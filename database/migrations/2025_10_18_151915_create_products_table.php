@@ -13,8 +13,14 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
+            $table->string('sku')->nullable()->unique();
+            $table->string('name');           // ← ini WAJIB ADA
+            $table->string('unit')->default('porsi');
+            $table->decimal('base_price', 12, 2)->default(0);
+            $table->boolean('active')->default(true);
             $table->timestamps();
-        });
+});
+
     }
 
     /**

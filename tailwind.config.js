@@ -1,18 +1,29 @@
-import defaultTheme from 'tailwindcss/defaultTheme';
-import forms from '@tailwindcss/forms';
+import defaultTheme from "tailwindcss/defaultTheme";
+import forms from "@tailwindcss/forms";
 
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
     content: [
-        './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
-        './storage/framework/views/*.php',
-        './resources/views/**/*.blade.php',
+        "./resources/views/**/*.blade.php",
+        "./resources/js/**/*.js",
+        "./resources/**/*.vue",
     ],
 
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                sans: ['"Public Sans"', ...defaultTheme.fontFamily.sans],
+                body: ['"Public Sans"', ...defaultTheme.fontFamily.sans],
+                display: ['"Space Grotesk"', ...defaultTheme.fontFamily.sans],
+            },
+            colors: {
+                brand: {
+                    50: "#f5f8ff",
+                    100: "#e8eeff",
+                    500: "#3455db",
+                    600: "#2644bd",
+                    700: "#1d3493",
+                },
             },
         },
     },

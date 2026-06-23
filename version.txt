@@ -1,0 +1,20 @@
+v.1.0 deployment
+v.1.1 update bestseller per customer
+v.1.1a patch edit password
+v.1.2 update master menu (aktif / no aktif, reset password), timezone
+v.2.0 upgrade accounting app
+v.2.1 update dashboard, KPI dan laporan owner
+v.2.2 update laporan neraca
+v.2.2.1 patch laporan produksi, laporan pemakaian bahan, dan status periode
+v.2.3 upgrade sales app
+v.2.3.1 patch editable menu & Harga carry forward
+v.2.3.2 patch disable PO completed langsung cash-in
+v.2.3.2 patch pindahkan laporan penjualan dari accounting app -> sales app
+v.2.3.3 patch jam server dan aplikasi jadi UTC +7
+v.2.3.4 patch laporan neraca detail expandable
+v.2.3.5 patch adjustment neraca
+v.2.3.6 patch adjustment laba rugi
+v.2.3.7 tambah menu closing penjualan
+v.2.3.8 patch untuk menu 3s dan snapshot dan edit Harga
+v.2.3.9 patch ubah laporan final penjualan dan laporan final
+v.2.3.10 patch sesuaikan laporan laba rugi, dan patch kecil di admin app dan owner app

@@ -35,6 +35,10 @@ Route::middleware('guest')->group(function () {
         ->name('password.store');
 });
 
+Route::middleware(['auth', 'force.password.change'])->group(function () {
+        Route::get('/dashboard', fn () => view('dashboard'))->name('dashboard');
+});
+
 Route::middleware('auth')->group(function () {
     Route::get('verify-email', EmailVerificationPromptController::class)
         ->name('verification.notice');
