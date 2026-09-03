@@ -65,12 +65,13 @@ it('shows detailed rows for the selected inventory item usage report', function 
     ]))
         ->assertOk()
         ->assertSeeText('Rincian Pemakaian Tepung Terigu (kg)')
-        ->assertSeeText('Saldo Awal')
+        ->assertSeeText('Bahan Baku Lama')
         ->assertSeeText('Pembelian')
         ->assertSeeText('Stock Opname')
-        ->assertSeeText('Total Saldo Awal')
+        ->assertSeeText('Total Bahan Baku Lama')
         ->assertSeeText('Total Pembelian')
         ->assertSeeText('Total Pemakaian')
+        ->assertSeeText('Sisa Stok')
         ->assertSeeText('Supplier: Supplier A | Tunai | Pembelian mingguan')
         ->assertSeeText('80,00');
 });
