@@ -364,6 +364,7 @@ class BalanceSheetService
                     ->sum('total_value');
 
                 $purchases = (float) InventoryPurchase::query()
+                    ->addsToStock()
                     ->where('inventory_item_id', $item->id)
                     ->whereDate('transaction_date', '<=', $reportDate->toDateString())
                     ->sum('total_value');
@@ -406,6 +407,7 @@ class BalanceSheetService
             ->pluck('total_amount', 'inventory_item_id');
 
         $purchaseByItem = InventoryPurchase::query()
+            ->addsToStock()
             ->whereDate('transaction_date', '<=', $reportDate->toDateString())
             ->selectRaw('inventory_item_id, SUM(total_value) as total_amount')
             ->groupBy('inventory_item_id')

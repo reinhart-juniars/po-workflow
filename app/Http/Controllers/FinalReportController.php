@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exports\ViewExcelExport;
 use App\Http\Controllers\Concerns\BuildsOperatingExpenseAdjustments;
+use App\Http\Controllers\Concerns\ReportsDamagedInventoryLoss;
 use App\Models\CashOut;
 use App\Models\ExpenseCategory;
 use App\Models\InventoryItem;
@@ -22,6 +23,7 @@ use Maatwebsite\Excel\Facades\Excel;
 class FinalReportController extends Controller
 {
     use BuildsOperatingExpenseAdjustments;
+    use ReportsDamagedInventoryLoss;
 
     /**
      * Mapping label PDF Laporan Laba Rugi → kemungkinan nama
@@ -310,6 +312,14 @@ class FinalReportController extends Controller
         // Adjustment beban operasional tanpa kategori tidak punya baris kategori
         // untuk ditempeli, jadi tampil sebagai baris tersendiri. Tanpa ini nilainya
         // hilang dari Total Pengeluaran dan Laba jadi overstated.
+        if ($lossRow = $this->damagedInventoryLossRow($dateFrom, $dateTo)) {
+            $rows[] = [
+                'label' => $lossRow['label'],
+                'amount' => $lossRow['amount'],
+                'is_extra' => true,
+            ];
+        }
+
         foreach ($this->standaloneOperatingExpenseAdjustmentRows($dateFrom, $dateTo) as $adjustmentRow) {
             $rows[] = [
                 'label' => $adjustmentRow['label'],

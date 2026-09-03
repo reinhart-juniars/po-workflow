@@ -52,7 +52,6 @@ class InventoryUsageService
         return [0.0, null, 'zero'];
     }
 
-
     public function buildItemReport(int $itemId, CarbonInterface $dateFrom, CarbonInterface $dateTo): array
     {
         $openingEntries = InventoryOpening::query()
@@ -105,7 +104,10 @@ class InventoryUsageService
             }
         }
 
+        // Barang yang datang rusak tidak pernah masuk stok, jadi tidak boleh
+        // ikut menambah "Bahan Baku Baru" maupun mengurangi pemakaian.
         $purchaseEntries = InventoryPurchase::query()
+            ->addsToStock()
             ->where('inventory_item_id', $itemId)
             ->whereBetween('transaction_date', [
                 $dateFrom->toDateString(),
@@ -195,7 +197,7 @@ class InventoryUsageService
                 'unit_cost' => (float) $purchaseEntry->unit_cost,
                 'value' => (float) $purchaseEntry->total_value,
                 'notes' => collect([
-                    $purchaseEntry->supplier_name ? 'Supplier: ' . $purchaseEntry->supplier_name : null,
+                    $purchaseEntry->supplier_name ? 'Supplier: '.$purchaseEntry->supplier_name : null,
                     $purchaseEntry->payment_type === 'payable' ? 'Kredit' : 'Tunai',
                     $purchaseEntry->notes,
                 ])->filter()->implode(' | '),

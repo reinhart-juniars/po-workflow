@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exports\ViewExcelExport;
 use App\Http\Controllers\Concerns\BuildsOperatingExpenseAdjustments;
 use App\Http\Controllers\Concerns\ChecksPeriodClosing;
+use App\Http\Controllers\Concerns\ReportsDamagedInventoryLoss;
 use App\Models\CashOut;
 use App\Models\ExpenseCategory;
 use App\Models\InventoryItem;
@@ -26,6 +27,7 @@ class ProfitLossReportController extends Controller
 {
     use BuildsOperatingExpenseAdjustments;
     use ChecksPeriodClosing;
+    use ReportsDamagedInventoryLoss;
 
     private const PAYABLE_SETTLEMENT_CATEGORY_NAME = 'Pembayaran Hutang';
 
@@ -288,6 +290,14 @@ class ProfitLossReportController extends Controller
         // Adjustment beban operasional tanpa kategori tidak punya baris kategori
         // untuk ditempeli, jadi tampil sebagai baris tersendiri. Tanpa ini nilainya
         // hilang dari Total Pengeluaran dan Laba jadi overstated.
+        if ($lossRow = $this->damagedInventoryLossRow($dateFrom, $dateTo)) {
+            $rows[] = [
+                'label' => $lossRow['label'],
+                'amount' => $lossRow['amount'],
+                'is_extra' => true,
+            ];
+        }
+
         foreach ($this->standaloneOperatingExpenseAdjustmentRows($dateFrom, $dateTo) as $adjustmentRow) {
             $rows[] = [
                 'label' => $adjustmentRow['label'],
@@ -460,6 +470,12 @@ class ProfitLossReportController extends Controller
             ->toBase()
             ->merge($operatingExpenseAdjustmentRows)
             ->values();
+
+        // Kerugian barang rusak: nilainya sudah dikeluarkan dari Bahan Baku,
+        // jadi harus muncul di sisi beban agar total Laba tetap sama.
+        if ($lossRow = $this->damagedInventoryLossRow($dateFrom, $dateTo)) {
+            $operatingExpenseRows = $operatingExpenseRows->push($lossRow)->values();
+        }
 
         $operatingExpenseTotal = round((float) $operatingExpenseRows->sum('amount'), 2);
 
