@@ -3,11 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Exports\ViewExcelExport;
+use App\Http\Controllers\Concerns\BuildsOperatingExpenseAdjustments;
 use App\Models\CashOut;
 use App\Models\ExpenseCategory;
 use App\Models\InventoryItem;
-use App\Models\InventoryOpening;
-use App\Models\InventoryPurchase;
 use App\Models\ProfitLossAdjustment;
 use App\Models\SalesActualItem;
 use App\Models\SalesDailyClosing;
@@ -22,6 +21,8 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class FinalReportController extends Controller
 {
+    use BuildsOperatingExpenseAdjustments;
+
     /**
      * Mapping label PDF Laporan Laba Rugi → kemungkinan nama
      * ExpenseCategory yang ada di database (case-insensitive).
@@ -52,7 +53,7 @@ class FinalReportController extends Controller
         InventoryUsageService $inventoryUsageService
     ) {
         $reportData = $this->buildReportData($request, $balanceSheetService, $inventoryUsageService);
-        $fileName = 'laporan_final_' . $reportData['dateFrom']->format('Ymd') . '_' . $reportData['dateTo']->format('Ymd') . '.xlsx';
+        $fileName = 'laporan_final_'.$reportData['dateFrom']->format('Ymd').'_'.$reportData['dateTo']->format('Ymd').'.xlsx';
 
         return Excel::download(
             new ViewExcelExport('accountingapp.reports.exports.final', $reportData),
@@ -66,7 +67,7 @@ class FinalReportController extends Controller
         InventoryUsageService $inventoryUsageService
     ) {
         $reportData = $this->buildReportData($request, $balanceSheetService, $inventoryUsageService);
-        $fileName = 'laporan_final_' . $reportData['dateFrom']->format('Ymd') . '_' . $reportData['dateTo']->format('Ymd') . '.pdf';
+        $fileName = 'laporan_final_'.$reportData['dateFrom']->format('Ymd').'_'.$reportData['dateTo']->format('Ymd').'.pdf';
 
         return Pdf::loadView('accountingapp.reports.exports.final', $reportData)
             ->setPaper('a4', 'portrait')
@@ -302,6 +303,17 @@ class FinalReportController extends Controller
             $rows[] = [
                 'label' => $categoryName,
                 'amount' => round((float) $amount, 2),
+                'is_extra' => true,
+            ];
+        }
+
+        // Adjustment beban operasional tanpa kategori tidak punya baris kategori
+        // untuk ditempeli, jadi tampil sebagai baris tersendiri. Tanpa ini nilainya
+        // hilang dari Total Pengeluaran dan Laba jadi overstated.
+        foreach ($this->standaloneOperatingExpenseAdjustmentRows($dateFrom, $dateTo) as $adjustmentRow) {
+            $rows[] = [
+                'label' => $adjustmentRow['label'],
+                'amount' => $adjustmentRow['amount'],
                 'is_extra' => true,
             ];
         }

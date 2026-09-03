@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\ViewExcelExport;
+use App\Http\Controllers\Concerns\BuildsOperatingExpenseAdjustments;
 use App\Http\Controllers\Concerns\ChecksPeriodClosing;
 use App\Models\CashOut;
 use App\Models\ExpenseCategory;
@@ -10,8 +11,8 @@ use App\Models\InventoryItem;
 use App\Models\OtherIncome;
 use App\Models\ProfitLossAdjustment;
 use App\Models\SalesActual;
-use App\Models\SalesDailyClosing;
 use App\Models\SalesActualItem;
+use App\Models\SalesDailyClosing;
 use App\Models\StockOpname;
 use App\Services\InventoryUsageService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -23,9 +24,11 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class ProfitLossReportController extends Controller
 {
+    use BuildsOperatingExpenseAdjustments;
     use ChecksPeriodClosing;
 
     private const PAYABLE_SETTLEMENT_CATEGORY_NAME = 'Pembayaran Hutang';
+
     private const SALES_ACTUAL_INCOME_CATEGORY_NAME = 'Sales Actual';
 
     private const PENGELUARAN_PDF_MAP = [
@@ -51,7 +54,7 @@ class ProfitLossReportController extends Controller
     public function exportExcel(Request $request, InventoryUsageService $inventoryUsageService)
     {
         $reportData = $this->prepareReportData($request, $inventoryUsageService, 'monthly');
-        $fileName = 'laporan_laba_rugi_' . $reportData['dateFrom']->format('Ymd') . '_' . $reportData['dateTo']->format('Ymd') . '.xlsx';
+        $fileName = 'laporan_laba_rugi_'.$reportData['dateFrom']->format('Ymd').'_'.$reportData['dateTo']->format('Ymd').'.xlsx';
 
         return Excel::download(
             new ViewExcelExport('accountingapp.reports.exports.profit-loss', $reportData),
@@ -62,7 +65,7 @@ class ProfitLossReportController extends Controller
     public function exportPdf(Request $request, InventoryUsageService $inventoryUsageService)
     {
         $reportData = $this->prepareReportData($request, $inventoryUsageService, 'monthly');
-        $fileName = 'laporan_laba_rugi_' . $reportData['dateFrom']->format('Ymd') . '_' . $reportData['dateTo']->format('Ymd') . '.pdf';
+        $fileName = 'laporan_laba_rugi_'.$reportData['dateFrom']->format('Ymd').'_'.$reportData['dateTo']->format('Ymd').'.pdf';
 
         return Pdf::loadView('accountingapp.reports.exports.profit-loss', $reportData)
             ->setPaper('a4', 'portrait')
@@ -72,7 +75,7 @@ class ProfitLossReportController extends Controller
     public function exportYearlyExcel(Request $request, InventoryUsageService $inventoryUsageService)
     {
         $reportData = $this->prepareReportData($request, $inventoryUsageService, 'yearly');
-        $fileName = 'laporan_laba_rugi_tahunan_' . $reportData['selectedYear'] . '.xlsx';
+        $fileName = 'laporan_laba_rugi_tahunan_'.$reportData['selectedYear'].'.xlsx';
 
         return Excel::download(
             new ViewExcelExport('accountingapp.reports.exports.profit-loss', $reportData),
@@ -83,7 +86,7 @@ class ProfitLossReportController extends Controller
     public function exportYearlyPdf(Request $request, InventoryUsageService $inventoryUsageService)
     {
         $reportData = $this->prepareReportData($request, $inventoryUsageService, 'yearly');
-        $fileName = 'laporan_laba_rugi_tahunan_' . $reportData['selectedYear'] . '.pdf';
+        $fileName = 'laporan_laba_rugi_tahunan_'.$reportData['selectedYear'].'.pdf';
 
         return Pdf::loadView('accountingapp.reports.exports.profit-loss', $reportData)
             ->setPaper('a4', 'landscape')
@@ -278,6 +281,17 @@ class ProfitLossReportController extends Controller
             $rows[] = [
                 'label' => $categoryName,
                 'amount' => round((float) $amount, 2),
+                'is_extra' => true,
+            ];
+        }
+
+        // Adjustment beban operasional tanpa kategori tidak punya baris kategori
+        // untuk ditempeli, jadi tampil sebagai baris tersendiri. Tanpa ini nilainya
+        // hilang dari Total Pengeluaran dan Laba jadi overstated.
+        foreach ($this->standaloneOperatingExpenseAdjustmentRows($dateFrom, $dateTo) as $adjustmentRow) {
+            $rows[] = [
+                'label' => $adjustmentRow['label'],
+                'amount' => $adjustmentRow['amount'],
                 'is_extra' => true,
             ];
         }
@@ -522,7 +536,7 @@ class ProfitLossReportController extends Controller
                 'label' => $row->label,
                 'amount' => round((float) $row->amount, 2),
                 'meta' => collect([
-                    'Adjustment laba rugi per ' . optional($row->adjustment_date)->format('d-m-Y'),
+                    'Adjustment laba rugi per '.optional($row->adjustment_date)->format('d-m-Y'),
                     $row->notes,
                 ])->filter()->implode(' | '),
             ])
@@ -546,7 +560,7 @@ class ProfitLossReportController extends Controller
                     'label' => $adjustment->label,
                     'amount' => round((float) $adjustment->amount, 2),
                     'meta' => collect([
-                        'Adjustment laba rugi per ' . optional($adjustment->adjustment_date)->format('d-m-Y'),
+                        'Adjustment laba rugi per '.optional($adjustment->adjustment_date)->format('d-m-Y'),
                         $adjustment->notes,
                     ])->filter()->implode(' | '),
                 ];
@@ -570,7 +584,7 @@ class ProfitLossReportController extends Controller
 
             return [
                 'key' => $dateFrom->format('Y-m'),
-                'label' => $this->monthLabel($month) . ' ' . $year,
+                'label' => $this->monthLabel($month).' '.$year,
                 'is_placeholder' => $isPlaceholder,
                 'statement' => $isPlaceholder
                     ? $this->emptyStatementData()

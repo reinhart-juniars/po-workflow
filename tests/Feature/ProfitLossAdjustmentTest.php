@@ -75,14 +75,18 @@ it('lets owner create historical profit loss adjustments and includes them in pr
         'date_to' => '2026-04-30',
     ]))
         ->assertOk()
-        ->assertSeeText('Koreksi pendapatan April')
-        ->assertSeeText('Koreksi HPP April')
+        // Adjustment pendapatan/HPP/pendapatan-lain diagregasi per grup di laporan
+        // (sumAdjustmentsByGroup), jadi labelnya tidak dirender per baris. Hanya
+        // adjustment beban operasional tanpa kategori yang tampil sebagai baris sendiri.
         ->assertSeeText('Koreksi beban April')
-        ->assertSeeText('Koreksi pendapatan lain April')
-        ->assertSeeText('Rp 100.000')
-        ->assertSeeText('Rp 25.000')
-        ->assertSeeText('Rp 5.000')
-        ->assertSeeText('Rp 60.000')
+        // Laba Rugi yang ditampilkan (FinalStyle) harus ikut menghitung adjustment
+        // beban operasional tanpa kategori; kalau tidak, Laba overstated 5.000.
+        ->assertViewHas('profitLoss', function (array $profitLoss) {
+            return (float) $profitLoss['totalPenjualan'] === 90000.0
+                && (float) $profitLoss['bahanBakuTerpakai'] === 25000.0
+                && (float) $profitLoss['totalPengeluaran'] === 5000.0
+                && (float) $profitLoss['labaRugi'] === 60000.0;
+        })
         ->assertViewHas('statement', function (array $statement) {
             return (float) $statement['salesRevenue'] === 100000.0
                 && (float) $statement['cogsTotal'] === 25000.0
