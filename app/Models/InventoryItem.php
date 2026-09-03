@@ -8,20 +8,30 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class InventoryItem extends Model
 {
     public const CATEGORY_FIXED_ASSET = 'inventaris';
+
     public const CATEGORY_RAW_MATERIAL = 'bahan_baku';
+
     public const CATEGORY_PACKAGING = 'packaging';
 
     protected $fillable = [
         'name',
         'unit',
         'category',
+        'minimum_stock_value',
         'is_active',
         'description',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'minimum_stock_value' => 'decimal:2',
     ];
+
+    /** Item ini ikut dipantau alert stok minimum. */
+    public function hasStockAlert(): bool
+    {
+        return $this->minimum_stock_value !== null;
+    }
 
     public static function categoryOptions(): array
     {
