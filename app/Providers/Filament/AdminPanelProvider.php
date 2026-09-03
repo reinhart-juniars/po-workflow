@@ -13,7 +13,9 @@ class AdminPanelProvider extends PanelProvider
             ->default() // tandai ini panel default
             ->id('admin')
             ->path('admin')
-            ->login()   // pakai login bawaan Filament
+            // Login memakai halaman sendiri: bawaan Filament hanya menerima
+            // email, sementara sebagian besar pengguna di sini masuk dengan nama.
+            ->login(\App\Filament\Pages\Auth\Login::class)
 
             // ⬇️ INI YANG PENTING: suruh Filament muat semua Resource, Page, Widget
             ->discoverResources(
@@ -27,6 +29,12 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(
                 in: app_path('Filament/Widgets'),
                 for: 'App\\Filament\\Widgets',
-            );
+            )
+
+            // Pengguna yang wajib ganti password tidak boleh memakai panel
+            // sebagai jalan memutar; middleware yang sama dipakai aplikasi Blade.
+            ->authMiddleware([
+                \App\Http\Middleware\ForcePasswordChange::class,
+            ]);
     }
 }
