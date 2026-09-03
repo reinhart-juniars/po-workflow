@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\InventoryPurchaseResource\Pages;
 
 use App\Filament\Resources\InventoryPurchaseResource;
-use App\Filament\Widgets\InventoryPurchaseKpiWidget;
+use App\Filament\Resources\InventoryPurchaseResource\Widgets\InventoryPurchaseKpiWidget;
 use Filament\Resources\Pages\ListRecords;
 
 class ListInventoryPurchases extends ListRecords

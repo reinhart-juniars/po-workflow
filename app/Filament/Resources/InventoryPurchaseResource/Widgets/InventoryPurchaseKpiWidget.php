@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Widgets;
+namespace App\Filament\Resources\InventoryPurchaseResource\Widgets;
 
 use App\Models\InventoryItem;
 use App\Models\InventoryPurchase;
@@ -11,6 +11,10 @@ use Illuminate\Support\Collection;
 /**
  * Ringkasan nilai pembelian bulan berjalan per kategori item, sepadan dengan
  * KPI pada modul Blade yang digantikan.
+ *
+ * Diletakkan di namespace resource, bukan App\Filament\Widgets, supaya tidak
+ * ikut ditemukan discoverWidgets() dan muncul di dashboard -- tempatnya hanya
+ * di kepala halaman daftar pembelian.
  */
 class InventoryPurchaseKpiWidget extends BaseWidget
 {
