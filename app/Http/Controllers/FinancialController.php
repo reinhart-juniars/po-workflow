@@ -25,9 +25,7 @@ class FinancialController extends Controller
             ->whereBetween('completed_at', [$dateFrom->copy()->startOfDay(), $dateTo->copy()->endOfDay()]);
 
         $cashInQuery = PurchaseOrder::query()
-            ->where('status', 'completed')
-            ->where('payment_type', 'receivable')
-            ->whereNotNull('cash_received_at')
+            ->cashReceived()
             ->whereBetween('cash_received_at', [$dateFrom->copy()->startOfDay(), $dateTo->copy()->endOfDay()]);
 
         $expenseQuery = CashOut::query()

@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\BalanceSheetAdjustment;
 use App\Models\CashAccount;
 use App\Models\CashOut;
-use App\Models\BalanceSheetAdjustment;
 use App\Models\ExpenseCategory;
 use App\Models\InventoryItem;
 use App\Models\InventoryOpening;
@@ -15,8 +15,8 @@ use App\Models\Payable;
 use App\Models\ProfitLossAdjustment;
 use App\Models\PurchaseOrder;
 use App\Models\SalesActual;
-use App\Models\SalesDailyClosing;
 use App\Models\SalesActualItem;
+use App\Models\SalesDailyClosing;
 use App\Models\StockOpname;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -24,10 +24,10 @@ use Illuminate\Support\Collection;
 class BalanceSheetService
 {
     private const PAYABLE_SETTLEMENT_CATEGORY_NAME = 'Pembayaran Hutang';
+
     public function __construct(
         private InventoryUsageService $inventoryUsageService
-    ) {
-    }
+    ) {}
 
     public function buildReport(Carbon $reportDate): array
     {
@@ -111,13 +111,13 @@ class BalanceSheetService
             [
                 'label' => 'Laba Ditahan',
                 'meta' => $priorPeriodEnd->lt($currentPeriodStart)
-                    ? 'Akumulasi laba/rugi sampai ' . $priorPeriodEnd->format('d-m-Y')
+                    ? 'Akumulasi laba/rugi sampai '.$priorPeriodEnd->format('d-m-Y')
                     : 'Belum ada periode sebelum bulan laporan.',
                 'amount' => $retainedEarnings,
             ],
             [
                 'label' => 'Laba Berjalan',
-                'meta' => 'Akumulasi laba/rugi ' . $currentPeriodStart->format('d-m-Y') . ' - ' . $reportDate->format('d-m-Y'),
+                'meta' => 'Akumulasi laba/rugi '.$currentPeriodStart->format('d-m-Y').' - '.$reportDate->format('d-m-Y'),
                 'amount' => $currentPeriodProfit,
             ],
         ])->merge($wealthAdjustmentRows)->values();
@@ -179,7 +179,7 @@ class BalanceSheetService
                 return [
                     'label' => $adjustment->label,
                     'meta' => collect([
-                        'Adjustment Neraca per ' . optional($adjustment->adjustment_date)->format('d-m-Y'),
+                        'Adjustment Neraca per '.optional($adjustment->adjustment_date)->format('d-m-Y'),
                         $adjustment->notes,
                     ])->filter()->implode(' | '),
                     'amount' => round((float) $adjustment->amount, 2),
@@ -203,9 +203,7 @@ class BalanceSheetService
         // Ongkir di-book sebagai OtherIncome (Penjualan Lain-Lain) saat cash_received,
         // jadi di sini cuma ambil porsi principal supaya tidak double-count dengan OtherIncome.
         $poReceiptsByAccount = PurchaseOrder::query()
-            ->where('payment_type', 'receivable')
-            ->whereNotNull('cash_account_id')
-            ->whereNotNull('cash_received_at')
+            ->cashReceived()
             ->where('cash_received_at', '<=', $reportDate->copy()->endOfDay())
             ->selectRaw('cash_account_id, SUM(COALESCE(total_amount, 0) - COALESCE(shipping_cost, 0)) as total_amount')
             ->groupBy('cash_account_id')
@@ -243,10 +241,10 @@ class BalanceSheetService
                 return [
                     'label' => $account->name,
                     'meta' => collect([
-                        $opening !== 0.0 ? 'Saldo awal Rp ' . number_format($opening, 0, ',', '.') : null,
-                        $poReceipts !== 0.0 ? 'Pelunasan piutang PO Rp ' . number_format($poReceipts, 0, ',', '.') : null,
-                        $otherIncome !== 0.0 ? 'Pemasukan lain Rp ' . number_format($otherIncome, 0, ',', '.') : null,
-                        $expenses !== 0.0 ? 'Cash out Rp ' . number_format($expenses, 0, ',', '.') : null,
+                        $opening !== 0.0 ? 'Saldo awal Rp '.number_format($opening, 0, ',', '.') : null,
+                        $poReceipts !== 0.0 ? 'Pelunasan piutang PO Rp '.number_format($poReceipts, 0, ',', '.') : null,
+                        $otherIncome !== 0.0 ? 'Pemasukan lain Rp '.number_format($otherIncome, 0, ',', '.') : null,
+                        $expenses !== 0.0 ? 'Cash out Rp '.number_format($expenses, 0, ',', '.') : null,
                     ])->filter()->implode(' | '),
                     'amount' => $amount,
                 ];
@@ -269,8 +267,8 @@ class BalanceSheetService
             ->map(function (OpeningBalance $openingBalance) {
                 return [
                     'label' => $openingBalance->customer?->name
-                        ?: ($openingBalance->description ?: 'Saldo awal piutang #' . $openingBalance->id),
-                    'meta' => 'Saldo awal per ' . optional($openingBalance->balance_date)->format('d-m-Y'),
+                        ?: ($openingBalance->description ?: 'Saldo awal piutang #'.$openingBalance->id),
+                    'meta' => 'Saldo awal per '.optional($openingBalance->balance_date)->format('d-m-Y'),
                     'amount' => round((float) $openingBalance->amount, 2),
                 ];
             }));
@@ -300,11 +298,11 @@ class BalanceSheetService
             ->map(function (PurchaseOrder $po) {
                 return [
                     'label' => ($po->customer?->name ?: $po->recipient_name ?: 'Piutang PO')
-                        . ' - '
-                        . $po->po_number,
+                        .' - '
+                        .$po->po_number,
                     'meta' => collect([
-                        $po->completed_at ? 'PO selesai ' . $po->completed_at->format('d-m-Y') : null,
-                        $po->due_date ? 'Jatuh tempo ' . $po->due_date->format('d-m-Y') : null,
+                        $po->completed_at ? 'PO selesai '.$po->completed_at->format('d-m-Y') : null,
+                        $po->due_date ? 'Jatuh tempo '.$po->due_date->format('d-m-Y') : null,
                     ])->filter()->implode(' | '),
                     'amount' => round((float) $po->total_amount, 2),
                 ];
@@ -353,6 +351,7 @@ class BalanceSheetService
 
                 if ($latestOpname) {
                     $categoryValue += (float) $latestOpname->total_value;
+
                     continue;
                 }
 
@@ -379,8 +378,8 @@ class BalanceSheetService
 
             if (abs($categoryValue) >= 0.005) {
                 $rows->push([
-                    'label' => $categoryLabel . ' - Persediaan Akhir',
-                    'meta' => 'Nilai stock opname terakhir ' . $categoryLabel . ' s/d ' . $reportDate->format('d-m-Y'),
+                    'label' => $categoryLabel.' - Persediaan Akhir',
+                    'meta' => 'Nilai stock opname terakhir '.$categoryLabel.' s/d '.$reportDate->format('d-m-Y'),
                     'amount' => round($categoryValue, 2),
                 ]);
             }
@@ -428,21 +427,21 @@ class BalanceSheetService
             ->flatMap(function (InventoryItem $item) use ($openingByItem, $purchaseByItem, $reportDate) {
                 $opening = round((float) ($openingByItem[$item->id] ?? 0), 2);
                 $purchases = round((float) ($purchaseByItem[$item->id] ?? 0), 2);
-                $itemLabel = $item->name . ($item->unit ? ' (' . $item->unit . ')' : '');
+                $itemLabel = $item->name.($item->unit ? ' ('.$item->unit.')' : '');
                 $rows = collect();
 
                 if (abs($opening) >= 0.005) {
                     $rows->push([
-                        'label' => $itemLabel . ' - Inventaris Lama',
-                        'meta' => 'Saldo awal inventaris s/d ' . $reportDate->format('d-m-Y'),
+                        'label' => $itemLabel.' - Inventaris Lama',
+                        'meta' => 'Saldo awal inventaris s/d '.$reportDate->format('d-m-Y'),
                         'amount' => $opening,
                     ]);
                 }
 
                 if (abs($purchases) >= 0.005) {
                     $rows->push([
-                        'label' => $itemLabel . ' - Inventaris Baru',
-                        'meta' => 'Pembelian inventaris s/d ' . $reportDate->format('d-m-Y'),
+                        'label' => $itemLabel.' - Inventaris Baru',
+                        'meta' => 'Pembelian inventaris s/d '.$reportDate->format('d-m-Y'),
                         'amount' => $purchases,
                     ]);
                 }
@@ -463,8 +462,8 @@ class BalanceSheetService
             ->get(['expense_category_id', 'amount'])
             ->groupBy(fn (CashOut $expense) => $expense->category?->name ?: 'Aktiva Tetap')
             ->map(fn (Collection $group, string $label) => [
-                'label' => $label . ' - Pembelian (Pengeluaran)',
-                'meta' => 'Pembelian aktiva tetap via pengeluaran s/d ' . $reportDate->format('d-m-Y'),
+                'label' => $label.' - Pembelian (Pengeluaran)',
+                'meta' => 'Pembelian aktiva tetap via pengeluaran s/d '.$reportDate->format('d-m-Y'),
                 'amount' => round((float) $group->sum('amount'), 2),
             ])
             ->filter(fn (array $row) => abs((float) $row['amount']) >= 0.005)
@@ -501,8 +500,8 @@ class BalanceSheetService
                     'label' => $payable->supplier_name,
                     'meta' => collect([
                         $payable->opening_balance_id ? 'Saldo awal hutang' : ($payable->description ?: 'Hutang supplier'),
-                        $payable->transaction_date ? 'Tanggal ' . $payable->transaction_date->format('d-m-Y') : null,
-                        $payable->due_date ? 'Jatuh tempo ' . $payable->due_date->format('d-m-Y') : null,
+                        $payable->transaction_date ? 'Tanggal '.$payable->transaction_date->format('d-m-Y') : null,
+                        $payable->due_date ? 'Jatuh tempo '.$payable->due_date->format('d-m-Y') : null,
                     ])->filter()->implode(' | '),
                     'amount' => round((float) $payable->amount, 2),
                     'is_partial' => $payable->status === 'partial',
@@ -518,8 +517,8 @@ class BalanceSheetService
             ->get(['id', 'balance_date', 'supplier_name', 'description', 'amount'])
             ->map(function (OpeningBalance $openingBalance) {
                 return [
-                    'label' => $openingBalance->supplier_name ?: ($openingBalance->description ?: 'Saldo awal hutang #' . $openingBalance->id),
-                    'meta' => 'Saldo awal hutang | Tanggal ' . optional($openingBalance->balance_date)->format('d-m-Y'),
+                    'label' => $openingBalance->supplier_name ?: ($openingBalance->description ?: 'Saldo awal hutang #'.$openingBalance->id),
+                    'meta' => 'Saldo awal hutang | Tanggal '.optional($openingBalance->balance_date)->format('d-m-Y'),
                     'amount' => round((float) $openingBalance->amount, 2),
                     'is_partial' => false,
                 ];

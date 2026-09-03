@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -205,6 +205,24 @@ class PurchaseOrder extends Model
     public function auditLogs()
     {
         return $this->hasMany(\App\Models\AuditLog::class);
+    }
+
+    /**
+     * PO piutang yang uangnya benar-benar sudah masuk ke salah satu akun kas.
+     *
+     * Sengaja TIDAK menyaring `status`. Kolom `cash_received_at` hanya terisi lewat
+     * pelunasan PO receivable yang sudah completed, dan dikosongkan lagi saat PO
+     * dibatalkan (ProductionAppController::cancel), jadi kolom itu sudah jadi penanda
+     * tunggal bahwa kasnya masuk. Kalau sebagian pemakai ikut menyaring `status` dan
+     * sebagian lagi tidak, Cashflow dan Neraca menghitung populasi PO yang berbeda dan
+     * saldo kas keduanya tidak akan pernah ketemu.
+     */
+    public function scopeCashReceived(Builder $query): Builder
+    {
+        return $query
+            ->where('payment_type', 'receivable')
+            ->whereNotNull('cash_received_at')
+            ->whereNotNull('cash_account_id');
     }
 
     public function scopeOpenReceivable(Builder $query): Builder

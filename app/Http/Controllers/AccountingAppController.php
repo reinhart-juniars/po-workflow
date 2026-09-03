@@ -5,11 +5,11 @@ namespace App\Http\Controllers;
 use App\Exports\ViewExcelExport;
 use App\Http\Controllers\Concerns\ChecksPeriodClosing;
 use App\Http\Controllers\Concerns\ResolvesCentralExpenseLocation;
-use App\Models\CashOut;
 use App\Models\AuditLog;
 use App\Models\BalanceSheetAdjustment;
 use App\Models\CashAccount;
 use App\Models\CashAccountTransfer;
+use App\Models\CashOut;
 use App\Models\Customer;
 use App\Models\ExpenseCategory;
 use App\Models\IncomeCategory;
@@ -21,7 +21,6 @@ use App\Models\Payable;
 use App\Models\PeriodClosing;
 use App\Models\ProfitLossAdjustment;
 use App\Models\PurchaseOrder;
-use App\Models\SalesActualItem;
 use App\Models\SalesDailyClosing;
 use App\Models\User;
 use App\Services\BalanceSheetService;
@@ -31,9 +30,9 @@ use App\Support\UiLabel;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
@@ -144,7 +143,7 @@ class AccountingAppController extends Controller
             ->count();
 
         $salesPerMonth = PurchaseOrder::query()
-            ->selectRaw($this->yearMonthSelectSql('completed_at') . ', SUM(total_amount) as total')
+            ->selectRaw($this->yearMonthSelectSql('completed_at').', SUM(total_amount) as total')
             ->where('status', 'completed')
             ->whereNotNull('completed_at', 'and')
             ->groupBy('period')
@@ -152,7 +151,7 @@ class AccountingAppController extends Controller
             ->get();
 
         $expensePerMonth = CashOut::query()
-            ->selectRaw($this->yearMonthSelectSql('expense_date') . ', SUM(amount) as total')
+            ->selectRaw($this->yearMonthSelectSql('expense_date').', SUM(amount) as total')
             ->groupBy('period')
             ->orderBy('period', 'asc')
             ->get();
@@ -172,14 +171,15 @@ class AccountingAppController extends Controller
             ->orderByDesc('period_month')
             ->first();
 
-        $reportPeriodLabel = $this->monthLabel($reportPeriodMonth) . ' ' . $reportPeriodYear;
+        $reportPeriodLabel = $this->monthLabel($reportPeriodMonth).' '.$reportPeriodYear;
         $latestClosedPeriodLabel = $latestClosedPeriod
-            ? $this->monthLabel((int) $latestClosedPeriod->period_month) . ' ' . $latestClosedPeriod->period_year
+            ? $this->monthLabel((int) $latestClosedPeriod->period_month).' '.$latestClosedPeriod->period_year
             : null;
         $closedPeriodsThisYear = PeriodClosing::query()
             ->where('period_year', $reportPeriodYear)
             ->count();
         $previousOpenPeriodWarning = $this->previousOpenPeriodWarning();
+
         return view('accountingapp.dashboard', compact(
             'openingCash',
             'totalCashIn',
@@ -231,7 +231,7 @@ class AccountingAppController extends Controller
 
         $filteredQuery = (clone $baseQuery)
             ->when($supplierName !== '', function ($query) use ($supplierName) {
-                $query->where('supplier_name', 'like', '%' . $supplierName . '%');
+                $query->where('supplier_name', 'like', '%'.$supplierName.'%');
             })
             ->when($source === 'inventory_purchase', function ($query) {
                 $query->whereHas('inventoryPurchases');
@@ -284,7 +284,7 @@ class AccountingAppController extends Controller
                 $sourceLabel = 'Pembelian Stok';
                 $purchase = $payable->inventoryPurchases->first();
                 $itemName = $purchase?->item?->name ?? 'Item inventory';
-                $sourceDetail = $itemName . ' x' . number_format((float) ($purchase?->qty ?? 0), 2, ',', '.');
+                $sourceDetail = $itemName.' x'.number_format((float) ($purchase?->qty ?? 0), 2, ',', '.');
             }
 
             $payable->setAttribute('days_remaining', $daysRemaining);
@@ -1368,7 +1368,7 @@ class AccountingAppController extends Controller
 
         $historicalCutoff = now()->startOfMonth()->toDateString();
         $data = $request->validate([
-            'adjustment_date' => ['required', 'date', 'before:' . $historicalCutoff],
+            'adjustment_date' => ['required', 'date', 'before:'.$historicalCutoff],
             'group' => ['required', Rule::in(ProfitLossAdjustment::GROUPS)],
             'expense_category_id' => ['nullable', 'integer', 'exists:expense_categories,id'],
             'label' => ['required', 'string', 'max:255'],
@@ -1437,7 +1437,7 @@ class AccountingAppController extends Controller
 
         $historicalCutoff = now()->startOfMonth()->toDateString();
         $data = $request->validate([
-            'adjustment_date' => ['required', 'date', 'before:' . $historicalCutoff],
+            'adjustment_date' => ['required', 'date', 'before:'.$historicalCutoff],
             'group' => ['required', Rule::in(ProfitLossAdjustment::GROUPS)],
             'expense_category_id' => ['nullable', 'integer', 'exists:expense_categories,id'],
             'label' => ['required', 'string', 'max:255'],
@@ -1893,7 +1893,7 @@ class AccountingAppController extends Controller
 
         $periodClosingId = $periodClosing->id;
         $year = $periodClosing->period_year;
-        $periodLabel = $this->monthLabel((int) $periodClosing->period_month) . ' ' . $periodClosing->period_year;
+        $periodLabel = $this->monthLabel((int) $periodClosing->period_month).' '.$periodClosing->period_year;
 
         $periodClosing->delete();
 
@@ -1947,7 +1947,7 @@ class AccountingAppController extends Controller
         if ($request->input('view') === 'paid') {
             $reportData = $this->buildPaidReceivablesData($request, false);
             $reportData['viewMode'] = 'paid';
-            $fileName = 'piutang_terlunasi_' . now()->format('Ymd_His') . '.xlsx';
+            $fileName = 'piutang_terlunasi_'.now()->format('Ymd_His').'.xlsx';
 
             return Excel::download(
                 new ViewExcelExport('accountingapp.periods.exports.index', $reportData),
@@ -1957,7 +1957,7 @@ class AccountingAppController extends Controller
 
         $reportData = $this->buildReceivablesMonitoringData($request, false);
         $reportData['viewMode'] = 'outstanding';
-        $fileName = 'monitoring_piutang_' . now()->format('Ymd_His') . '.xlsx';
+        $fileName = 'monitoring_piutang_'.now()->format('Ymd_His').'.xlsx';
 
         return Excel::download(
             new ViewExcelExport('accountingapp.periods.exports.index', $reportData),
@@ -1970,7 +1970,7 @@ class AccountingAppController extends Controller
         if ($request->input('view') === 'paid') {
             $reportData = $this->buildPaidReceivablesData($request, false);
             $reportData['viewMode'] = 'paid';
-            $fileName = 'piutang_terlunasi_' . now()->format('Ymd_His') . '.pdf';
+            $fileName = 'piutang_terlunasi_'.now()->format('Ymd_His').'.pdf';
 
             return Pdf::loadView('accountingapp.periods.exports.index', $reportData)
                 ->setPaper('a4', 'landscape')
@@ -1979,7 +1979,7 @@ class AccountingAppController extends Controller
 
         $reportData = $this->buildReceivablesMonitoringData($request, false);
         $reportData['viewMode'] = 'outstanding';
-        $fileName = 'monitoring_piutang_' . now()->format('Ymd_His') . '.pdf';
+        $fileName = 'monitoring_piutang_'.now()->format('Ymd_His').'.pdf';
 
         return Pdf::loadView('accountingapp.periods.exports.index', $reportData)
             ->setPaper('a4', 'landscape')
@@ -2016,7 +2016,7 @@ class AccountingAppController extends Controller
             })
             ->when($customerSearch !== '', function ($query) use ($customerSearch) {
                 $query->whereHas('customer', function ($q) use ($customerSearch) {
-                    $q->where('name', 'like', '%' . $customerSearch . '%');
+                    $q->where('name', 'like', '%'.$customerSearch.'%');
                 });
             });
 
@@ -2031,10 +2031,12 @@ class AccountingAppController extends Controller
             $itemsSummary = $po->items
                 ->map(function ($item) {
                     $productName = $item->product->name ?? 'Produk';
-                    return $productName . ' x' . (int) $item->qty;
+
+                    return $productName.' x'.(int) $item->qty;
                 })
                 ->implode(', ');
             $po->setAttribute('items_summary', $itemsSummary);
+
             return $po;
         });
 
@@ -2073,7 +2075,7 @@ class AccountingAppController extends Controller
     {
         $reportData = $salesReportService->buildReportData($request);
         $reportData['useSectionLayout'] = true;
-        $fileName = 'laporan_penjualan_' . $reportData['dateFrom']->format('Ymd') . '_' . $reportData['dateTo']->format('Ymd') . '.xlsx';
+        $fileName = 'laporan_penjualan_'.$reportData['dateFrom']->format('Ymd').'_'.$reportData['dateTo']->format('Ymd').'.xlsx';
 
         return Excel::download(
             new ViewExcelExport('reports.exports.sales', $reportData),
@@ -2085,7 +2087,7 @@ class AccountingAppController extends Controller
     {
         $reportData = $salesReportService->buildReportData($request);
         $reportData['useSectionLayout'] = true;
-        $fileName = 'laporan_penjualan_' . $reportData['dateFrom']->format('Ymd') . '_' . $reportData['dateTo']->format('Ymd') . '.pdf';
+        $fileName = 'laporan_penjualan_'.$reportData['dateFrom']->format('Ymd').'_'.$reportData['dateTo']->format('Ymd').'.pdf';
 
         $paper = $salesReportService->pdfPaperSize($reportData, true);
         $orientation = is_array($paper) ? 'portrait' : 'landscape';
@@ -2100,13 +2102,13 @@ class AccountingAppController extends Controller
         if ($po->status !== 'completed' || $po->payment_type !== 'receivable') {
             return redirect()
                 ->route('accountingapp.periods.index')
-                ->with('error', 'PO ini bukan piutang ' . UiLabel::purchaseOrderStatus('completed') . '.');
+                ->with('error', 'PO ini bukan piutang '.UiLabel::purchaseOrderStatus('completed').'.');
         }
 
         if ($po->cash_received_at) {
             return redirect()
                 ->route('accountingapp.periods.index')
-                ->with('warning', 'Piutang sudah ditandai ' . UiLabel::purchaseOrderStatus('completed') . ' sebelumnya.');
+                ->with('warning', 'Piutang sudah ditandai '.UiLabel::purchaseOrderStatus('completed').' sebelumnya.');
         }
 
         $data = $request->validate([
@@ -2259,11 +2261,11 @@ class AccountingAppController extends Controller
             })
             ->when($customerSearch !== '', function ($query) use ($customerSearch) {
                 $query->whereHas('customer', function ($q) use ($customerSearch) {
-                    $q->where('name', 'like', '%' . $customerSearch . '%');
+                    $q->where('name', 'like', '%'.$customerSearch.'%');
                 });
             })
             ->when($poNumberSearch !== '', function ($query) use ($poNumberSearch) {
-                $query->where('po_number', 'like', '%' . $poNumberSearch . '%');
+                $query->where('po_number', 'like', '%'.$poNumberSearch.'%');
             });
 
         if ($urgency === 'overdue') {
@@ -2292,7 +2294,8 @@ class AccountingAppController extends Controller
             $itemsSummary = $po->items
                 ->map(function ($item) {
                     $productName = $item->product->name ?? 'Produk';
-                    return $productName . ' x' . (int) $item->qty;
+
+                    return $productName.' x'.(int) $item->qty;
                 })
                 ->implode(', ');
 
@@ -2312,7 +2315,7 @@ class AccountingAppController extends Controller
     public function exportCashflowExcel(Request $request)
     {
         $reportData = $this->buildCashflowReportData($request);
-        $fileName = 'laporan_cashflow_' . $reportData['dateFrom']->format('Ymd') . '_' . $reportData['dateTo']->format('Ymd') . '.xlsx';
+        $fileName = 'laporan_cashflow_'.$reportData['dateFrom']->format('Ymd').'_'.$reportData['dateTo']->format('Ymd').'.xlsx';
 
         return Excel::download(
             new ViewExcelExport('accountingapp.reports.exports.cashflow', $reportData),
@@ -2323,7 +2326,7 @@ class AccountingAppController extends Controller
     public function exportCashflowPdf(Request $request)
     {
         $reportData = $this->buildCashflowReportData($request);
-        $fileName = 'laporan_cashflow_' . $reportData['dateFrom']->format('Ymd') . '_' . $reportData['dateTo']->format('Ymd') . '.pdf';
+        $fileName = 'laporan_cashflow_'.$reportData['dateFrom']->format('Ymd').'_'.$reportData['dateTo']->format('Ymd').'.pdf';
 
         return Pdf::loadView('accountingapp.reports.exports.cashflow', $reportData)
             ->setPaper('a4', 'landscape')
@@ -2431,8 +2434,7 @@ class AccountingAppController extends Controller
         Collection $otherIncomeEntries,
         Collection $expenseEntries,
         ?float $openingBalanceOverride = null
-    ): array
-    {
+    ): array {
         $openingBalance = $openingBalanceOverride !== null
             ? round($openingBalanceOverride, 2)
             : round((float) $openingBalances
@@ -2563,16 +2565,16 @@ class AccountingAppController extends Controller
                 : $periodStart->copy()->addDays(6);
             $visibleStart = $periodStart->lt($dateFrom) ? $dateFrom->copy() : $periodStart;
             $visibleEnd = $periodEnd->gt($dateTo) ? $dateTo->copy() : $periodEnd;
-            $groupLabel = $this->monthLabel((int) $periodStart->month) . ' ' . $periodStart->year;
+            $groupLabel = $this->monthLabel((int) $periodStart->month).' '.$periodStart->year;
 
             return [
                 $visibleStart->copy()->startOfDay(),
                 $visibleEnd->copy()->endOfDay(),
-                'Week ' . $weekOfMonth,
+                'Week '.$weekOfMonth,
                 $periodEnd->copy()->addDay(),
                 [
                     'group_label' => $groupLabel,
-                    'sub_label' => $visibleStart->format('d M Y') . ' - ' . $visibleEnd->format('d M Y'),
+                    'sub_label' => $visibleStart->format('d M Y').' - '.$visibleEnd->format('d M Y'),
                     'week_number' => $weekOfMonth,
                 ],
             ];
@@ -2585,8 +2587,8 @@ class AccountingAppController extends Controller
             $visibleEnd = $periodEnd->gt($dateTo) ? $dateTo->copy() : $periodEnd;
             $isFullMonth = $visibleStart->isSameDay($periodStart) && $visibleEnd->isSameDay($periodEnd);
             $label = $isFullMonth
-                ? $this->monthLabel((int) $periodStart->month) . ' ' . $periodStart->year
-                : $visibleStart->format('d M Y') . ' - ' . $visibleEnd->format('d M Y');
+                ? $this->monthLabel((int) $periodStart->month).' '.$periodStart->year
+                : $visibleStart->format('d M Y').' - '.$visibleEnd->format('d M Y');
 
             return [
                 $visibleStart->copy()->startOfDay(),
@@ -2658,11 +2660,11 @@ class AccountingAppController extends Controller
 
                 return [
                     'label' => 'Pelunasan',
-                    'reference' => $poNumber !== '' ? $poNumber : '#' . $entry->id,
+                    'reference' => $poNumber !== '' ? $poNumber : '#'.$entry->id,
                     'amount' => $principal,
                 ];
             })
-            ->groupBy(fn (array $row) => $row['label'] . '|' . $row['reference'])
+            ->groupBy(fn (array $row) => $row['label'].'|'.$row['reference'])
             ->map(fn (Collection $rows) => [
                 'label' => $rows->first()['label'],
                 'reference' => $rows->first()['reference'],
@@ -2683,7 +2685,7 @@ class AccountingAppController extends Controller
 
                 return [
                     'week_number' => $weekNumber,
-                    'label' => 'Week ' . $weekNumber,
+                    'label' => 'Week '.$weekNumber,
                     'period_count' => $rows->count(),
                     'months' => $rows->pluck('group_label')->filter()->unique()->values()->all(),
                     'total_income' => round((float) $rows->sum('total_income'), 2),
@@ -2985,7 +2987,7 @@ class AccountingAppController extends Controller
             return $fallback;
         }
 
-        return 'Saldo Awal Hutang #' . $openingBalance->id;
+        return 'Saldo Awal Hutang #'.$openingBalance->id;
     }
 
     protected function yearMonthSelectSql(string $column): string
@@ -3272,7 +3274,7 @@ class AccountingAppController extends Controller
             'transaction_date' => $data['expense_date'],
             'due_date' => $inventoryData['due_date'],
             'supplier_name' => $inventoryData['supplier_name'],
-            'description' => $data['description'] ?? ('Pembelian stok ' . $item->name),
+            'description' => $data['description'] ?? ('Pembelian stok '.$item->name),
             'amount' => $inventoryData['amount'],
             'status' => 'unpaid',
             'paid_at' => null,
@@ -3372,9 +3374,7 @@ class AccountingAppController extends Controller
     protected function cashInQuery(Carbon $dateFrom, Carbon $dateTo)
     {
         return PurchaseOrder::query()
-            ->where('status', 'completed')
-            ->where('payment_type', 'receivable')
-            ->whereNotNull('cash_received_at', 'and')
+            ->cashReceived()
             ->whereBetween('cash_received_at', [
                 $dateFrom->copy()->startOfDay(),
                 $dateTo->copy()->endOfDay(),
@@ -3557,8 +3557,7 @@ class AccountingAppController extends Controller
             ->sum('amount');
 
         $priorCashIn = (float) PurchaseOrder::query()
-            ->where('payment_type', 'receivable')
-            ->whereNotNull('cash_received_at')
+            ->cashReceived()
             ->where('cash_received_at', '<', $cutoff)
             ->sum(DB::raw($this->poCashInPrincipalExpression()));
 
