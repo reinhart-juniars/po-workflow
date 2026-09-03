@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\InventoryItemResource\Pages;
 use App\Models\InventoryItem;
 use App\Services\InventoryStockAlertService;
+use App\Support\Units\Unit;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -40,10 +41,16 @@ class InventoryItemResource extends Resource
                     ->maxLength(255)
                     ->autofocus(),
 
-                Forms\Components\TextInput::make('unit')
+                Forms\Components\Select::make('unit')
                     ->label('Satuan')
                     ->required()
-                    ->maxLength(50),
+                    ->searchable()
+                    ->native(false)
+                    // Satuan lama seperti "All" atau "Unit" tidak ada di daftar;
+                    // nilainya tetap ditawarkan supaya menyunting item lama tidak
+                    // diam-diam mengganti satuannya.
+                    ->options(fn (?InventoryItem $record) => static::unitOptions($record?->unit))
+                    ->helperText('Satuan berat dan volume bisa dikonversi otomatis saat resep dihitung; satuan hitung tidak.'),
 
                 Forms\Components\Select::make('category')
                     ->label('Kategori')
@@ -173,6 +180,25 @@ class InventoryItemResource extends Resource
                     }),
             ])
             ->defaultSort('name');
+    }
+
+    /**
+     * Pilihan satuan, dikelompokkan per besaran.
+     *
+     * Nilai lama yang tidak dikenal registri tetap disertakan supaya item lama
+     * bisa disunting tanpa dipaksa berganti satuan.
+     *
+     * @return array<string, array<string, string>|string>
+     */
+    public static function unitOptions(?string $current = null): array
+    {
+        $options = Unit::groupedOptions();
+
+        if (filled($current) && Unit::tryFromAlias($current) === null) {
+            $options['Satuan Lama'][$current] = $current;
+        }
+
+        return $options;
     }
 
     /**
