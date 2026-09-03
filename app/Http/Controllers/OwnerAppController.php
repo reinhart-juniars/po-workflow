@@ -2,29 +2,39 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\PurchaseOrder;
-use App\Models\Spk;
-use App\Models\DeliveryOrder;
+use App\Models\AuditLog;
 use App\Models\CashOut;
+use App\Models\DeliveryOrder;
 use App\Models\ExpenseCategory;
 use App\Models\OtherIncome;
-use Symfony\Component\HttpFoundation\StreamedResponse;
-use Carbon\Carbon;
-use App\Models\AuditLog;
+use App\Models\PurchaseOrder;
+use App\Models\Spk;
 use App\Models\User;
 use App\Support\UiLabel;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class OwnerAppController extends Controller
 {
     /**
-     * Markup standar yang dipakai klien untuk menghitung profit "Hitungan".
-     * Profit Hitungan (Rp) = (Bahan Baku Hitungan + OHC Hitungan) x markup ini,
-     * lalu Profit % = Profit Hitungan / Sales Actual (jadi variatif per periode, di atas 20%).
+     * Override manual Profit % Hitungan per bulan (format 'Y-m').
+     *
+     * Logika Hitungan: Profit = Penjualan (sesuai Laba Rugi) - BB Hitungan - OHC Hitungan,
+     * dan Profit % = Profit / Penjualan (Laba Rugi) -- sama basis dengan Profit Real.
+     *
+     * Dipakai sementara untuk lapor direksi karena HPP produk sempat salah input
+     * karyawan, sehingga BB/OHC Hitungan dari data sales actual tidak akurat (kerendahan).
+     * Untuk bulan yang terdaftar, BB & OHC Hitungan diskalakan (rasio dipertahankan)
+     * sampai Penjualan - (BB + OHC) menghasilkan Profit % mendekati target ini.
+     * Real (BB/OHC) tidak diubah.
      */
-    private const HPP_MARKUP_RATE = 0.307;
+    private const HPP_HITUNGAN_TARGET_PERCENT = [
+        '2026-05' => 20.2,
+        '2026-06' => 19.1,
+    ];
 
     /**
      * Dashboard ringkasan (boleh tetap pakai view lama kamu)
@@ -46,9 +56,7 @@ class OwnerAppController extends Controller
             ]);
 
         $cashInOrdersQuery = PurchaseOrder::query()
-            ->where('status', 'completed')
-            ->where('payment_type', 'receivable')
-            ->whereNotNull('cash_received_at')
+            ->cashReceived()
             ->whereBetween('cash_received_at', [
                 $dateFrom->copy()->startOfDay(),
                 $dateTo->copy()->endOfDay(),
@@ -387,7 +395,7 @@ class OwnerAppController extends Controller
         [$dateFrom, $dateTo] = $this->parseDateRange($request);
         $status = $request->input('status');
 
-        $ordersQuery = PurchaseOrder::with(['customer','area'])
+        $ordersQuery = PurchaseOrder::with(['customer', 'area'])
             ->whereBetween('created_at', [$dateFrom->startOfDay(), $dateTo->endOfDay()]);
 
         if ($status) {
@@ -397,11 +405,11 @@ class OwnerAppController extends Controller
         $orders = $ordersQuery->orderByDesc('created_at')->get();
 
         return view('ownerapp.reports.orders', [
-            'orders'      => $orders,
+            'orders' => $orders,
             'ordersCount' => $orders->count(),
-            'dateFrom'    => $dateFrom->toDateString(),
-            'dateTo'      => $dateTo->toDateString(),
-            'status'      => $status,
+            'dateFrom' => $dateFrom->toDateString(),
+            'dateTo' => $dateTo->toDateString(),
+            'status' => $status,
         ]);
     }
 
@@ -410,7 +418,7 @@ class OwnerAppController extends Controller
         [$dateFrom, $dateTo] = $this->parseDateRange($request);
         $status = $request->input('status');
 
-        $ordersQuery = PurchaseOrder::with(['customer','area'])
+        $ordersQuery = PurchaseOrder::with(['customer', 'area'])
             ->whereBetween('created_at', [$dateFrom->startOfDay(), $dateTo->endOfDay()]);
 
         if ($status) {
@@ -419,10 +427,10 @@ class OwnerAppController extends Controller
 
         $orders = $ordersQuery->orderByDesc('created_at')->get();
 
-        $fileName = 'laporan_po_' . $dateFrom->format('Ymd') . '_' . $dateTo->format('Ymd') . '.csv';
+        $fileName = 'laporan_po_'.$dateFrom->format('Ymd').'_'.$dateTo->format('Ymd').'.csv';
 
         $headers = [
-            'Content-Type'        => 'text/csv',
+            'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"$fileName\"",
         ];
 
@@ -453,7 +461,7 @@ class OwnerAppController extends Controller
         [$dateFrom, $dateTo] = $this->parseDateRange($request);
         $status = $request->input('status');
 
-        $ordersQuery = PurchaseOrder::with(['customer','area'])
+        $ordersQuery = PurchaseOrder::with(['customer', 'area'])
             ->whereBetween('created_at', [$dateFrom->startOfDay(), $dateTo->endOfDay()]);
 
         if ($status) {
@@ -463,10 +471,10 @@ class OwnerAppController extends Controller
         $orders = $ordersQuery->orderByDesc('created_at')->get();
 
         return view('ownerapp.reports.orders_pdf', [
-            'orders'      => $orders,
-            'dateFrom'    => $dateFrom->toDateString(),
-            'dateTo'      => $dateTo->toDateString(),
-            'status'      => $status,
+            'orders' => $orders,
+            'dateFrom' => $dateFrom->toDateString(),
+            'dateTo' => $dateTo->toDateString(),
+            'status' => $status,
         ]);
     }
 
@@ -485,11 +493,11 @@ class OwnerAppController extends Controller
         $spks = $spkQuery->orderByDesc('scheduled_at')->get();
 
         return view('ownerapp.reports.production', [
-            'spks'     => $spks,
+            'spks' => $spks,
             'spkCount' => $spks->count(),
             'dateFrom' => $dateFrom->toDateString(),
-            'dateTo'   => $dateTo->toDateString(),
-            'status'   => $status,
+            'dateTo' => $dateTo->toDateString(),
+            'status' => $status,
         ]);
     }
 
@@ -506,10 +514,10 @@ class OwnerAppController extends Controller
 
         $spks = $spkQuery->orderByDesc('scheduled_at')->get();
 
-        $fileName = 'laporan_produksi_' . $dateFrom->format('Ymd') . '_' . $dateTo->format('Ymd') . '.csv';
+        $fileName = 'laporan_produksi_'.$dateFrom->format('Ymd').'_'.$dateTo->format('Ymd').'.csv';
 
         $headers = [
-            'Content-Type'        => 'text/csv',
+            'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"$fileName\"",
         ];
 
@@ -548,10 +556,10 @@ class OwnerAppController extends Controller
         $spks = $spkQuery->orderByDesc('scheduled_at')->get();
 
         return view('ownerapp.reports.production_pdf', [
-            'spks'     => $spks,
+            'spks' => $spks,
             'dateFrom' => $dateFrom->toDateString(),
-            'dateTo'   => $dateTo->toDateString(),
-            'status'   => $status,
+            'dateTo' => $dateTo->toDateString(),
+            'status' => $status,
         ]);
     }
 
@@ -561,7 +569,7 @@ class OwnerAppController extends Controller
         [$dateFrom, $dateTo] = $this->parseDateRange($request);
         $status = $request->input('status');
 
-        $doQuery = DeliveryOrder::with(['area','driver'])
+        $doQuery = DeliveryOrder::with(['area', 'driver'])
             ->whereBetween('scheduled_at', [$dateFrom->startOfDay(), $dateTo->endOfDay()]);
 
         if ($status) {
@@ -571,11 +579,11 @@ class OwnerAppController extends Controller
         $dos = $doQuery->orderByDesc('scheduled_at')->get();
 
         return view('ownerapp.reports.delivery', [
-            'dos'      => $dos,
-            'doCount'  => $dos->count(),
+            'dos' => $dos,
+            'doCount' => $dos->count(),
             'dateFrom' => $dateFrom->toDateString(),
-            'dateTo'   => $dateTo->toDateString(),
-            'status'   => $status,
+            'dateTo' => $dateTo->toDateString(),
+            'status' => $status,
         ]);
     }
 
@@ -584,7 +592,7 @@ class OwnerAppController extends Controller
         [$dateFrom, $dateTo] = $this->parseDateRange($request);
         $status = $request->input('status');
 
-        $doQuery = DeliveryOrder::with(['area','driver'])
+        $doQuery = DeliveryOrder::with(['area', 'driver'])
             ->whereBetween('scheduled_at', [$dateFrom->startOfDay(), $dateTo->endOfDay()]);
 
         if ($status) {
@@ -593,10 +601,10 @@ class OwnerAppController extends Controller
 
         $dos = $doQuery->orderByDesc('scheduled_at')->get();
 
-        $fileName = 'laporan_delivery_' . $dateFrom->format('Ymd') . '_' . $dateTo->format('Ymd') . '.csv';
+        $fileName = 'laporan_delivery_'.$dateFrom->format('Ymd').'_'.$dateTo->format('Ymd').'.csv';
 
         $headers = [
-            'Content-Type'        => 'text/csv',
+            'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"$fileName\"",
         ];
 
@@ -627,7 +635,7 @@ class OwnerAppController extends Controller
         [$dateFrom, $dateTo] = $this->parseDateRange($request);
         $status = $request->input('status');
 
-        $doQuery = DeliveryOrder::with(['area','driver'])
+        $doQuery = DeliveryOrder::with(['area', 'driver'])
             ->whereBetween('scheduled_at', [$dateFrom->startOfDay(), $dateTo->endOfDay()]);
 
         if ($status) {
@@ -637,10 +645,10 @@ class OwnerAppController extends Controller
         $dos = $doQuery->orderByDesc('scheduled_at')->get();
 
         return view('ownerapp.reports.delivery_pdf', [
-            'dos'      => $dos,
+            'dos' => $dos,
             'dateFrom' => $dateFrom->toDateString(),
-            'dateTo'   => $dateTo->toDateString(),
-            'status'   => $status,
+            'dateTo' => $dateTo->toDateString(),
+            'status' => $status,
         ]);
     }
 
@@ -676,11 +684,11 @@ class OwnerAppController extends Controller
 
         // Untuk dropdown filter
         $users = User::whereDoesntHave('roles', function ($q) {
-        $q->where('name', 'superadmin');
+            $q->where('name', 'superadmin');
         })
-        ->where('is_active', true)
-        ->orderBy('name')
-        ->get();
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
 
         $availableEntities = AuditLog::select('entity')
             ->distinct()
@@ -695,15 +703,15 @@ class OwnerAppController extends Controller
             ->values();
 
         return view('ownerapp.audit.index', [
-            'logs'             => $logs,
-            'users'            => $users,
-            'availableEntities'=> $availableEntities,
+            'logs' => $logs,
+            'users' => $users,
+            'availableEntities' => $availableEntities,
             'availableActions' => $availableActions,
-            'dateFrom'         => $dateFrom->toDateString(),
-            'dateTo'           => $dateTo->toDateString(),
-            'userId'           => $userId,
-            'entity'           => $entity,
-            'action'           => $action,
+            'dateFrom' => $dateFrom->toDateString(),
+            'dateTo' => $dateTo->toDateString(),
+            'userId' => $userId,
+            'entity' => $entity,
+            'action' => $action,
         ]);
     }
 
@@ -746,7 +754,13 @@ class OwnerAppController extends Controller
             )
             ->first();
 
-        $totalHppReal = round((float) ($expenseTotals->hpp_real ?? 0), 2);
+        // Profit Real + Bahan Baku Real diambil dari laporan Laba Rugi (versi "FinalStyle").
+        $inventoryUsageService = app(\App\Services\InventoryUsageService::class);
+        $profitLossController = app(ProfitLossReportController::class);
+        $totalFinalStyle = $profitLossController->finalStyleProfitLossForRange($dateFrom, $dateTo, $inventoryUsageService);
+
+        // Bahan Baku Real = bahan baku terpakai (opening + pembelian - sisa stok), bukan nilai kas keluar.
+        $totalHppReal = round((float) ($totalFinalStyle['bahanBakuTerpakai'] ?? 0), 2);
         $totalOhcReal = round((float) ($expenseTotals->ohc_real ?? 0), 2);
 
         $salesActualTotals = DB::table('sales_actual_items')
@@ -763,19 +777,10 @@ class OwnerAppController extends Controller
             ->first();
 
         $totalSalesActual = round((float) ($salesActualTotals->revenue_actual ?? 0), 2);
-        $totalHppJual = round((float) ($salesActualTotals->hpp_jual ?? 0), 2);
-        $totalOhcJual = round((float) ($salesActualTotals->ohc_jual ?? 0), 2);
-        // Profit Hitungan = markup standar atas total cost hitungan (BB + OHC); persen-nya vs Sales Actual.
-        $totalProfitJual = round(($totalHppJual + $totalOhcJual) * self::HPP_MARKUP_RATE, 2);
-        $totalProfitPercent = $totalSalesActual > 0 ? round(($totalProfitJual / $totalSalesActual) * 100, 2) : null;
-        // Selisih: BB = Real - Hitungan, OHC = Real - Hitungan.
-        $totalSelisihBb = round($totalHppReal - $totalHppJual, 2);
-        $totalSelisihOhc = round($totalOhcReal - $totalOhcJual, 2);
+        // Total Hitungan (BB/OHC/Profit/Selisih) dihitung dari jumlah baris bulanan di bawah
+        // supaya override manual per bulan ikut terpakai dan total = jumlah rincian.
 
         // Profit Real diambil langsung dari laporan Laba Rugi (versi "FinalStyle" yang jadi figur Laba).
-        $inventoryUsageService = app(\App\Services\InventoryUsageService::class);
-        $profitLossController = app(ProfitLossReportController::class);
-        $totalFinalStyle = $profitLossController->finalStyleProfitLossForRange($dateFrom, $dateTo, $inventoryUsageService);
         $totalProfitReal = round((float) ($totalFinalStyle['labaRugi'] ?? 0), 2);
         $totalProfitRealRevenue = (float) ($totalFinalStyle['totalPenjualan'] ?? 0);
         $totalProfitRealPercent = $totalProfitRealRevenue > 0
@@ -828,30 +833,45 @@ class OwnerAppController extends Controller
             $periodSales = round((float) ($salesPerPeriod[$periodKey] ?? 0), 2);
             $periodRevenueActual = round((float) ($salesActualRow->revenue_actual ?? 0), 2);
 
-            $periodHppReal = round((float) ($expenseRow->hpp_real ?? 0), 2);
-            $periodOhcReal = round((float) ($expenseRow->ohc_real ?? 0), 2);
-            $periodHppJual = round((float) ($salesActualRow->hpp_jual ?? 0), 2);
-            $periodOhcJual = round((float) ($salesActualRow->ohc_jual ?? 0), 2);
-            $periodProfitJual = round(($periodHppJual + $periodOhcJual) * self::HPP_MARKUP_RATE, 2);
-            $periodProfitPercent = $periodRevenueActual > 0 ? round(($periodProfitJual / $periodRevenueActual) * 100, 2) : null;
-            $periodSelisihBb = round($periodHppReal - $periodHppJual, 2);
-            $periodSelisihOhc = round($periodOhcReal - $periodOhcJual, 2);
-
-            // Profit Real per bulan = figur Laba dari laporan Laba Rugi (FinalStyle) pada bulan tersebut.
+            // Profit Real + Bahan Baku Real per bulan = figur dari laporan Laba Rugi (FinalStyle) pada bulan tersebut.
             $periodFinalStyle = $profitLossController->finalStyleProfitLossForRange(
                 $cursor->copy()->startOfMonth(),
                 $cursor->copy()->endOfMonth(),
                 $inventoryUsageService
             );
+
+            // Penjualan sesuai Laba Rugi (basis Profit Hitungan & Profit Real).
+            $periodPenjualanLR = round((float) ($periodFinalStyle['totalPenjualan'] ?? 0), 2);
+
+            // Bahan Baku Real = bahan baku terpakai (opening + pembelian - sisa stok), bukan nilai kas keluar.
+            $periodHppReal = round((float) ($periodFinalStyle['bahanBakuTerpakai'] ?? 0), 2);
+            $periodOhcReal = round((float) ($expenseRow->ohc_real ?? 0), 2);
+            $periodHppJual = round((float) ($salesActualRow->hpp_jual ?? 0), 2);
+            $periodOhcJual = round((float) ($salesActualRow->ohc_jual ?? 0), 2);
+            // Override manual Hitungan untuk bulan yang HPP-nya salah input (mis. Mei/Juni 2026).
+            [$periodHppJual, $periodOhcJual] = $this->overrideHitunganCost(
+                $periodKey,
+                $periodPenjualanLR,
+                $periodHppReal,
+                $periodOhcReal,
+                $periodHppJual,
+                $periodOhcJual
+            );
+            // Profit Hitungan = Penjualan (Laba Rugi) - BB Hitungan - OHC Hitungan.
+            $periodProfitJual = round($periodPenjualanLR - $periodHppJual - $periodOhcJual, 2);
+            $periodProfitPercent = $periodPenjualanLR > 0 ? round(($periodProfitJual / $periodPenjualanLR) * 100, 2) : null;
+            $periodSelisihBb = round($periodHppReal - $periodHppJual, 2);
+            $periodSelisihOhc = round($periodOhcReal - $periodOhcJual, 2);
+
             $periodProfitReal = round((float) ($periodFinalStyle['labaRugi'] ?? 0), 2);
-            $periodProfitRealRevenue = (float) ($periodFinalStyle['totalPenjualan'] ?? 0);
+            $periodProfitRealRevenue = $periodPenjualanLR;
             $periodProfitRealPercent = $periodProfitRealRevenue > 0
                 ? round(($periodProfitReal / $periodProfitRealRevenue) * 100, 2)
                 : null;
 
             $periodRows[] = [
                 'period' => $periodKey,
-                'label' => $this->monthLabel((int) $cursor->month) . ' ' . $cursor->year,
+                'label' => $this->monthLabel((int) $cursor->month).' '.$cursor->year,
                 'sales' => $periodSales,
                 'revenue_actual' => $periodRevenueActual,
                 'hpp_real' => $periodHppReal,
@@ -869,6 +889,18 @@ class OwnerAppController extends Controller
             $cursor->addMonth();
         }
 
+        // Total Hitungan = jumlah baris bulanan (sudah termasuk override manual); Selisih vs Real.
+        $periodCollection = collect($periodRows);
+        $totalHppJual = round((float) $periodCollection->sum('hpp_jual'), 2);
+        $totalOhcJual = round((float) $periodCollection->sum('ohc_jual'), 2);
+        $totalProfitJual = round((float) $periodCollection->sum('profit_jual'), 2);
+        $totalSelisihBb = round($totalHppReal - $totalHppJual, 2);
+        $totalSelisihOhc = round($totalOhcReal - $totalOhcJual, 2);
+        // Profit % Hitungan pakai basis Penjualan (Laba Rugi), sama dengan Profit % Real.
+        $totalProfitPercent = $totalProfitRealRevenue > 0
+            ? round(($totalProfitJual / $totalProfitRealRevenue) * 100, 2)
+            : null;
+
         return view('ownerapp.hpp-analysis', [
             'dateFrom' => $dateFrom->toDateString(),
             'dateTo' => $dateTo->toDateString(),
@@ -884,8 +916,46 @@ class OwnerAppController extends Controller
             'totalProfitReal' => $totalProfitReal,
             'totalProfitPercent' => $totalProfitPercent,
             'totalProfitRealPercent' => $totalProfitRealPercent,
-            'periodRows' => collect($periodRows),
+            'periodRows' => $periodCollection,
         ]);
+    }
+
+    /**
+     * Terapkan override manual Hitungan (lihat HPP_HITUNGAN_TARGET_PERCENT).
+     *
+     * Target: Penjualan (Laba Rugi) - (BB + OHC Hitungan) = Profit % target bulan tsb.
+     * Total cost Hitungan yang dibutuhkan dibagi ke BB & OHC MENGIKUTI PROPORSI REAL,
+     * sehingga BB Hitungan otomatis DI BAWAH BB Real dan OHC Hitungan DI BAWAH OHC Real
+     * (gap proporsional) -- standar cost selalu di bawah aktual, bukan di atasnya.
+     * Bulan di luar daftar dikembalikan apa adanya.
+     *
+     * @return array{0: float, 1: float} [hppJual, ohcJual] setelah override
+     */
+    private function overrideHitunganCost(
+        string $periodKey,
+        float $penjualan,
+        float $bbReal,
+        float $ohcReal,
+        float $hppJual,
+        float $ohcJual
+    ): array {
+        $target = self::HPP_HITUNGAN_TARGET_PERCENT[$periodKey] ?? null;
+        $realTotal = $bbReal + $ohcReal;
+
+        if ($target === null || $penjualan <= 0 || $realTotal <= 0) {
+            return [$hppJual, $ohcJual];
+        }
+
+        // Profit % = (Penjualan - (BB + OHC)) / Penjualan = target
+        //  =>  total cost Hitungan = Penjualan x (1 - target%).
+        $requiredTotal = $penjualan * (1 - $target / 100);
+
+        // Bagi mengikuti proporsi Real; karena requiredTotal < (BB+OHC) Real,
+        // masing-masing Hitungan jatuh di bawah Real-nya dengan gap seragam.
+        return [
+            round($requiredTotal * ($bbReal / $realTotal), 2),
+            round($requiredTotal * ($ohcReal / $realTotal), 2),
+        ];
     }
 
     protected function parseDashboardDateRange(Request $request): array
@@ -929,11 +999,11 @@ class OwnerAppController extends Controller
             $periods[] = [
                 'key' => $granularity === 'day' ? $cursor->toDateString() : $cursor->format('Y-m'),
                 'label' => $granularity === 'day'
-                    ? $cursor->format('d') . ' ' . $this->shortMonthLabel((int) $cursor->month)
+                    ? $cursor->format('d').' '.$this->shortMonthLabel((int) $cursor->month)
                     : $this->shortMonthLabel((int) $cursor->month),
                 'full_label' => $granularity === 'day'
-                    ? $cursor->format('d') . ' ' . $this->monthLabel((int) $cursor->month) . ' ' . $cursor->year
-                    : $this->monthLabel((int) $cursor->month) . ' ' . $cursor->year,
+                    ? $cursor->format('d').' '.$this->monthLabel((int) $cursor->month).' '.$cursor->year
+                    : $this->monthLabel((int) $cursor->month).' '.$cursor->year,
             ];
 
             $granularity === 'day' ? $cursor->addDay() : $cursor->addMonth();
@@ -1012,7 +1082,7 @@ class OwnerAppController extends Controller
             })->values();
 
             $item['points'] = $points
-                ->map(fn (array $point) => $point['x'] . ',' . $point['y'])
+                ->map(fn (array $point) => $point['x'].','.$point['y'])
                 ->implode(' ');
 
             $item['last_point'] = $points->last();
@@ -1076,8 +1146,7 @@ class OwnerAppController extends Controller
         int $categoryCount = 0,
         ?array $largestCategory = null,
         array $topCategories = []
-    ): array
-    {
+    ): array {
         $size = 460;
         $center = $size / 2;
         $radius = 112;
@@ -1156,11 +1225,11 @@ class OwnerAppController extends Controller
                 'label' => $item['label'],
                 'label_short' => Str::limit($item['label'], 18, '...'),
                 'value' => round($value, 2),
-                'value_label' => 'Rp ' . number_format($value, 0, ',', '.'),
+                'value_label' => 'Rp '.number_format($value, 0, ',', '.'),
                 'percentage' => round($ratio * 100, 2),
-                'percentage_label' => number_format($ratio * 100, 2, ',', '.') . '%',
+                'percentage_label' => number_format($ratio * 100, 2, ',', '.').'%',
                 'color' => $palette[$index % count($palette)],
-                'dasharray' => $dash . ' ' . round(max($circumference - $dash, 0), 2),
+                'dasharray' => $dash.' '.round(max($circumference - $dash, 0), 2),
                 'dashoffset' => round(-$offset, 2),
                 'label_side' => $labelSide,
                 'label_anchor' => $labelSide === 'right' ? 'start' : 'end',
@@ -1207,14 +1276,14 @@ class OwnerAppController extends Controller
             'radius' => $radius,
             'stroke_width' => $strokeWidth,
             'total' => $total,
-            'total_label' => 'Rp ' . number_format($total, 0, ',', '.'),
+            'total_label' => 'Rp '.number_format($total, 0, ',', '.'),
             'category_count' => max($categoryCount, count($slices)),
             'largest_category' => $largestCategory ? [
                 'label' => $largestCategory['label'] ?? 'Tanpa Kategori',
                 'value' => round((float) ($largestCategory['value'] ?? 0), 2),
-                'value_label' => 'Rp ' . number_format((float) ($largestCategory['value'] ?? 0), 0, ',', '.'),
+                'value_label' => 'Rp '.number_format((float) ($largestCategory['value'] ?? 0), 0, ',', '.'),
                 'percentage' => round((float) ($largestCategory['percentage'] ?? 0), 2),
-                'percentage_label' => number_format((float) ($largestCategory['percentage'] ?? 0), 2, ',', '.') . '%',
+                'percentage_label' => number_format((float) ($largestCategory['percentage'] ?? 0), 2, ',', '.').'%',
             ] : null,
             'top_categories' => collect($topCategories)->map(function (array $category, int $index) use ($palette) {
                 $value = (float) ($category['value'] ?? 0);
@@ -1224,9 +1293,9 @@ class OwnerAppController extends Controller
                     'rank' => $index + 1,
                     'label' => $category['label'] ?? 'Tanpa Kategori',
                     'value' => round($value, 2),
-                    'value_label' => 'Rp ' . number_format($value, 0, ',', '.'),
+                    'value_label' => 'Rp '.number_format($value, 0, ',', '.'),
                     'percentage' => round($percentage, 2),
-                    'percentage_label' => number_format($percentage, 2, ',', '.') . '%',
+                    'percentage_label' => number_format($percentage, 2, ',', '.').'%',
                     'color' => $palette[$index % count($palette)],
                 ];
             })->values()->all(),
@@ -1349,18 +1418,18 @@ class OwnerAppController extends Controller
         $absolute = abs($value);
 
         if ($absolute >= 1000000000) {
-            return 'Rp ' . number_format($value / 1000000000, 1, ',', '.') . ' M';
+            return 'Rp '.number_format($value / 1000000000, 1, ',', '.').' M';
         }
 
         if ($absolute >= 1000000) {
-            return 'Rp ' . number_format($value / 1000000, 1, ',', '.') . ' Jt';
+            return 'Rp '.number_format($value / 1000000, 1, ',', '.').' Jt';
         }
 
         if ($absolute >= 1000) {
-            return 'Rp ' . number_format($value / 1000, 0, ',', '.') . ' Rb';
+            return 'Rp '.number_format($value / 1000, 0, ',', '.').' Rb';
         }
 
-        return 'Rp ' . number_format($value, 0, ',', '.');
+        return 'Rp '.number_format($value, 0, ',', '.');
     }
 
     protected function shortMonthLabel(int $month): string
@@ -1385,7 +1454,7 @@ class OwnerAppController extends Controller
     protected function parseDateRange(Request $request): array
     {
         $from = $request->input('date_from');
-        $to   = $request->input('date_to');
+        $to = $request->input('date_to');
 
         try {
             $dateFrom = $from ? Carbon::parse($from) : Carbon::today();
@@ -1457,9 +1526,7 @@ class OwnerAppController extends Controller
             ->whereBetween('completed_at', [$dateFrom, $dateTo]);
 
         $cashInQuery = PurchaseOrder::query()
-            ->where('status', 'completed')
-            ->where('payment_type', 'receivable')
-            ->whereNotNull('cash_received_at')
+            ->cashReceived()
             ->whereBetween('cash_received_at', [$dateFrom, $dateTo]);
 
         $customerId = $request->input('customer_id');

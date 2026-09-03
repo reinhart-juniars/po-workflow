@@ -86,7 +86,7 @@
                     </p>
                 </div>
             </div>
-            <p class="stat-meta mt-2">Hitungan = (BB + OHC Hitungan) × markup &nbsp;·&nbsp; Real = Laba bersih Laporan Laba Rugi</p>
+            <p class="stat-meta mt-2">Hitungan = Penjualan − (BB + OHC Hitungan) &nbsp;·&nbsp; Real = Laba bersih Laporan Laba Rugi</p>
         </article>
         <article class="stat-card">
             <p class="stat-label">Profit (%)</p>
