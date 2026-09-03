@@ -2,16 +2,31 @@
 
 namespace App\Models;
 
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, HasRoles, Notifiable;
+
+    /**
+     * Peran yang boleh membuka panel admin Filament.
+     *
+     * Panel berisi master data dan modul inventory; staf sales dan delivery
+     * bekerja lewat aplikasi Blade masing-masing dan tidak membutuhkannya.
+     */
+    public const PANEL_ROLES = [
+        'superadmin',
+        'owner',
+        'admin',
+        'accounting',
+    ];
 
     public const MANAGEABLE_ROLES = [
         'owner',
@@ -37,10 +52,10 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected static function booted(): void
     {
-    static::updating(function ($user) {
-        // cegah menghapus role owner dari user owner, atau promote/demote owner via request biasa, dll.
-        // dibiarkan kosong jika semua via Filament + Policy sudah cukup.
-    });
+        static::updating(function ($user) {
+            // cegah menghapus role owner dari user owner, atau promote/demote owner via request biasa, dll.
+            // dibiarkan kosong jika semua via Filament + Policy sudah cukup.
+        });
     }
 
     public function isSuperadmin(): bool
@@ -121,8 +136,20 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
         ];
     }
+
     public function mustChangePassword(): bool
     {
         return (bool) $this->force_password_change;
+    }
+
+    /**
+     * Tanpa method ini Filament menolak setiap pengguna dengan 403 di semua
+     * environment selain 'local', sehingga panel tidak terpakai di server --
+     * dan sebaliknya, di 'local' siapa pun yang login bisa membuka seluruh
+     * panel. Keputusannya karena itu dibuat eksplisit di sini.
+     */
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->is_active && $this->hasAnyRole(self::PANEL_ROLES);
     }
 }

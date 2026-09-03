@@ -5,6 +5,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Role;
 
 /**
  * Login panel admin.
@@ -13,6 +14,8 @@ use Livewire\Livewire;
  * sistem ini tidak punya email dan masuk memakai nama. Tanpa penyesuaian itu
  * staf akunting tidak bisa membuka modul inventory sama sekali.
  */
+beforeEach(fn () => Role::findOrCreate('accounting', 'web'));
+
 it('menerima login memakai nama untuk pengguna tanpa email', function () {
     $user = User::factory()->create([
         'name' => 'Dila',
@@ -21,6 +24,7 @@ it('menerima login memakai nama untuk pengguna tanpa email', function () {
         'is_active' => true,
         'force_password_change' => false,
     ]);
+    $user->assignRole('accounting');
 
     Livewire::test(Login::class)
         ->fillForm(['login' => 'Dila', 'password' => 'rahasia123'])
@@ -39,6 +43,7 @@ it('tetap menerima login memakai email', function () {
         'is_active' => true,
         'force_password_change' => false,
     ]);
+    $user->assignRole('accounting');
 
     Livewire::test(Login::class)
         ->fillForm(['login' => 'superadmin@example.test', 'password' => 'rahasia123'])
@@ -49,13 +54,14 @@ it('tetap menerima login memakai email', function () {
 });
 
 it('menolak password yang salah', function () {
-    User::factory()->create([
+    $user = User::factory()->create([
         'name' => 'Dila',
         'email' => null,
         'password' => Hash::make('rahasia123'),
         'is_active' => true,
         'force_password_change' => false,
     ]);
+    $user->assignRole('accounting');
 
     Livewire::test(Login::class)
         ->fillForm(['login' => 'Dila', 'password' => 'salah'])
@@ -66,13 +72,14 @@ it('menolak password yang salah', function () {
 });
 
 it('menolak akun nonaktif dan tidak meninggalkan sesi yang terlanjur masuk', function () {
-    User::factory()->create([
+    $user = User::factory()->create([
         'name' => 'Mantan Karyawan',
         'email' => null,
         'password' => Hash::make('rahasia123'),
         'is_active' => false,
         'force_password_change' => false,
     ]);
+    $user->assignRole('accounting');
 
     Livewire::test(Login::class)
         ->fillForm(['login' => 'Mantan Karyawan', 'password' => 'rahasia123'])
@@ -103,6 +110,7 @@ it('mengalihkan pengguna yang wajib ganti password keluar dari panel', function 
         'is_active' => true,
         'force_password_change' => true,
     ]);
+    $user->assignRole('accounting');
 
     $this->actingAs($user)
         ->get('/admin/inventory-items')
@@ -114,4 +122,24 @@ it('mengalihkan pengguna yang wajib ganti password keluar dari panel', function 
     $this->actingAs($user)
         ->get('/admin/inventory-items')
         ->assertOk();
+});
+
+it('menolak login dari peran yang tidak berkepentingan dengan panel', function () {
+    Role::findOrCreate('delivery', 'web');
+
+    $kurir = User::factory()->create([
+        'name' => 'Faris',
+        'email' => null,
+        'password' => Hash::make('rahasia123'),
+        'is_active' => true,
+        'force_password_change' => false,
+    ]);
+    $kurir->assignRole('delivery');
+
+    Livewire::test(Login::class)
+        ->fillForm(['login' => 'Faris', 'password' => 'rahasia123'])
+        ->call('authenticate')
+        ->assertHasFormErrors(['login']);
+
+    expect(Auth::check())->toBeFalse();
 });

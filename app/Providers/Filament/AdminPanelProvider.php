@@ -2,6 +2,10 @@
 
 namespace App\Providers\Filament;
 
+use App\Http\Middleware\ForcePasswordChange;
+use Filament\Http\Middleware\Authenticate;
+use Filament\Http\Middleware\DisableBladeIconComponents;
+use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
 use Filament\PanelProvider;
 
@@ -17,6 +21,24 @@ class AdminPanelProvider extends PanelProvider
             // email, sementara sebagian besar pengguna di sini masuk dengan nama.
             ->login(\App\Filament\Pages\Auth\Login::class)
 
+            // Panel memakai grup middleware 'web' milik aplikasi ini, bukan
+            // daftar sendiri, supaya cookie, sesi, dan CSRF-nya persis sama
+            // dengan aplikasi Blade -- keduanya berbagi guard dan sesi yang sama.
+            // Dua middleware terakhir adalah kebutuhan Filament sendiri.
+            ->middleware([
+                'web',
+                DisableBladeIconComponents::class,
+                DispatchServingFilamentEvent::class,
+            ])
+
+            // Tanpa Authenticate, seluruh halaman panel terbuka untuk siapa pun
+            // tanpa login. ForcePasswordChange menyusul supaya panel tidak bisa
+            // dipakai memutari kewajiban ganti password di aplikasi Blade.
+            ->authMiddleware([
+                Authenticate::class,
+                ForcePasswordChange::class,
+            ])
+
             // ⬇️ INI YANG PENTING: suruh Filament muat semua Resource, Page, Widget
             ->discoverResources(
                 in: app_path('Filament/Resources'),
@@ -29,12 +51,6 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(
                 in: app_path('Filament/Widgets'),
                 for: 'App\\Filament\\Widgets',
-            )
-
-            // Pengguna yang wajib ganti password tidak boleh memakai panel
-            // sebagai jalan memutar; middleware yang sama dipakai aplikasi Blade.
-            ->authMiddleware([
-                \App\Http\Middleware\ForcePasswordChange::class,
-            ]);
+            );
     }
 }
