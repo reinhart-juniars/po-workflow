@@ -18,7 +18,7 @@ class SuperadminBackupController extends Controller
             'database' => DB::connection()->getDatabaseName(),
             'driver' => DB::connection()->getDriverName(),
             'environment' => app()->environment(),
-            'restoreEnabled' => !app()->environment('production'),
+            'restoreEnabled' => ! app()->environment('production'),
         ]);
     }
 
@@ -33,7 +33,7 @@ class SuperadminBackupController extends Controller
         @set_time_limit(0);
         @ini_set('memory_limit', '512M');
 
-        $tempPath = tempnam(sys_get_temp_dir(), 'po_backup_') . '.sql.gz';
+        $tempPath = tempnam(sys_get_temp_dir(), 'po_backup_').'.sql.gz';
 
         $stream = gzopen($tempPath, 'wb6');
         if ($stream === false) {
@@ -49,7 +49,7 @@ class SuperadminBackupController extends Controller
             gzclose($stream);
             @unlink($tempPath);
             Log::error('Backup database gagal', ['message' => $e->getMessage()]);
-            abort(500, 'Backup gagal: ' . $e->getMessage());
+            abort(500, 'Backup gagal: '.$e->getMessage());
         }
 
         gzclose($stream);
@@ -83,11 +83,12 @@ class SuperadminBackupController extends Controller
         $extension = strtolower($file->getClientOriginalExtension());
         $allowed = ['sql', 'gz'];
 
-        if (!in_array($extension, $allowed, true)) {
+        if (! in_array($extension, $allowed, true)) {
             return back()->with('error', 'Format file harus .sql atau .sql.gz');
         }
 
         @set_time_limit(0);
+        @ini_set('memory_limit', '512M');
 
         try {
             $service->restore($file->getRealPath());
@@ -98,7 +99,7 @@ class SuperadminBackupController extends Controller
 
             return redirect()
                 ->route('superadmin.backup.index')
-                ->with('error', 'Restore gagal: ' . $e->getMessage());
+                ->with('error', 'Restore gagal: '.$e->getMessage());
         }
 
         return redirect()
