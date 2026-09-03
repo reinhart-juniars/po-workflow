@@ -3,27 +3,26 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ChecksPeriodClosing;
-use App\Http\Controllers\Concerns\ResolvesCentralExpenseLocation;
 use App\Models\CashAccount;
-use App\Models\CashOut;
 use App\Models\ExpenseCategory;
 use App\Models\InventoryItem;
 use App\Models\InventoryPurchase;
-use App\Models\Payable;
 use App\Models\User;
+use App\Services\InventoryPurchaseFlowService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class InventoryPurchaseController extends Controller
 {
     use ChecksPeriodClosing;
-    use ResolvesCentralExpenseLocation;
+
+    public function __construct(
+        protected InventoryPurchaseFlowService $purchaseFlow
+    ) {}
 
     public function index(Request $request): View
     {
@@ -103,9 +102,9 @@ class InventoryPurchaseController extends Controller
     public function edit(InventoryPurchase $inventoryPurchase): View
     {
         $inventoryPurchase->load(['item', 'cashOut', 'payable']);
-        $inventoryItemKey = (new InventoryItem())->getKeyName();
-        $expenseCategoryKey = (new ExpenseCategory())->getKeyName();
-        $cashAccountKey = (new CashAccount())->getKeyName();
+        $inventoryItemKey = (new InventoryItem)->getKeyName();
+        $expenseCategoryKey = (new ExpenseCategory)->getKeyName();
+        $cashAccountKey = (new CashAccount)->getKeyName();
 
         $items = InventoryItem::query()
             ->where(function ($query) use ($inventoryPurchase, $inventoryItemKey) {
@@ -162,27 +161,7 @@ class InventoryPurchaseController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
-        $data['qty'] = 1.0;
-        $data['unit_cost'] = (float) $data['total_cost'];
-
-        $data = $this->normalizePaymentData($data);
-        $this->ensureFlowRequirements($data);
-
-        DB::transaction(function () use ($inventoryPurchase, $data) {
-            $inventoryPurchase->update([
-                'inventory_item_id' => $data['inventory_item_id'],
-                'transaction_date' => $data['transaction_date'],
-                'qty' => $data['qty'],
-                'unit_cost' => $data['unit_cost'],
-                'total_value' => (float) $data['unit_cost'],
-                'payment_type' => $data['payment_type'],
-                'supplier_name' => $data['supplier_name'] ?? null,
-                'notes' => $data['notes'] ?? null,
-                'updated_by' => $this->currentUserId(),
-            ]);
-
-            $this->syncFinancialFlowForPurchase($inventoryPurchase, $data);
-        });
+        $this->purchaseFlow->update($inventoryPurchase, $data, $this->currentUserId());
 
         return redirect()
             ->route('accountingapp.inventory-purchases.index')
@@ -193,167 +172,11 @@ class InventoryPurchaseController extends Controller
     {
         $this->ensureInventoryPurchaseDeleteAccess();
 
-        $inventoryPurchase->load(['payable', 'cashOut']);
-
-        DB::transaction(function () use ($inventoryPurchase) {
-            if ($inventoryPurchase->payable && $inventoryPurchase->payable->status !== 'unpaid') {
-                throw ValidationException::withMessages([
-                    'payment_type' => 'Pembelian stok kredit tidak bisa dihapus karena hutangnya sudah dibayar atau diproses.',
-                ]);
-            }
-
-            if ($inventoryPurchase->cashOut) {
-                $inventoryPurchase->cashOut->delete();
-            }
-
-            if ($inventoryPurchase->payable) {
-                $inventoryPurchase->payable->delete();
-            }
-
-            $inventoryPurchase->delete();
-        });
+        $this->purchaseFlow->delete($inventoryPurchase);
 
         return redirect()
             ->route('accountingapp.inventory-purchases.index')
             ->with('success', 'Pembelian stok berhasil dihapus.');
-    }
-
-    protected function ensureFlowRequirements(array $data): void
-    {
-        $messages = [];
-
-        if ($data['payment_type'] === 'payable' && blank($data['supplier_name'] ?? null)) {
-            $messages['supplier_name'] = 'Supplier wajib diisi untuk pembelian kredit.';
-        }
-
-        if ($data['payment_type'] === 'cash') {
-            if (blank($data['expense_category_id'] ?? null)) {
-                $messages['expense_category_id'] = 'Kategori pengeluaran wajib dipilih untuk pembelian tunai.';
-            }
-
-            if (blank($data['cash_account_id'] ?? null)) {
-                $messages['cash_account_id'] = 'Cash account wajib dipilih untuk pembelian tunai.';
-            } elseif (! CashAccount::query()->whereKey($data['cash_account_id'])->exists()) {
-                $messages['cash_account_id'] = 'Cash account tidak valid.';
-            }
-
-            if (! empty($data['expense_category_id'] ?? null)) {
-                $category = ExpenseCategory::query()->find($data['expense_category_id']);
-
-                if (! $category || $category->expense_mode !== ExpenseCategory::MODE_INVENTORY_PURCHASE) {
-                    $messages['expense_category_id'] = 'Kategori untuk pembelian tunai harus bertipe Pembelian Stok.';
-                }
-            }
-        }
-
-        if ($messages !== []) {
-            throw ValidationException::withMessages($messages);
-        }
-    }
-
-    protected function normalizePaymentData(array $data): array
-    {
-        if ($data['payment_type'] === 'cash') {
-            $data['due_date'] = null;
-        }
-
-        return $data;
-    }
-
-    protected function syncFinancialFlowForPurchase(InventoryPurchase $inventoryPurchase, array $data): void
-    {
-        if ($data['payment_type'] === 'cash') {
-            $this->syncCashOutForPurchase($inventoryPurchase, $data);
-            $this->detachPayableFromPurchase($inventoryPurchase);
-
-            return;
-        }
-
-        $this->syncPayableForPurchase($inventoryPurchase, $data);
-        $this->detachCashOutFromPurchase($inventoryPurchase);
-    }
-
-    protected function syncCashOutForPurchase(InventoryPurchase $inventoryPurchase, array $data): void
-    {
-        $itemName = $inventoryPurchase->item()->value('name') ?? 'Item inventory';
-
-        $cashOut = CashOut::query()->updateOrCreate(
-            ['id' => $inventoryPurchase->cash_out_id],
-            [
-                'expense_category_id' => $data['expense_category_id'],
-                'expense_location_id' => $this->centralExpenseLocationId(),
-                'cash_account_id' => $data['cash_account_id'],
-                'payable_id' => null,
-                'amount' => (float) $data['unit_cost'],
-                'expense_date' => $data['transaction_date'],
-                'description' => $data['notes'] ?? ('Pembelian stok ' . $itemName),
-                'is_adjustment' => false,
-                'adjustment_note' => null,
-                'adjusted_by' => null,
-                'created_by' => $inventoryPurchase->created_by ?? $this->currentUserId(),
-                'updated_by' => $this->currentUserId(),
-            ]
-        );
-
-        if ($inventoryPurchase->cash_out_id !== $cashOut->id) {
-            $inventoryPurchase->update(['cash_out_id' => $cashOut->id]);
-        }
-    }
-
-    protected function syncPayableForPurchase(InventoryPurchase $inventoryPurchase, array $data): void
-    {
-        $itemName = $inventoryPurchase->item()->value('name') ?? 'Item inventory';
-
-        $payable = Payable::query()->updateOrCreate(
-            ['id' => $inventoryPurchase->payable_id],
-            [
-                'transaction_date' => $data['transaction_date'],
-                'due_date' => $data['due_date'] ?? null,
-                'supplier_name' => $data['supplier_name'],
-                'description' => 'Pembelian stok ' . $itemName,
-                'amount' => (float) $data['unit_cost'],
-                'status' => 'unpaid',
-                'paid_at' => null,
-                'notes' => $data['notes'] ?? null,
-                'created_by' => $inventoryPurchase->created_by ?? $this->currentUserId(),
-                'updated_by' => $this->currentUserId(),
-            ]
-        );
-
-        if ($inventoryPurchase->payable_id !== $payable->id) {
-            $inventoryPurchase->update(['payable_id' => $payable->id]);
-        }
-    }
-
-    protected function detachCashOutFromPurchase(InventoryPurchase $inventoryPurchase): void
-    {
-        if (! $inventoryPurchase->cash_out_id) {
-            return;
-        }
-
-        CashOut::query()->whereKey($inventoryPurchase->cash_out_id)->delete();
-        $inventoryPurchase->update(['cash_out_id' => null]);
-    }
-
-    protected function detachPayableFromPurchase(InventoryPurchase $inventoryPurchase): void
-    {
-        if (! $inventoryPurchase->payable_id) {
-            return;
-        }
-
-        $payable = $inventoryPurchase->payable;
-
-        if ($payable && $payable->status !== 'unpaid') {
-            throw ValidationException::withMessages([
-                'payment_type' => 'Pembelian ini sudah terkait hutang yang tidak bisa dilepas karena sudah dibayar atau diproses.',
-            ]);
-        }
-
-        if ($payable) {
-            $payable->delete();
-        }
-
-        $inventoryPurchase->update(['payable_id' => null]);
     }
 
     protected function ensureInventoryPurchaseDeleteAccess(): void
