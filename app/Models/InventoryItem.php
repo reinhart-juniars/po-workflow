@@ -21,6 +21,7 @@ class InventoryItem extends Model
         'unit',
         'parent_id',
         'category',
+        'ingredient_group',
         'pack_qty',
         'pack_price',
         'unit_price',

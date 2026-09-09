@@ -25,6 +25,10 @@ class InventoryItemPriceHistory extends Model
         'source',
         'note',
         'created_by',
+        // Waktu kejadian adalah bagian dari data histori, bukan sekadar metadata:
+        // baris hasil migrasi harus menyandang waktu aslinya, bukan waktu impor.
+        'created_at',
+        'updated_at',
     ];
 
     protected $casts = [
