@@ -16,9 +16,24 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
  * nama; yang tetap tidak ketemu dibuat sebagai item baru. Kategori tidak dikenal
  * dan baris tanpa nama ditolak dan dilaporkan, bukan diam-diam dilewati --
  * import yang menelan kesalahan meninggalkan master data yang salah tanpa jejak.
+ *
+ * Kolom yang tidak ada di berkas tidak disentuh sama sekali. Tanpa aturan itu,
+ * berkas lama yang belum punya kolom harga akan mengosongkan harga seluruh
+ * bahan begitu diunggah -- dan HPP seluruh menu ikut menjadi nol.
  */
 class InventoryItemsImport implements SkipsEmptyRows, ToCollection, WithHeadingRow
 {
+    /** Kolom berkas -> kolom item, untuk kolom yang boleh diisi sebagian. */
+    protected const OPTIONAL_COLUMNS = [
+        'kelompok_bahan' => 'ingredient_group',
+        'isi_kemasan' => 'pack_qty',
+        'harga_kemasan' => 'pack_price',
+        'harga_satuan' => 'unit_price',
+        'nilai_stok_minimum' => 'minimum_stock_value',
+        'keterangan' => 'description',
+        'induk_id' => 'parent_id',
+    ];
+
     protected int $created = 0;
 
     protected int $updated = 0;
@@ -49,15 +64,29 @@ class InventoryItemsImport implements SkipsEmptyRows, ToCollection, WithHeadingR
                 continue;
             }
 
-            $parsed[] = [
-                'id' => $row['id'] ?? null,
+            $data = [
                 'name' => $name,
                 'unit' => trim((string) ($row['satuan'] ?? '')) ?: 'unit',
                 'category' => $category,
-                'minimum_stock_value' => $this->normalizeMoney($row['nilai_stok_minimum'] ?? null),
-                'is_active' => $this->normalizeBoolean($row['aktif'] ?? true),
-                'description' => $row['keterangan'] ?? null,
             ];
+
+            if ($row->has('aktif')) {
+                $data['is_active'] = $this->normalizeBoolean($row['aktif']);
+            }
+
+            foreach (self::OPTIONAL_COLUMNS as $column => $attribute) {
+                if (! $row->has($column)) {
+                    continue;
+                }
+
+                $data[$attribute] = match ($attribute) {
+                    'parent_id' => blank($row[$column]) ? null : (int) $row[$column],
+                    'description', 'ingredient_group' => blank($row[$column]) ? null : trim((string) $row[$column]),
+                    default => $this->normalizeMoney($row[$column]),
+                };
+            }
+
+            $parsed[] = ['id' => $row['id'] ?? null] + $data;
         }
 
         if ($this->errors !== []) {
@@ -68,7 +97,10 @@ class InventoryItemsImport implements SkipsEmptyRows, ToCollection, WithHeadingR
 
         DB::transaction(function () use ($parsed) {
             foreach ($parsed as $data) {
-                $item = $this->resolveItem($data['id'], $data['name']);
+                $id = $data['id'];
+                unset($data['id']);
+
+                $item = $this->resolveItem($id, $data['name']);
 
                 if ($item) {
                     $item->update($data);
@@ -76,6 +108,11 @@ class InventoryItemsImport implements SkipsEmptyRows, ToCollection, WithHeadingR
 
                     continue;
                 }
+
+                // Item baru bergabung ke bucket kategorinya, bukan berdiri
+                // sendiri: item tanpa induk diperlakukan sebagai bucket, dan
+                // bucket bayangan akan mengacaukan pengelompokan Laba Rugi.
+                $data['parent_id'] ??= $this->bucketIdFor($data['category']);
 
                 InventoryItem::query()->create($data);
                 $this->created++;
@@ -90,6 +127,16 @@ class InventoryItemsImport implements SkipsEmptyRows, ToCollection, WithHeadingR
         }
 
         return InventoryItem::query()->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])->first();
+    }
+
+    /** Bucket induk untuk sebuah kategori. */
+    protected function bucketIdFor(string $category): ?int
+    {
+        return InventoryItem::query()
+            ->buckets()
+            ->where('category', $category)
+            ->orderBy('id')
+            ->value('id');
     }
 
     /** Menerima kunci kategori maupun labelnya, supaya file hasil edit manusia tetap masuk. */
@@ -121,7 +168,7 @@ class InventoryItemsImport implements SkipsEmptyRows, ToCollection, WithHeadingR
         $clean = str_replace(['.', ' '], '', (string) $value);
         $clean = str_replace(',', '.', $clean);
 
-        return is_numeric($clean) ? round((float) $clean, 2) : null;
+        return is_numeric($clean) ? round((float) $clean, 4) : null;
     }
 
     protected function normalizeBoolean(mixed $value): bool

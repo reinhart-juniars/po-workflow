@@ -2,11 +2,16 @@
 
 namespace App\Filament\Resources\RecipeResource\Pages;
 
+use App\Exports\RecipesExport;
 use App\Filament\Resources\RecipeResource;
+use App\Imports\RecipesImport;
 use App\Models\Recipe;
 use Filament\Actions;
+use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ListRecords;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ListRecipes extends ListRecords
 {
@@ -16,6 +21,58 @@ class ListRecipes extends ListRecords
     {
         return [
             Actions\CreateAction::make()->label('Tambah Resep'),
+
+            Actions\Action::make('export')
+                ->label('Export Excel')
+                ->icon('heroicon-m-arrow-down-tray')
+                ->color('gray')
+                ->action(fn () => Excel::download(
+                    new RecipesExport,
+                    'resep-'.now()->format('Ymd_His').'.xlsx'
+                )),
+
+            Actions\Action::make('import')
+                ->label('Import Excel')
+                ->icon('heroicon-m-arrow-up-tray')
+                ->color('gray')
+                ->form([
+                    Forms\Components\FileUpload::make('berkas')
+                        ->label('Berkas Excel')
+                        ->required()
+                        ->acceptedFileTypes([
+                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                            'application/vnd.ms-excel',
+                            'text/csv',
+                        ])
+                        ->helperText(
+                            'Gunakan format hasil Export. Rincian bahan sebuah resep diganti seluruhnya '
+                            .'oleh baris yang ada di berkas, jadi kolom bahan_id dan sub_resep_id harus ikut terbawa.'
+                        )
+                        ->storeFiles(false),
+                ])
+                ->action(function (array $data) {
+                    $import = new RecipesImport;
+
+                    Excel::import($import, $data['berkas']);
+
+                    if ($import->hasErrors()) {
+                        Notification::make()
+                            ->danger()
+                            ->title('Import dibatalkan')
+                            ->body(implode("\n", array_slice($import->errors(), 0, 5)))
+                            ->persistent()
+                            ->send();
+
+                        return;
+                    }
+
+                    Notification::make()
+                        ->success()
+                        ->title('Import selesai')
+                        ->body($import->created().' resep baru, '.$import->updated().' diperbarui, '
+                            .$import->lines().' baris bahan tersimpan.')
+                        ->send();
+                }),
         ];
     }
 

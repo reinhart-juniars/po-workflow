@@ -16,6 +16,9 @@ use Maatwebsite\Excel\Concerns\WithMapping;
  * Kolom id dan nama_item sengaja diletakkan di depan karena file hasil export
  * ini juga menjadi format import: id dipakai untuk memperbarui item yang sudah
  * ada, sedangkan baris tanpa id dianggap item baru.
+ *
+ * Kolom bahan (kelompok, kemasan, harga) ikut dibawa supaya harga bahan bisa
+ * diperbarui borongan lewat Excel -- itulah cara klien mengurus 305 bahan.
  */
 class InventoryItemsExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping
 {
@@ -25,7 +28,7 @@ class InventoryItemsExport implements FromCollection, ShouldAutoSize, WithHeadin
 
     public function collection(): Collection
     {
-        return $this->items ?? InventoryItem::query()->orderBy('name')->get();
+        return $this->items ?? InventoryItem::query()->with('parent')->orderBy('name')->get();
     }
 
     public function headings(): array
@@ -35,6 +38,12 @@ class InventoryItemsExport implements FromCollection, ShouldAutoSize, WithHeadin
             'nama_item',
             'satuan',
             'kategori',
+            'induk_id',
+            'induk_nama',
+            'kelompok_bahan',
+            'isi_kemasan',
+            'harga_kemasan',
+            'harga_satuan',
             'nilai_stok_minimum',
             'aktif',
             'keterangan',
@@ -50,6 +59,12 @@ class InventoryItemsExport implements FromCollection, ShouldAutoSize, WithHeadin
             $item->name,
             $item->unit,
             $item->category,
+            $item->parent_id,
+            $item->parent?->name,
+            $item->ingredient_group,
+            $item->pack_qty !== null ? (float) $item->pack_qty : null,
+            $item->pack_price !== null ? (float) $item->pack_price : null,
+            $item->unit_price !== null ? (float) $item->unit_price : null,
             $item->minimum_stock_value !== null ? (float) $item->minimum_stock_value : null,
             $item->is_active ? 'ya' : 'tidak',
             $item->description,

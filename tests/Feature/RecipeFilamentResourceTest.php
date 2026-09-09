@@ -170,6 +170,21 @@ it('menghitung kebutuhan bahan untuk jumlah produksi yang diminta', function () 
         ->assertSee('0,75 kg');
 });
 
+it('menyediakan export dan import resep pada daftar', function () {
+    Recipe::query()->create([
+        'name' => 'Gorengan', 'jenis' => Recipe::JENIS_UTAMA,
+        'yield_qty' => 10, 'yield_unit' => 'porsi', 'ohc_pct' => 0.4, 'profit_pct' => 0.25,
+    ]);
+
+    // Tombolnya terpasang lewat nama aksi; salah ketik nama kelas Export atau
+    // Import baru ketahuan saat diklik, bukan saat halamannya dibuka.
+    Livewire::test(RecipeResource\Pages\ListRecipes::class)
+        ->assertActionExists('export')
+        ->assertActionExists('import')
+        ->callAction('export')
+        ->assertHasNoActionErrors();
+});
+
 it('menautkan seluruh baris sebuah nama lewat daftar bahan belum cocok', function () {
     $satu = Recipe::query()->create([
         'name' => 'Sop Ayam', 'jenis' => Recipe::JENIS_UTAMA,

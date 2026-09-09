@@ -6,7 +6,6 @@ use App\Models\InventoryItem;
 use App\Models\InventoryItemPriceHistory;
 use App\Models\Recipe;
 use App\Models\RecipeItem;
-use App\Models\RecipeMismatch;
 use App\Services\RecipeMismatchResolver;
 use App\Support\Units\Unit;
 use Illuminate\Support\Facades\DB;
@@ -51,7 +50,10 @@ class MasterMenuMigrationService
                 // kembali di sini. Tanpa langkah ini, tiap penyegaran data
                 // menghapus pekerjaan itu dan mismatch-nya muncul lagi.
                 $summary['keputusan'] = app(RecipeMismatchResolver::class)->reapplyAll();
-                $summary['mismatch'] = $this->rebuildMismatches();
+                // Daftar bahan belum cocok disusun oleh layanan rekonsiliasi, yang
+                // juga dipakai import resep -- daftarnya tidak boleh punya dua
+                // penyusun yang bisa berbeda hasilnya.
+                $summary['mismatch'] = app(RecipeMismatchResolver::class)->rebuild();
 
                 if ($dryRun) {
                     // Uji-jalan tetap menempuh seluruh jalur tulis supaya angkanya
@@ -338,82 +340,5 @@ class MasterMenuMigrationService
         }
 
         return ['dipindahkan' => $inserted, 'belum_tertaut' => $unmatched];
-    }
-
-    /**
-     * Susun ulang daftar bahan yang belum punya padanan.
-     *
-     * Dikelompokkan per nama, bukan per baris: 4.878 baris yatim hanya berisi
-     * ratusan nama unik, dan satu keputusan menautkan ratusan baris sekaligus.
-     * Baris yang sudah pernah diputuskan tidak diubah statusnya.
-     *
-     * @return array<string, int>
-     */
-    protected function rebuildMismatches(): array
-    {
-        $groups = [];
-
-        RecipeItem::query()
-            ->unmatched()
-            ->select(['raw_name', 'recipe_id', 'unit', 'unit_price_snapshot'])
-            ->cursor()
-            ->each(function (RecipeItem $item) use (&$groups) {
-                $norm = Recipe::normalizeName($item->raw_name);
-
-                if ($norm === '') {
-                    return;
-                }
-
-                if (! isset($groups[$norm])) {
-                    $groups[$norm] = [
-                        'raw_name' => $item->raw_name,
-                        'raw_name_norm' => $norm,
-                        'occurrence_count' => 0,
-                        'recipes' => [],
-                        'sample_unit' => $item->unit,
-                        'assumed_unit_price' => $item->unit_price_snapshot,
-                    ];
-                }
-
-                $groups[$norm]['occurrence_count']++;
-                $groups[$norm]['recipes'][$item->recipe_id] = true;
-
-                if ($groups[$norm]['assumed_unit_price'] === null && $item->unit_price_snapshot !== null) {
-                    $groups[$norm]['assumed_unit_price'] = $item->unit_price_snapshot;
-                }
-            });
-
-        $touched = 0;
-
-        foreach ($groups as $norm => $group) {
-            $existing = RecipeMismatch::query()->where('raw_name_norm', $norm)->first();
-
-            $counts = [
-                'occurrence_count' => $group['occurrence_count'],
-                'recipe_count' => count($group['recipes']),
-                'sample_unit' => $group['sample_unit'],
-                'assumed_unit_price' => $group['assumed_unit_price'],
-            ];
-
-            if ($existing) {
-                // Keputusan manusia dipertahankan; hanya hitungannya disegarkan.
-                $existing->update($counts);
-                $touched++;
-
-                continue;
-            }
-
-            RecipeMismatch::query()->create($counts + [
-                'raw_name' => $group['raw_name'],
-                'raw_name_norm' => $norm,
-                'status' => RecipeMismatch::STATUS_OPEN,
-            ]);
-            $touched++;
-        }
-
-        return [
-            'nama_unik' => $touched,
-            'belum_diputuskan' => RecipeMismatch::query()->open()->count(),
-        ];
     }
 }

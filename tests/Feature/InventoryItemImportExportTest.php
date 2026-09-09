@@ -42,13 +42,94 @@ it('mengekspor item beserta ambang dan nilai stok berjalannya', function () {
         'payment_type' => 'cash',
     ]);
 
-    $baris = (new InventoryItemsExport)->map($item);
+    $export = new InventoryItemsExport;
 
-    expect($baris[1])->toBe('Tepung Terigu')
-        ->and($baris[3])->toBe(InventoryItem::CATEGORY_RAW_MATERIAL)
-        ->and($baris[4])->toBe(500000.0)
-        ->and($baris[5])->toBe('ya')
-        ->and($baris[7])->toBe(120000.0);
+    // Dibaca lewat nama kolomnya, bukan nomor kolom: format ini juga menjadi
+    // format import, jadi kolomnya akan bertambah seiring waktu dan tes yang
+    // menghitung posisi akan rusak setiap kali itu terjadi.
+    $baris = array_combine($export->headings(), $export->map($item));
+
+    expect($baris['nama_item'])->toBe('Tepung Terigu')
+        ->and($baris['kategori'])->toBe(InventoryItem::CATEGORY_RAW_MATERIAL)
+        ->and($baris['nilai_stok_minimum'])->toBe(500000.0)
+        ->and($baris['aktif'])->toBe('ya')
+        ->and($baris['nilai_stok_berjalan'])->toBe(120000.0);
+});
+
+it('membawa kolom bahan agar harga bisa diperbarui borongan lewat excel', function () {
+    $bucket = InventoryItem::query()->create([
+        'name' => 'Bahan Baku',
+        'unit' => 'All',
+        'category' => InventoryItem::CATEGORY_RAW_MATERIAL,
+        'is_active' => true,
+    ]);
+
+    $item = InventoryItem::query()->create([
+        'parent_id' => $bucket->id,
+        'name' => 'Tepung Terigu',
+        'unit' => 'kg',
+        'category' => InventoryItem::CATEGORY_RAW_MATERIAL,
+        'ingredient_group' => 'karbo',
+        'pack_qty' => 25,
+        'pack_price' => 300000,
+        'unit_price' => 12000,
+        'is_active' => true,
+    ]);
+
+    $export = new InventoryItemsExport;
+    $baris = array_combine($export->headings(), $export->map($item));
+
+    expect($baris['induk_id'])->toBe($bucket->id)
+        ->and($baris['induk_nama'])->toBe('Bahan Baku')
+        ->and($baris['kelompok_bahan'])->toBe('karbo')
+        ->and($baris['isi_kemasan'])->toBe(25.0)
+        ->and($baris['harga_kemasan'])->toBe(300000.0)
+        ->and($baris['harga_satuan'])->toBe(12000.0);
+});
+
+it('tidak mengosongkan kolom yang tidak ada di berkas', function () {
+    $item = InventoryItem::query()->create([
+        'name' => 'Tepung Terigu',
+        'unit' => 'kg',
+        'category' => InventoryItem::CATEGORY_RAW_MATERIAL,
+        'unit_price' => 12000,
+        'minimum_stock_value' => 500000,
+        'is_active' => true,
+    ]);
+
+    // Berkas lama, hanya berisi kolom yang dulu ada.
+    $import = new InventoryItemsImport;
+    $import->collection(collect([
+        collect(['id' => $item->id, 'nama_item' => 'Tepung Terigu', 'satuan' => 'kg', 'kategori' => 'bahan_baku']),
+    ]));
+
+    // Kalau kolom yang absen ikut ditulis sebagai null, harga seluruh bahan
+    // terhapus begitu berkas lama diunggah -- dan HPP seluruh menu jadi nol.
+    expect($import->hasErrors())->toBeFalse()
+        ->and((float) $item->fresh()->unit_price)->toBe(12000.0)
+        ->and((float) $item->fresh()->minimum_stock_value)->toBe(500000.0);
+});
+
+it('menempatkan item baru hasil import di bawah bucket kategorinya', function () {
+    $bucket = InventoryItem::query()->create([
+        'name' => 'Bahan Baku',
+        'unit' => 'All',
+        'category' => InventoryItem::CATEGORY_RAW_MATERIAL,
+        'is_active' => true,
+    ]);
+
+    $import = new InventoryItemsImport;
+    $import->collection(collect([
+        collect(['nama_item' => 'Garam Dapur', 'satuan' => 'kg', 'kategori' => 'bahan_baku', 'harga_satuan' => 8000]),
+    ]));
+
+    $garam = InventoryItem::query()->firstWhere('name', 'Garam Dapur');
+
+    // Item tanpa induk diperlakukan sebagai bucket, dan bucket bayangan akan
+    // mengacaukan pengelompokan Laba Rugi.
+    expect($garam->parent_id)->toBe($bucket->id)
+        ->and($garam->isBucket())->toBeFalse()
+        ->and((float) $garam->unit_price)->toBe(8000.0);
 });
 
 it('membuat item baru dan memperbarui yang sudah ada berdasarkan id', function () {

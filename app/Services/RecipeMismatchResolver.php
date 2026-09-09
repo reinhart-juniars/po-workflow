@@ -145,6 +145,86 @@ class RecipeMismatchResolver
         return ['keputusan' => $decisions->count(), 'baris' => $rows];
     }
 
+    /**
+     * Susun ulang daftar bahan yang belum punya padanan.
+     *
+     * Dikelompokkan per nama, bukan per baris: 4.878 baris yatim hanya berisi
+     * ratusan nama unik, dan satu keputusan menautkan ratusan baris sekaligus.
+     * Baris yang sudah pernah diputuskan hanya disegarkan hitungannya -- kalau
+     * statusnya ikut disetel ulang, seluruh kerja rekonsiliasi hilang setiap
+     * kali data resep disegarkan.
+     *
+     * Dipakai perpindahan data Master Menu maupun import resep, supaya daftar
+     * kerjanya tidak pernah tertinggal dari data resep yang sebenarnya.
+     *
+     * @return array<string, int>
+     */
+    public function rebuild(): array
+    {
+        $groups = [];
+
+        RecipeItem::query()
+            ->unmatched()
+            ->select(['raw_name', 'recipe_id', 'unit', 'unit_price_snapshot'])
+            ->cursor()
+            ->each(function (RecipeItem $item) use (&$groups) {
+                $norm = Recipe::normalizeName($item->raw_name);
+
+                if ($norm === '') {
+                    return;
+                }
+
+                if (! isset($groups[$norm])) {
+                    $groups[$norm] = [
+                        'raw_name' => $item->raw_name,
+                        'occurrence_count' => 0,
+                        'recipes' => [],
+                        'sample_unit' => $item->unit,
+                        'assumed_unit_price' => $item->unit_price_snapshot,
+                    ];
+                }
+
+                $groups[$norm]['occurrence_count']++;
+                $groups[$norm]['recipes'][$item->recipe_id] = true;
+
+                if ($groups[$norm]['assumed_unit_price'] === null && $item->unit_price_snapshot !== null) {
+                    $groups[$norm]['assumed_unit_price'] = $item->unit_price_snapshot;
+                }
+            });
+
+        $touched = 0;
+
+        foreach ($groups as $norm => $group) {
+            $counts = [
+                'occurrence_count' => $group['occurrence_count'],
+                'recipe_count' => count($group['recipes']),
+                'sample_unit' => $group['sample_unit'],
+                'assumed_unit_price' => $group['assumed_unit_price'],
+            ];
+
+            $existing = RecipeMismatch::query()->where('raw_name_norm', $norm)->first();
+
+            if ($existing) {
+                $existing->update($counts);
+                $touched++;
+
+                continue;
+            }
+
+            RecipeMismatch::query()->create($counts + [
+                'raw_name' => $group['raw_name'],
+                'raw_name_norm' => $norm,
+                'status' => RecipeMismatch::STATUS_OPEN,
+            ]);
+            $touched++;
+        }
+
+        return [
+            'nama_unik' => $touched,
+            'belum_diputuskan' => RecipeMismatch::query()->open()->count(),
+        ];
+    }
+
     /** Jumlah baris resep yang akan ikut terpengaruh oleh sebuah keputusan. */
     public function affectedRowCount(string $rawNameNorm): int
     {
