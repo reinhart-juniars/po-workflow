@@ -182,7 +182,23 @@ it('mengisi awal form aturan dari tautan halaman butuh aturan', function () {
             'inventory_item_id' => $this->ayam->id,
             'from_unit' => 'gram',
             'to_unit' => 'pcs',
-        ]);
+        ])
+        // Tanpa usulan angka, tidak ada peringatan apa pun.
+        ->assertNotNotified();
+});
+
+it('memperingatkan bahwa faktor usulan berasal dari nama bahan', function () {
+    Livewire::withQueryParams([
+        'inventory_item_id' => $this->ayam->id,
+        'from_unit' => 'pack',
+        'to_unit' => 'gr',
+        'factor' => 500,
+    ])
+        ->test(CreateInventoryUnitConversion::class)
+        ->assertFormSet(['factor' => 500.0])
+        // Angka usulan ikut menentukan HPP, jadi peringatannya harus muncul di
+        // halaman tempat orang menekan simpan, bukan hanya di halaman daftar.
+        ->assertNotified('Angka diisi dari nama bahan');
 });
 
 it('tidak mengisi apa pun ketika form aturan dibuka tanpa tautan', function () {

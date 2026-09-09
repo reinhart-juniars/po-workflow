@@ -7,6 +7,7 @@ use App\Models\RecipeItem;
 use App\Services\IngredientUnitConverter;
 use App\Services\MissingUnitConversionScanner;
 use App\Services\RecipeCostService;
+use App\Support\Units\PackSizeHint;
 
 /**
  * Aturan konversi satuan per bahan.
@@ -188,4 +189,48 @@ it('mendaftar pasangan satuan yang menahan resep dan melepasnya setelah diatur',
     aturan($ayam, 'pcs', 250, 'gram');
 
     expect(app(MissingUnitConversionScanner::class)->scan())->toHaveCount(0);
+});
+
+it('mengusulkan faktor dari isi kemasan yang tertulis di nama bahan', function () {
+    // Nama-nama ini apa adanya dari data klien.
+    expect(PackSizeHint::suggest('telur @1kg isi 16butir', 'kg', 'butir'))
+        ->toBe(['from_unit' => 'kg', 'to_unit' => 'butir', 'factor' => 16.0])
+        ->and(PackSizeHint::suggest('mie burung dara 36pack', 'dus', 'pack'))
+        ->toBe(['from_unit' => 'dus', 'to_unit' => 'pack', 'factor' => 36.0])
+        ->and(PackSizeHint::suggest('sendok makan trp 100pcs', 'pack', 'pc'))
+        ->toBe(['from_unit' => 'pack', 'to_unit' => 'pcs', 'factor' => 100.0])
+        // "@500gr" menjembatani satuan resep "gr" lewat registri satuan.
+        ->and(PackSizeHint::suggest('tepung beras rose brand @500gr', 'pack', 'gr'))
+        ->toBe(['from_unit' => 'pack', 'to_unit' => 'gram', 'factor' => 500.0]);
+});
+
+it('diam ketika nama bahan menyebut kemasan bertingkat', function () {
+    // Satu dus berisi 12 pack berisi 200 ml. Angka mana pun yang diambil
+    // sendirian akan salah, dan angka salah yang tampil sebagai usulan lebih
+    // berbahaya daripada kolom kosong -- orang cenderung menyimpannya begitu saja.
+    expect(PackSizeHint::suggest('santan kara 200ml @12pack 200ml', 'dus', 'ml'))->toBeNull()
+        // Dua satuan isi yang berbeda juga bertingkat: 500 ml itu ukuran wadah,
+        // 500 pcs itu isi dusnya.
+        ->and(PackSizeHint::suggest('thinwall kotak 500ml @500pcs', 'dus', 'pc'))->toBeNull()
+        // Satu satuan dengan dua angka berbeda sama ambigunya.
+        ->and(PackSizeHint::suggest('minyak 1lt isi 5lt', 'jirigen', 'ml'))->toBeNull();
+});
+
+it('tidak mengusulkan apa pun ketika angkanya tidak menyelesaikan pasangannya', function () {
+    // Tidak ada angka sama sekali di namanya.
+    expect(PackSizeHint::suggest('Sereh', 'pcs', 'gr'))->toBeNull()
+        // Ada angka, tetapi satuannya tidak sepadan dengan satuan resep: 500 ml
+        // tidak menjelaskan berapa pcs isi satu dus.
+        ->and(PackSizeHint::suggest('thinwall kotak 500ml', 'dus', 'pc'))->toBeNull()
+        // Angka yang satuannya sama dengan satuan harga adalah ukuran kemasan
+        // itu sendiri, bukan isinya.
+        ->and(PackSizeHint::suggest('beras @25kg', 'kg', 'kg'))->toBeNull()
+        // Bacaan yang mustahil: satu gram tidak berisi sepuluh ikat. Muncul dari
+        // bahan yang satuan harganya keliru, dan usulan seperti ini hanya akan
+        // menularkan kekeliruan itu ke HPP.
+        ->and(PackSizeHint::suggest('sawi @10ikat', 'gram', 'ikat'))->toBeNull()
+        // Kontrol positif: bacaan sejenis yang masuk akal tetap diusulkan --
+        // satu kilogram berisi 16 butir berarti ±62 gram per butir.
+        ->and(PackSizeHint::suggest('telur @1kg isi 16butir', 'kg', 'butir'))
+        ->toBe(['from_unit' => 'kg', 'to_unit' => 'butir', 'factor' => 16.0]);
 });

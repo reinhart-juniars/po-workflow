@@ -4,6 +4,7 @@ namespace App\Filament\Resources\InventoryUnitConversionResource\Pages;
 
 use App\Filament\Resources\InventoryUnitConversionResource;
 use App\Services\MissingUnitConversionScanner;
+use App\Support\Units\PackSizeHint;
 use Filament\Actions;
 use Filament\Resources\Pages\Page;
 use Illuminate\Support\Collection;
@@ -43,7 +44,7 @@ class MissingUnitConversions extends Page
         return $this->rows ??= app(MissingUnitConversionScanner::class)->scan();
     }
 
-    /** @return array{pasangan: int, baris: int, resep: int, bahan: int} */
+    /** @return array{pasangan: int, baris: int, usulan: int, bahan: int} */
     public function getSummary(): array
     {
         $rows = $this->getRows();
@@ -51,20 +52,37 @@ class MissingUnitConversions extends Page
         return [
             'pasangan' => $rows->count(),
             'baris' => (int) $rows->sum('line_count'),
-            // Satu resep bisa muncul di beberapa pasangan sekaligus, jadi angka
-            // ini adalah jumlah keterlibatan, bukan jumlah resep unik.
-            'resep' => (int) $rows->sum('recipe_count'),
+            'usulan' => $rows->filter(fn (array $row) => $row['hint'] !== null)->count(),
             'bahan' => $rows->pluck('inventory_item_id')->unique()->count(),
         ];
     }
 
-    /** Tautan ke form aturan baru yang sudah terisi bahan dan pasangan satuannya. */
+    /**
+     * Tautan ke form aturan baru yang sudah terisi bahan dan pasangan satuannya.
+     *
+     * Bila nama bahan menyebut isi kemasannya sendiri, angkanya ikut diusulkan
+     * -- tetap sebagai isian awal yang bisa diubah, bukan aturan yang tersimpan
+     * sendiri, karena nama bahan adalah teks bebas.
+     */
     public function createUrl(array $row): string
     {
-        return InventoryUnitConversionResource::getUrl('create', [
+        $hint = $row['hint'] ?? null;
+
+        return InventoryUnitConversionResource::getUrl('create', $hint ? [
+            'inventory_item_id' => $row['inventory_item_id'],
+            'from_unit' => $hint['from_unit'],
+            'to_unit' => $hint['to_unit'],
+            'factor' => $hint['factor'],
+        ] : [
             'inventory_item_id' => $row['inventory_item_id'],
             'from_unit' => $row['from_unit'],
             'to_unit' => $row['to_unit'],
         ]);
+    }
+
+    /** Bacaan usulan untuk sebuah baris, bila ada. */
+    public function hintText(array $row): ?string
+    {
+        return ($row['hint'] ?? null) ? PackSizeHint::describe($row['hint']) : null;
     }
 }

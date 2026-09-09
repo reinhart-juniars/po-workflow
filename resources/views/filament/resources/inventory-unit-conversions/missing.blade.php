@@ -8,7 +8,7 @@
         @foreach ([
             ['Pasangan Satuan', $summary['pasangan'], 'Tiap pasangan butuh satu aturan.'],
             ['Baris Resep Tertahan', $summary['baris'], 'Baris yang biayanya dihitung nol.'],
-            ['Keterlibatan Resep', $summary['resep'], 'Satu resep bisa terhitung di beberapa pasangan.'],
+            ['Punya Usulan Angka', $summary['usulan'], 'Terbaca dari nama bahan; tetap perlu dibenarkan.'],
             ['Bahan Terdampak', $summary['bahan'], null],
         ] as [$label, $value, $note])
             <x-filament::section>
@@ -42,7 +42,14 @@
                 <tbody>
                     @forelse ($rows as $row)
                         <tr class="border-b border-gray-100 dark:border-gray-800">
-                            <td class="py-2 pr-4 font-medium">{{ $row['item_name'] }}</td>
+                            <td class="py-2 pr-4 font-medium">
+                                {{ $row['item_name'] }}
+                                @if ($hint = $this->hintText($row))
+                                    <div class="mt-0.5 text-xs font-normal text-primary-600 dark:text-primary-400">
+                                        Usul dari nama bahan: {{ $hint }}
+                                    </div>
+                                @endif
+                            </td>
                             <td class="py-2 pr-4">{{ $row['from_unit'] ?: '-' }}</td>
                             <td class="py-2 pr-4">{{ $row['to_unit'] ?: '-' }}</td>
                             <td class="py-2 pr-4 text-right">{{ number_format($row['line_count'], 0, ',', '.') }}</td>

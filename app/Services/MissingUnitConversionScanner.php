@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\Units\PackSizeHint;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -58,6 +59,9 @@ class MissingUnitConversionScanner
                 'to_unit' => (string) $row->to_unit,
                 'line_count' => (int) $row->line_count,
                 'recipe_count' => (int) $row->recipe_count,
+                // Sekadar usulan angka yang dibaca dari nama bahan; tetap harus
+                // dibenarkan manusia sebelum menjadi aturan.
+                'hint' => PackSizeHint::suggest($row->item_name, $row->to_unit, $row->from_unit),
             ])
             ->sortByDesc('line_count')
             ->values();

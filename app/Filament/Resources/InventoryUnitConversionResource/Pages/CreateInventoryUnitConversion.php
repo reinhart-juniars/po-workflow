@@ -4,6 +4,7 @@ namespace App\Filament\Resources\InventoryUnitConversionResource\Pages;
 
 use App\Filament\Resources\InventoryUnitConversionResource;
 use App\Support\Units\Unit;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateInventoryUnitConversion extends CreateRecord
@@ -23,7 +24,22 @@ class CreateInventoryUnitConversion extends CreateRecord
             'inventory_item_id' => request()->integer('inventory_item_id') ?: null,
             'from_unit' => static::canonicalUnit(request()->query('from_unit')),
             'to_unit' => static::canonicalUnit(request()->query('to_unit')),
+            // Usulan angka dari nama bahan. Sengaja hanya mengisi form, bukan
+            // menyimpan aturan: nama bahan teks bebas, dan angkanya harus
+            // dilihat manusia sebelum ikut menentukan HPP.
+            'factor' => (float) request()->query('factor') ?: null,
         ]));
+
+        if ((float) request()->query('factor') > 0) {
+            // Peringatannya menyusul ke halaman ini, karena di sinilah orang
+            // menekan simpan -- konteks "ini cuma usulan" ada di halaman
+            // sebelumnya dan mudah tertinggal.
+            Notification::make()
+                ->warning()
+                ->title('Angka diisi dari nama bahan')
+                ->body('Ini bacaan atas teks nama bahan, bukan hasil timbang. Periksa dulu sebelum disimpan; angka ini ikut menentukan HPP.')
+                ->send();
+        }
     }
 
     /**
