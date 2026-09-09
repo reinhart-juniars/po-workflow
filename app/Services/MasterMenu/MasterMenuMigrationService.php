@@ -7,6 +7,7 @@ use App\Models\InventoryItemPriceHistory;
 use App\Models\Recipe;
 use App\Models\RecipeItem;
 use App\Models\RecipeMismatch;
+use App\Services\RecipeMismatchResolver;
 use App\Support\Units\Unit;
 use Illuminate\Support\Facades\DB;
 
@@ -45,6 +46,11 @@ class MasterMenuMigrationService
                 $summary['histori_harga'] = $this->migratePriceHistories();
                 $summary['resep'] = $this->migrateRecipes();
                 $summary['baris_resep'] = $this->migrateRecipeItems();
+                // Baris resep disusun ulang setiap kali perpindahan dijalankan,
+                // jadi tautan hasil rekonsiliasi bersama klien harus dipasang
+                // kembali di sini. Tanpa langkah ini, tiap penyegaran data
+                // menghapus pekerjaan itu dan mismatch-nya muncul lagi.
+                $summary['keputusan'] = app(RecipeMismatchResolver::class)->reapplyAll();
                 $summary['mismatch'] = $this->rebuildMismatches();
 
                 if ($dryRun) {

@@ -188,6 +188,12 @@ it('mempertahankan keputusan manusia saat perpindahan diulang', function () {
     expect($mismatch->status)->toBe(RecipeMismatch::STATUS_LINKED)
         ->and($mismatch->resolved_inventory_item_id)->toBe($garam->id)
         ->and($mismatch->occurrence_count)->toBe(2);
+
+    // Statusnya bertahan saja belum cukup: baris resepnya disusun ulang dari
+    // sumber setiap kali, jadi tautannya harus ikut dipasang kembali -- kalau
+    // tidak, keputusannya tercatat tetapi HPP-nya tetap kosong.
+    expect(RecipeItem::query()->where('inventory_item_id', $garam->id)->count())->toBe(2)
+        ->and(RecipeItem::query()->unmatched()->count())->toBe(0);
 });
 
 it('membatalkan seluruh perubahan pada mode uji-jalan', function () {
