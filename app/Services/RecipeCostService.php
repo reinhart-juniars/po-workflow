@@ -5,9 +5,7 @@ namespace App\Services;
 use App\Models\InventoryItem;
 use App\Models\Recipe;
 use App\Models\RecipeItem;
-use App\Support\Units\Unit;
 use Illuminate\Support\Collection;
-use Throwable;
 
 /**
  * Perhitungan HPP dan kebutuhan bahan dari resep.
@@ -22,7 +20,9 @@ use Throwable;
  *    jejak. Setiap kegagalan dicatat di 'issues' dan menaikkan bendera, karena
  *    HPP yang diam-diam kekecilan jauh lebih berbahaya daripada HPP yang
  *    ditandai tidak lengkap.
- * 2. Konversi satuan hanya dilakukan bila sah. Sisanya ditandai, tidak ditebak.
+ * 2. Konversi satuan hanya dilakukan bila sah -- lewat registri satuan, atau
+ *    lewat aturan konversi per bahan bila keduanya beda besaran. Sisanya
+ *    ditandai, tidak ditebak.
  * 3. Resep berputar (A memakai B, B memakai A) dideteksi dan dihentikan.
  *    Tanpa penjagaan ini perhitungannya tidak pernah selesai.
  */
@@ -32,7 +32,7 @@ class RecipeCostService
     protected array $memo = [];
 
     public function __construct(
-        protected UnitConverter $converter
+        protected IngredientUnitConverter $converter
     ) {}
 
     /**
@@ -331,11 +331,11 @@ class RecipeCostService
             return $line;
         }
 
-        $converted = $this->convertQuantity($qty, $item->unit, $ingredient->unit);
+        $converted = $this->convertQuantity($qty, $item->unit, $ingredient->unit, $ingredient->id);
 
         if ($converted === null) {
             $line['unit_price'] = $price;
-            $line['issue'] = 'Satuan "'.$item->unit.'" pada "'.$item->raw_name.'" tidak bisa dikonversi ke satuan harga "'.$ingredient->unit.'".';
+            $line['issue'] = 'Satuan "'.$item->unit.'" pada "'.$item->raw_name.'" tidak bisa dikonversi ke satuan harga "'.$ingredient->unit.'". Tambahkan aturan konversi untuk bahan "'.$ingredient->name.'".';
 
             return $line;
         }
@@ -350,35 +350,13 @@ class RecipeCostService
      * Ubah kuantitas dari satuan baris ke satuan tujuan.
      *
      * Mengembalikan null bila tidak sah, supaya pemanggil menandainya alih-alih
-     * memakai angka yang salah. Satuan yang teksnya sama tetap diterima meski
-     * tidak dikenal registri -- dua sisi memakai satuan yang sama persis tidak
-     * membutuhkan konversi apa pun.
+     * memakai angka yang salah. Konversi lintas-besaran (gr -> pcs) hanya
+     * berhasil bila bahannya punya aturan konversi -- entah milik bahan itu
+     * sendiri, entah aturan umum.
      */
-    protected function convertQuantity(float $qty, ?string $fromUnit, ?string $toUnit): ?float
+    protected function convertQuantity(float $qty, ?string $fromUnit, ?string $toUnit, ?int $inventoryItemId = null): ?float
     {
-        $fromText = mb_strtolower(trim((string) $fromUnit));
-        $toText = mb_strtolower(trim((string) $toUnit));
-
-        if ($fromText !== '' && $fromText === $toText) {
-            return $qty;
-        }
-
-        $from = Unit::tryFromAlias($fromUnit);
-        $to = Unit::tryFromAlias($toUnit);
-
-        if ($from === null || $to === null) {
-            return null;
-        }
-
-        if ($from === $to) {
-            return $qty;
-        }
-
-        try {
-            return $this->converter->convert($qty, $from, $to);
-        } catch (Throwable) {
-            return null;
-        }
+        return $this->converter->convert($qty, $fromUnit, $toUnit, $inventoryItemId);
     }
 
     /**
@@ -450,10 +428,10 @@ class RecipeCostService
             }
 
             $ingredient = $item->inventoryItem;
-            $converted = $this->convertQuantity($qty, $item->unit, $ingredient->unit);
+            $converted = $this->convertQuantity($qty, $item->unit, $ingredient->unit, $ingredient->id);
 
             if ($converted === null) {
-                $issues[] = 'Satuan "'.$item->unit.'" pada "'.$item->raw_name.'" tidak bisa dikonversi ke satuan bahan "'.$ingredient->unit.'".';
+                $issues[] = 'Satuan "'.$item->unit.'" pada "'.$item->raw_name.'" tidak bisa dikonversi ke satuan bahan "'.$ingredient->unit.'". Tambahkan aturan konversi untuk bahan "'.$ingredient->name.'".';
 
                 continue;
             }
