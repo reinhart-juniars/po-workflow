@@ -211,6 +211,31 @@ class RecipeResource extends Resource
                             ->columns(4),
                     ]),
 
+                Forms\Components\Section::make('Template Kerja')
+                    ->description('Pekerjaan paten untuk menu ini; disalin ke lembar kerja tiap SPK Produksi yang memasaknya.')
+                    ->collapsed()
+                    ->schema([
+                        Forms\Components\Repeater::make('tasks')
+                            ->label('')
+                            ->relationship()
+                            ->orderColumn('sort_order')
+                            ->reorderable()
+                            ->defaultItems(0)
+                            ->addActionLabel('Tambah Pekerjaan')
+                            ->itemLabel(fn (array $state) => trim(($state['task'] ?? '').' '.($state['object'] ?? '').' '.($state['quantity_text'] ?? '')) ?: 'Pekerjaan baru')
+                            ->schema([
+                                Forms\Components\TextInput::make('task')->label('Pekerjaan')->placeholder('potong / goreng')->required()->maxLength(255),
+                                Forms\Components\TextInput::make('object')->label('Objek')->placeholder('ayam, wortel')->maxLength(255),
+                                Forms\Components\TextInput::make('quantity_text')->label('Jumlah')->placeholder('25 gr')->maxLength(100),
+                                Forms\Components\Select::make('pic')
+                                    ->label('PIC Bawaan')
+                                    ->options(fn () => \App\Models\ProductionWorker::options())
+                                    ->searchable()
+                                    ->native(false),
+                            ])
+                            ->columns(4),
+                    ]),
+
                 Forms\Components\Section::make('Catatan')
                     ->collapsed()
                     ->schema([
