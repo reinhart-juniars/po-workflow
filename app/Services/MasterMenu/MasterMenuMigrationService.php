@@ -4,8 +4,12 @@ namespace App\Services\MasterMenu;
 
 use App\Models\InventoryItem;
 use App\Models\InventoryItemPriceHistory;
+use App\Models\ProductionOrder;
+use App\Models\ProductionOrderLine;
+use App\Models\ProductionWorker;
 use App\Models\Recipe;
 use App\Models\RecipeItem;
+use App\Models\RecipeTask;
 use App\Services\RecipeMismatchResolver;
 use App\Support\Units\Unit;
 use Illuminate\Support\Facades\DB;
@@ -54,6 +58,9 @@ class MasterMenuMigrationService
                 // juga dipakai import resep -- daftarnya tidak boleh punya dua
                 // penyusun yang bisa berbeda hasilnya.
                 $summary['mismatch'] = app(RecipeMismatchResolver::class)->rebuild();
+                $summary['pelaksana'] = $this->migrateWorkers();
+                $summary['template_kerja'] = $this->migrateRecipeTasks();
+                $summary['spk_produksi'] = $this->migrateProductionOrders();
 
                 if ($dryRun) {
                     // Uji-jalan tetap menempuh seluruh jalur tulis supaya angkanya
@@ -340,5 +347,186 @@ class MasterMenuMigrationService
         }
 
         return ['dipindahkan' => $inserted, 'belum_tertaut' => $unmatched];
+    }
+
+    /**
+     * Pelaksana dapur dari master_person.
+     *
+     * Nama tugas (master_task) sengaja tidak dipindahkan sebagai master
+     * sendiri: di Master Menu pun pilihannya sudah diambil dari tugas yang
+     * benar-benar dipakai di template kerja, dan itulah yang dipakai di sini.
+     *
+     * @return array<string, int>
+     */
+    protected function migrateWorkers(): array
+    {
+        if (! $this->source->connection()->getSchemaBuilder()->hasTable('master_person')) {
+            return ['baru' => 0];
+        }
+
+        $created = 0;
+
+        foreach ($this->source->table('master_person')->orderBy('id')->cursor() as $row) {
+            $name = trim((string) $row->name);
+
+            if ($name === '') {
+                continue;
+            }
+
+            $worker = ProductionWorker::query()->firstOrCreate(['name' => $name], ['is_active' => true]);
+
+            if ($worker->wasRecentlyCreated) {
+                $created++;
+            }
+        }
+
+        return ['baru' => $created];
+    }
+
+    /**
+     * Template kerja per menu (menu_tasks).
+     *
+     * Seperti baris resep, disusun ulang seluruhnya untuk resep yang ikut
+     * berpindah: template tidak punya jejak sendiri di tujuan.
+     *
+     * @return array<string, int>
+     */
+    protected function migrateRecipeTasks(): array
+    {
+        if (! $this->source->connection()->getSchemaBuilder()->hasTable('menu_tasks')) {
+            return ['dipindahkan' => 0];
+        }
+
+        $recipeBySource = Recipe::query()->whereNotNull('source_recipe_id')->pluck('id', 'source_recipe_id');
+
+        RecipeTask::query()->whereIn('recipe_id', $recipeBySource->values())->delete();
+
+        $inserted = 0;
+
+        foreach ($this->source->table('menu_tasks')->orderBy('recipe_id')->orderBy('sort_order')->orderBy('id')->cursor() as $row) {
+            $recipeId = $recipeBySource[$row->recipe_id] ?? null;
+
+            if ($recipeId === null) {
+                continue;
+            }
+
+            RecipeTask::query()->create([
+                'recipe_id' => $recipeId,
+                'sort_order' => (int) ($row->sort_order ?? 0),
+                'task' => $row->tugas ?: null,
+                'object' => $row->objek ?: null,
+                'quantity_text' => $row->jumlah ?: null,
+                'pic' => $row->pic ?: null,
+            ]);
+
+            $inserted++;
+        }
+
+        return ['dipindahkan' => $inserted];
+    }
+
+    /**
+     * SPK Master Menu beserta barisnya, lembar kerja produksinya, dan
+     * keterangan order yang melahirkannya -- semuanya sebagai histori.
+     *
+     * Ke depan SPK Produksi lahir dari PO po-workflow, jadi yang dipindahkan
+     * di sini tidak punya spk_id dan barisnya bertanda master_menu. Statusnya
+     * ditandai selesai: ini catatan masa lalu, bukan pekerjaan yang menunggu
+     * form kebutuhan.
+     *
+     * @return array<string, int>
+     */
+    protected function migrateProductionOrders(): array
+    {
+        $schema = $this->source->connection()->getSchemaBuilder();
+
+        if (! $schema->hasTable('spk')) {
+            return ['baru' => 0, 'diperbarui' => 0, 'baris' => 0, 'tugas' => 0];
+        }
+
+        $recipeBySource = Recipe::query()->whereNotNull('source_recipe_id')->pluck('id', 'source_recipe_id');
+
+        // Order Master Menu hanya menyumbang keterangan (judul, pelanggan) ke
+        // SPK yang di-generate darinya.
+        $orderBySpk = $schema->hasTable('orders')
+            ? $this->source->table('orders')->whereNotNull('spk_id')->get()->keyBy('spk_id')
+            : collect();
+
+        $created = 0;
+        $updated = 0;
+        $lines = 0;
+        $tasks = 0;
+
+        foreach ($this->source->table('spk')->orderBy('id')->cursor() as $row) {
+            $order = $orderBySpk->get($row->id);
+            $notes = trim(implode("\n", array_filter([
+                $row->notes,
+                $order ? 'Order Master Menu #'.$order->id.($order->customer ? ' — '.$order->customer : '') : null,
+            ])));
+
+            $attributes = [
+                'title' => $row->title ?: 'SPK Master Menu #'.$row->id,
+                'production_date' => $row->spk_date ?: ($row->created_at ? substr($row->created_at, 0, 10) : now()->toDateString()),
+                'production_time' => $row->spk_time ?: null,
+                'status' => ProductionOrder::STATUS_COMPLETED,
+                'notes' => $notes !== '' ? $notes : null,
+            ];
+
+            $production = ProductionOrder::query()->where('source_spk_id', $row->id)->first();
+
+            if ($production) {
+                $production->update($attributes);
+                $updated++;
+            } else {
+                $production = ProductionOrder::query()->create($attributes + [
+                    'source_spk_id' => $row->id,
+                    'completed_at' => $row->spk_date ? $row->spk_date.' 00:00:00' : now(),
+                ]);
+                $created++;
+            }
+
+            // Baris & lembar kerja disusun ulang seluruhnya, seperti baris resep.
+            $production->lines()->where('source', ProductionOrderLine::SOURCE_MASTER_MENU)->delete();
+
+            foreach ($this->source->table('spk_orders')->where('spk_id', $row->id)->orderBy('sort_order')->orderBy('id')->cursor() as $line) {
+                $recipeId = $line->recipe_id ? ($recipeBySource[$line->recipe_id] ?? null) : null;
+
+                $production->lines()->create([
+                    'sort_order' => (int) ($line->sort_order ?? 0),
+                    'kind' => ($line->kind === 'menu' && $recipeId) ? ProductionOrderLine::KIND_MENU : ProductionOrderLine::KIND_MANUAL,
+                    'source' => ProductionOrderLine::SOURCE_MASTER_MENU,
+                    'recipe_id' => $recipeId,
+                    'label' => $line->label ?: ($recipeId ? Recipe::query()->whereKey($recipeId)->value('name') : null),
+                    'qty' => (float) ($line->qty ?? 0),
+                    'unit' => $line->unit ?: null,
+                    'remark' => $line->remark ?: null,
+                ]);
+
+                $lines++;
+            }
+
+            if ($schema->hasTable('produksi')) {
+                $production->tasks()->delete();
+
+                $produksiIds = $this->source->table('produksi')->where('spk_id', $row->id)->pluck('id');
+
+                foreach ($this->source->table('produksi_rows')->whereIn('produksi_id', $produksiIds)->orderBy('sort_order')->orderBy('id')->cursor() as $task) {
+                    $production->tasks()->create([
+                        'sort_order' => (int) ($task->sort_order ?? 0),
+                        'recipe_id' => $task->recipe_id ? ($recipeBySource[$task->recipe_id] ?? null) : null,
+                        'menu_label' => $task->menu_label ?: null,
+                        'worker_name' => $task->nama ?: null,
+                        'task' => $task->tugas ?: null,
+                        'object' => $task->objek ?: null,
+                        'quantity_text' => $task->jumlah ?: null,
+                        'is_done' => true,
+                    ]);
+
+                    $tasks++;
+                }
+            }
+        }
+
+        return ['baru' => $created, 'diperbarui' => $updated, 'baris' => $lines, 'tugas' => $tasks];
     }
 }

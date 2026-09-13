@@ -2,9 +2,14 @@
 
 use App\Models\InventoryItem;
 use App\Models\InventoryItemPriceHistory;
+use App\Models\ProductionOrder;
+use App\Models\ProductionOrderLine;
+use App\Models\ProductionTask;
+use App\Models\ProductionWorker;
 use App\Models\Recipe;
 use App\Models\RecipeItem;
 use App\Models\RecipeMismatch;
+use App\Models\RecipeTask;
 use App\Services\MasterMenu\MasterMenuMigrationService;
 use App\Services\MasterMenu\MasterMenuSource;
 
@@ -46,6 +51,28 @@ function sumberMasterMenu(): MasterMenuSource
             section TEXT, ingredient_id INTEGER, ref_recipe_id INTEGER,
             raw_name TEXT, qty REAL, unit TEXT, unit_price_snapshot REAL, notes TEXT
         );
+        CREATE TABLE master_person (id INTEGER PRIMARY KEY, name TEXT);
+        CREATE TABLE menu_tasks (
+            id INTEGER PRIMARY KEY, recipe_id INTEGER, sort_order INTEGER,
+            tugas TEXT, objek TEXT, jumlah TEXT, pic TEXT
+        );
+        CREATE TABLE orders (
+            id INTEGER PRIMARY KEY, title TEXT, customer TEXT, order_date TEXT,
+            order_time TEXT, notes TEXT, spk_id INTEGER, created_at TEXT, updated_at TEXT
+        );
+        CREATE TABLE spk (
+            id INTEGER PRIMARY KEY, title TEXT, spk_date TEXT, spk_time TEXT,
+            notes TEXT, created_at TEXT, updated_at TEXT
+        );
+        CREATE TABLE spk_orders (
+            id INTEGER PRIMARY KEY, spk_id INTEGER, sort_order INTEGER, kind TEXT,
+            recipe_id INTEGER, label TEXT, qty REAL, unit TEXT, remark TEXT
+        );
+        CREATE TABLE produksi (id INTEGER PRIMARY KEY, title TEXT, spk_id INTEGER, notes TEXT);
+        CREATE TABLE produksi_rows (
+            id INTEGER PRIMARY KEY, produksi_id INTEGER, sort_order INTEGER,
+            recipe_id INTEGER, menu_label TEXT, nama TEXT, tugas TEXT, jumlah TEXT, objek TEXT
+        );
     ');
 
     $pdo->exec("
@@ -69,6 +96,20 @@ function sumberMasterMenu(): MasterMenuSource
                (3, 2, 0, NULL, 1, 'sambal matah', 1, 'porsi'),
                (4, 2, 1, 1, NULL, 'tepung terigu', 50, 'gr'),
                (5, 2, 2, NULL, NULL, 'garam', 5, 'gr');
+
+        INSERT INTO master_person (id, name) VALUES (1, 'Mia'), (2, 'Indra');
+        INSERT INTO menu_tasks (id, recipe_id, sort_order, tugas, objek, jumlah, pic)
+        VALUES (1, 2, 0, 'goreng', 'sambal', '10 porsi', 'Mia'),
+               (2, 2, 1, 'plating', 'nasi', NULL, 'Indra');
+
+        INSERT INTO spk (id, title, spk_date, spk_time, notes) VALUES (1, 'SPK 9 Juni', '2026-06-09', '08.30', 'catatan spk');
+        INSERT INTO orders (id, title, customer, order_date, spk_id) VALUES (1, 'Order PT ABC', 'PT ABC', '2026-06-09', 1);
+        INSERT INTO spk_orders (id, spk_id, sort_order, kind, recipe_id, label, qty, unit, remark)
+        VALUES (1, 1, 0, 'menu', 2, NULL, 50, 'porsi', 'dari Order #1'),
+               (2, 1, 1, 'manual', NULL, 'siapkan es batu', 2, 'pack', NULL);
+        INSERT INTO produksi (id, title, spk_id) VALUES (1, 'Produksi 9 Juni', 1);
+        INSERT INTO produksi_rows (id, produksi_id, sort_order, recipe_id, menu_label, nama, tugas, jumlah, objek)
+        VALUES (1, 1, 0, 2, 'Nasi Sambal Matah', 'Mia', 'goreng', '10 porsi', 'sambal');
     ");
 
     return new MasterMenuSource($path);
@@ -206,4 +247,38 @@ it('membatalkan seluruh perubahan pada mode uji-jalan', function () {
     expect(InventoryItem::query()->whereNotNull('source_ingredient_id')->count())->toBe(0)
         ->and(Recipe::query()->count())->toBe(0)
         ->and(RecipeItem::query()->count())->toBe(0);
+});
+
+it('memindahkan pelaksana, template kerja, dan spk master menu sebagai histori', function () {
+    $this->migrator->run();
+
+    $nasi = Recipe::query()->firstWhere('source_recipe_id', 2);
+    $spk = ProductionOrder::query()->firstWhere('source_spk_id', 1);
+
+    expect(ProductionWorker::query()->pluck('name')->sort()->values()->all())->toBe(['Indra', 'Mia'])
+        ->and($nasi->tasks)->toHaveCount(2)
+        ->and($nasi->tasks[0]->task)->toBe('goreng')
+        ->and($nasi->tasks[0]->pic)->toBe('Mia');
+
+    // SPK lama adalah histori: selesai, tanpa slot po-workflow, barisnya
+    // bertanda master_menu, dan keterangan order-nya ikut terbawa.
+    expect($spk->status)->toBe(ProductionOrder::STATUS_COMPLETED)
+        ->and($spk->spk_id)->toBeNull()
+        ->and($spk->production_date->toDateString())->toBe('2026-06-09')
+        ->and($spk->notes)->toContain('PT ABC')
+        ->and($spk->lines)->toHaveCount(2)
+        ->and($spk->lines[0]->recipe_id)->toBe($nasi->id)
+        ->and($spk->lines[0]->source)->toBe(ProductionOrderLine::SOURCE_MASTER_MENU)
+        ->and($spk->lines[1]->kind)->toBe(ProductionOrderLine::KIND_MANUAL)
+        ->and($spk->tasks)->toHaveCount(1)
+        ->and($spk->tasks[0]->worker_name)->toBe('Mia');
+
+    $this->migrator->run();
+
+    // Dijalankan ulang: tidak ada yang berlipat.
+    expect(ProductionOrder::query()->count())->toBe(1)
+        ->and(ProductionOrderLine::query()->count())->toBe(2)
+        ->and(ProductionTask::query()->count())->toBe(1)
+        ->and(RecipeTask::query()->count())->toBe(2)
+        ->and(ProductionWorker::query()->count())->toBe(2);
 });
