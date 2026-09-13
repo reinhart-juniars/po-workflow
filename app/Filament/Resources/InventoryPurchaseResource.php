@@ -83,6 +83,20 @@ class InventoryPurchaseResource extends Resource
                             ->required()
                             ->live()
                             ->native(false),
+
+                        Forms\Components\Select::make('requisition_id')
+                            ->label('Untuk Form Kebutuhan')
+                            ->options(fn () => \App\Models\Requisition::query()
+                                ->with('productionOrder')
+                                ->orderByDesc('id')
+                                ->limit(100)
+                                ->get()
+                                ->mapWithKeys(fn ($r) => [$r->id => $r->number.' — '.$r->productionOrder?->number.' ('.$r->statusLabel().')'])
+                                ->all())
+                            ->searchable()
+                            ->native(false)
+                            ->columnSpanFull()
+                            ->helperText('Opsional. Menautkan pembelian ini ke form kebutuhan SPK yang menjadi alasannya, sebagai bukti langkah "Diperiksa saat barang dibeli".'),
                     ])
                     ->columns(2),
 

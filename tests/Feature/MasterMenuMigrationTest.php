@@ -2,6 +2,7 @@
 
 use App\Models\InventoryItem;
 use App\Models\InventoryItemPriceHistory;
+use App\Models\Product;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderLine;
 use App\Models\ProductionTask;
@@ -116,7 +117,8 @@ function sumberMasterMenu(): MasterMenuSource
 }
 
 beforeEach(function () {
-    $this->migrator = new MasterMenuMigrationService(sumberMasterMenu());
+    $this->source = sumberMasterMenu();
+    $this->migrator = new MasterMenuMigrationService($this->source);
 });
 
 it('memindahkan bahan ke bawah bucket yang sesuai berikut harganya', function () {
@@ -281,4 +283,31 @@ it('memindahkan pelaksana, template kerja, dan spk master menu sebagai histori',
         ->and(ProductionTask::query()->count())->toBe(1)
         ->and(RecipeTask::query()->count())->toBe(2)
         ->and(ProductionWorker::query()->count())->toBe(2);
+});
+
+it('memetakan resep ke produk hanya untuk nama yang cocok persis', function () {
+    $this->migrator->run();
+
+    // "NASI SAMBAL MATAH 12K" cocok setelah normalisasi (suffix harga dibuang);
+    // "Sambal Matah" tidak punya padanan produk.
+    $produk = Product::query()->create(['name' => 'Nasi Sambal Matah 12K', 'unit' => 'porsi', 'base_price' => 12000, 'active' => true]);
+    Product::query()->create(['name' => 'Nasi Goreng Merah', 'unit' => 'porsi', 'base_price' => 10000, 'active' => true]);
+
+    $this->artisan('inventory:map-recipes-to-products', ['--db' => $this->source->path()])
+        ->assertSuccessful();
+
+    $nasi = Recipe::query()->firstWhere('source_recipe_id', 2);
+    $sambal = Recipe::query()->firstWhere('source_recipe_id', 1);
+
+    expect($nasi->product_id)->toBe($produk->id)
+        // Yang tidak cocok persis tetap kosong: itu keputusan klien.
+        ->and($sambal->product_id)->toBeNull();
+
+    // Pemetaan yang sudah ada tidak ditimpa saat dijalankan lagi.
+    $lain = Product::query()->create(['name' => 'Produk Lain', 'unit' => 'porsi', 'base_price' => 1, 'active' => true]);
+    $nasi->update(['product_id' => $lain->id]);
+
+    $this->artisan('inventory:map-recipes-to-products', ['--db' => $this->source->path()])->assertSuccessful();
+
+    expect($nasi->fresh()->product_id)->toBe($lain->id);
 });

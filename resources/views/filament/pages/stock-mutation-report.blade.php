@@ -8,12 +8,13 @@
     @endphp
 
     @if ($summary)
-        <div class="grid gap-4 md:grid-cols-4">
+        <div class="grid gap-4 md:grid-cols-5">
             @foreach ([
                 ['Bahan Baku Lama', $summary['opening'] ?? 0, null],
                 ['Pembelian', $summary['purchases'] ?? 0, 'Barang berkondisi tidak baik tidak dihitung.'],
                 ['Sisa Stok', $summary['ending'] ?? 0, null],
                 ['Pemakaian', $summary['usage'] ?? 0, null],
+                ['Pemakaian Resep', $summary['usage_recipe'] ?? 0, 'Dari SPK Produksi yang ditutup di periode ini; pembanding residual.'],
             ] as [$label, $value, $note])
                 <x-filament::section>
                     <div class="text-sm text-gray-500 dark:text-gray-400">{{ $label }}</div>

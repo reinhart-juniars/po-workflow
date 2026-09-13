@@ -50,6 +50,9 @@ class InventoryPurchaseFlowService
                 'condition_checked_by' => $data['condition_checked_by'] ?? $purchase->condition_checked_by,
                 'supplier_name' => $data['supplier_name'] ?? null,
                 'notes' => $data['notes'] ?? null,
+                // Tautan ke Form Kebutuhan: pembeliannya tetap lahir di sini,
+                // form hanya menjadi alasannya. Kosong bila tidak disebut.
+                'requisition_id' => array_key_exists('requisition_id', $data) ? ($data['requisition_id'] ?: null) : $purchase->requisition_id,
                 'updated_by' => $actorId,
             ]);
 

@@ -157,3 +157,31 @@ it('menyembunyikan tombol hapus dari pengguna selain owner dan superadmin', func
     Livewire::test(InventoryPurchaseResource\Pages\ListInventoryPurchases::class)
         ->assertTableActionVisible('delete', $this->purchase);
 });
+
+it('menautkan pembelian ke form kebutuhan yang menjadi alasannya', function () {
+    $order = \App\Models\ProductionOrder::query()->create([
+        'title' => 'SPK uji', 'production_date' => '2026-03-10', 'status' => \App\Models\ProductionOrder::STATUS_PLANNED,
+    ]);
+    $requisition = \App\Models\Requisition::query()->create(['production_order_id' => $order->id]);
+
+    Livewire::test(InventoryPurchaseResource\Pages\EditInventoryPurchase::class, [
+        'record' => $this->purchase->getKey(),
+    ])
+        ->fillForm([
+            'inventory_item_id' => $this->item->id,
+            'transaction_date' => '2026-03-10',
+            'total_cost' => 175000,
+            'payment_type' => 'cash',
+            'expense_category_id' => $this->category->id,
+            'cash_account_id' => $this->cashAccount->id,
+            'condition' => InventoryPurchase::CONDITION_GOOD,
+            'requisition_id' => $requisition->id,
+        ])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    // Tautan ini bukti langkah "Diperiksa saat barang dibeli"; pembeliannya
+    // sendiri tetap lahir dari modul Pengeluaran, form hanya alasannya.
+    expect($this->purchase->fresh()->requisition_id)->toBe($requisition->id)
+        ->and($requisition->purchases()->count())->toBe(1);
+});
