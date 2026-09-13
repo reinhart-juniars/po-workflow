@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\InventoryMovement;
 use App\Models\InventoryOpening;
 use App\Models\InventoryPurchase;
 use App\Models\StockOpname;
@@ -10,6 +11,10 @@ use Illuminate\Support\Collection;
 
 class InventoryUsageService
 {
+    public function __construct(
+        protected InventoryLedgerService $ledger,
+    ) {}
+
     public function calculateForItem(int $itemId, CarbonInterface $dateFrom, CarbonInterface $dateTo): array
     {
         return $this->buildItemReport($itemId, $dateFrom, $dateTo)['summary'];
@@ -134,11 +139,23 @@ class InventoryUsageService
             $dateTo
         );
 
+        // Pemakaian menurut resep x produksi (ledger Phase 3) ikut dibawa sebagai
+        // pembanding. Angka residual di atas tidak diubah: selama masa uji
+        // paralel keduanya harus terlihat berdampingan, dan residual tetap
+        // menjadi sumber HPP sampai perbandingannya disetujui.
+        $recipeUsage = round(-$this->ledger->valueForBucket(
+            $itemId,
+            InventoryMovement::TYPE_USAGE,
+            $dateFrom->toDateString(),
+            $dateTo->toDateString(),
+        ), 2);
+
         $summary = [
             'opening' => $opening,
             'purchases' => $purchases,
             'ending' => $ending,
             'usage' => $opening + $purchases - $ending,
+            'usage_recipe' => $recipeUsage,
             'opening_source' => $openingSource,
             'ending_source' => $endingSource,
         ];

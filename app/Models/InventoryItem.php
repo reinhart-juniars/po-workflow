@@ -112,6 +112,12 @@ class InventoryItem extends Model
         return $this->hasMany(RecipeItem::class);
     }
 
+    /** Ledger kuantitas bahan ini. */
+    public function movements(): HasMany
+    {
+        return $this->hasMany(InventoryMovement::class);
+    }
+
     /** Item ini sendiri sebuah bucket, bukan bahan detail. */
     public function isBucket(): bool
     {

@@ -109,6 +109,12 @@ class Recipe extends Model
         return $this->belongsTo(Product::class);
     }
 
+    /** Template kerja paten menu ini. */
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(RecipeTask::class)->orderBy('sort_order')->orderBy('id');
+    }
+
     /** Baris resep lain yang memakai resep ini sebagai sub-menu. */
     public function usedInItems(): HasMany
     {

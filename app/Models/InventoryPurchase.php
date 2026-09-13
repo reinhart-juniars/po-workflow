@@ -23,6 +23,7 @@ class InventoryPurchase extends Model
 
     protected $fillable = [
         'inventory_item_id',
+        'requisition_id',
         'transaction_date',
         'qty',
         'unit_cost',
@@ -47,6 +48,12 @@ class InventoryPurchase extends Model
         'total_value' => 'decimal:2',
         'condition_checked_at' => 'datetime',
     ];
+
+    /** Form kebutuhan yang menjadi alasan pembelian ini, bila ada. */
+    public function requisition(): BelongsTo
+    {
+        return $this->belongsTo(Requisition::class);
+    }
 
     public static function conditionOptions(): array
     {
