@@ -1,0 +1,331 @@
+/*
+  Cangkang 3S Business Control System -- dipakai halaman Blade (layouts.shell)
+  DAN panel Filament (disuntik lewat render hook), jadi ditulis sebagai CSS
+  polos tanpa utilitas Tailwind aplikasi.
+
+  Struktur: bilah aplikasi di atas (Owner / Admin / ... ), sidebar menu
+  aplikasi di kiri, konten di kanan. Gerak: satu momen -- penanda tab & menu
+  aktif "berpindah" antar halaman lewat cross-document view transition --
+  ditambah umpan balik tekan dan hover yang cepat.
+*/
+
+:root {
+  --sh-brand: #3455db;
+  --sh-brand-600: #2644bd;
+  --sh-brand-700: #1d3493;
+  --sh-brand-50: #eef2ff;
+  --sh-brand-100: #e0e7ff;
+  --sh-ink: #0f172a;
+  --sh-ink-2: #334155;
+  --sh-ink-3: #64748b;
+  --sh-line: #e2e8f0;
+  --sh-surface: #ffffff;
+  --sh-bg: #f4f6fb;
+  --sh-danger: #e11d48;
+  --sh-radius: 12px;
+  --sh-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --sh-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --sh-fast: 140ms;
+  --sh-base: 220ms;
+  --sh-slow: 320ms;
+  --sh-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
+  --sh-shadow-md: 0 8px 24px -12px rgba(15, 23, 42, 0.25), 0 2px 6px -2px rgba(15, 23, 42, 0.08);
+}
+
+/* ---------- Perpindahan halaman (MPA view transitions) ---------- */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root) {
+  animation: sh-fade-out 120ms var(--sh-ease) both;
+}
+
+::view-transition-new(root) {
+  animation: sh-fade-in 200ms var(--sh-ease-out) both;
+}
+
+::view-transition-group(sh-app-tab),
+::view-transition-group(sh-nav-active) {
+  animation-duration: 260ms;
+  animation-timing-function: var(--sh-ease-out);
+}
+
+@keyframes sh-fade-out {
+  to { opacity: 0; }
+}
+
+@keyframes sh-fade-in {
+  from { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* ---------- Bilah aplikasi (topbar) ---------- */
+.sh-appbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.sh-appbar-scroll {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px;
+  border-radius: 999px;
+  background: #f1f4f9;
+}
+
+.sh-appbar-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.sh-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  padding: 7px 13px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--sh-ink-3);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color var(--sh-fast) var(--sh-ease), background-color var(--sh-fast) var(--sh-ease), transform var(--sh-fast) var(--sh-ease-out);
+}
+
+.sh-tab svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  opacity: 0.75;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .sh-tab:hover {
+    color: var(--sh-ink);
+    background: rgba(255, 255, 255, 0.7);
+  }
+}
+
+.sh-tab:active {
+  transform: scale(0.97);
+}
+
+.sh-tab:focus-visible {
+  outline: 2px solid var(--sh-brand);
+  outline-offset: 2px;
+}
+
+.sh-tab.is-active {
+  color: var(--sh-brand-700);
+  background: var(--sh-surface);
+  box-shadow: var(--sh-shadow-sm);
+  view-transition-name: sh-app-tab;
+}
+
+.sh-tab.is-active svg {
+  opacity: 1;
+  color: var(--sh-brand);
+}
+
+/* Nama aplikasi di atas sidebar (Blade memakai .shell-app-name dari app.css) */
+.sh-app-name {
+  margin: 0 0 12px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--sh-brand-50);
+  color: var(--sh-brand-700);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* ---------- Menu pengguna ---------- */
+.sh-user {
+  position: relative;
+}
+
+.sh-user > summary {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px;
+  padding-right: 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color var(--sh-fast) var(--sh-ease), transform var(--sh-fast) var(--sh-ease-out);
+}
+
+.sh-user > summary::-webkit-details-marker {
+  display: none;
+}
+
+.sh-user > summary:hover {
+  background: #f1f4f9;
+}
+
+.sh-user > summary:active {
+  transform: scale(0.97);
+}
+
+.sh-user > summary:focus-visible {
+  outline: 2px solid var(--sh-brand);
+  outline-offset: 2px;
+}
+
+.sh-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--sh-brand) 0%, var(--sh-brand-700) 100%);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.sh-user-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--sh-ink-2);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sh-user-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 232px;
+  padding: 6px;
+  border-radius: 14px;
+  border: 1px solid var(--sh-line);
+  background: var(--sh-surface);
+  box-shadow: var(--sh-shadow-md);
+  transform-origin: top right;
+  animation: sh-pop 160ms var(--sh-ease-out) both;
+  z-index: 60;
+}
+
+@keyframes sh-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.96);
+  }
+}
+
+.sh-user-menu-head {
+  padding: 8px 10px 10px;
+  border-bottom: 1px solid var(--sh-line);
+  margin-bottom: 6px;
+}
+
+.sh-user-menu-head strong {
+  display: block;
+  font-size: 13.5px;
+  color: var(--sh-ink);
+}
+
+.sh-user-menu-head span {
+  display: block;
+  font-size: 12px;
+  color: var(--sh-ink-3);
+  margin-top: 2px;
+}
+
+.sh-user-menu a,
+.sh-user-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 9px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--sh-ink-2);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--sh-fast) var(--sh-ease), color var(--sh-fast) var(--sh-ease);
+}
+
+.sh-user-menu a svg,
+.sh-user-menu button svg {
+  width: 16px;
+  height: 16px;
+  color: var(--sh-ink-3);
+}
+
+.sh-user-menu a:hover,
+.sh-user-menu button:hover {
+  background: #f1f4f9;
+  color: var(--sh-ink);
+}
+
+.sh-user-menu .is-danger {
+  color: var(--sh-danger);
+}
+
+.sh-user-menu .is-danger svg {
+  color: var(--sh-danger);
+}
+
+.sh-user-menu .is-danger:hover {
+  background: #fff1f2;
+}
+
+/* ---------- Umpan balik tekan untuk tombol Filament ---------- */
+.fi-btn,
+.fi-icon-btn {
+  transition: transform var(--sh-fast) var(--sh-ease-out), background-color var(--sh-fast) var(--sh-ease), color var(--sh-fast) var(--sh-ease), box-shadow var(--sh-fast) var(--sh-ease);
+}
+
+.fi-btn:active,
+.fi-icon-btn:active {
+  transform: scale(0.97);
+}
+
+.fi-sidebar-item-button {
+  transition: background-color var(--sh-fast) var(--sh-ease), color var(--sh-fast) var(--sh-ease);
+}
+
+.fi-sidebar-item-active .fi-sidebar-item-button {
+  view-transition-name: sh-nav-active;
+}
+
+/* Topbar Filament: bilah aplikasi mengisi ruang di antara tombol sidebar dan menu pengguna */
+.fi-topbar nav > .sh-appbar {
+  flex: 1 1 auto;
+  margin-inline: 8px;
+}
+
+/* ---------- Permukaan browser ---------- */
+::selection {
+  background: var(--sh-brand-100);
+  color: var(--sh-ink);
+}

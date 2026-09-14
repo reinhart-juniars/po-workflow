@@ -686,12 +686,13 @@
 }
 
 /* ------------------------------------------------------------------
-   Cangkang 3S BCS (layouts/shell.blade.php): tampilan disamakan dengan
-   panel Filament supaya halaman Blade dan halaman inventory terasa satu.
+   Cangkang 3S BCS (layouts/shell.blade.php): sidebar menu aplikasi.
+   Bilah aplikasi & menu pengguna ada di resources/css/shell.css karena
+   dipakai juga oleh panel Filament.
    ------------------------------------------------------------------ */
 @layer components {
     .shell-body {
-        background: #f9fafb;
+        background: #f4f6fb;
     }
 
     .shell-body .app-card,
@@ -699,51 +700,46 @@
         @apply rounded-xl border border-gray-200 bg-white shadow-sm backdrop-blur-0;
     }
 
+    .shell-app-name {
+        @apply rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-brand-700;
+    }
+
+    .shell-section-title {
+        @apply px-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400;
+    }
+
     .shell-icon {
-        @apply h-5 w-5 shrink-0 text-gray-400;
+        @apply h-4 w-4 shrink-0 text-gray-400;
     }
 
     .shell-item {
-        @apply flex items-center gap-x-3 rounded-lg px-2 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100;
+        @apply flex items-center gap-x-2.5 rounded-lg px-2 py-2 text-sm font-medium text-gray-600 transition-[background-color,color,transform] duration-150 ease-out hover:bg-gray-100 hover:text-gray-900 active:scale-[0.98];
+    }
+
+    .shell-item:focus-visible {
+        @apply outline-none ring-2 ring-brand-500/60;
+    }
+
+    .shell-bullet {
+        @apply ml-1 h-1.5 w-1.5 shrink-0 rounded-full bg-gray-300 transition-[background-color,transform] duration-150 ease-out;
     }
 
     .shell-item-active {
-        @apply bg-brand-50 text-brand-600;
+        @apply bg-brand-50 text-brand-700;
+        view-transition-name: sh-nav-active;
+    }
+
+    .shell-item-active .shell-bullet {
+        @apply scale-125 bg-brand-600;
     }
 
     .shell-item-active .shell-icon {
         @apply text-brand-600;
     }
 
-    .shell-group summary::-webkit-details-marker {
-        display: none;
-    }
-
-    .shell-group-label {
-        @apply flex cursor-pointer list-none items-center gap-x-3 rounded-lg px-2 py-2 text-sm font-medium text-gray-700 select-none hover:bg-gray-100;
-    }
-
-    .shell-chevron {
-        @apply h-4 w-4 text-gray-400 transition-transform;
-    }
-
-    .shell-group[open] .shell-chevron {
-        @apply rotate-180;
-    }
-
-    .shell-subitem {
-        @apply flex items-center gap-x-3 rounded-lg py-2 pl-3 pr-2 text-sm font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-900;
-    }
-
-    .shell-bullet {
-        @apply ml-1 h-1.5 w-1.5 shrink-0 rounded-full bg-gray-300;
-    }
-
-    .shell-subitem-active {
-        @apply bg-brand-50 text-brand-600;
-    }
-
-    .shell-subitem-active .shell-bullet {
-        @apply bg-brand-600;
+    /* Tombol aplikasi lama ikut merasakan tekanan */
+    .btn-primary,
+    .btn-ghost {
+        @apply transition-[background-color,color,transform,border-color] duration-150 ease-out active:scale-[0.97];
     }
 }

@@ -2,11 +2,12 @@
 
 Aplikasi internal W3S Catering: purchase order → SPK → pengiriman → penjualan aktual,
 ditambah inventory, kas/pengeluaran, dan laporan keuangan. Laravel 12 / PHP 8.2 / MySQL,
-satu antarmuka **3S Business Control System**: sidebar & menu didefinisikan sekali di
-`App\Support\Navigation` dan dirender oleh layout Blade (`layouts.shell`, halaman
-pesanan/akunting/sales/...) maupun panel Filament di `/inventory` (inventory, resep,
-produksi, pengaturan). Satu login (`/login`), satu sesi, satu tampilan; path lama
-`/admin` diarahkan ke `/inventory`.
+satu antarmuka **3S Business Control System**: bilah aplikasi di atas (Owner, Admin,
+Accounting, Inventory, Sales, Production, Delivery) dan menu aplikasi di sidebar, didefinisikan
+sekali di `App\Support\Navigation` dan dirender oleh layout Blade (`layouts.shell`) maupun panel
+Filament di `/inventory` (inventory, resep, produksi, pengaturan). Satu login (`/login`), satu
+sesi, satu tampilan (`resources/css/shell.css` dipakai keduanya); path lama `/admin` diarahkan ke
+`/inventory`.
 
 ## Modul Inventory Terpadu
 

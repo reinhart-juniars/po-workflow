@@ -12,6 +12,8 @@ use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
+use Illuminate\Support\Facades\Vite;
 
 /**
  * Panel Filament untuk modul inventory / resep / produksi -- bagian dari
@@ -60,15 +62,19 @@ class AdminPanelProvider extends PanelProvider
                     ->icon('heroicon-m-user-circle'),
             ])
 
-            // Menu 3S BCS yang sama dengan layout Blade: grup & urutannya dari
-            // Navigation::GROUPS, halaman Blade masuk sebagai tautan, halaman
-            // Filament didaftarkan resource/page masing-masing pada grup yang
-            // sama. Grup tanpa item untuk peran tertentu otomatis hilang.
+            // Sidebar = menu aplikasi Inventory: nama & urutan grupnya dari
+            // Navigation::menus()['inventory']; resource/page mendaftar sendiri
+            // ke grup itu. Grup tanpa item untuk peran tertentu otomatis hilang.
             ->navigationGroups(array_map(
-                fn (array $group) => NavigationGroup::make($group['label'])->icon($group['icon']),
-                Navigation::GROUPS,
+                fn (string $label) => NavigationGroup::make($label),
+                array_keys(Navigation::menus()['inventory']),
             ))
-            ->navigationItems(Navigation::filamentItems())
+
+            // Bilah aplikasi (Owner / Admin / ...) dan gaya cangkang yang sama
+            // dengan layout Blade, disuntik ke topbar & head panel.
+            ->renderHook(PanelsRenderHook::HEAD_END, fn () => Vite::withEntryPoints(['resources/css/shell.css'])->toHtml())
+            ->renderHook(PanelsRenderHook::TOPBAR_START, fn () => view('partials.app-bar', ['currentApp' => 'inventory']))
+            ->renderHook(PanelsRenderHook::SIDEBAR_NAV_START, fn () => '<p class="sh-app-name">Inventory</p>')
 
             // Panel memakai grup middleware 'web' milik aplikasi ini, bukan
             // daftar sendiri, supaya cookie, sesi, dan CSRF-nya persis sama
