@@ -30,10 +30,10 @@ use Spatie\Permission\Models\Role;
  * sambung atau kolom yang tidak ikut tersimpan baru ketahuan di sini.
  */
 beforeEach(function () {
-    Role::findOrCreate('accounting', 'web');
+    Role::findOrCreate('admin', 'web');
 
     $this->user = User::factory()->create(['is_active' => true, 'force_password_change' => false]);
-    $this->user->assignRole('accounting');
+    $this->user->assignRole('admin');
     $this->actingAs($this->user);
 
     $bucket = InventoryItem::query()->create([

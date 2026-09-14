@@ -81,8 +81,9 @@ it('meloloskan pengguna yang sudah login dari pagar autentikasi', function () {
 });
 
 it('membuka halaman inventory untuk pengguna yang sudah login', function () {
-    // Resource inventory belum dijaga policy, jadi di sinilah 200 benar-benar
-    // bisa dituntut -- membuktikan pagar login bukan sekadar menolak semua.
+    // Akunting memegang inventory.view (ModuleAccess), jadi di sinilah 200
+    // benar-benar bisa dituntut -- membuktikan pagar login bukan sekadar
+    // menolak semua. Matriks izin per peran diuji di ModuleAccessTest.
     $user = penggunaPanel();
 
     $this->actingAs($user);

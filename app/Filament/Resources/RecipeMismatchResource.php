@@ -91,6 +91,7 @@ class RecipeMismatchResource extends Resource
             ])
             ->actions([
                 Tables\Actions\Action::make('tautkan')
+                    ->authorize('recipe.manage')
                     ->label('Tautkan')
                     ->icon('heroicon-m-link')
                     ->visible(fn (RecipeMismatch $record) => ! $record->isResolved())
@@ -122,6 +123,7 @@ class RecipeMismatchResource extends Resource
                     }),
 
                 Tables\Actions\Action::make('buat_bahan')
+                    ->authorize('recipe.manage')
                     ->label('Buat Bahan')
                     ->icon('heroicon-m-plus-circle')
                     ->color('gray')
@@ -176,6 +178,7 @@ class RecipeMismatchResource extends Resource
                     }),
 
                 Tables\Actions\Action::make('abaikan')
+                    ->authorize('recipe.manage')
                     ->label('Abaikan')
                     ->icon('heroicon-m-eye-slash')
                     ->color('gray')
@@ -197,6 +200,7 @@ class RecipeMismatchResource extends Resource
                     }),
 
                 Tables\Actions\Action::make('buka_ulang')
+                    ->authorize('recipe.manage')
                     ->label('Buka Ulang')
                     ->icon('heroicon-m-arrow-uturn-left')
                     ->color('warning')

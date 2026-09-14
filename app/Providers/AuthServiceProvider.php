@@ -14,10 +14,10 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected $policies = [
         \App\Models\PurchaseOrder::class => \App\Policies\PurchaseOrderPolicy::class,
-        \App\Models\Spk::class           => \App\Policies\SpkPolicy::class,
+        \App\Models\Spk::class => \App\Policies\SpkPolicy::class,
         \App\Models\DeliveryOrder::class => \App\Policies\DeliveryOrderPolicy::class,
-        \App\Models\User::class          => \App\Policies\UserPolicy::class,
-        \App\Models\Product::class       => \App\Policies\ProductPolicy::class,
+        \App\Models\User::class => \App\Policies\UserPolicy::class,
+        \App\Models\Product::class => \App\Policies\ProductPolicy::class,
         // tambahkan policy lain di sini nanti, misal:
         // \App\Models\Spk::class => \App\Policies\SpkPolicy::class,
     ];
@@ -28,15 +28,18 @@ class AuthServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerPolicies();
-        
-        Gate::define('assignRoles', fn($user) => 
-        $user->hasRole('owner'));
 
-        Gate::define('manage-po', fn($user) =>
-        $user->hasAnyRole(['owner','admin','administrator']));
+        // Superadmin memegang semua izin modul tanpa perlu disebut di matriks
+        // ModuleAccess; peran lain diputuskan policy masing-masing (null =
+        // lanjut ke policy, bukan tolak).
+        Gate::before(fn ($user) => $user->hasRole('superadmin') ? true : null);
+
+        Gate::define('assignRoles', fn ($user) => $user->hasRole('owner'));
+
+        Gate::define('manage-po', fn ($user) => $user->hasAnyRole(['owner', 'admin', 'administrator']));
 
         // contoh Gate tambahan kalau kamu perlu nanti
         // Gate::define('isAdmin', fn ($user) => $user->role === 'admin');
-        
+
     }
 }

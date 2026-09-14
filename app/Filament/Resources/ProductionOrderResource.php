@@ -232,6 +232,7 @@ class ProductionOrderResource extends Resource
     public static function generateFromSpkAction(): \Filament\Actions\Action
     {
         return \Filament\Actions\Action::make('dari_spk')
+            ->authorize('production.manage')
             ->label('Buat dari Slot SPK')
             ->icon('heroicon-m-arrow-path')
             ->form([

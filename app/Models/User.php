@@ -18,14 +18,18 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     /**
      * Peran yang boleh membuka panel admin Filament.
      *
-     * Panel berisi master data dan modul inventory; staf sales dan delivery
+     * Panel berisi master data, modul inventory, dan modul produksi (SPK
+     * Produksi & Form Kebutuhan dipakai tim produksi); staf sales dan delivery
      * bekerja lewat aplikasi Blade masing-masing dan tidak membutuhkannya.
+     * Apa yang boleh dibuka tiap peran di dalam panel diputuskan izin modul
+     * (App\Support\Access\ModuleAccess), bukan daftar ini.
      */
     public const PANEL_ROLES = [
         'superadmin',
         'owner',
         'admin',
         'accounting',
+        'production',
     ];
 
     public const MANAGEABLE_ROLES = [

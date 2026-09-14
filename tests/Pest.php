@@ -13,6 +13,9 @@
 
 pest()->extend(Tests\TestCase::class)
     ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+    // Policy modul membaca izin spatie; tanpa sinkron ini setiap peran di tes
+    // akan kosong izin dan seluruh panel membalas 403.
+    ->beforeEach(fn () => App\Support\Access\ModuleAccess::sync())
     ->in('Feature');
 
 /*

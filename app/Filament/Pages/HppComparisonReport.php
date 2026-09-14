@@ -32,6 +32,11 @@ class HppComparisonReport extends Page implements HasForms
 
     protected static ?int $navigationSort = 40;
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->can('ledger.view') ?? false;
+    }
+
     protected static string $view = 'filament.pages.hpp-comparison-report';
 
     protected static ?string $title = 'Perbandingan HPP: Resep vs Opname';

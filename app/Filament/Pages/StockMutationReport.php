@@ -32,6 +32,11 @@ class StockMutationReport extends Page implements HasForms
 
     protected static ?int $navigationSort = 50;
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->can('inventory.view') ?? false;
+    }
+
     protected static string $view = 'filament.pages.stock-mutation-report';
 
     protected static ?string $title = 'Laporan Mutasi Stok';

@@ -19,14 +19,14 @@ use Spatie\Permission\Models\Role;
  * sebelum tersimpan.
  */
 beforeEach(function () {
-    Role::findOrCreate('accounting', 'web');
+    Role::findOrCreate('admin', 'web');
 
     $this->user = User::factory()->create([
         'is_active' => true,
         'force_password_change' => false,
     ]);
 
-    $this->user->assignRole('accounting');
+    $this->user->assignRole('admin');
     $this->actingAs($this->user);
 
     $this->bucket = InventoryItem::query()->create([

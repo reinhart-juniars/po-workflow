@@ -181,6 +181,8 @@ class RequisitionForm extends Page implements HasForms
     /** Simpan isian sesuai tahap form saat ini. */
     public function save(): void
     {
+        abort_unless(auth()->user()?->can('production.manage'), 403);
+
         $requisition = $this->getRequisition();
 
         if (! $requisition) {
@@ -236,6 +238,7 @@ class RequisitionForm extends Page implements HasForms
         return [
             Actions\Action::make('susun')
                 ->label(fn () => $this->getRequisition() ? 'Segarkan Kebutuhan' : 'Susun Form')
+                ->authorize('production.manage')
                 ->icon('heroicon-m-calculator')
                 ->color(fn () => $this->getRequisition() ? 'gray' : 'primary')
                 ->visible(function () {
@@ -271,6 +274,7 @@ class RequisitionForm extends Page implements HasForms
             Actions\Action::make('simpan')
                 ->label('Simpan Isian')
                 ->icon('heroicon-m-check')
+                ->authorize('production.manage')
                 ->visible(function () {
                     $requisition = $this->getRequisition();
 
@@ -281,6 +285,7 @@ class RequisitionForm extends Page implements HasForms
 
             Actions\Action::make('setujui')
                 ->label('Setujui')
+                ->authorize('requisition.approve')
                 ->icon('heroicon-m-hand-thumb-up')
                 ->color('info')
                 ->visible(fn () => $this->getRequisition()?->isDraft() ?? false)
@@ -303,6 +308,7 @@ class RequisitionForm extends Page implements HasForms
 
             Actions\Action::make('periksa')
                 ->label('Periksa (Barang Dibeli)')
+                ->authorize('requisition.check')
                 ->icon('heroicon-m-truck')
                 ->color('success')
                 ->visible(fn () => $this->getRequisition()?->isApproved() ?? false)
@@ -323,6 +329,7 @@ class RequisitionForm extends Page implements HasForms
 
             Actions\Action::make('tutup')
                 ->label('Tutup SPK (Posting Pemakaian)')
+                ->authorize('production.complete')
                 ->icon('heroicon-m-lock-closed')
                 ->color('warning')
                 ->visible(fn () => ($this->getRequisition()?->isChecked() ?? false) && ! $this->getOrder()->fresh()->isCompleted())

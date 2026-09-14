@@ -119,6 +119,8 @@ class ProductionTasks extends Page implements HasForms
 
     public function save(): void
     {
+        abort_unless(auth()->user()?->can('production.manage'), 403);
+
         $this->form->getState();
         $this->form->saveRelationships();
 
@@ -131,6 +133,7 @@ class ProductionTasks extends Page implements HasForms
 
         return [
             Actions\Action::make('salin')
+                ->authorize('production.manage')
                 ->label('Salin dari Template Menu')
                 ->icon('heroicon-m-document-duplicate')
                 ->color('gray')
@@ -147,6 +150,7 @@ class ProductionTasks extends Page implements HasForms
                 }),
 
             Actions\Action::make('simpan')
+                ->authorize('production.manage')
                 ->label('Simpan')
                 ->icon('heroicon-m-check')
                 ->action(fn () => $this->save()),

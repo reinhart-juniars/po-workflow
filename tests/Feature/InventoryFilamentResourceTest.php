@@ -16,6 +16,7 @@ beforeEach(function () {
         'force_password_change' => false,
         'is_active' => true,
     ]);
+    $this->user->assignRole('admin');
 
     $this->actingAs($this->user);
 });

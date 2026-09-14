@@ -32,6 +32,7 @@ class ListRecipes extends ListRecords
                 )),
 
             Actions\Action::make('import')
+                ->authorize('recipe.manage')
                 ->label('Import Excel')
                 ->icon('heroicon-m-arrow-up-tray')
                 ->color('gray')

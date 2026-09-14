@@ -30,6 +30,7 @@ class ListInventoryItems extends ListRecords
                 )),
 
             Actions\Action::make('import')
+                ->authorize('inventory.manage')
                 ->label('Import Excel')
                 ->icon('heroicon-m-arrow-up-tray')
                 ->color('gray')

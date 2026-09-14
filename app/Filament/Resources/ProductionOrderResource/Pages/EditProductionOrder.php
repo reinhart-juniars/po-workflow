@@ -22,6 +22,7 @@ class EditProductionOrder extends EditRecord
 
         return [
             Actions\Action::make('segarkan')
+                ->authorize('production.manage')
                 ->label('Segarkan dari PO')
                 ->icon('heroicon-m-arrow-path')
                 ->color('gray')
@@ -42,6 +43,7 @@ class EditProductionOrder extends EditRecord
                 }),
 
             Actions\Action::make('siap')
+                ->authorize('production.manage')
                 ->label('Tandai Siap Produksi')
                 ->icon('heroicon-m-check')
                 ->color('info')
@@ -76,6 +78,7 @@ class EditProductionOrder extends EditRecord
                 ->action(fn () => app(ProductionDocumentService::class)->productionOrderPdf($order)),
 
             Actions\Action::make('batalkan')
+                ->authorize('production.manage')
                 ->label('Batalkan')
                 ->icon('heroicon-m-x-mark')
                 ->color('danger')
