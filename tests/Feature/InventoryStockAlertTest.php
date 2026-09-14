@@ -151,6 +151,6 @@ it('menyampaikan alert stok minimum sebagai notifikasi di dashboard, sekali per 
     $this->actingAs($produksi);
     session()->forget('inventory_stock_alert_notified_on');
 
-    Livewire::test(Dashboard::class)->assertOk()->assertNotNotified();
+    Livewire::test(Dashboard::class)->assertForbidden();
     expect(LowStockAlertWidget::canView())->toBeFalse();
 });

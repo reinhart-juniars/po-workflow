@@ -28,7 +28,7 @@ class InventoryMovementResource extends Resource
 
     protected static ?string $navigationLabel = 'Ledger Stok';
 
-    protected static ?int $navigationSort = 30;
+    protected static ?int $navigationSort = 50;
 
     protected static ?string $modelLabel = 'Gerakan Stok';
 

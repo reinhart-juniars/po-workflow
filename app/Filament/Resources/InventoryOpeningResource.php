@@ -20,7 +20,7 @@ class InventoryOpeningResource extends Resource
 
     protected static ?string $navigationGroup = 'Inventory';
 
-    protected static ?string $navigationLabel = 'Saldo Awal';
+    protected static ?string $navigationLabel = 'Saldo Awal Stok';
 
     protected static ?int $navigationSort = 40;
 

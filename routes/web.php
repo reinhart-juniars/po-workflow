@@ -20,8 +20,6 @@ use App\Http\Controllers\DeliveryAppController;
 use App\Http\Controllers\FinalReportController;
 use App\Http\Controllers\FinancialController;
 use App\Http\Controllers\IncomeCategoryController;
-use App\Http\Controllers\InventoryItemController;
-use App\Http\Controllers\InventoryOpeningController;
 use App\Http\Controllers\InventoryPurchaseController;
 use App\Http\Controllers\InventoryUsageReportController;
 use App\Http\Controllers\OwnerAppController;
@@ -29,7 +27,6 @@ use App\Http\Controllers\OwnerUserController;
 use App\Http\Controllers\ProductionAppController;
 use App\Http\Controllers\ProfitLossReportController;
 use App\Http\Controllers\SalesAppController;
-use App\Http\Controllers\StockOpnameController;
 use App\Http\Controllers\SuperadminBackupController;
 use App\Http\Controllers\SuperadminDashboardController;
 use App\Http\Controllers\UserProfileController;
@@ -259,13 +256,19 @@ Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:sales|ow
         Route::get('/reports/sales/export/pdf', [SalesAppController::class, 'exportSalesPdf'])->name('reports.sales.export.pdf');
     });
 
-// Panel Filament pindah dari /admin ke /inventory-app (Inventory App); tautan
+// Panel Filament pindah dari /admin ke /inventory; tautan
 // dan bookmark lama diarahkan ke tempat baru. Diletakkan sebelum grup lain
 // supaya /admin-app (aplikasi Blade) tidak ikut tertangkap: pola ini hanya
 // cocok untuk /admin dan /admin/... .
-Route::get('/admin/{path?}', fn (?string $path = null) => redirect('/inventory-app'.($path ? '/'.$path : ''), 301))
+Route::get('/admin/{path?}', fn (?string $path = null) => redirect('/inventory'.($path ? '/'.$path : ''), 301))
     ->where('path', '.*')
     ->name('admin.legacy-redirect');
+
+// Akar panel inventory tidak punya halaman sendiri: beranda sistem adalah
+// dashboard peran pengguna.
+Route::get('/inventory', fn () => redirect(auth()->check() ? \App\Support\Navigation::dashboardUrl(auth()->user()) : route('login')))
+    ->middleware('web')
+    ->name('inventory.home');
 
 Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:superadmin'])
     ->prefix('superadmin')
@@ -410,13 +413,15 @@ Route::middleware(['web', 'auth', 'ensure.role:accounting|owner|superadmin'])
         Route::delete('/cash-account-transfers/{cashAccountTransfer}', [AccountingAppController::class, 'cashAccountTransfersDestroy'])
             ->name('cash-account-transfers.destroy');
         Route::resource('income-categories', IncomeCategoryController::class)->except(['show']);
-        Route::resource('inventory-items', InventoryItemController::class)->except(['show']);
-        Route::resource('inventory-openings', InventoryOpeningController::class)->except(['show']);
+        // Master item, saldo awal stok, dan opname kini satu pemilik: modul
+        // inventory (Filament). Route lama dipertahankan sebagai pengalih.
+        Route::get('/inventory-items', fn () => redirect()->route('filament.admin.resources.inventory-items.index'))->name('inventory-items.index');
+        Route::get('/inventory-openings', fn () => redirect()->route('filament.admin.resources.inventory-openings.index'))->name('inventory-openings.index');
+        Route::get('/stock-opnames', fn () => redirect()->route('filament.admin.resources.stock-opnames.index'))->name('stock-opnames.index');
         Route::resource('inventory-purchases', InventoryPurchaseController::class)->except(['show', 'destroy']);
         Route::delete('/inventory-purchases/{inventoryPurchase}', [InventoryPurchaseController::class, 'destroy'])
             ->middleware('ensure.role:owner,superadmin')
             ->name('inventory-purchases.destroy');
-        Route::resource('stock-opnames', StockOpnameController::class)->except(['show']);
 
         // optional: edit & update pengeluaran
         Route::get('/expenses/{cashOut}/edit', [AccountingAppController::class, 'expensesEdit'])->name('expenses.edit');

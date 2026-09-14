@@ -61,6 +61,20 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        // Akun nonaktif tidak boleh masuk walau kata sandinya benar; sesi yang
+        // terlanjur dibuat Auth::attempt dibatalkan lagi supaya penolakan ini
+        // sungguhan, bukan sekadar pesan di layar.
+        if (! Auth::user()?->is_active) {
+            Auth::logout();
+            $this->session()->invalidate();
+            $this->session()->regenerateToken();
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                $loginField => 'Akun ini nonaktif. Hubungi pemilik untuk mengaktifkannya kembali.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 

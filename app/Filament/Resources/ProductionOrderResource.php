@@ -36,7 +36,7 @@ class ProductionOrderResource extends Resource
 
     protected static ?string $navigationLabel = 'SPK Produksi';
 
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 30;
 
     protected static ?string $modelLabel = 'SPK Produksi';
 

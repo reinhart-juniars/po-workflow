@@ -27,7 +27,7 @@ class HppComparisonReport extends Page implements HasForms
 
     protected static ?string $navigationIcon = 'heroicon-o-scale';
 
-    protected static ?string $navigationGroup = 'Produksi';
+    protected static ?string $navigationGroup = 'Resep & HPP';
 
     protected static ?string $navigationLabel = 'Perbandingan HPP';
 

@@ -31,7 +31,7 @@ class ModuleSettings extends Page implements HasForms
 
     protected static ?string $navigationLabel = 'Pengaturan';
 
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 20;
 
     protected static ?string $slug = 'pengaturan';
 

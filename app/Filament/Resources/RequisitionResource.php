@@ -23,7 +23,7 @@ class RequisitionResource extends Resource
 
     protected static ?string $navigationLabel = 'Form Kebutuhan';
 
-    protected static ?int $navigationSort = 20;
+    protected static ?int $navigationSort = 40;
 
     protected static ?string $modelLabel = 'Form Kebutuhan';
 

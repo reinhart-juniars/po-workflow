@@ -35,11 +35,11 @@ class RecipeResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-book-open';
 
-    protected static ?string $navigationGroup = 'Inventory';
+    protected static ?string $navigationGroup = 'Resep & HPP';
 
     protected static ?string $navigationLabel = 'Resep & Menu';
 
-    protected static ?int $navigationSort = 30;
+    protected static ?int $navigationSort = 10;
 
     protected static ?string $modelLabel = 'Resep';
 

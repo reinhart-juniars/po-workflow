@@ -17,11 +17,22 @@ class Dashboard extends BaseDashboard
 {
     protected const ALERT_SESSION_KEY = 'inventory_stock_alert_notified_on';
 
+    protected static ?string $navigationIcon = 'heroicon-o-bell-alert';
+
+    // Bukan beranda panel: beranda sistem adalah dashboard peran (Blade).
+    protected static string $routePath = 'stok-minimum';
+
+    protected static ?string $navigationGroup = 'Inventory';
+
+    protected static ?string $navigationLabel = 'Stok Minimum';
+
+    protected static ?int $navigationSort = 50;
+
+    protected static ?string $title = 'Stok Minimum';
+
     public static function canAccess(): bool
     {
-        // Semua peran yang boleh membuka panel boleh melihat dashboard;
-        // isinya (widget) menyaring diri lewat izin masing-masing.
-        return auth()->check();
+        return auth()->user()?->can('inventory.view') ?? false;
     }
 
     public function mount(): void

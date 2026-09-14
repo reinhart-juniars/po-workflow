@@ -2,10 +2,11 @@
 
 Aplikasi internal W3S Catering: purchase order → SPK → pengiriman → penjualan aktual,
 ditambah inventory, kas/pengeluaran, dan laporan keuangan. Laravel 12 / PHP 8.2 / MySQL,
-dua lapis antarmuka: aplikasi Blade per peran (`/owner-app`, `/admin-app`, …) dan
-**Inventory App** di `/inventory-app` — panel Filament yang memakai header, warna, font,
-pengalih aplikasi, dan sesi login yang sama dengan aplikasi Blade (path lama `/admin`
-diarahkan ke sana).
+satu antarmuka **3S Business Control System**: sidebar & menu didefinisikan sekali di
+`App\Support\Navigation` dan dirender oleh layout Blade (`layouts.shell`, halaman
+pesanan/akunting/sales/...) maupun panel Filament di `/inventory` (inventory, resep,
+produksi, pengaturan). Satu login (`/login`), satu sesi, satu tampilan; path lama
+`/admin` diarahkan ke `/inventory`.
 
 ## Modul Inventory Terpadu
 
@@ -17,7 +18,7 @@ menggantikan HPP residual opname dengan pemakaian bahan riil dari resep × produ
 | 1 | Item inventaris bertingkat (bucket → bahan), pembelian, opname, saldo awal, laporan mutasi, import/export Excel | Inventory |
 | 2 | Resep & sub-resep, Analisa HPP, aturan konversi satuan per bahan + pendeteksi pasangan yang belum diatur, Bahan Belum Cocok (pencocokan nama), import/export resep | Inventory |
 | 3 | SPK Produksi dari slot SPK/PO, Form Kebutuhan bertahap (Dibuat → Disetujui → Diperiksa → Tutup SPK), ledger stok per bahan, lembar kerja, plating, PDF, Perbandingan HPP resep vs opname | Produksi |
-| 4 | Izin modul (spatie permission) per peran, Pengaturan modul, navigasi terpadu, validasi & pembersihan pasca migrasi, runbook cutover & UAT | Sistem |
+| 4 | Izin modul (spatie permission) per peran, Pengaturan modul, cangkang & menu 3S terpadu (satu sumber untuk Blade dan Filament), validasi & pembersihan pasca migrasi, runbook cutover & UAT | Sistem |
 
 Dokumen:
 
@@ -55,7 +56,7 @@ bila tidak ada.
 
 ## Keamanan
 
-- Inventory App (`/inventory-app`) hanya untuk peran `superadmin`, `owner`, `admin`, `accounting`, `production`;
-  di dalamnya setiap resource dijaga policy berbasis izin modul (`tests/Feature/Security/`).
+- Halaman inventory (`/inventory/...`) hanya untuk peran `superadmin`, `owner`, `admin`, `accounting`, `production`;
+  setiap resource dijaga policy berbasis izin modul (`tests/Feature/Security/`). Halaman Blade dijaga `ensure.role`.
 - Tes arsitektur menolak resource/halaman panel baru yang tidak punya policy/`canAccess`.
 - Rahasia hanya di `.env` (gitignored; di server mode 600 milik user deploy).

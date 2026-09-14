@@ -68,3 +68,25 @@ test('users can logout', function () {
     assertGuest();
     $response->assertRedirect('/');
 });
+
+test('inactive users can not authenticate even with the right password', function () {
+    $user = User::factory()->create(['is_active' => false]);
+
+    $response = $this->post('/login', ['email' => $user->email, 'password' => 'password']);
+
+    $response->assertSessionHasErrors('email');
+    $this->assertGuest();
+
+    // Positive control: akun yang sama, setelah diaktifkan, bisa masuk.
+    $user->update(['is_active' => true]);
+    $this->post('/login', ['email' => $user->email, 'password' => 'password']);
+    $this->assertAuthenticated();
+});
+
+test('users can authenticate with their name instead of email', function () {
+    $user = User::factory()->create(['name' => 'Karyawan Dapur', 'is_active' => true]);
+
+    $this->post('/login', ['name' => 'Karyawan Dapur', 'password' => 'password']);
+
+    $this->assertAuthenticated();
+});

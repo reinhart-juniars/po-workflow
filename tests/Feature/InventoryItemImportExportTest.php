@@ -1,13 +1,11 @@
 <?php
 
 use App\Exports\InventoryItemsExport;
-use App\Filament\Pages\StockMutationReport;
 use App\Imports\InventoryItemsImport;
 use App\Models\InventoryItem;
 use App\Models\InventoryPurchase;
 use App\Models\StockOpname;
 use App\Models\User;
-use Livewire\Livewire;
 use Maatwebsite\Excel\Facades\Excel;
 
 /** Menulis berkas CSV sementara dengan heading yang sama seperti hasil export. */
@@ -220,7 +218,7 @@ it('menerima label kategori dan angka berformat indonesia', function () {
     unlink($path);
 });
 
-it('menampilkan mutasi stok memakai angka yang sama dengan laporan pemakaian bahan', function () {
+it('menampilkan pemakaian residual dan pemakaian resep berdampingan di laporan pemakaian bahan', function () {
     $item = InventoryItem::query()->create([
         'name' => 'Tepung Terigu',
         'unit' => 'kg',
@@ -255,17 +253,16 @@ it('menampilkan mutasi stok memakai angka yang sama dengan laporan pemakaian bah
         'total_value' => 40000,
     ]);
 
-    $page = Livewire::test(StockMutationReport::class)
-        ->set('data.inventory_item_id', $item->id)
-        ->set('data.date_from', '2026-03-01')
-        ->set('data.date_to', '2026-03-31');
+    // Laporan Pemakaian Bahan (Blade) adalah satu-satunya halaman mutasi stok:
+    // barang rusak tidak ikut, dan kartu Pemakaian Resep tampil di sampingnya.
+    $this->user->assignRole('accounting');
 
-    $summary = $page->instance()->getSummary();
-
-    // Barang rusak tidak ikut, jadi angkanya identik dengan Laporan Pemakaian Bahan.
-    expect((float) $summary['purchases'])->toBe(100000.0)
-        ->and((float) $summary['ending'])->toBe(40000.0)
-        ->and((float) $summary['usage'])->toBe(60000.0);
-
-    $page->assertOk()->assertSee('Rincian Mutasi');
+    $this->get(route('accountingapp.reports.inventory-usage', [
+        'inventory_item_id' => $item->id, 'date_from' => '2026-03-01', 'date_to' => '2026-03-31',
+    ]))
+        ->assertOk()
+        ->assertSeeInOrder(['Pembelian', '100.000,00'])
+        ->assertSeeInOrder(['Sisa Stok', '40.000,00'])
+        ->assertSeeInOrder(['Pemakaian', '60.000,00', 'Sumber HPP: residual opname'])
+        ->assertSee('Pemakaian Resep');
 });

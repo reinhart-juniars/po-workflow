@@ -28,7 +28,7 @@ class InventoryUnitConversionResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-scale';
 
-    protected static ?string $navigationGroup = 'Inventory';
+    protected static ?string $navigationGroup = 'Resep & HPP';
 
     protected static ?string $navigationLabel = 'Konversi Satuan';
 

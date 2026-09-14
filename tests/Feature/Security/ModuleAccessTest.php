@@ -49,12 +49,9 @@ function modulPerResource(): array
 }
 
 it('menjaga setiap resource modul baru dengan policy yang membaca izin modul', function () {
-    // Resource lama (PO, SPK, Produk, User, ...) punya policy shield sendiri
-    // dan sengaja tidak dituntut memakai ModulePolicy.
-    $lama = ['customers', 'delivery-orders', 'products', 'purchase-orders', 'spks', 'users'];
-
+    // Semua resource panel adalah modul inventory/resep/produksi; domain lain
+    // (PO, SPK, Produk, Pengguna, ...) hidup di aplikasi Blade.
     $tanpaPolicy = collect(Filament::getResources())
-        ->reject(fn (string $resource) => in_array($resource::getSlug(), $lama, true))
         ->reject(fn (string $resource) => Gate::getPolicyFor($resource::getModel()) instanceof ModulePolicy)
         ->map(fn (string $resource) => $resource::getSlug())
         ->values()
@@ -113,8 +110,8 @@ it('membuka daftar resource hanya untuk peran yang punya izin lihat modulnya', f
     // Akunting tidak melihat modul yang memang bukan urusannya -- pastikan
     // cabang 403 di atas benar-benar pernah dijalankan.
     $akunting = penggunaBerperan('accounting');
-    $this->actingAs($akunting)->get('/inventory-app/inventory-movements')->assertOk();
-    $this->actingAs(penggunaBerperan('sales'))->get('/inventory-app/inventory-movements')->assertForbidden();
+    $this->actingAs($akunting)->get('/inventory/inventory-movements')->assertOk();
+    $this->actingAs(penggunaBerperan('sales'))->get('/inventory/inventory-movements')->assertForbidden();
 });
 
 it('menolak pembuatan data oleh peran yang hanya boleh melihat', function () {
@@ -207,7 +204,7 @@ it('meloloskan superadmin ke semua modul tanpa izin eksplisit', function () {
         $this->actingAs($super)->get($resource::getUrl('index'))->assertOk();
     }
 
-    $this->actingAs($super)->get('/inventory-app/hpp-comparison-report')->assertOk();
+    $this->actingAs($super)->get('/inventory/hpp-comparison-report')->assertOk();
 });
 
 it('menyembunyikan menu navigasi modul yang izinnya dicabut dari peran', function () {
@@ -220,15 +217,15 @@ it('menyembunyikan menu navigasi modul yang izinnya dicabut dari peran', functio
     $produksi = penggunaBerperan('production');
 
     $this->actingAs($produksi)
-        ->get('/inventory-app/production-orders')
+        ->get('/inventory/production-orders')
         ->assertOk()
         ->assertSee('SPK Produksi')
         ->assertDontSee('Bahan Belum Cocok');
 
-    $this->actingAs($produksi)->get('/inventory-app/recipe-mismatches')->assertForbidden();
+    $this->actingAs($produksi)->get('/inventory/recipe-mismatches')->assertForbidden();
 
     // Positive control: peran yang izinnya utuh tetap bisa membuka halamannya.
-    $this->actingAs(penggunaBerperan('admin'))->get('/inventory-app/recipe-mismatches')->assertOk();
+    $this->actingAs(penggunaBerperan('admin'))->get('/inventory/recipe-mismatches')->assertOk();
 });
 
 it('menyimpan bahan baru hanya lewat peran yang berizin kelola inventory', function () {

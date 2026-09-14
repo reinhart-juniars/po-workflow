@@ -61,7 +61,7 @@
   </section>
 
   @if($summary)
-    <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-4">
+    <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-5">
       <div class="section-card">
         <div class="metric-label">Bahan Baku Lama</div>
         <div class="stat-value text-[1.35rem]">{{ number_format($summary['opening'], 2, ',', '.') }}</div>
@@ -77,6 +77,21 @@
       <div class="section-card">
         <div class="metric-label">Pemakaian</div>
         <div class="text-xl font-semibold text-amber-700">{{ number_format($summary['usage'], 2, ',', '.') }}</div>
+        <div class="mt-1 text-xs text-slate-500">
+          @if (($summary['usage_source'] ?? 'residual') === 'resep')
+            Sumber HPP: ledger resep (pemakaian + penyesuaian). Residual opname: {{ number_format($summary['usage_residual'] ?? 0, 2, ',', '.') }}
+          @else
+            Sumber HPP: residual opname (Bahan Baku Lama + Pembelian − Sisa Stok).
+          @endif
+        </div>
+      </div>
+      <div class="section-card">
+        <div class="metric-label">Pemakaian Resep</div>
+        <div class="stat-value text-[1.35rem]">{{ number_format($summary['usage_recipe'] ?? 0, 2, ',', '.') }}</div>
+        <div class="mt-1 text-xs text-slate-500">
+          Dari SPK Produksi yang ditutup di periode ini; penyesuaian sisa fisik {{ number_format($summary['adjustment_recipe'] ?? 0, 2, ',', '.') }}.
+          @if (($summary['usage_source'] ?? 'residual') !== 'resep') Pembanding; ubah sumber di Pengaturan. @endif
+        </div>
       </div>
     </div>
 

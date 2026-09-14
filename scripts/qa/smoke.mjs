@@ -1,7 +1,7 @@
 /**
  * Smoke test browser sungguhan untuk panel Inventory Terpadu (Phase 1-4).
  *
- * Membuka setiap halaman panel sebagai pengguna yang diberikan, mencatat
+ * Membuka halaman inventory dan beberapa halaman Blade sebagai pengguna yang diberikan, mencatat
  * status HTTP, error konsol, dan halaman exception, lalu menjalankan alur
  * Phase 3 dari ujung ke ujung (Buat dari Slot SPK -> Form Kebutuhan -> Setujui
  * -> Periksa -> Tutup SPK -> PDF). Dipakai saat gladi cutover & UAT.
@@ -36,13 +36,12 @@ if (!USER || !PASS) {
 fs.mkdirSync(OUT, { recursive: true });
 
 const PAGES = [
-  '/inventory-app/inventory-items', '/inventory-app/inventory-items/create', '/inventory-app/inventory-purchases', '/inventory-app/stock-opnames',
-  '/inventory-app/inventory-openings', '/inventory-app/stock-mutation-report',
-  '/inventory-app/inventory-unit-conversions', '/inventory-app/inventory-unit-conversions/create', '/inventory-app/inventory-unit-conversions/butuh-aturan',
-  '/inventory-app/recipes', '/inventory-app/recipes/create', '/inventory-app/recipe-mismatches',
-  '/inventory-app/production-orders', '/inventory-app/production-orders/create', '/inventory-app/requisitions', '/inventory-app/inventory-movements',
-  '/inventory-app/production-workers', '/inventory-app/hpp-comparison-report',
-  '/inventory-app/pengaturan', '/inventory-app/users',
+  '/inventory/inventory-items', '/inventory/inventory-items/create', '/inventory/inventory-purchases', '/inventory/stock-opnames',
+  '/inventory/inventory-openings',   '/inventory/inventory-unit-conversions', '/inventory/inventory-unit-conversions/create', '/inventory/inventory-unit-conversions/butuh-aturan',
+  '/inventory/recipes', '/inventory/recipes/create', '/inventory/recipe-mismatches',
+  '/inventory/production-orders', '/inventory/production-orders/create', '/inventory/requisitions', '/inventory/inventory-movements',
+  '/inventory/production-workers', '/inventory/hpp-comparison-report',
+  '/inventory/pengaturan', '/inventory/stok-minimum', '/accounting-app/reports/inventory-usage', '/owner-app', '/accounting-app', '/admin-app/orders',
 ];
 
 const report = { pages: [], flow: [], errors: [], downloads: [] };
@@ -99,8 +98,9 @@ async function step(name, fn) {
 }
 
 // login
-await page.goto(`${BASE}/inventory-app/login`, { waitUntil: 'networkidle0' });
-await page.type('input[id$="login"]', USER);
+// Satu pintu masuk: /login aplikasi (nama pengguna di kolom 'name').
+await page.goto(`${BASE}/login`, { waitUntil: 'networkidle0' });
+await page.type('input[name=name]', USER);
 await page.type('input[type=password]', PASS);
 await Promise.all([page.waitForNavigation({ waitUntil: 'networkidle0' }), page.click('button[type=submit]')]);
 if (page.url().includes('/login')) { console.error('Login gagal.'); await browser.close(); process.exit(1); }
@@ -124,7 +124,7 @@ for (const url of PAGES) {
 if (FLOW) {
   try {
     await step('dari_spk', async () => {
-      await page.goto(`${BASE}/inventory-app/production-orders`, { waitUntil: 'networkidle0' });
+      await page.goto(`${BASE}/inventory/production-orders`, { waitUntil: 'networkidle0' });
       const nav = page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 30000 }).catch(() => null);
       await action(/list-production-orders/, 'dari_spk', { data: { spk_id: Number(SPK) } });
       await nav;
@@ -133,7 +133,7 @@ if (FLOW) {
     const id = page.url().match(/production-orders\/(\d+)/)?.[1];
     if (!id) throw new Error('SPK Produksi tidak terbentuk');
     const REQ = /requisition-form/;
-    await step('susun', async () => { await page.goto(`${BASE}/inventory-app/production-orders/${id}/kebutuhan`, { waitUntil: 'networkidle0' }); await action(REQ, 'susun'); });
+    await step('susun', async () => { await page.goto(`${BASE}/inventory/production-orders/${id}/kebutuhan`, { waitUntil: 'networkidle0' }); await action(REQ, 'susun'); });
     await step('isi_stok_awal', () => page.evaluate(() => {
       let n = 0;
       for (const i of document.querySelectorAll('.fi-fo-repeater-item input')) {
@@ -146,7 +146,7 @@ if (FLOW) {
     await step('periksa', () => action(REQ, 'periksa', { confirm: true }));
     await step('cetak_form', async () => { await action(REQ, 'cetak'); await new Promise((r) => setTimeout(r, 1500)); });
     await step('tutup', () => action(REQ, 'tutup', { confirm: true }));
-    await step('cetak_spk', async () => { await page.goto(`${BASE}/inventory-app/production-orders/${id}/edit`, { waitUntil: 'networkidle0' }); await action(/edit-production-order/, 'cetak'); await new Promise((r) => setTimeout(r, 1500)); });
+    await step('cetak_spk', async () => { await page.goto(`${BASE}/inventory/production-orders/${id}/edit`, { waitUntil: 'networkidle0' }); await action(/edit-production-order/, 'cetak'); await new Promise((r) => setTimeout(r, 1500)); });
   } catch (e) {
     report.flowError = String(e);
   }

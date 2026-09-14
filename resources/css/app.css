@@ -684,3 +684,66 @@
         scrollbar-gutter: auto;
     }
 }
+
+/* ------------------------------------------------------------------
+   Cangkang 3S BCS (layouts/shell.blade.php): tampilan disamakan dengan
+   panel Filament supaya halaman Blade dan halaman inventory terasa satu.
+   ------------------------------------------------------------------ */
+@layer components {
+    .shell-body {
+        background: #f9fafb;
+    }
+
+    .shell-body .app-card,
+    .shell-body .app-sidebar {
+        @apply rounded-xl border border-gray-200 bg-white shadow-sm backdrop-blur-0;
+    }
+
+    .shell-icon {
+        @apply h-5 w-5 shrink-0 text-gray-400;
+    }
+
+    .shell-item {
+        @apply flex items-center gap-x-3 rounded-lg px-2 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100;
+    }
+
+    .shell-item-active {
+        @apply bg-brand-50 text-brand-600;
+    }
+
+    .shell-item-active .shell-icon {
+        @apply text-brand-600;
+    }
+
+    .shell-group summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .shell-group-label {
+        @apply flex cursor-pointer list-none items-center gap-x-3 rounded-lg px-2 py-2 text-sm font-medium text-gray-700 select-none hover:bg-gray-100;
+    }
+
+    .shell-chevron {
+        @apply h-4 w-4 text-gray-400 transition-transform;
+    }
+
+    .shell-group[open] .shell-chevron {
+        @apply rotate-180;
+    }
+
+    .shell-subitem {
+        @apply flex items-center gap-x-3 rounded-lg py-2 pl-3 pr-2 text-sm font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-900;
+    }
+
+    .shell-bullet {
+        @apply ml-1 h-1.5 w-1.5 shrink-0 rounded-full bg-gray-300;
+    }
+
+    .shell-subitem-active {
+        @apply bg-brand-50 text-brand-600;
+    }
+
+    .shell-subitem-active .shell-bullet {
+        @apply bg-brand-600;
+    }
+}

@@ -18,9 +18,9 @@ use Spatie\Permission\Models\Role;
 function uriPanelTerlindungi(): array
 {
     return collect(Route::getRoutes())
-        // Hanya panel Filament (prefix 'inventory-app/'); route Blade 'admin-app/...'
+        // Hanya panel Filament (prefix 'inventory/'); route Blade 'admin-app/...'
         // punya pagar sendiri dan diuji terpisah.
-        ->filter(fn ($route) => ($route->uri() === 'inventory-app' || str_starts_with($route->uri(), 'inventory-app/'))
+        ->filter(fn ($route) => ($route->uri() === 'inventory' || str_starts_with($route->uri(), 'inventory/'))
             && in_array('GET', $route->methods(), true))
         ->reject(fn ($route) => str_contains($route->uri(), 'login')
             || str_contains($route->uri(), 'logout')
@@ -57,7 +57,7 @@ it('menolak seluruh halaman panel untuk pengunjung yang belum login', function (
 
     foreach ($uris as $uri) {
         $this->get('/'.$uri)
-            ->assertRedirect(route('filament.admin.auth.login'));
+            ->assertRedirect(route('login'));
     }
 });
 
@@ -76,7 +76,7 @@ it('meloloskan pengguna yang sudah login dari pagar autentikasi', function () {
         $response = $this->get('/'.$uri);
 
         expect($response->headers->get('Location'))
-            ->not->toBe(route('filament.admin.auth.login'), "Halaman /{$uri} masih menolak pengguna yang sudah login.");
+            ->not->toBe(route('login'), "Halaman /{$uri} masih menolak pengguna yang sudah login.");
     }
 });
 
@@ -88,16 +88,17 @@ it('membuka halaman inventory untuk pengguna yang sudah login', function () {
 
     $this->actingAs($user);
 
-    foreach (['inventory-app/inventory-items', 'inventory-app/stock-opnames', 'inventory-app/inventory-openings', 'inventory-app/inventory-purchases'] as $uri) {
+    foreach (['inventory/inventory-items', 'inventory/stock-opnames', 'inventory/inventory-openings', 'inventory/inventory-purchases'] as $uri) {
         $this->get('/'.$uri)->assertOk();
     }
 });
 
 it('memulai sesi dan menerbitkan csrf token di halaman login', function () {
+    // Satu pintu masuk untuk seluruh sistem: /login milik aplikasi Blade.
     // Tanpa middleware sesi, halaman login tetap membalas 200 tetapi tidak
     // pernah menaruh cookie dan token CSRF-nya kosong, sehingga setiap kiriman
-    // form berakhir 419. Itulah yang membuat panel tidak bisa dipakai login.
-    $response = $this->get('/inventory-app/login')->assertOk();
+    // form berakhir 419.
+    $response = $this->get('/login')->assertOk();
 
     expect($response->headers->getCookies())->not->toBeEmpty()
         ->and(csrf_token())->not->toBeEmpty();
@@ -113,15 +114,26 @@ it('menolak pengguna yang perannya tidak berkepentingan dengan panel', function 
     $kurir = User::factory()->create(['is_active' => true, 'force_password_change' => false]);
     $kurir->assignRole('delivery');
 
-    $this->actingAs($kurir)->get('/inventory-app/inventory-items')->assertForbidden();
+    $this->actingAs($kurir)->get('/inventory/inventory-items')->assertForbidden();
 
     // Positive control: peran yang berkepentingan tetap masuk.
-    $this->actingAs(penggunaPanel())->get('/inventory-app/inventory-items')->assertOk();
+    $this->actingAs(penggunaPanel())->get('/inventory/inventory-items')->assertOk();
 });
 
 it('menolak pengguna nonaktif meski perannya berkepentingan', function () {
     $user = penggunaPanel();
     $user->update(['is_active' => false]);
 
-    $this->actingAs($user)->get('/inventory-app/inventory-items')->assertForbidden();
+    $this->actingAs($user)->get('/inventory/inventory-items')->assertForbidden();
+});
+
+it('mengalihkan pengguna yang wajib ganti password keluar dari panel', function () {
+    $user = penggunaPanel();
+    $user->update(['force_password_change' => true]);
+
+    $this->actingAs($user)->get('/inventory/inventory-items')->assertRedirect(route('profile.edit'));
+
+    // Positive control: setelah passwordnya diganti, halaman yang sama terbuka.
+    $user->update(['force_password_change' => false]);
+    $this->actingAs($user)->get('/inventory/inventory-items')->assertOk();
 });

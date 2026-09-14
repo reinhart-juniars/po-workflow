@@ -28,11 +28,11 @@ class RecipeMismatchResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-question-mark-circle';
 
-    protected static ?string $navigationGroup = 'Inventory';
+    protected static ?string $navigationGroup = 'Resep & HPP';
 
     protected static ?string $navigationLabel = 'Bahan Belum Cocok';
 
-    protected static ?int $navigationSort = 40;
+    protected static ?int $navigationSort = 30;
 
     protected static ?string $modelLabel = 'Bahan Belum Cocok';
 

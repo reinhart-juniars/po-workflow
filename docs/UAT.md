@@ -13,12 +13,13 @@ Legenda kolom "Wajib": W = wajib untuk serah terima, O = opsional/dicatat saja.
 
 | # | Langkah | Hasil yang diharapkan | W/O | ✓/✗ | Catatan |
 |---|---|---|---|---|---|
-| A1 | Login `production` → buka `/inventory-app` | Masuk; sidebar hanya menampilkan Produksi, Inventory (lihat), Resep (lihat) | W | | |
+| A1 | Login `production` (satu halaman login untuk semua) | Mendarat di Produksi Harian; sidebar hanya menampilkan grup Produksi, Inventory, Resep & HPP | W | | |
 | A2 | `production` buka Inventory → Item Inventaris → Tambah | Ditolak (403 / tombol tidak ada) | W | | |
 | A3 | `accounting` buka Form Kebutuhan draft | Tidak ada tombol Susun/Simpan/Setujui | W | | |
 | A4 | `admin` buka form yang sama | Tombol Setujui ada | W | | |
 | A5 | `admin` buka Sistem → Pengaturan | Ditolak; `owner` bisa | W | | |
-| A6 | Sidebar `owner` | Urutan grup: Pesanan, Produksi, Pengiriman, Inventory, Master Data, Sistem | O | | |
+| A6 | Sidebar `owner` di halaman Pengeluaran (Blade) vs halaman Resep (inventory) | Sidebar identik: Dashboard, Pesanan, Produksi, Pengiriman, Sales, Inventory, Resep & HPP, Akunting, Monitoring, Laporan Keuangan, Master Data, Sistem | W | | |
+| A7 | Klik `/admin/...` lama atau menu lama Master Item di Akunting | Mendarat di halaman inventory yang sesuai | O | | |
 
 ## B. Inventory (Phase 1)
 
