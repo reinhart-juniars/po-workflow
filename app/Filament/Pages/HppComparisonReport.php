@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Services\ProductionUsageService;
+use App\Support\Settings\Settings;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -46,9 +47,13 @@ class HppComparisonReport extends Page implements HasForms
 
     public function mount(): void
     {
+        // Periode awal mengikuti pengaturan: bulan lalu lebih berguna di awal
+        // bulan, saat bulan berjalan belum punya opname penutup.
+        $anchor = app(Settings::class)->get('hpp.comparison_default_range') === 'bulan_lalu' ? now()->subMonthNoOverflow() : now();
+
         $this->form->fill([
-            'date_from' => now()->startOfMonth()->toDateString(),
-            'date_to' => now()->endOfMonth()->toDateString(),
+            'date_from' => $anchor->copy()->startOfMonth()->toDateString(),
+            'date_to' => $anchor->copy()->endOfMonth()->toDateString(),
         ]);
     }
 

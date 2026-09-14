@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Helpers\AutoNumberHelper;
+use App\Support\Settings\Settings;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -49,7 +50,7 @@ class ProductionOrder extends Model
     {
         static::creating(function (self $order) {
             if (empty($order->number)) {
-                $order->number = AutoNumberHelper::generate('production_orders', 'number', 'SPKP');
+                $order->number = AutoNumberHelper::generate('production_orders', 'number', app(Settings::class)->get('document.production_prefix'));
             }
 
             if (empty($order->status)) {

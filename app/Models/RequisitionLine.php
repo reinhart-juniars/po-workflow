@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Settings\Settings;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -51,8 +52,10 @@ class RequisitionLine extends Model
     {
         $required = (float) $this->required_qty;
         $opening = $this->opening_stock_qty === null ? 0.0 : (float) $this->opening_stock_qty;
+        $shortfall = round(max($required - $opening, 0), 4);
 
-        return round(max($required - $opening, 0), 4);
+        // Pembelian biasanya per kemasan utuh: 0,3 dus tetap harus beli 1 dus.
+        return app(Settings::class)->bool('requisition.round_purchase_up') ? (float) ceil($shortfall) : $shortfall;
     }
 
     /** Pemakaian yang diposting ke ledger: aktual bila diisi, kebutuhan bila tidak. */

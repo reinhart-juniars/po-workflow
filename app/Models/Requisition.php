@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Helpers\AutoNumberHelper;
+use App\Support\Settings\Settings;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -44,7 +45,7 @@ class Requisition extends Model
     {
         static::creating(function (self $requisition) {
             if (empty($requisition->number)) {
-                $requisition->number = AutoNumberHelper::generate('requisitions', 'number', 'FKB');
+                $requisition->number = AutoNumberHelper::generate('requisitions', 'number', app(Settings::class)->get('document.requisition_prefix'));
             }
 
             if (empty($requisition->status)) {

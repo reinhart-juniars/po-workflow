@@ -3,30 +3,34 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
-use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\User;
-use Filament\Forms;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Forms\Components\{TextInput, Select, Fieldset};
-use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Gate;
-use Filament\Forms\Components\CheckboxList;
+use Spatie\Permission\Models\Role;
 
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-users';
+
+    protected static ?string $navigationGroup = 'Sistem';
+
+    protected static ?string $navigationLabel = 'Pengguna';
+
+    protected static ?int $navigationSort = 20;
 
     public static function form(Form $form): Form
     {
-    return $form->schema([
+        return $form->schema([
             Fieldset::make('User')
                 ->schema([
                     TextInput::make('name')->required()->maxLength(120),
@@ -39,7 +43,7 @@ class UserResource extends Resource
                 ])->columns(2),
 
             Fieldset::make('Roles')
-                ->visible(fn($record) => Gate::allows('assignRoles', $record ?? app(\App\Models\User::class)))
+                ->visible(fn ($record) => Gate::allows('assignRoles', $record ?? app(\App\Models\User::class)))
                 ->schema([
                     // Hanya izinkan pilih role staff operasional
                     Select::make('roles')
@@ -47,9 +51,8 @@ class UserResource extends Resource
                         ->multiple()
                         ->preload()
                         ->relationship('roles', 'name')
-                        ->options(fn () =>
-                            Role::whereIn('name', ['admin','accounting','sales','production','delivery'])
-                                ->pluck('name','id')
+                        ->options(fn () => Role::whereIn('name', ['admin', 'accounting', 'sales', 'production', 'delivery'])
+                            ->pluck('name', 'id')
                         )
                         ->helperText('Hanya Owner yang dapat mengubah role.'),
                 ]),
@@ -84,14 +87,14 @@ class UserResource extends Resource
                 Tables\Actions\Action::make('assign_roles')
                     ->label('Assign Roles')
                     ->icon('heroicon-o-user-plus')
-                    ->visible(fn($record) => Gate::allows('assignRoles', $record))
+                    ->visible(fn ($record) => Gate::allows('assignRoles', $record))
                     ->authorize(fn ($record) => Gate::allows('assignRoles', $record))
                     ->form([
                         CheckboxList::make('roles')
                             ->options(
-                                Role::whereIn('name',['admin','accounting','sales','production','delivery'])->pluck('name','name')->toArray()
+                                Role::whereIn('name', ['admin', 'accounting', 'sales', 'production', 'delivery'])->pluck('name', 'name')->toArray()
                             )
-                            ->columns(1)
+                            ->columns(1),
                     ])
                     ->fillForm(function ($record) {
                         return ['roles' => $record->roles->pluck('name')->toArray()];
@@ -112,13 +115,13 @@ class UserResource extends Resource
     // semua staff boleh lihat daftar user (atau Gate::allows('viewAny', static::getModel()))
     public static function canViewAny(): bool
     {
-        return true; 
+        return true;
     }
 
     // hanya owner yang create user baru (opsional)
     public static function canCreate(): bool
     {
-        return Gate::allows('assignRoles'); //, auth()->user());
+        return Gate::allows('assignRoles'); // , auth()->user());
     }
 
     // owner boleh edit siapa aja, non-owner hanya edit dirinya sendiri

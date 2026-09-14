@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\InventoryMovement;
 use App\Models\ProductionOrder;
 use App\Models\RequisitionLine;
+use App\Support\Settings\Settings;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -76,6 +77,14 @@ class ProductionCompletionService
 
         if (! $requisition || ! $requisition->isChecked()) {
             throw new RuntimeException('Form kebutuhan SPK ini belum diperiksa. Pemakaian hanya bisa diposting setelah barangnya tercatat masuk.');
+        }
+
+        if (app(Settings::class)->bool('production.require_remaining_on_close')) {
+            $belumDiisi = $requisition->lines()->whereNull('remaining_qty')->count();
+
+            if ($belumDiisi > 0) {
+                throw new RuntimeException("{$belumDiisi} bahan belum diisi Sisa Stok. Pengaturan mewajibkan sisa stok fisik dicatat sebelum SPK ditutup.");
+            }
         }
 
         return DB::transaction(function () use ($order, $requisition, $userId) {

@@ -6,6 +6,7 @@ use App\Http\Middleware\ForcePasswordChange;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
 
@@ -20,6 +21,20 @@ class AdminPanelProvider extends PanelProvider
             // Login memakai halaman sendiri: bawaan Filament hanya menerima
             // email, sementara sebagian besar pengguna di sini masuk dengan nama.
             ->login(\App\Filament\Pages\Auth\Login::class)
+
+            // Satu panel terpadu: urutan grup mengikuti alur kerja (pesanan ->
+            // produksi -> pengiriman), lalu inventory & master, terakhir sistem.
+            // Grup yang tidak punya item untuk peran tertentu otomatis hilang.
+            ->brandName('PO-workflow')
+            ->sidebarCollapsibleOnDesktop()
+            ->navigationGroups([
+                NavigationGroup::make('Pesanan')->icon('heroicon-o-clipboard-document-list'),
+                NavigationGroup::make('Produksi')->icon('heroicon-o-fire'),
+                NavigationGroup::make('Pengiriman')->icon('heroicon-o-truck'),
+                NavigationGroup::make('Inventory')->icon('heroicon-o-cube'),
+                NavigationGroup::make('Master Data')->icon('heroicon-o-archive-box'),
+                NavigationGroup::make('Sistem')->icon('heroicon-o-cog-6-tooth')->collapsed(),
+            ])
 
             // Panel memakai grup middleware 'web' milik aplikasi ini, bukan
             // daftar sendiri, supaya cookie, sesi, dan CSRF-nya persis sama

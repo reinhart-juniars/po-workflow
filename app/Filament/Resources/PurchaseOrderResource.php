@@ -4,42 +4,37 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\PurchaseOrderResource\Pages;
 use App\Filament\Resources\PurchaseOrderResource\RelationManagers\PurchaseOrderItemsRelationManager;
-use App\Models\PurchaseOrder;
-use App\Models\Product;
-use App\Support\UiLabel;
-
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
-
-use Filament\Forms;
-use Filament\Tables;
-use Filament\Forms\Form;
-use Filament\Tables\Table;
 use App\Models\Customer;
-
-// Form components
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
+use App\Models\PurchaseOrder;
+use App\Support\UiLabel;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\TimePicker;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Section;
-
-// Table columns
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\TimePicker;
+// Form components
+use Filament\Forms\Form;
+use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+// Table columns
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Gate;
 
 class PurchaseOrderResource extends \Filament\Resources\Resource
 {
     protected static ?string $model = PurchaseOrder::class;
+
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
-    protected static ?string $navigationGroup = 'Orders';
+
+    protected static ?string $navigationGroup = 'Pesanan';
+
     protected static ?string $navigationLabel = 'Purchase Orders';
+
     protected static ?string $modelLabel = 'Purchase Order';
 
     public static function form(Form $form): Form
@@ -72,7 +67,7 @@ class PurchaseOrderResource extends \Filament\Resources\Resource
                                 ->rows(2),
                             Select::make('area_id')
                                 ->label('Area')
-                                ->relationship('area','name')
+                                ->relationship('area', 'name')
                                 ->preload()
                                 ->required(),
                         ])
@@ -151,20 +146,20 @@ class PurchaseOrderResource extends \Filament\Resources\Resource
                     ->formatStateUsing(fn (?string $state) => UiLabel::purchaseOrderStatus($state))
                     ->colors([
                         'warning' => 'pending',
-                        'info'    => 'scheduled',
+                        'info' => 'scheduled',
                         'primary' => 'in_production',
-                        'gray'    => 'ready_for_delivery',
+                        'gray' => 'ready_for_delivery',
                         'success' => 'delivered',
                     ]),
             ])
             ->filters([
-                SelectFilter::make('area_id')->relationship('area','name'),
+                SelectFilter::make('area_id')->relationship('area', 'name'),
                 SelectFilter::make('status')->options([
-                    'pending'           => UiLabel::purchaseOrderStatus('pending'),
-                    'scheduled'         => UiLabel::purchaseOrderStatus('scheduled'),
-                    'in_production'     => UiLabel::purchaseOrderStatus('in_production'),
-                    'ready_for_delivery'=> UiLabel::purchaseOrderStatus('ready_for_delivery'),
-                    'delivered'         => UiLabel::purchaseOrderStatus('delivered'),
+                    'pending' => UiLabel::purchaseOrderStatus('pending'),
+                    'scheduled' => UiLabel::purchaseOrderStatus('scheduled'),
+                    'in_production' => UiLabel::purchaseOrderStatus('in_production'),
+                    'ready_for_delivery' => UiLabel::purchaseOrderStatus('ready_for_delivery'),
+                    'delivered' => UiLabel::purchaseOrderStatus('delivered'),
                 ]),
                 Filter::make('date_range')
                     ->form([
@@ -200,9 +195,9 @@ class PurchaseOrderResource extends \Filament\Resources\Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListPurchaseOrders::route('/'),
+            'index' => Pages\ListPurchaseOrders::route('/'),
             'create' => Pages\CreatePurchaseOrder::route('/create'),
-            'edit'   => Pages\EditPurchaseOrder::route('/{record}/edit'),
+            'edit' => Pages\EditPurchaseOrder::route('/{record}/edit'),
             // View page opsional: aktifkan jika kamu generate sendiri
             // 'view' => Pages\ViewPurchaseOrder::route('/{record}'),
         ];
@@ -227,7 +222,4 @@ class PurchaseOrderResource extends \Filament\Resources\Resource
     {
         return Gate::allows('delete', $record);
     }
-
-    
 }
-

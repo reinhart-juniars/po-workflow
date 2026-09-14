@@ -7,6 +7,7 @@ use App\Models\InventoryItem;
 use App\Models\Recipe;
 use App\Models\RecipeItem;
 use App\Services\RecipeCostService;
+use App\Support\Settings\Settings;
 use App\Support\Units\Unit;
 use Closure;
 use Filament\Forms;
@@ -115,15 +116,17 @@ class RecipeResource extends Resource
                             ->helperText('Bila diisi, angka inilah yang dipakai menilai profit, bukan harga hasil hitungan.'),
 
                         // Disimpan sebagai pecahan (0,40) tetapi diisi sebagai
-                        // persen, karena begitulah angkanya dibicarakan.
+                        // persen, karena begitulah angkanya dibicarakan. Nilai
+                        // bawaan ikut diberikan sebagai pecahan supaya lewat
+                        // formatStateUsing yang sama.
                         Forms\Components\TextInput::make('ohc_pct')
                             ->label('OHC')
                             ->suffix('%')
                             ->numeric()
                             ->required()
-                            ->default(40)
+                            ->default(fn () => app(Settings::class)->percentAsFraction('recipe.default_ohc_pct'))
                             ->step('any')
-                            ->formatStateUsing(fn (?string $state) => $state === null ? 40 : round((float) $state * 100, 2))
+                            ->formatStateUsing(fn (?string $state) => $state === null ? app(Settings::class)->get('recipe.default_ohc_pct') : round((float) $state * 100, 2))
                             ->dehydrateStateUsing(fn ($state) => (float) $state / 100),
 
                         Forms\Components\TextInput::make('profit_pct')
@@ -131,9 +134,9 @@ class RecipeResource extends Resource
                             ->suffix('%')
                             ->numeric()
                             ->required()
-                            ->default(25)
+                            ->default(fn () => app(Settings::class)->percentAsFraction('recipe.default_profit_pct'))
                             ->step('any')
-                            ->formatStateUsing(fn (?string $state) => $state === null ? 25 : round((float) $state * 100, 2))
+                            ->formatStateUsing(fn (?string $state) => $state === null ? app(Settings::class)->get('recipe.default_profit_pct') : round((float) $state * 100, 2))
                             ->dehydrateStateUsing(fn ($state) => (float) $state / 100)
                             ->helperText('Dipakai menilai apakah harga jualnya sudah memadai.'),
                     ])

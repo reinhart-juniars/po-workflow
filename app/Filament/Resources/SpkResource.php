@@ -7,32 +7,32 @@ use App\Filament\Resources\SpkResource\RelationManagers\PurchaseOrdersRelationMa
 use App\Models\Spk;
 use App\Support\UiLabel;
 use Filament\Forms;
-use Filament\Tables;
-use Filament\Forms\Form;
-use Filament\Tables\Table;
-
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Section;
-
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Form;
+use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\Filter;
-use Filament\Forms\Get;
-
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Auth;
 
 class SpkResource extends \Filament\Resources\Resource
 {
     protected static ?string $model = Spk::class;
+
     protected static ?string $navigationIcon = 'heroicon-o-wrench-screwdriver';
-    protected static ?string $navigationGroup = 'Production';
-    protected static ?string $navigationLabel = 'SPK';
+
+    protected static ?string $navigationGroup = 'Produksi';
+
+    protected static ?string $navigationLabel = 'Slot SPK';
+
+    protected static ?int $navigationSort = 5;
 
     public static function form(Form $form): Form
     {
@@ -84,7 +84,7 @@ class SpkResource extends \Filament\Resources\Resource
                     ->badge()
                     ->formatStateUsing(fn (?string $state) => UiLabel::spkSlot($state))
                     ->colors([
-                        'info' => ['fixed_03','fixed_07','fixed_11'],
+                        'info' => ['fixed_03', 'fixed_07', 'fixed_11'],
                         'gray' => ['custom'],
                     ]),
                 TextColumn::make('responsible.name')->label('Responsible')->toggleable(),
@@ -110,7 +110,7 @@ class SpkResource extends \Filament\Resources\Resource
                         return $query
                             ->when($data['from'] ?? null, fn (Builder $q, $v) => $q->whereDate('scheduled_at', '>=', $v))
                             ->when($data['to'] ?? null, fn (Builder $q, $v) => $q->whereDate('scheduled_at', '<=', $v));
-                    })
+                    }),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
@@ -135,9 +135,9 @@ class SpkResource extends \Filament\Resources\Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListSpks::route('/'),
+            'index' => Pages\ListSpks::route('/'),
             'create' => Pages\CreateSpk::route('/create'),
-            'edit'   => Pages\EditSpk::route('/{record}/edit'),
+            'edit' => Pages\EditSpk::route('/{record}/edit'),
         ];
     }
 
