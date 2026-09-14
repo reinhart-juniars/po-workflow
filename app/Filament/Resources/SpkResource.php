@@ -30,6 +30,16 @@ class SpkResource extends \Filament\Resources\Resource
 
     protected static ?string $navigationGroup = 'Produksi';
 
+    /**
+     * Resource lama dari masa panel /admin; pekerjaan hariannya sudah berjalan
+     * di aplikasi Blade. Di Inventory App hanya superadmin yang melihatnya di
+     * menu (URL-nya tetap dijaga policy masing-masing).
+     */
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->user()?->hasRole('superadmin') ?? false;
+    }
+
     protected static ?string $navigationLabel = 'Slot SPK';
 
     protected static ?int $navigationSort = 5;

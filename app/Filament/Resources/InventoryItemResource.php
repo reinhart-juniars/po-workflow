@@ -179,7 +179,7 @@ class InventoryItemResource extends Resource
 
                 TextColumn::make('minimum_stock_value')
                     ->label('Stok Minimum')
-                    ->money('idr', true)
+                    ->money('IDR', locale: 'id')
                     ->placeholder('Tidak dipantau')
                     ->sortable(),
 
@@ -189,7 +189,7 @@ class InventoryItemResource extends Resource
                     ->label('Nilai Stok')
                     ->state(fn (InventoryItem $record) => app(InventoryStockAlertService::class)
                         ->currentStockValue($record->id)['value'])
-                    ->money('idr', true)
+                    ->money('IDR', locale: 'id')
                     ->color(fn ($state, InventoryItem $record) => $record->minimum_stock_value !== null
                         && (float) $state < (float) $record->minimum_stock_value
                             ? 'danger'

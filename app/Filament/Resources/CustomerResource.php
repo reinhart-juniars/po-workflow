@@ -8,17 +8,30 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
 class CustomerResource extends Resource
 {
     protected static ?string $model = Customer::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
+
     protected static ?string $navigationGroup = 'Master Data';
+
+    /**
+     * Resource lama dari masa panel /admin; pekerjaan hariannya sudah berjalan
+     * di aplikasi Blade. Di Inventory App hanya superadmin yang melihatnya di
+     * menu (URL-nya tetap dijaga policy masing-masing).
+     */
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->user()?->hasRole('superadmin') ?? false;
+    }
+
     protected static ?string $navigationLabel = 'Customer';
+
     protected static ?int $navigationSort = 20;
 
     public static function form(Form $form): Form
@@ -30,7 +43,7 @@ class CustomerResource extends Resource
                     ->required()
                     ->maxLength(120)
                     ->reactive()
-                    ->afterStateUpdated(fn($state, $set) => $set('name', strtoupper($state))),
+                    ->afterStateUpdated(fn ($state, $set) => $set('name', strtoupper($state))),
                 Forms\Components\TextInput::make('phone')
                     ->label('Nomor WA')
                     ->tel()
@@ -41,10 +54,10 @@ class CustomerResource extends Resource
                     ->label('Alamat')
                     ->rows(2)
                     ->maxLength(255)
-                    ->afterStateUpdated(fn($state, $set) => $set('address', strtoupper($state))),
+                    ->afterStateUpdated(fn ($state, $set) => $set('address', strtoupper($state))),
                 Forms\Components\Select::make('area_id')
                     ->label('Area')
-                    ->relationship('area','name')
+                    ->relationship('area', 'name')
                     ->searchable()
                     ->preload()
                     ->required(),
@@ -111,9 +124,9 @@ class CustomerResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListCustomers::route('/'),
+            'index' => Pages\ListCustomers::route('/'),
             'create' => Pages\CreateCustomer::route('/create'),
-            'edit'   => Pages\EditCustomer::route('/{record}/edit'),
+            'edit' => Pages\EditCustomer::route('/{record}/edit'),
         ];
     }
 }

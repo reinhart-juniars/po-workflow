@@ -13,7 +13,7 @@ Legenda kolom "Wajib": W = wajib untuk serah terima, O = opsional/dicatat saja.
 
 | # | Langkah | Hasil yang diharapkan | W/O | ✓/✗ | Catatan |
 |---|---|---|---|---|---|
-| A1 | Login `production` → buka `/admin` | Masuk; sidebar hanya menampilkan Produksi, Inventory (lihat), Resep (lihat) | W | | |
+| A1 | Login `production` → buka `/inventory-app` | Masuk; sidebar hanya menampilkan Produksi, Inventory (lihat), Resep (lihat) | W | | |
 | A2 | `production` buka Inventory → Item Inventaris → Tambah | Ditolak (403 / tombol tidak ada) | W | | |
 | A3 | `accounting` buka Form Kebutuhan draft | Tidak ada tombol Susun/Simpan/Setujui | W | | |
 | A4 | `admin` buka form yang sama | Tombol Setujui ada | W | | |

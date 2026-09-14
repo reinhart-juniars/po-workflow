@@ -36,13 +36,13 @@ if (!USER || !PASS) {
 fs.mkdirSync(OUT, { recursive: true });
 
 const PAGES = [
-  '/admin/inventory-items', '/admin/inventory-items/create', '/admin/inventory-purchases', '/admin/stock-opnames',
-  '/admin/inventory-openings', '/admin/stock-mutation-report',
-  '/admin/inventory-unit-conversions', '/admin/inventory-unit-conversions/create', '/admin/inventory-unit-conversions/butuh-aturan',
-  '/admin/recipes', '/admin/recipes/create', '/admin/recipe-mismatches',
-  '/admin/production-orders', '/admin/production-orders/create', '/admin/requisitions', '/admin/inventory-movements',
-  '/admin/production-workers', '/admin/hpp-comparison-report',
-  '/admin/pengaturan', '/admin/users',
+  '/inventory-app/inventory-items', '/inventory-app/inventory-items/create', '/inventory-app/inventory-purchases', '/inventory-app/stock-opnames',
+  '/inventory-app/inventory-openings', '/inventory-app/stock-mutation-report',
+  '/inventory-app/inventory-unit-conversions', '/inventory-app/inventory-unit-conversions/create', '/inventory-app/inventory-unit-conversions/butuh-aturan',
+  '/inventory-app/recipes', '/inventory-app/recipes/create', '/inventory-app/recipe-mismatches',
+  '/inventory-app/production-orders', '/inventory-app/production-orders/create', '/inventory-app/requisitions', '/inventory-app/inventory-movements',
+  '/inventory-app/production-workers', '/inventory-app/hpp-comparison-report',
+  '/inventory-app/pengaturan', '/inventory-app/users',
 ];
 
 const report = { pages: [], flow: [], errors: [], downloads: [] };
@@ -99,7 +99,7 @@ async function step(name, fn) {
 }
 
 // login
-await page.goto(`${BASE}/admin/login`, { waitUntil: 'networkidle0' });
+await page.goto(`${BASE}/inventory-app/login`, { waitUntil: 'networkidle0' });
 await page.type('input[id$="login"]', USER);
 await page.type('input[type=password]', PASS);
 await Promise.all([page.waitForNavigation({ waitUntil: 'networkidle0' }), page.click('button[type=submit]')]);
@@ -124,7 +124,7 @@ for (const url of PAGES) {
 if (FLOW) {
   try {
     await step('dari_spk', async () => {
-      await page.goto(`${BASE}/admin/production-orders`, { waitUntil: 'networkidle0' });
+      await page.goto(`${BASE}/inventory-app/production-orders`, { waitUntil: 'networkidle0' });
       const nav = page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 30000 }).catch(() => null);
       await action(/list-production-orders/, 'dari_spk', { data: { spk_id: Number(SPK) } });
       await nav;
@@ -133,7 +133,7 @@ if (FLOW) {
     const id = page.url().match(/production-orders\/(\d+)/)?.[1];
     if (!id) throw new Error('SPK Produksi tidak terbentuk');
     const REQ = /requisition-form/;
-    await step('susun', async () => { await page.goto(`${BASE}/admin/production-orders/${id}/kebutuhan`, { waitUntil: 'networkidle0' }); await action(REQ, 'susun'); });
+    await step('susun', async () => { await page.goto(`${BASE}/inventory-app/production-orders/${id}/kebutuhan`, { waitUntil: 'networkidle0' }); await action(REQ, 'susun'); });
     await step('isi_stok_awal', () => page.evaluate(() => {
       let n = 0;
       for (const i of document.querySelectorAll('.fi-fo-repeater-item input')) {
@@ -146,7 +146,7 @@ if (FLOW) {
     await step('periksa', () => action(REQ, 'periksa', { confirm: true }));
     await step('cetak_form', async () => { await action(REQ, 'cetak'); await new Promise((r) => setTimeout(r, 1500)); });
     await step('tutup', () => action(REQ, 'tutup', { confirm: true }));
-    await step('cetak_spk', async () => { await page.goto(`${BASE}/admin/production-orders/${id}/edit`, { waitUntil: 'networkidle0' }); await action(/edit-production-order/, 'cetak'); await new Promise((r) => setTimeout(r, 1500)); });
+    await step('cetak_spk', async () => { await page.goto(`${BASE}/inventory-app/production-orders/${id}/edit`, { waitUntil: 'networkidle0' }); await action(/edit-production-order/, 'cetak'); await new Promise((r) => setTimeout(r, 1500)); });
   } catch (e) {
     report.flowError = String(e);
   }

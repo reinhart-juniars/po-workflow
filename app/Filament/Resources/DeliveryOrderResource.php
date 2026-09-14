@@ -23,6 +23,16 @@ class DeliveryOrderResource extends Resource
 
     protected static ?string $navigationGroup = 'Pengiriman';
 
+    /**
+     * Resource lama dari masa panel /admin; pekerjaan hariannya sudah berjalan
+     * di aplikasi Blade. Di Inventory App hanya superadmin yang melihatnya di
+     * menu (URL-nya tetap dijaga policy masing-masing).
+     */
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->user()?->hasRole('superadmin') ?? false;
+    }
+
     public static function form(Form $form): Form
     {
         return $form

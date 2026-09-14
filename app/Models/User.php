@@ -93,13 +93,20 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         }
 
         if ($this->hasAnyRole(['superadmin', 'owner'])) {
-            return array_merge($keys, $staffApps);
+            $keys = array_merge($keys, $staffApps);
+        } else {
+            foreach ($staffApps as $appKey) {
+                if ($this->hasRole($appKey)) {
+                    $keys[] = $appKey;
+                }
+            }
         }
 
-        foreach ($staffApps as $appKey) {
-            if ($this->hasRole($appKey)) {
-                $keys[] = $appKey;
-            }
+        // Inventory App (panel Filament) terbuka untuk peran panel; letaknya
+        // setelah accounting supaya urutan pengalih mengikuti alur kerja.
+        if ($this->is_active && $this->hasAnyRole(self::PANEL_ROLES)) {
+            $pos = array_search('accounting', $keys, true);
+            array_splice($keys, $pos === false ? count($keys) : $pos + 1, 0, 'inventory');
         }
 
         return array_values(array_unique($keys));

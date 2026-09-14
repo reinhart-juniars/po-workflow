@@ -2,8 +2,10 @@
 
 Aplikasi internal W3S Catering: purchase order → SPK → pengiriman → penjualan aktual,
 ditambah inventory, kas/pengeluaran, dan laporan keuangan. Laravel 12 / PHP 8.2 / MySQL,
-dua lapis antarmuka: aplikasi Blade per peran (`/owner-app`, `/admin-app`, …) dan panel
-Filament di `/admin`.
+dua lapis antarmuka: aplikasi Blade per peran (`/owner-app`, `/admin-app`, …) dan
+**Inventory App** di `/inventory-app` — panel Filament yang memakai header, warna, font,
+pengalih aplikasi, dan sesi login yang sama dengan aplikasi Blade (path lama `/admin`
+diarahkan ke sana).
 
 ## Modul Inventory Terpadu
 
@@ -53,7 +55,7 @@ bila tidak ada.
 
 ## Keamanan
 
-- Panel `/admin` hanya untuk peran `superadmin`, `owner`, `admin`, `accounting`, `production`;
+- Inventory App (`/inventory-app`) hanya untuk peran `superadmin`, `owner`, `admin`, `accounting`, `production`;
   di dalamnya setiap resource dijaga policy berbasis izin modul (`tests/Feature/Security/`).
 - Tes arsitektur menolak resource/halaman panel baru yang tidak punya policy/`canAccess`.
 - Rahasia hanya di `.env` (gitignored; di server mode 600 milik user deploy).

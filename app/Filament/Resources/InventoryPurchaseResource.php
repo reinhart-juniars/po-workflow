@@ -187,7 +187,7 @@ class InventoryPurchaseResource extends Resource
 
                 TextColumn::make('total_value')
                     ->label('Nilai')
-                    ->money('idr', true)
+                    ->money('IDR', locale: 'id')
                     ->weight(FontWeight::SemiBold)
                     ->sortable(),
 

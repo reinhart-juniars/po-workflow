@@ -113,8 +113,8 @@ it('membuka daftar resource hanya untuk peran yang punya izin lihat modulnya', f
     // Akunting tidak melihat modul yang memang bukan urusannya -- pastikan
     // cabang 403 di atas benar-benar pernah dijalankan.
     $akunting = penggunaBerperan('accounting');
-    $this->actingAs($akunting)->get('/admin/inventory-movements')->assertOk();
-    $this->actingAs(penggunaBerperan('sales'))->get('/admin/inventory-movements')->assertForbidden();
+    $this->actingAs($akunting)->get('/inventory-app/inventory-movements')->assertOk();
+    $this->actingAs(penggunaBerperan('sales'))->get('/inventory-app/inventory-movements')->assertForbidden();
 });
 
 it('menolak pembuatan data oleh peran yang hanya boleh melihat', function () {
@@ -207,7 +207,7 @@ it('meloloskan superadmin ke semua modul tanpa izin eksplisit', function () {
         $this->actingAs($super)->get($resource::getUrl('index'))->assertOk();
     }
 
-    $this->actingAs($super)->get('/admin/hpp-comparison-report')->assertOk();
+    $this->actingAs($super)->get('/inventory-app/hpp-comparison-report')->assertOk();
 });
 
 it('menyembunyikan menu navigasi modul yang izinnya dicabut dari peran', function () {
@@ -220,15 +220,15 @@ it('menyembunyikan menu navigasi modul yang izinnya dicabut dari peran', functio
     $produksi = penggunaBerperan('production');
 
     $this->actingAs($produksi)
-        ->get('/admin/production-orders')
+        ->get('/inventory-app/production-orders')
         ->assertOk()
         ->assertSee('SPK Produksi')
         ->assertDontSee('Bahan Belum Cocok');
 
-    $this->actingAs($produksi)->get('/admin/recipe-mismatches')->assertForbidden();
+    $this->actingAs($produksi)->get('/inventory-app/recipe-mismatches')->assertForbidden();
 
     // Positive control: peran yang izinnya utuh tetap bisa membuka halamannya.
-    $this->actingAs(penggunaBerperan('admin'))->get('/admin/recipe-mismatches')->assertOk();
+    $this->actingAs(penggunaBerperan('admin'))->get('/inventory-app/recipe-mismatches')->assertOk();
 });
 
 it('menyimpan bahan baru hanya lewat peran yang berizin kelola inventory', function () {

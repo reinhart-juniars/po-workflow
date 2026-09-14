@@ -113,14 +113,14 @@ it('mengalihkan pengguna yang wajib ganti password keluar dari panel', function 
     $user->assignRole('accounting');
 
     $this->actingAs($user)
-        ->get('/admin/inventory-items')
+        ->get('/inventory-app/inventory-items')
         ->assertRedirect(route('profile.edit'));
 
     // Positive control: setelah passwordnya diganti, halaman yang sama terbuka.
     $user->update(['force_password_change' => false]);
 
     $this->actingAs($user)
-        ->get('/admin/inventory-items')
+        ->get('/inventory-app/inventory-items')
         ->assertOk();
 });
 

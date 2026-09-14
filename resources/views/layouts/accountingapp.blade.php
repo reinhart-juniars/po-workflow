@@ -38,9 +38,12 @@
                         'label' => 'Akun Kas',
                         'match' => 'accountingapp.cash-accounts.*',
                     ],
+                    // Master bahan, saldo awal, dan opname kini dikelola di
+                    // Inventory App (satu sumber data); halaman Blade lamanya
+                    // masih ada untuk tautan lama, tetapi tidak ditawarkan lagi.
                     [
-                        'route' => 'accountingapp.inventory-items.index',
-                        'label' => 'Master Item',
+                        'route' => 'filament.admin.resources.inventory-items.index',
+                        'label' => 'Master Item ↗',
                         'match' => 'accountingapp.inventory-items.*',
                     ],
                     [
@@ -65,8 +68,8 @@
                             'match' => 'accountingapp.opening-balances.*',
                         ],
                         [
-                            'route' => 'accountingapp.inventory-openings.index',
-                            'label' => 'Opening Inventory',
+                            'route' => 'filament.admin.resources.inventory-openings.index',
+                            'label' => 'Opening Inventory ↗',
                             'match' => 'accountingapp.inventory-openings.*',
                         ],
                         $canManageBalanceSheetAdjustments
@@ -110,8 +113,8 @@
                         'match' => 'accountingapp.cash-account-transfers.*',
                     ],
                     [
-                        'route' => 'accountingapp.stock-opnames.index',
-                        'label' => 'Stock Opname',
+                        'route' => 'filament.admin.resources.stock-opnames.index',
+                        'label' => 'Stock Opname ↗',
                         'match' => 'accountingapp.stock-opnames.*',
                     ],
                 ],

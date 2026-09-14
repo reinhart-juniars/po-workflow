@@ -1,7 +1,7 @@
 # Hak Akses Modul Inventory Terpadu
 
 Aplikasi ini memakai **peran** (spatie/laravel-permission `Role`) sejak awal: aplikasi
-Blade dijaga middleware `ensure.role:`, dan panel `/admin` dibuka untuk peran di
+Blade dijaga middleware `ensure.role:`, dan panel Inventory App (`/inventory-app`) dibuka untuk peran di
 `User::PANEL_ROLES`. Modul baru (Inventory, Resep, Produksi) menambah lapisan **izin**
 di atasnya supaya pemilik bisa menggeser hak per peran tanpa mengubah kode.
 

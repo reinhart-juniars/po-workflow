@@ -51,12 +51,12 @@ class LowStockAlertWidget extends BaseWidget
                     ->label('Nilai Stok')
                     ->state(fn (InventoryItem $record) => app(InventoryStockAlertService::class)
                         ->currentStockValue($record->id)['value'])
-                    ->money('idr', true)
+                    ->money('IDR', locale: 'id')
                     ->color('danger'),
 
                 TextColumn::make('minimum_stock_value')
                     ->label('Minimum')
-                    ->money('idr', true),
+                    ->money('IDR', locale: 'id'),
 
                 TextColumn::make('shortfall')
                     ->label('Kekurangan')
@@ -65,7 +65,7 @@ class LowStockAlertWidget extends BaseWidget
                             - (float) app(InventoryStockAlertService::class)->currentStockValue($record->id)['value'],
                         2
                     ))
-                    ->money('idr', true)
+                    ->money('IDR', locale: 'id')
                     ->weight('bold'),
             ])
             ->actions([

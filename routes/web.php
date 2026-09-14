@@ -1,31 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\AdminAppController;
-use App\Http\Controllers\ProductionAppController;
-use App\Http\Controllers\DeliveryAppController;
-use App\Http\Controllers\SalesAppController;
-use App\Http\Controllers\OwnerAppController;
-use App\Http\Controllers\AdminProductController;
-use App\Http\Controllers\AdminCustomerController;
-use App\Http\Controllers\OwnerUserController;
-use App\Http\Controllers\SuperadminDashboardController;
-use App\Http\Controllers\SuperadminBackupController;
-use App\Http\Controllers\UserProfileController;
-use App\Http\Controllers\FinancialController;
 use App\Http\Controllers\AccountingAppController;
-use App\Http\Controllers\CashAccountController;
-use App\Http\Controllers\IncomeCategoryController;
-use App\Http\Controllers\InventoryItemController;
-use App\Http\Controllers\InventoryOpeningController;
-use App\Http\Controllers\InventoryPurchaseController;
-use App\Http\Controllers\StockOpnameController;
-use App\Http\Controllers\InventoryUsageReportController;
-use App\Http\Controllers\ProfitLossReportController;
-use App\Http\Controllers\BalanceSheetReportController;
-use App\Http\Controllers\FinalReportController;
+use App\Http\Controllers\AdminAppController;
+use App\Http\Controllers\AdminCustomerController;
+use App\Http\Controllers\AdminProductController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
@@ -34,25 +12,47 @@ use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BalanceSheetReportController;
+use App\Http\Controllers\CashAccountController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DeliveryAppController;
+use App\Http\Controllers\FinalReportController;
+use App\Http\Controllers\FinancialController;
+use App\Http\Controllers\IncomeCategoryController;
+use App\Http\Controllers\InventoryItemController;
+use App\Http\Controllers\InventoryOpeningController;
+use App\Http\Controllers\InventoryPurchaseController;
+use App\Http\Controllers\InventoryUsageReportController;
+use App\Http\Controllers\OwnerAppController;
+use App\Http\Controllers\OwnerUserController;
+use App\Http\Controllers\ProductionAppController;
+use App\Http\Controllers\ProfitLossReportController;
+use App\Http\Controllers\SalesAppController;
+use App\Http\Controllers\StockOpnameController;
+use App\Http\Controllers\SuperadminBackupController;
+use App\Http\Controllers\SuperadminDashboardController;
+use App\Http\Controllers\UserProfileController;
+use Illuminate\Support\Facades\Route;
 
 Route::middleware('web')->group(function () {
-        // Halaman login
-        Route::get('/', [AuthController::class, 'showLogin'])
-            ->name('login');
-        Route::get('/login',   [AuthController::class, 'showLogin']); // opsional, biar / & /login sama
-        Route::post('/login', [AuthController::class, 'login'])
-            ->name('login.submit');
-        Route::post('/', [AuthController::class, 'login']);
+    // Halaman login
+    Route::get('/', [AuthController::class, 'showLogin'])
+        ->name('login');
+    Route::get('/login', [AuthController::class, 'showLogin']); // opsional, biar / & /login sama
+    Route::post('/login', [AuthController::class, 'login'])
+        ->name('login.submit');
+    Route::post('/', [AuthController::class, 'login']);
 
-        // Logout    
-        Route::post('/logout', [AuthController::class, 'logout'])
-            ->middleware('auth')->name('logout');
+    // Logout
+    Route::post('/logout', [AuthController::class, 'logout'])
+        ->middleware('auth')->name('logout');
 
-        // 🔹 Dispatcher setelah login
-        Route::get('/dashboard', [DashboardController::class, 'index'])
-            ->middleware(['auth', 'force.password.change'])
-            ->name('dashboard');
-    });
+    // 🔹 Dispatcher setelah login
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->middleware(['auth', 'force.password.change'])
+        ->name('dashboard');
+});
 
 Route::middleware(['web', 'guest'])->group(function () {
     Route::get('/register', [RegisteredUserController::class, 'create'])
@@ -101,54 +101,54 @@ Route::middleware(['web', 'auth'])->group(function () {
         ->name('password.update');
 });
 
-Route::middleware(['web','auth','force.password.change','ensure.role:admin|owner|superadmin'])
+Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:admin|owner|superadmin'])
     ->prefix('admin-app')
     ->name('adminapp.')
     ->group(function () {
 
-        // Route Dashboard    
-        Route::get('/',               [AdminAppController::class, 'dashboard'])->name('dashboard');
+        // Route Dashboard
+        Route::get('/', [AdminAppController::class, 'dashboard'])->name('dashboard');
         Route::get('/dashboard', function () {
             return redirect()->route('adminapp.dashboard');
         });
 
         // Route Orders
-        Route::get('/orders',         [AdminAppController::class, 'ordersIndex'])->name('orders.index');
-        Route::get('/orders/{po}',    [AdminAppController::class, 'ordersShow'])->name('orders.show');
-        Route::post('/orders',        [AdminAppController::class, 'ordersStore'])->name('orders.store');
+        Route::get('/orders', [AdminAppController::class, 'ordersIndex'])->name('orders.index');
+        Route::get('/orders/{po}', [AdminAppController::class, 'ordersShow'])->name('orders.show');
+        Route::post('/orders', [AdminAppController::class, 'ordersStore'])->name('orders.store');
 
         // Edit & Update PO
         Route::get('/orders/{po}/edit', [AdminAppController::class, 'ordersEdit'])->name('orders.edit');
-        Route::put('/orders/{po}',      [AdminAppController::class, 'ordersUpdate'])->name('orders.update');
+        Route::put('/orders/{po}', [AdminAppController::class, 'ordersUpdate'])->name('orders.update');
 
         // Delete PO
         Route::delete('/orders/{po}', [AdminAppController::class, 'ordersDestroy'])->name('orders.destroy');
 
         // Route SPK
-        Route::get('/spk',            [AdminAppController::class, 'spkIndex'])->name('spk.index');
-        Route::post('/spk',           [AdminAppController::class, 'spkStore'])->name('spk.store');
+        Route::get('/spk', [AdminAppController::class, 'spkIndex'])->name('spk.index');
+        Route::post('/spk', [AdminAppController::class, 'spkStore'])->name('spk.store');
 
         // Route Delivery
-        Route::get('/delivery',  [AdminAppController::class, 'deliveryIndex'])->name('delivery.index');
+        Route::get('/delivery', [AdminAppController::class, 'deliveryIndex'])->name('delivery.index');
         Route::post('/delivery', [AdminAppController::class, 'deliveryStore'])->name('delivery.store');
 
         // MASTER PRODUCTS
-        Route::get('/products',                [AdminProductController::class, 'index'])->name('products.index');
-        Route::get('/products/create',         [AdminProductController::class, 'create'])->name('products.create');
-        Route::get('/products/export/excel',   [AdminProductController::class, 'exportExcel'])->name('products.export.excel');
-        Route::post('/products/import/excel',  [AdminProductController::class, 'importExcel'])->name('products.import.excel');
+        Route::get('/products', [AdminProductController::class, 'index'])->name('products.index');
+        Route::get('/products/create', [AdminProductController::class, 'create'])->name('products.create');
+        Route::get('/products/export/excel', [AdminProductController::class, 'exportExcel'])->name('products.export.excel');
+        Route::post('/products/import/excel', [AdminProductController::class, 'importExcel'])->name('products.import.excel');
         Route::post('/products/import/excel/commit', [AdminProductController::class, 'commitImportExcel'])->name('products.import.excel.commit');
         Route::post('/products/import/excel/cancel', [AdminProductController::class, 'cancelImportExcel'])->name('products.import.excel.cancel');
-        Route::post('/products',               [AdminProductController::class, 'store'])->name('products.store');
+        Route::post('/products', [AdminProductController::class, 'store'])->name('products.store');
         Route::get('/products/{product}/edit', [AdminProductController::class, 'edit'])->name('products.edit');
-        Route::put('/products/{product}',      [AdminProductController::class, 'update'])->name('products.update');
+        Route::put('/products/{product}', [AdminProductController::class, 'update'])->name('products.update');
 
         // MASTER CUSTOMER
-        Route::get('/customers',                 [AdminCustomerController::class, 'index'])->name('customers.index');
-        Route::get('/customers/create',          [AdminCustomerController::class, 'create'])->name('customers.create');
-        Route::post('/customers',                [AdminCustomerController::class, 'store'])->name('customers.store');
+        Route::get('/customers', [AdminCustomerController::class, 'index'])->name('customers.index');
+        Route::get('/customers/create', [AdminCustomerController::class, 'create'])->name('customers.create');
+        Route::post('/customers', [AdminCustomerController::class, 'store'])->name('customers.store');
         Route::get('/customers/{customer}/edit', [AdminCustomerController::class, 'edit'])->name('customers.edit');
-        Route::put('/customers/{customer}',      [AdminCustomerController::class, 'update'])->name('customers.update');
+        Route::put('/customers/{customer}', [AdminCustomerController::class, 'update'])->name('customers.update');
 
         // LAPORAN MENU TANPA HPP/OHC
         Route::get('/reports/missing-costs', [AdminAppController::class, 'ordersMissingCosts'])
@@ -194,19 +194,19 @@ Route::middleware(['web','auth','force.password.change','ensure.role:admin|owner
             ->name('audit.index');
     });
 
-Route::middleware(['web','auth','force.password.change','ensure.role:production|owner|superadmin'])
+Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:production|owner|superadmin'])
     ->prefix('production-app')
     ->name('productionapp.')
     ->group(function () {
 
-        Route::get('/',                 [ProductionAppController::class, 'dashboard'])->name('dashboard');
+        Route::get('/', [ProductionAppController::class, 'dashboard'])->name('dashboard');
         Route::get('/dashboard', function () {
             return redirect()->route('productionapp.dashboard');
         });
 
         // detail PO (progress)
-        Route::get('/orders/{po}',      [ProductionAppController::class, 'show'])->name('orders.show');
-        Route::put('/orders/{po}',      [AdminAppController::class, 'ordersUpdate'])->name('orders.update');
+        Route::get('/orders/{po}', [ProductionAppController::class, 'show'])->name('orders.show');
+        Route::put('/orders/{po}', [AdminAppController::class, 'ordersUpdate'])->name('orders.update');
 
         // ubah status menjadi completed
         Route::post('/orders/{po}/complete', [ProductionAppController::class, 'complete'])->name('orders.complete');
@@ -215,28 +215,28 @@ Route::middleware(['web','auth','force.password.change','ensure.role:production|
         Route::post('/orders/{po}/cancel', [ProductionAppController::class, 'cancel'])->name('orders.cancel');
     });
 
-Route::middleware(['web','auth','force.password.change','ensure.role:delivery|owner|superadmin'])
+Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:delivery|owner|superadmin'])
     ->prefix('delivery-app')
     ->name('deliveryapp.')
     ->group(function () {
-        Route::get('/',                    [DeliveryAppController::class, 'dashboard'])->name('dashboard');
+        Route::get('/', [DeliveryAppController::class, 'dashboard'])->name('dashboard');
         Route::get('/dashboard', function () {
             return redirect()->route('deliveryapp.dashboard');
         });
 
         // Detail DO
-        Route::get('/orders/{do}',         [DeliveryAppController::class, 'show'])->name('orders.show');
+        Route::get('/orders/{do}', [DeliveryAppController::class, 'show'])->name('orders.show');
 
         // Transisi status
-        Route::post('/orders/{do}/start',  [DeliveryAppController::class, 'start'])
+        Route::post('/orders/{do}/start', [DeliveryAppController::class, 'start'])
             ->name('orders.start');     // ready -> on_delivery
         Route::post('/orders/{do}/cancel', [DeliveryAppController::class, 'cancel'])
             ->name('orders.cancel');   // on_delivery -> ready
-        Route::post('/orders/{do}/done',   [DeliveryAppController::class, 'complete'])
+        Route::post('/orders/{do}/done', [DeliveryAppController::class, 'complete'])
             ->name('orders.done');   // on_delivery -> delivered
     });
 
-Route::middleware(['web','auth','force.password.change','ensure.role:sales|owner|superadmin'])
+Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:sales|owner|superadmin'])
     ->prefix('sales-app')
     ->name('salesapp.')
     ->group(function () {
@@ -258,6 +258,14 @@ Route::middleware(['web','auth','force.password.change','ensure.role:sales|owner
         Route::get('/reports/sales/export/excel', [SalesAppController::class, 'exportSalesExcel'])->name('reports.sales.export.excel');
         Route::get('/reports/sales/export/pdf', [SalesAppController::class, 'exportSalesPdf'])->name('reports.sales.export.pdf');
     });
+
+// Panel Filament pindah dari /admin ke /inventory-app (Inventory App); tautan
+// dan bookmark lama diarahkan ke tempat baru. Diletakkan sebelum grup lain
+// supaya /admin-app (aplikasi Blade) tidak ikut tertangkap: pola ini hanya
+// cocok untuk /admin dan /admin/... .
+Route::get('/admin/{path?}', fn (?string $path = null) => redirect('/inventory-app'.($path ? '/'.$path : ''), 301))
+    ->where('path', '.*')
+    ->name('admin.legacy-redirect');
 
 Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:superadmin'])
     ->prefix('superadmin')
@@ -281,7 +289,7 @@ Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:owner|su
     ->group(function () {
 
         // DASHBOARD RINGKASAN
-        Route::get('/',          [OwnerAppController::class, 'dashboard'])->name('dashboard');
+        Route::get('/', [OwnerAppController::class, 'dashboard'])->name('dashboard');
         Route::get('/dashboard', function () {
             return redirect()->route('ownerapp.dashboard');
         });
@@ -319,9 +327,9 @@ Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:owner|su
             ->name('hpp-analysis');
 
         // Shortcuts
-        Route::get('/open/admin-app',      fn () => redirect('/admin-app'))->name('open.admin');
+        Route::get('/open/admin-app', fn () => redirect('/admin-app'))->name('open.admin');
         Route::get('/open/production-app', fn () => redirect('/production-app'))->name('open.production');
-        Route::get('/open/delivery-app',   fn () => redirect('/delivery-app'))->name('open.delivery');
+        Route::get('/open/delivery-app', fn () => redirect('/delivery-app'))->name('open.delivery');
     });
 
 Route::middleware(['web', 'auth', 'ensure.role:accounting|owner|superadmin'])

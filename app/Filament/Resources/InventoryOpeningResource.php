@@ -82,7 +82,7 @@ class InventoryOpeningResource extends Resource
 
                 TextColumn::make('total_value')
                     ->label('Nilai Stok')
-                    ->money('idr', true)
+                    ->money('IDR', locale: 'id')
                     ->sortable(),
 
                 TextColumn::make('notes')

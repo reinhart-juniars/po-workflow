@@ -1,65 +1,12 @@
 @php
+    // Judul & pengalih aplikasi dibaca dari satu sumber (App\Support\AppSwitcher)
+    // supaya sama persis dengan topbar Inventory App.
     $user = auth()->user();
-
-    $titles = [
-        'owner' => 'Owner App',
-        'admin' => 'Admin App',
-        'accounting' => 'Accounting App',
-        'sales' => 'Sales App',
-        'production' => 'Production App',
-        'delivery' => 'Delivery App',
-        'superadmin' => 'Superadmin Dashboard',
-        'profile' => 'Profil Akun',
-    ];
+    $apps = \App\Support\AppSwitcher::apps();
 
     $currentApp = $currentApp ?? 'owner';
-    $title = $titles[$currentApp] ?? 'App';
-
-    $appLinks = [
-        'superadmin' => [
-            'label' => 'Superadmin',
-            'url' => route('superadmin.dashboard'),
-            'isCurrent' => request()->routeIs('superadmin.*'),
-        ],
-        'owner' => [
-            'label' => 'Owner',
-            'url' => route('ownerapp.dashboard'),
-            'isCurrent' => request()->routeIs('ownerapp.*'),
-        ],
-        'admin' => [
-            'label' => 'Admin',
-            'url' => route('adminapp.dashboard'),
-            'isCurrent' => request()->routeIs('adminapp.*'),
-        ],
-        'accounting' => [
-            'label' => 'Accounting',
-            'url' => route('accountingapp.dashboard'),
-            'isCurrent' => request()->routeIs('accountingapp.*'),
-        ],
-        'sales' => [
-            'label' => 'Sales',
-            'url' => route('salesapp.dashboard'),
-            'isCurrent' => request()->routeIs('salesapp.*'),
-        ],
-        'production' => [
-            'label' => 'Production',
-            'url' => route('productionapp.dashboard'),
-            'isCurrent' => request()->routeIs('productionapp.*'),
-        ],
-        'delivery' => [
-            'label' => 'Delivery',
-            'url' => route('deliveryapp.dashboard'),
-            'isCurrent' => request()->routeIs('deliveryapp.*'),
-        ],
-    ];
-
-    $switchLinks = [];
-
-    foreach ($user?->accessibleAppKeys() ?? [] as $appKey) {
-        if (isset($appLinks[$appKey])) {
-            $switchLinks[] = ['key' => $appKey, ...$appLinks[$appKey]];
-        }
-    }
+    $title = $currentApp === 'profile' ? 'Profil Akun' : ($apps[$currentApp]['title'] ?? 'App');
+    $switchLinks = \App\Support\AppSwitcher::linksFor($user, $currentApp);
 @endphp
 
 <header class="border-b border-slate-200/80 bg-white/85 backdrop-blur">
@@ -80,7 +27,6 @@
 
       <div class="flex flex-wrap items-center gap-2">
         @foreach ($switchLinks as $link)
-          @continue(($currentApp === $link['key']) || (!empty($link['isCurrent']) && $link['isCurrent']))
           <a href="{{ $link['url'] }}" class="btn-ghost text-slate-600">
             {{ $link['label'] }}
           </a>

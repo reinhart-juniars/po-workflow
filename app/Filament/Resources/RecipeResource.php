@@ -286,7 +286,7 @@ class RecipeResource extends Resource
                 TextColumn::make('hpp')
                     ->label('HPP / Hasil')
                     ->state(fn (Recipe $record) => app(RecipeCostService::class)->cost($record)['hpp_per_yield'])
-                    ->money('idr', true)
+                    ->money('IDR', locale: 'id')
                     ->alignRight()
                     ->description(fn (Recipe $record) => rtrim(rtrim(number_format((float) $record->yield_qty, 2, ',', '.'), '0'), ',')
                         .' '.$record->yield_unit),

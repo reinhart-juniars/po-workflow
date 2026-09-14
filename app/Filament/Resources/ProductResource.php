@@ -10,17 +10,20 @@ use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
 class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+
     protected static ?string $navigationGroup = 'Master Data';
+
     protected static ?string $navigationLabel = 'Produk';
+
     protected static ?int $navigationSort = 10;
 
     public static function form(Form $form): Form
@@ -85,7 +88,7 @@ class ProductResource extends Resource
                     ->sortable(),
                 TextColumn::make('base_price')
                     ->label('Harga')
-                    ->money('idr', true)
+                    ->money('IDR', locale: 'id')
                     ->sortable(),
                 IconColumn::make('active')
                     ->label('Aktif')
@@ -118,9 +121,9 @@ class ProductResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListProducts::route('/'),
+            'index' => Pages\ListProducts::route('/'),
             'create' => Pages\CreateProduct::route('/create'),
-            'edit'   => Pages\EditProduct::route('/{record}/edit'),
+            'edit' => Pages\EditProduct::route('/{record}/edit'),
         ];
     }
 }
