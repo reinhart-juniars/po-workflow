@@ -31,6 +31,7 @@
             <th class="right" style="width: 64px">Kebutuhan</th>
             <th class="right" style="width: 64px">Stok Awal</th>
             <th class="right" style="width: 64px">Beli</th>
+            <th class="right" style="width: 56px">Diterima</th>
             <th class="right" style="width: 64px">Harga</th>
             <th class="right" style="width: 72px">Perkiraan</th>
             <th class="right" style="width: 64px">Pemakaian</th>
@@ -46,6 +47,7 @@
                 <td class="right">{{ $qty($line->required_qty) }}</td>
                 <td class="right">{!! $line->opening_stock_qty === null ? '<span class="fill"></span>' : $qty($line->opening_stock_qty) !!}</td>
                 <td class="right">{!! $line->purchase_qty === null ? '<span class="fill"></span>' : $qty($line->purchase_qty) !!}</td>
+                <td class="right">{!! $line->received_qty === null ? '<span class="fill"></span>' : $qty($line->received_qty) !!}</td>
                 <td class="right">{{ $rupiah($line->unit_price) }}</td>
                 <td class="right">{{ $rupiah((float) ($line->purchase_qty ?? 0) * (float) ($line->unit_price ?? 0)) }}</td>
                 <td class="right">{!! $line->actual_used_qty === null ? '<span class="fill"></span>' : $qty($line->actual_used_qty) !!}</td>
@@ -53,7 +55,7 @@
             </tr>
         @endforeach
         <tr class="total">
-            <td colspan="7" class="right">Perkiraan total pembelian</td>
+            <td colspan="8" class="right">Perkiraan total pembelian</td>
             <td class="right">{{ $rupiah($totalBeli) }}</td>
             <td colspan="2"></td>
         </tr>

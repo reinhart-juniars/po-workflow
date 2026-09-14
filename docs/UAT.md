@@ -28,8 +28,11 @@ Legenda kolom "Wajib": W = wajib untuk serah terima, O = opsional/dicatat saja.
 | B2 | Tambah bahan baru dengan induk, satuan, harga kemasan | Harga satuan terhitung otomatis dari harga kemasan / isi | W | | |
 | B3 | Export Excel Item Inventaris | File terunduh, kolom induk/kelompok/harga ada | O | | |
 | B4 | Import Excel yang sama tanpa perubahan | Tidak ada perubahan data (idempoten) | O | | |
+| B4a | Ubah harga satuan bahan di panel → tab Histori Harga | Baris baru: lama → baru, sumber "panel", siapa & kapan | W | | |
+| B4b | Stock Opname / Saldo Awal: Export → ubah nilai di Excel → Import | Nilai berubah; baris item tak dikenal menolak seluruh berkas | W | | |
 | B5 | Pembelian Bahan Baku: catat pembelian, tautkan ke Form Kebutuhan | Pembelian tampil di form terkait | W | | |
-| B6 | Laporan Mutasi Stok periode berjalan | Kartu "Pemakaian Resep" tampil di samping residual | W | | |
+| B6 | Laporan Mutasi Stok periode berjalan | Kartu "Pemakaian Resep" tampil di samping residual; catatan menyebut sumber HPP aktif | W | | |
+| B7 | Login sebagai admin saat ada bahan di bawah ambang | Notifikasi "N bahan di bawah stok minimum" muncul sekali + widget dashboard + badge menu | W | | |
 
 ## C. Resep, konversi, pencocokan (Phase 2)
 
@@ -55,7 +58,8 @@ Legenda kolom "Wajib": W = wajib untuk serah terima, O = opsional/dicatat saja.
 | D5 | Form Kebutuhan → Susun Form (`production`) | Baris per bahan: Kebutuhan, Stok Awal kosong, Beli = usulan; masalah konversi disebutkan | W | | |
 | D6 | Isi Stok Awal semua baris → Simpan → muat ulang | Isian tersimpan; Beli menyesuaikan (Kebutuhan − Stok Awal) | W | | |
 | D7 | Setujui (`admin`/`owner`) | Status Disetujui; Stok Awal & Beli terkunci | W | | |
-| D8 | Periksa (`accounting`/`admin`) | Status Diperiksa; Ledger Stok berisi opening (hanya bahan tanpa riwayat) + purchase | W | | |
+| D7a | Pada tahap Disetujui, isi kolom Diterima lebih kecil dari Beli untuk satu bahan (barang datang rusak) | Tersimpan; kolom lain terkunci | W | | |
+| D8 | Periksa (`accounting`/`admin`) | Status Diperiksa; Ledger Stok berisi opening (hanya bahan tanpa riwayat) + purchase **sejumlah Diterima** (bahan rusak tidak menambah stok) | W | | |
 | D9 | Cetak Form | PDF dengan kolom tanda tangan | W | | |
 | D10 | Isi Pemakaian Aktual & Sisa Stok → Tutup SPK (`production`) | Status SPK selesai; ledger usage (negatif) + adjustment; notifikasi nilai pemakaian | W | | |
 | D11 | Coba Tutup SPK lagi / Periksa lagi | Ditolak (tidak bisa diulang) | W | | |
@@ -72,6 +76,7 @@ Legenda kolom "Wajib": W = wajib untuk serah terima, O = opsional/dicatat saja.
 | E3 | Bandingkan 5 bahan acak: harga kemasan & isi | Sama | W | | |
 | E4 | SPK riwayat Master Menu (17) tampil di SPK Produksi tab Selesai | Ada, tidak bisa diedit | O | | |
 | E5 | Perbandingan HPP resep vs residual opname untuk 2 periode lampau | Angka dicatat, dibahas; Owner memutuskan kapan opname berhenti jadi sumber utama | W | | |
+| E6 | Setelah disetujui: Pengaturan → "Sumber pemakaian bahan untuk HPP" = Ledger resep | Laporan Laba Rugi "Bahan Baku Terpakai" & Laporan Pemakaian Bahan berganti ke angka resep; residual tetap tampil sebagai pembanding | W | | |
 
 ## F. Paralel HPP (definition of done Phase 3)
 

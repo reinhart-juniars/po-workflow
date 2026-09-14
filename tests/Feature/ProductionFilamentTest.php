@@ -118,11 +118,16 @@ it('menjalankan form kebutuhan dari susun sampai spk ditutup lewat halaman', fun
         ->assertHasNoActionErrors();
     expect($requisition->fresh()->status)->toBe(Requisition::STATUS_APPROVED);
 
+    // Tahap Disetujui: kolom Diterima terbuka; 0,25 kg datang rusak -> diterima 0,5.
+    // Periksa memakai isian yang belum disimpan itu.
     Livewire::test(ProductionOrderResource\Pages\RequisitionForm::class, ['record' => $order->id])
+        ->fillForm(['lines' => [['id' => $line->id, 'received_qty' => 0.5]]])
         ->callAction('periksa')
         ->assertHasNoActionErrors();
     expect($requisition->fresh()->status)->toBe(Requisition::STATUS_CHECKED)
-        ->and(InventoryMovement::query()->count())->toBe(2);
+        ->and((float) $line->fresh()->received_qty)->toBe(0.5)
+        ->and(InventoryMovement::query()->count())->toBe(2)
+        ->and((float) InventoryMovement::query()->ofType(InventoryMovement::TYPE_PURCHASE)->sum('qty'))->toBe(0.5);
 
     // Catat aktual 1,1 kg lalu tutup: pemakaian terposting, SPK selesai.
     Livewire::test(ProductionOrderResource\Pages\RequisitionForm::class, ['record' => $order->id])

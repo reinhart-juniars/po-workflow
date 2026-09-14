@@ -49,6 +49,14 @@ class SettingRegistry
                 'max' => 500,
                 'help' => 'Persen dari HPP + OHC.',
             ],
+            'hpp.usage_source' => [
+                'group' => 'Resep & HPP',
+                'label' => 'Sumber pemakaian bahan untuk HPP',
+                'type' => self::TYPE_SELECT,
+                'default' => 'residual',
+                'options' => ['residual' => 'Residual opname (Saldo Awal + Beli - Sisa)', 'resep' => 'Ledger resep x produksi (+ penyesuaian sisa fisik)'],
+                'help' => 'Ganti ke ledger resep hanya setelah Perbandingan HPP beberapa periode disetujui Owner. Berlaku ke Laporan Pemakaian Bahan, Laba Rugi, dan Neraca.',
+            ],
             'hpp.comparison_default_range' => [
                 'group' => 'Resep & HPP',
                 'label' => 'Periode awal Perbandingan HPP',

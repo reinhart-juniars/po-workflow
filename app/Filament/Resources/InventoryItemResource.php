@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\InventoryItemResource\Pages;
+use App\Filament\Resources\InventoryItemResource\RelationManagers;
 use App\Models\InventoryItem;
 use App\Services\InventoryStockAlertService;
 use App\Support\Units\Unit;
@@ -77,8 +78,72 @@ class InventoryItemResource extends Resource
                     ->label('Keterangan')
                     ->rows(3)
                     ->columnSpanFull(),
+
+                // Kolom bahan (dulu milik Master Menu): induk/bucket, kelompok,
+                // kemasan, dan harga satuan yang dipakai HPP resep. Harga satuan
+                // dihitung dari harga kemasan / isi bila keduanya diisi, tetapi
+                // tetap bisa ditulis langsung untuk bahan tanpa kemasan.
+                Forms\Components\Section::make('Data Bahan')
+                    ->description('Dipakai resep & HPP. Item tanpa induk diperlakukan sebagai bucket (kelompok stok di Laba Rugi).')
+                    ->schema([
+                        Forms\Components\Select::make('parent_id')
+                            ->label('Induk / Bucket')
+                            ->options(fn (?InventoryItem $record) => InventoryItem::query()->buckets()
+                                ->when($record, fn ($q) => $q->whereKeyNot($record->id))
+                                ->orderBy('name')->pluck('name', 'id'))
+                            ->searchable()
+                            ->native(false)
+                            ->placeholder('— tidak ada (item ini bucket) —'),
+
+                        Forms\Components\TextInput::make('ingredient_group')
+                            ->label('Kelompok Bahan')
+                            ->maxLength(100)
+                            ->placeholder('mis. sayur, bumbu, protein'),
+
+                        Forms\Components\TextInput::make('pack_qty')
+                            ->label('Isi Kemasan')
+                            ->numeric()
+                            ->minValue(0)
+                            ->step('any')
+                            ->suffix(fn (Forms\Get $get) => $get('unit'))
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn (Forms\Get $get, Forms\Set $set) => static::syncUnitPrice($get, $set)),
+
+                        Forms\Components\TextInput::make('pack_price')
+                            ->label('Harga Kemasan')
+                            ->prefix('Rp')
+                            ->numeric()
+                            ->minValue(0)
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn (Forms\Get $get, Forms\Set $set) => static::syncUnitPrice($get, $set)),
+
+                        Forms\Components\TextInput::make('unit_price')
+                            ->label('Harga Satuan')
+                            ->prefix('Rp')
+                            ->numeric()
+                            ->minValue(0)
+                            ->step('any')
+                            ->helperText('Per satuan di atas. Terisi otomatis dari harga kemasan / isi; setiap perubahan dicatat ke Histori Harga.'),
+
+                        Forms\Components\Toggle::make('is_prepared')
+                            ->label('Bahan olahan (dibuat sendiri)')
+                            ->inline(false),
+                    ])
+                    ->columns(3)
+                    ->columnSpanFull(),
             ])
             ->columns(2);
+    }
+
+    /** Harga satuan = harga kemasan / isi kemasan, bila keduanya terisi. */
+    public static function syncUnitPrice(Forms\Get $get, Forms\Set $set): void
+    {
+        $qty = (float) $get('pack_qty');
+        $price = (float) $get('pack_price');
+
+        if ($qty > 0 && $price > 0) {
+            $set('unit_price', round($price / $qty, 4));
+        }
     }
 
     public static function table(Table $table): Table
@@ -99,6 +164,18 @@ class InventoryItemResource extends Resource
                     ->badge()
                     ->formatStateUsing(fn (?string $state) => InventoryItem::categoryOptions()[$state] ?? $state)
                     ->sortable(),
+
+                TextColumn::make('parent.name')
+                    ->label('Induk')
+                    ->placeholder('bucket')
+                    ->toggleable(),
+
+                TextColumn::make('unit_price')
+                    ->label('Harga Satuan')
+                    ->money('IDR', locale: 'id')
+                    ->placeholder('-')
+                    ->sortable()
+                    ->toggleable(),
 
                 TextColumn::make('minimum_stock_value')
                     ->label('Stok Minimum')
@@ -231,6 +308,13 @@ class InventoryItemResource extends Resource
     public static function getNavigationBadgeColor(): ?string
     {
         return 'danger';
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\PriceHistoriesRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

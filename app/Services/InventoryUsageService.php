@@ -6,6 +6,7 @@ use App\Models\InventoryMovement;
 use App\Models\InventoryOpening;
 use App\Models\InventoryPurchase;
 use App\Models\StockOpname;
+use App\Support\Settings\Settings;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 
@@ -139,23 +140,36 @@ class InventoryUsageService
             $dateTo
         );
 
-        // Pemakaian menurut resep x produksi (ledger Phase 3) ikut dibawa sebagai
-        // pembanding. Angka residual di atas tidak diubah: selama masa uji
-        // paralel keduanya harus terlihat berdampingan, dan residual tetap
-        // menjadi sumber HPP sampai perbandingannya disetujui.
+        // Pemakaian menurut resep x produksi (ledger Phase 3) selalu ikut
+        // dihitung sebagai pembanding. Mana yang menjadi 'usage' -- angka yang
+        // dibaca Laba Rugi, Neraca, dan laporan pemakaian -- ditentukan
+        // pengaturan hpp.usage_source: residual sampai masa paralel disetujui
+        // Owner, sesudah itu ledger resep (pemakaian + penyesuaian sisa fisik).
         $recipeUsage = round(-$this->ledger->valueForBucket(
             $itemId,
             InventoryMovement::TYPE_USAGE,
             $dateFrom->toDateString(),
             $dateTo->toDateString(),
         ), 2);
+        $recipeAdjustment = round(-$this->ledger->valueForBucket(
+            $itemId,
+            InventoryMovement::TYPE_ADJUSTMENT,
+            $dateFrom->toDateString(),
+            $dateTo->toDateString(),
+        ), 2);
+
+        $residualUsage = round($opening + $purchases - $ending, 2);
+        $usageSource = app(Settings::class)->get('hpp.usage_source');
 
         $summary = [
             'opening' => $opening,
             'purchases' => $purchases,
             'ending' => $ending,
-            'usage' => $opening + $purchases - $ending,
+            'usage' => $usageSource === 'resep' ? round($recipeUsage + $recipeAdjustment, 2) : $residualUsage,
+            'usage_source' => $usageSource,
+            'usage_residual' => $residualUsage,
             'usage_recipe' => $recipeUsage,
+            'adjustment_recipe' => $recipeAdjustment,
             'opening_source' => $openingSource,
             'ending_source' => $endingSource,
         ];
@@ -262,7 +276,9 @@ class InventoryUsageService
             'kind' => 'result',
             'label' => 'Total Pemakaian',
             'value' => (float) ($summary['usage'] ?? 0),
-            'notes' => null,
+            'notes' => ($summary['usage_source'] ?? 'residual') === 'resep'
+                ? 'Dari ledger resep x produksi (pemakaian + penyesuaian sisa fisik); residual opname Rp '.number_format((float) ($summary['usage_residual'] ?? 0), 2, ',', '.').' hanya pembanding.'
+                : null,
         ]);
 
         return $rows;

@@ -177,6 +177,34 @@ class RequisitionService
      * Dilakukan dalam satu transaksi, dan dilarang diulang: form yang sudah
      * diperiksa tidak bisa diperiksa lagi, sehingga ledger tidak terisi dua kali.
      */
+    /**
+     * Catat jumlah yang benar-benar diterima (tahap Disetujui, sebelum
+     * Periksa). Barang "Tidak Baik" tidak boleh ikut masuk stok, jadi yang
+     * diterima boleh lebih kecil dari Beli -- tetapi tidak lebih besar, karena
+     * kelebihan kiriman dicatat sebagai pembelian tersendiri.
+     */
+    public function recordReceivedQty(RequisitionLine $line, ?float $receivedQty): RequisitionLine
+    {
+        $requisition = $line->requisition;
+
+        if (! $requisition->isApproved()) {
+            throw new RuntimeException('Form '.$requisition->number.' belum disetujui atau sudah diperiksa; jumlah diterima hanya dicatat di antaranya.');
+        }
+
+        if ($receivedQty !== null && $receivedQty < 0) {
+            throw new RuntimeException('Jumlah diterima tidak boleh negatif.');
+        }
+
+        if ($receivedQty !== null && $receivedQty > (float) $line->purchase_qty + 0.00005) {
+            throw new RuntimeException('Diterima untuk '.$line->name.' melebihi Beli ('.(float) $line->purchase_qty.' '.$line->unit.'). Kelebihan kiriman dicatat sebagai pembelian terpisah.');
+        }
+
+        $line->received_qty = $receivedQty === null ? null : round($receivedQty, 4);
+        $line->save();
+
+        return $line;
+    }
+
     public function check(Requisition $requisition, ?int $userId = null): Requisition
     {
         if (! $requisition->isApproved()) {
@@ -209,11 +237,13 @@ class RequisitionService
                     );
                 }
 
-                if ((float) $line->purchase_qty > 0) {
+                // Yang masuk stok adalah yang diterima layak pakai, bukan yang
+                // dipesan: barang datang rusak sudah dikurangi di received_qty.
+                if ($line->receivedQty() > 0) {
                     $this->ledger->post(
                         $line->inventory_item_id,
                         InventoryMovement::TYPE_PURCHASE,
-                        (float) $line->purchase_qty,
+                        $line->receivedQty(),
                         $line->unit,
                         $date,
                         $price,

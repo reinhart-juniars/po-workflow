@@ -20,6 +20,8 @@ use App\Services\ProductionCompletionService;
 use App\Services\ProductionOrderService;
 use App\Services\ProductionUsageService;
 use App\Services\RequisitionService;
+use App\Support\Settings\Settings;
+use Spatie\Permission\Models\Role;
 
 /**
  * Alur Phase 3 dari ujung ke ujung: PO -> SPK Produksi -> Form Kebutuhan ->
@@ -228,6 +230,41 @@ it('memposting saldo awal dan pembelian ke ledger hanya saat diperiksa, sekali s
     expect(InventoryMovement::query()->count())->toBe(3);
 });
 
+it('hanya memasukkan jumlah yang diterima layak ke ledger, bukan yang datang rusak', function () {
+    // Padanan ledger dari InventoryPurchase::CONDITION_DAMAGED: barang "Tidak
+    // Baik" saat kedatangan tidak boleh menambah stok tersedia.
+    $d = siapkanProduksi();
+    $order = app(ProductionOrderService::class)->generateFromSpk($d['spk']);
+    $service = app(RequisitionService::class);
+    $ledger = app(InventoryLedgerService::class);
+    $requisition = $service->build($order)['requisition'];
+
+    $tepung = $requisition->lines->firstWhere('inventory_item_id', $d['tepung']->id);
+    $minyak = $requisition->lines->firstWhere('inventory_item_id', $d['minyak']->id);
+    $service->fillOpeningStock($tepung, 0.5);   // beli 1,5
+    $service->fillOpeningStock($minyak, 0);     // beli = kebutuhan
+
+    // Jumlah diterima hanya bisa dicatat setelah disetujui, sebelum diperiksa.
+    expect(fn () => $service->recordReceivedQty($tepung->fresh(), 1))->toThrow(RuntimeException::class);
+
+    $service->approve($requisition->fresh());
+
+    // 0,5 kg dari 1,5 kg tepung datang rusak -> diterima 1. Melebihi Beli ditolak.
+    $service->recordReceivedQty($tepung->fresh(), 1.0);
+    expect(fn () => $service->recordReceivedQty($tepung->fresh(), 2.0))->toThrow(RuntimeException::class, 'melebihi Beli');
+
+    $service->check($requisition->fresh());
+
+    // Tepung: opening 0,5 + diterima 1 = 1,5 (bukan 2). Minyak tanpa catatan diterima: masuk sejumlah Beli.
+    expect($ledger->balance($d['tepung']->id))->toBe(1.5)
+        ->and($ledger->balance($d['minyak']->id))->toBe((float) $minyak->fresh()->purchase_qty)
+        ->and((float) InventoryMovement::query()->ofType(InventoryMovement::TYPE_PURCHASE)
+            ->where('inventory_item_id', $d['tepung']->id)->value('qty'))->toBe(1.0);
+
+    // Setelah diperiksa, jumlah diterima terkunci.
+    expect(fn () => $service->recordReceivedQty($tepung->fresh(), 0.5))->toThrow(RuntimeException::class);
+});
+
 it('tidak memposting saldo awal lagi untuk bahan yang sudah punya ledger', function () {
     $d = siapkanProduksi();
     $ledger = app(InventoryLedgerService::class);
@@ -315,8 +352,35 @@ it('membawa pemakaian resep ke laporan pemakaian bahan sebagai pembanding residu
     $summary = app(InventoryUsageService::class)->calculateForItem($d['bucket']->id, $from, $to);
 
     expect($summary['usage_recipe'])->toBe(48000.0)
+        ->and($summary['usage_source'])->toBe('residual')
         // Angka residual tidak tersentuh: tidak ada opname/pembelian nilai di periode ini.
-        ->and($summary['usage'])->toBe(0.0);
+        ->and($summary['usage'])->toBe(0.0)
+        ->and($summary['usage_residual'])->toBe(0.0);
+
+    // Setelah masa paralel disetujui, Owner memindahkan sumber HPP ke ledger
+    // resep: 'usage' -- yang dibaca Laba Rugi & Neraca -- berganti, residual
+    // tetap tersedia sebagai pembanding.
+    app(Settings::class)->set('hpp.usage_source', 'resep');
+    $summary = app(InventoryUsageService::class)->calculateForItem($d['bucket']->id, $from, $to);
+
+    expect($summary['usage'])->toBe(48000.0)
+        ->and($summary['usage_source'])->toBe('resep')
+        ->and($summary['usage_residual'])->toBe(0.0)
+        ->and($summary['adjustment_recipe'])->toBe(0.0);
+
+    // Laporan Laba Rugi (aplikasi akunting) membaca 'usage' yang sama:
+    // Bahan Baku Terpakai berganti dari Rp 0 menjadi Rp 48.000.
+    Role::findOrCreate('accounting', 'web');
+    $akunting = User::factory()->create(['is_active' => true, 'force_password_change' => false]);
+    $akunting->assignRole('accounting');
+    $laba = fn () => $this->actingAs($akunting)
+        ->get(route('accountingapp.reports.final', ['date_from' => '2026-09-01', 'date_to' => '2026-09-30']))
+        ->assertOk();
+
+    $laba()->assertSeeInOrder(['Bahan Baku Terpakai', 'Rp 48.000']);
+
+    app(Settings::class)->set('hpp.usage_source', 'residual');
+    $laba()->assertSeeInOrder(['Bahan Baku Terpakai', 'Rp 0']);
 
     $banding = app(ProductionUsageService::class)->compareBucket($d['bucket'], $from, $to);
 

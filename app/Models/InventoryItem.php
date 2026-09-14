@@ -106,6 +106,75 @@ class InventoryItem extends Model
         return $this->hasMany(InventoryItemPriceHistory::class)->latest();
     }
 
+    /**
+     * Sumber perubahan harga yang sedang berjalan ('panel', 'import', ...);
+     * null berarti histori tidak dicatat -- dipakai migrasi Master Menu yang
+     * membawa historinya sendiri.
+     */
+    public static ?string $priceChangeSource = 'panel';
+
+    /** Jalankan $callback tanpa mencatat histori harga (mis. migrasi). */
+    public static function withoutPriceHistory(callable $callback): mixed
+    {
+        $previous = static::$priceChangeSource;
+        static::$priceChangeSource = null;
+
+        try {
+            return $callback();
+        } finally {
+            static::$priceChangeSource = $previous;
+        }
+    }
+
+    /**
+     * Setiap perubahan harga satuan/kemasan dicatat sebagai histori, seperti
+     * yang dilakukan Master Menu -- inilah yang nanti memberi makan notifikasi
+     * perubahan harga (Bagian B) dan menjelaskan lonjakan HPP.
+     */
+    protected static function booted(): void
+    {
+        // Dipisah created/updated: wasRecentlyCreated tetap true seumur
+        // instance, jadi tidak bisa dipakai membedakan keduanya di saved().
+        static::created(function (self $item) {
+            if (static::$priceChangeSource === null || ($item->unit_price === null && $item->pack_price === null)) {
+                return;
+            }
+
+            $item->recordPriceHistory(null, null, InventoryItemPriceHistory::ACTION_SET_AWAL);
+        });
+
+        static::updated(function (self $item) {
+            if (static::$priceChangeSource === null || (! $item->wasChanged('unit_price') && ! $item->wasChanged('pack_price'))) {
+                return;
+            }
+
+            $oldUnit = $item->getOriginal('unit_price');
+            $newUnit = $item->unit_price;
+
+            $action = match (true) {
+                $oldUnit === null || (float) $oldUnit == 0.0 => InventoryItemPriceHistory::ACTION_SET_AWAL,
+                (float) $newUnit > (float) $oldUnit => InventoryItemPriceHistory::ACTION_NAIK,
+                (float) $newUnit < (float) $oldUnit => InventoryItemPriceHistory::ACTION_TURUN_DIPAKSA,
+                default => InventoryItemPriceHistory::ACTION_NAIK, // hanya harga kemasan yang berubah
+            };
+
+            $item->recordPriceHistory($oldUnit, $item->getOriginal('pack_price'), $action);
+        });
+    }
+
+    protected function recordPriceHistory(mixed $oldUnit, mixed $oldPack, string $action): void
+    {
+        $this->priceHistories()->create([
+            'old_unit_price' => $oldUnit,
+            'new_unit_price' => $this->unit_price,
+            'old_pack_price' => $oldPack,
+            'new_pack_price' => $this->pack_price,
+            'action' => $action,
+            'source' => static::$priceChangeSource,
+            'created_by' => auth()->id(),
+        ]);
+    }
+
     /** Baris resep yang memakai bahan ini. */
     public function recipeItems(): HasMany
     {

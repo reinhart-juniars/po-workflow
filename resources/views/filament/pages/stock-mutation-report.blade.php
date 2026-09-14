@@ -13,8 +13,8 @@
                 ['Bahan Baku Lama', $summary['opening'] ?? 0, null],
                 ['Pembelian', $summary['purchases'] ?? 0, 'Barang berkondisi tidak baik tidak dihitung.'],
                 ['Sisa Stok', $summary['ending'] ?? 0, null],
-                ['Pemakaian', $summary['usage'] ?? 0, null],
-                ['Pemakaian Resep', $summary['usage_recipe'] ?? 0, 'Dari SPK Produksi yang ditutup di periode ini; pembanding residual.'],
+                ['Pemakaian', $summary['usage'] ?? 0, ($summary['usage_source'] ?? 'residual') === 'resep' ? 'Sumber HPP: ledger resep (pemakaian + penyesuaian). Residual opname: Rp '.number_format((float) ($summary['usage_residual'] ?? 0), 2, ',', '.') : 'Sumber HPP: residual opname (Saldo Awal + Beli - Sisa).'],
+                ['Pemakaian Resep', $summary['usage_recipe'] ?? 0, 'Dari SPK Produksi yang ditutup di periode ini'.(($summary['usage_source'] ?? 'residual') === 'resep' ? '; penyesuaian sisa fisik Rp '.number_format((float) ($summary['adjustment_recipe'] ?? 0), 2, ',', '.').'.' : '; pembanding residual (ubah sumber di Pengaturan).')],
             ] as [$label, $value, $note])
                 <x-filament::section>
                     <div class="text-sm text-gray-500 dark:text-gray-400">{{ $label }}</div>

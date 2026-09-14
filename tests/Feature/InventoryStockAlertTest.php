@@ -1,11 +1,18 @@
 <?php
 
+use App\Filament\Pages\Dashboard;
+use App\Filament\Resources\InventoryItemResource;
+use App\Filament\Widgets\LowStockAlertWidget;
 use App\Models\InventoryItem;
 use App\Models\InventoryOpening;
 use App\Models\InventoryPurchase;
 use App\Models\StockOpname;
+use App\Models\User;
 use App\Services\InventoryStockAlertService;
 use Carbon\Carbon;
+use Livewire\Livewire;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 function buatItem(array $attributes = []): InventoryItem
 {
@@ -112,4 +119,38 @@ it('mengabaikan item tanpa ambang dan item nonaktif', function () {
     $alerts = app(InventoryStockAlertService::class)->alerts(Carbon::parse('2026-03-31'));
 
     expect($alerts->pluck('item.name')->all())->toBe(['Minyak Goreng']);
+});
+
+it('menyampaikan alert stok minimum sebagai notifikasi di dashboard, sekali per hari', function () {
+    Role::findOrCreate('admin', 'web');
+    $admin = User::factory()->create(['is_active' => true, 'force_password_change' => false]);
+    $admin->assignRole('admin');
+    $this->actingAs($admin);
+
+    // Tanpa item di bawah ambang: dashboard sunyi (positive control untuk kondisi di bawah).
+    Livewire::test(Dashboard::class)->assertOk()->assertNotNotified();
+
+    $item = buatItem(['minimum_stock_value' => 500000]);
+    catatPembelian($item, '2026-03-05', 100000);
+
+    Livewire::test(Dashboard::class)
+        ->assertOk()
+        ->assertNotified('1 bahan di bawah stok minimum');
+
+    // Kunjungan berikutnya di hari yang sama tidak mengulang notifikasinya;
+    // widget dan badge navigasi tetap menampilkannya.
+    Livewire::test(Dashboard::class)->assertOk()->assertNotNotified();
+    expect(LowStockAlertWidget::canView())->toBeTrue()
+        ->and(InventoryItemResource::getNavigationBadge())->toBe('1');
+
+    // Peran tanpa izin inventory tidak diganggu notifikasi maupun widget.
+    Role::findOrCreate('production', 'web')->revokePermissionTo('inventory.view');
+    app(PermissionRegistrar::class)->forgetCachedPermissions();
+    $produksi = User::factory()->create(['is_active' => true, 'force_password_change' => false]);
+    $produksi->assignRole('production');
+    $this->actingAs($produksi);
+    session()->forget('inventory_stock_alert_notified_on');
+
+    Livewire::test(Dashboard::class)->assertOk()->assertNotNotified();
+    expect(LowStockAlertWidget::canView())->toBeFalse();
 });

@@ -95,6 +95,19 @@ class InventoryItemsImport implements SkipsEmptyRows, ToCollection, WithHeadingR
             return;
         }
 
+        $previousSource = InventoryItem::$priceChangeSource;
+        InventoryItem::$priceChangeSource = 'import';
+
+        try {
+            $this->persist($parsed);
+        } finally {
+            InventoryItem::$priceChangeSource = $previousSource;
+        }
+    }
+
+    /** @param  array<int, array<string, mixed>>  $parsed */
+    protected function persist(array $parsed): void
+    {
         DB::transaction(function () use ($parsed) {
             foreach ($parsed as $data) {
                 $id = $data['id'];

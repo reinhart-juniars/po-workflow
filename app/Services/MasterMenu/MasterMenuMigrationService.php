@@ -162,14 +162,16 @@ class MasterMenuMigrationService
                 ->where('source_ingredient_id', $row->id)
                 ->first();
 
+            // Histori harga dibawa dari tabel sumber (migratePriceHistories),
+            // jadi pencatatan otomatis dimatikan supaya tidak berganda.
             if ($existing) {
-                $existing->update($attributes);
+                InventoryItem::withoutPriceHistory(fn () => $existing->update($attributes));
                 $updated++;
 
                 continue;
             }
 
-            InventoryItem::query()->create($attributes + ['source_ingredient_id' => $row->id]);
+            InventoryItem::withoutPriceHistory(fn () => InventoryItem::query()->create($attributes + ['source_ingredient_id' => $row->id]));
             $created++;
         }
 

@@ -27,7 +27,8 @@ class LowStockAlertWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        return app(InventoryStockAlertService::class)->alertCount() > 0;
+        return (auth()->user()?->can('inventory.view') ?? false)
+            && app(InventoryStockAlertService::class)->alertCount() > 0;
     }
 
     public function table(Table $table): Table

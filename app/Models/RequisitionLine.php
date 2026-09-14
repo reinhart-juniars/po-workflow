@@ -17,6 +17,7 @@ class RequisitionLine extends Model
         'required_qty',
         'opening_stock_qty',
         'purchase_qty',
+        'received_qty',
         'unit_price',
         'actual_used_qty',
         'remaining_qty',
@@ -56,6 +57,15 @@ class RequisitionLine extends Model
 
         // Pembelian biasanya per kemasan utuh: 0,3 dus tetap harus beli 1 dus.
         return app(Settings::class)->bool('requisition.round_purchase_up') ? (float) ceil($shortfall) : $shortfall;
+    }
+
+    /**
+     * Yang masuk ledger saat Periksa: jumlah diterima bila dicatat (barang
+     * datang rusak dikurangi di sini), selain itu sejumlah Beli.
+     */
+    public function receivedQty(): float
+    {
+        return $this->received_qty === null ? (float) $this->purchase_qty : (float) $this->received_qty;
     }
 
     /** Pemakaian yang diposting ke ledger: aktual bila diisi, kebutuhan bila tidak. */

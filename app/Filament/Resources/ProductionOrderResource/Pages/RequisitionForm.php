@@ -87,6 +87,7 @@ class RequisitionForm extends Page implements HasForms
                     'required_qty' => (float) $line->required_qty,
                     'opening_stock_qty' => $line->opening_stock_qty === null ? null : (float) $line->opening_stock_qty,
                     'purchase_qty' => $line->purchase_qty === null ? null : (float) $line->purchase_qty,
+                    'received_qty' => $line->received_qty === null ? null : (float) $line->received_qty,
                     'unit_price' => $line->unit_price === null ? null : (float) $line->unit_price,
                     'actual_used_qty' => $line->actual_used_qty === null ? null : (float) $line->actual_used_qty,
                     'remaining_qty' => $line->remaining_qty === null ? null : (float) $line->remaining_qty,
@@ -101,6 +102,7 @@ class RequisitionForm extends Page implements HasForms
         $requisition = $this->getRequisition();
         $order = $this->getOrder();
         $draft = $requisition?->isDraft() ?? false;
+        $receivingOpen = $requisition?->isApproved() ?? false;
         $actualsOpen = ($requisition?->isChecked() ?? false) && ! $order->isCompleted();
 
         return $form
@@ -143,6 +145,17 @@ class RequisitionForm extends Page implements HasForms
                             ->dehydrated($draft)
                             ->helperText($draft ? 'Boleh dibulatkan ke kemasan.' : null),
 
+                        TextInput::make('received_qty')
+                            ->label('Diterima')
+                            ->numeric()
+                            ->minValue(0)
+                            ->step('any')
+                            ->suffix(fn ($get) => $get('unit'))
+                            ->placeholder('= beli')
+                            ->disabled(! $receivingOpen)
+                            ->dehydrated($receivingOpen)
+                            ->helperText($receivingOpen ? 'Kurangi bila ada yang datang rusak / tidak baik.' : null),
+
                         Placeholder::make('harga')
                             ->label('Harga Satuan')
                             ->content(fn ($get) => $get('unit_price') === null ? '-' : 'Rp '.number_format((float) $get('unit_price'), 2, ',', '.')),
@@ -170,10 +183,10 @@ class RequisitionForm extends Page implements HasForms
                         TextInput::make('notes')
                             ->label('Catatan')
                             ->maxLength(255)
-                            ->disabled(! ($draft || $actualsOpen))
-                            ->dehydrated($draft || $actualsOpen),
+                            ->disabled(! ($draft || $receivingOpen || $actualsOpen))
+                            ->dehydrated($draft || $receivingOpen || $actualsOpen),
                     ])
-                    ->columns(7),
+                    ->columns(8),
             ])
             ->statePath('data');
     }
@@ -208,6 +221,9 @@ class RequisitionForm extends Page implements HasForms
                         $service->overridePurchaseQty($line->fresh(), (float) $row['purchase_qty']);
                     }
 
+                    $line->fresh()->update(['notes' => $row['notes'] ?? null]);
+                } elseif ($requisition->isApproved()) {
+                    $service->recordReceivedQty($line, static::number($row['received_qty'] ?? null));
                     $line->fresh()->update(['notes' => $row['notes'] ?? null]);
                 } elseif ($requisition->isChecked() && ! $this->getOrder()->isCompleted()) {
                     $completion->recordActuals(
@@ -279,7 +295,7 @@ class RequisitionForm extends Page implements HasForms
                     $requisition = $this->getRequisition();
 
                     return $requisition !== null
-                        && ($requisition->isDraft() || ($requisition->isChecked() && ! $this->getOrder()->fresh()->isCompleted()));
+                        && ($requisition->isDraft() || $requisition->isApproved() || ($requisition->isChecked() && ! $this->getOrder()->fresh()->isCompleted()));
                 })
                 ->action(fn () => $this->save()),
 
@@ -313,8 +329,11 @@ class RequisitionForm extends Page implements HasForms
                 ->color('success')
                 ->visible(fn () => $this->getRequisition()?->isApproved() ?? false)
                 ->requiresConfirmation()
-                ->modalDescription('Menandai barang sudah dibeli & diperiksa. Stok Awal (untuk bahan yang belum punya ledger) dan Beli akan dicatat ke ledger stok. Langkah ini tidak bisa diulang.')
+                ->modalDescription('Menandai barang sudah dibeli & diperiksa. Stok Awal (untuk bahan yang belum punya ledger) dan jumlah Diterima (= Beli bila kosong) akan dicatat ke ledger stok. Langkah ini tidak bisa diulang.')
                 ->action(function () {
+                    // Isian "Diterima" yang belum disimpan ikut dibawa.
+                    $this->save();
+
                     try {
                         app(RequisitionService::class)->check($this->getRequisition(), auth()->id());
                     } catch (Throwable $e) {
