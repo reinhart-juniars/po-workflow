@@ -1,61 +1,59 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# PO-workflow
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi internal W3S Catering: purchase order → SPK → pengiriman → penjualan aktual,
+ditambah inventory, kas/pengeluaran, dan laporan keuangan. Laravel 12 / PHP 8.2 / MySQL,
+dua lapis antarmuka: aplikasi Blade per peran (`/owner-app`, `/admin-app`, …) dan panel
+Filament di `/admin`.
 
-## About Laravel
+## Modul Inventory Terpadu
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Menyatukan Master Menu Revamp (resep & HPP, dulu SQLite lokal) ke dalam po-workflow dan
+menggantikan HPP residual opname dengan pemakaian bahan riil dari resep × produksi.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+| Phase | Isi | Di panel |
+|---|---|---|
+| 1 | Item inventaris bertingkat (bucket → bahan), pembelian, opname, saldo awal, laporan mutasi, import/export Excel | Inventory |
+| 2 | Resep & sub-resep, Analisa HPP, aturan konversi satuan per bahan + pendeteksi pasangan yang belum diatur, Bahan Belum Cocok (pencocokan nama), import/export resep | Inventory |
+| 3 | SPK Produksi dari slot SPK/PO, Form Kebutuhan bertahap (Dibuat → Disetujui → Diperiksa → Tutup SPK), ledger stok per bahan, lembar kerja, plating, PDF, Perbandingan HPP resep vs opname | Produksi |
+| 4 | Izin modul (spatie permission) per peran, Pengaturan modul, navigasi terpadu, validasi & pembersihan pasca migrasi, runbook cutover & UAT | Sistem |
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Dokumen:
 
-## Learning Laravel
+- [docs/ACCESS.md](docs/ACCESS.md) — izin & matriks peran, cara mengubahnya
+- [docs/CUTOVER.md](docs/CUTOVER.md) — runbook deploy, migrasi data, rollback
+- [docs/UAT.md](docs/UAT.md) — checklist UAT Bagian A bersama Owner
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Perintah artisan modul
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+| Perintah | Fungsi |
+|---|---|
+| `inventory:audit-master-menu` | Audit rekonsiliasi Master Menu vs po-workflow (Excel) |
+| `inventory:migrate-master-menu {--db} {--database} {--dry-run} {--force}` | Pindahkan bahan, harga, resep, mismatch, pelaksana, template, SPK riwayat (idempoten) |
+| `inventory:map-recipes-to-products {--dry-run}` | Petakan resep → produk yang namanya cocok persis |
+| `inventory:validate-migration {--fix} {--fail-on=error}` | Laporan validasi pasca migrasi + pembersihan aman |
+| `access:sync {--reset}` | Sinkronkan izin modul ke peran |
+| `db:clone-to-staging` | Salin database kerja ke `po_workflow_staging` |
+| `po:audit-cash-in {--fix}` | Audit data kas PO lama |
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Pengembangan
 
-## Laravel Sponsors
+Dilayani Laravel Herd di `http://po-workflow.test` (jangan jalankan `php artisan serve`).
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```bash
+composer install && npm install
+cp .env.example .env && php artisan key:generate
+php artisan migrate && php artisan db:seed      # peran + izin modul ikut tersemai
+npm run dev                                      # atau npm run build
+php artisan test --compact                       # Pest, SQLite :memory:
+vendor/bin/pint --dirty
+```
 
-### Premium Partners
+`MASTER_MENU_DB_PATH` di `.env` menunjuk `app.db` Master Menu untuk migrasi/audit; kosongkan
+bila tidak ada.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Keamanan
 
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- Panel `/admin` hanya untuk peran `superadmin`, `owner`, `admin`, `accounting`, `production`;
+  di dalamnya setiap resource dijaga policy berbasis izin modul (`tests/Feature/Security/`).
+- Tes arsitektur menolak resource/halaman panel baru yang tidak punya policy/`canAccess`.
+- Rahasia hanya di `.env` (gitignored; di server mode 600 milik user deploy).

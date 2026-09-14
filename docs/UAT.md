@@ -1,0 +1,91 @@
+# UAT — Modul Inventory Terpadu (Bagian A, Phase 1–4)
+
+Diisi bersama Owner W3S Catering di server produksi/staging setelah migrasi data.
+Setiap baris: pelaku menjalankan langkah, pemeriksa mencatat hasil (✓ / ✗ + catatan).
+Bagian A dinyatakan selesai (Termin 2) bila semua baris **Wajib** ✓ dan tidak ada ✗ terbuka.
+
+Akun uji: satu per peran (`owner`, `admin`, `accounting`, `production`). Jangan memakai
+akun pribadi Owner untuk uji tolakan akses.
+
+Legenda kolom "Wajib": W = wajib untuk serah terima, O = opsional/dicatat saja.
+
+## A. Akses & navigasi (Phase 4)
+
+| # | Langkah | Hasil yang diharapkan | W/O | ✓/✗ | Catatan |
+|---|---|---|---|---|---|
+| A1 | Login `production` → buka `/admin` | Masuk; sidebar hanya menampilkan Produksi, Inventory (lihat), Resep (lihat) | W | | |
+| A2 | `production` buka Inventory → Item Inventaris → Tambah | Ditolak (403 / tombol tidak ada) | W | | |
+| A3 | `accounting` buka Form Kebutuhan draft | Tidak ada tombol Susun/Simpan/Setujui | W | | |
+| A4 | `admin` buka form yang sama | Tombol Setujui ada | W | | |
+| A5 | `admin` buka Sistem → Pengaturan | Ditolak; `owner` bisa | W | | |
+| A6 | Sidebar `owner` | Urutan grup: Pesanan, Produksi, Pengiriman, Inventory, Master Data, Sistem | O | | |
+
+## B. Inventory (Phase 1)
+
+| # | Langkah | Hasil yang diharapkan | W/O | ✓/✗ | Catatan |
+|---|---|---|---|---|---|
+| B1 | Item Inventaris: cari bahan hasil migrasi (mis. "Beras") | Ada, induk = bucket Bahan Baku, harga satuan terisi | W | | |
+| B2 | Tambah bahan baru dengan induk, satuan, harga kemasan | Harga satuan terhitung otomatis dari harga kemasan / isi | W | | |
+| B3 | Export Excel Item Inventaris | File terunduh, kolom induk/kelompok/harga ada | O | | |
+| B4 | Import Excel yang sama tanpa perubahan | Tidak ada perubahan data (idempoten) | O | | |
+| B5 | Pembelian Bahan Baku: catat pembelian, tautkan ke Form Kebutuhan | Pembelian tampil di form terkait | W | | |
+| B6 | Laporan Mutasi Stok periode berjalan | Kartu "Pemakaian Resep" tampil di samping residual | W | | |
+
+## C. Resep, konversi, pencocokan (Phase 2)
+
+| # | Langkah | Hasil yang diharapkan | W/O | ✓/✗ | Catatan |
+|---|---|---|---|---|---|
+| C1 | Resep & Menu: buka resep migrasi (mis. "Nasi Goreng Ikan Asin") → Analisa HPP | HPP per porsi, OHC, profit, rincian bahan; baris bermasalah ditandai merah dengan alasan | W | | |
+| C2 | Konversi Satuan → Butuh Aturan: pilih pasangan teratas → "Buat aturan" | Form terisi (bahan, dari, ke; faktor usulan bila nama mengandung ukuran kemasan) → simpan | W | | |
+| C3 | Kembali ke HPP resep yang memakai bahan itu | Baris merah hilang, HPP naik sesuai | W | | |
+| C4 | Bahan Belum Cocok: tautkan satu nama ke bahan yang ada | Status Ditautkan; baris resep yang memakainya kini terhubung (cek di resep) | W | | |
+| C5 | Bahan Belum Cocok: "Buat bahan" untuk satu nama | Bahan baru muncul di Item Inventaris di bawah bucket | W | | |
+| C6 | Jalankan ulang migrasi (staging) lalu cek C4 | Tautan manual tetap ada | O | | |
+| C7 | Export resep → ubah satu qty di Excel → import | Baris berubah; file dengan bahan tak dikenal ditolak utuh | O | | |
+| C8 | Tambah resep baru | OHC/profit bawaan sesuai Pengaturan (40% / 25% bila belum diubah) | W | | |
+
+## D. Produksi & Form Kebutuhan (Phase 3)
+
+| # | Langkah | Hasil yang diharapkan | W/O | ✓/✗ | Catatan |
+|---|---|---|---|---|---|
+| D1 | SPK Produksi → Buat dari Slot SPK (slot dengan PO) | SPKP-… terbentuk; baris per item PO; produk tanpa resep disebut di notifikasi | W | | |
+| D2 | Edit SPK → Segarkan dari PO setelah PO berubah | Baris mengikuti PO; baris manual tidak hilang | W | | |
+| D3 | Lembar Kerja → Salin dari Template Menu | Pekerjaan per resep terisi; bisa ubah PIC/jam | W | | |
+| D4 | Plating | Komponen per menu tampil; Cetak PDF terunduh | W | | |
+| D5 | Form Kebutuhan → Susun Form (`production`) | Baris per bahan: Kebutuhan, Stok Awal kosong, Beli = usulan; masalah konversi disebutkan | W | | |
+| D6 | Isi Stok Awal semua baris → Simpan → muat ulang | Isian tersimpan; Beli menyesuaikan (Kebutuhan − Stok Awal) | W | | |
+| D7 | Setujui (`admin`/`owner`) | Status Disetujui; Stok Awal & Beli terkunci | W | | |
+| D8 | Periksa (`accounting`/`admin`) | Status Diperiksa; Ledger Stok berisi opening (hanya bahan tanpa riwayat) + purchase | W | | |
+| D9 | Cetak Form | PDF dengan kolom tanda tangan | W | | |
+| D10 | Isi Pemakaian Aktual & Sisa Stok → Tutup SPK (`production`) | Status SPK selesai; ledger usage (negatif) + adjustment; notifikasi nilai pemakaian | W | | |
+| D11 | Coba Tutup SPK lagi / Periksa lagi | Ditolak (tidak bisa diulang) | W | | |
+| D12 | Perbandingan HPP, periode tanggal produksi | Kolom Pemakaian Resep & Penyesuaian terisi; residual opname di sampingnya | W | | |
+| D13 | Pengaturan: aktifkan "Wajib isi Sisa Stok" → Tutup SPK lain tanpa sisa | Ditolak dengan pesan jumlah bahan yang belum diisi | O | | |
+| D14 | Pengaturan: aktifkan "Bulatkan usulan Beli" → Susun form baru | Beli bilangan bulat | O | | |
+
+## E. Data migrasi (Phase 4)
+
+| # | Langkah | Hasil yang diharapkan | W/O | ✓/✗ | Catatan |
+|---|---|---|---|---|---|
+| E1 | `php artisan inventory:validate-migration` | 0 error; baris "sumber vs tujuan" sama | W | | |
+| E2 | Bandingkan 5 resep acak: HPP di Master Menu vs Analisa HPP di po-workflow | Sama, atau selisih dijelaskan oleh konversi/mismatch yang belum diputuskan | W | | |
+| E3 | Bandingkan 5 bahan acak: harga kemasan & isi | Sama | W | | |
+| E4 | SPK riwayat Master Menu (17) tampil di SPK Produksi tab Selesai | Ada, tidak bisa diedit | O | | |
+| E5 | Perbandingan HPP resep vs residual opname untuk 2 periode lampau | Angka dicatat, dibahas; Owner memutuskan kapan opname berhenti jadi sumber utama | W | | |
+
+## F. Paralel HPP (definition of done Phase 3)
+
+Diisi tiap akhir bulan selama masa paralel (minimal 2 periode).
+
+| Periode | Residual opname (Bahan Baku) | Pemakaian resep + penyesuaian | Selisih | Penjelasan | Disetujui Owner |
+|---|---|---|---|---|---|
+| | | | | | |
+| | | | | | |
+
+## Tanda tangan
+
+| Peran | Nama | Tanggal | Tanda tangan |
+|---|---|---|---|
+| Owner W3S Catering | | | |
+| Admin | | | |
+| Pengembang | Reinhart Juniars | | |
