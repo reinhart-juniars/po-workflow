@@ -203,6 +203,9 @@ Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:producti
 
         // detail PO (progress)
         Route::get('/orders/{po}', [ProductionAppController::class, 'show'])->name('orders.show');
+
+        // susun SPK Produksi (modul inventory) dari slot SPK lama, lalu buka Form Kebutuhan
+        Route::post('/spk/{spk}/production-order', [ProductionAppController::class, 'createProductionOrder'])->name('spk.production-order');
         Route::put('/orders/{po}', [AdminAppController::class, 'ordersUpdate'])->name('orders.update');
 
         // ubah status menjadi completed

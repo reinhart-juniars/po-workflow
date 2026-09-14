@@ -2,16 +2,25 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ProductsExport;
+use App\Models\Area;
+use App\Models\AuditLog;   // ⬅️ penting
+use App\Models\CashAccount;
+use App\Models\Customer;
+use App\Models\DeliveryOrder;
+use App\Models\Product;
+use App\Models\PurchaseOrder;
+use App\Models\PurchaseOrderItem;
+use App\Models\Spk;
+use App\Models\User;
+use App\Services\ProductionOrderService;
+use App\Support\UiLabel;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Schema;   // ⬅️ penting
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
-use Carbon\Carbon;
-use App\Models\AuditLog;
-use App\Models\{PurchaseOrder, PurchaseOrderItem, Product, Customer, Area, Spk, DeliveryOrder, User, CashAccount};
-use App\Support\UiLabel;
-use App\Exports\ProductsExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -30,7 +39,7 @@ class AdminAppController extends Controller
 
         // Hitung semua PO yang masih aktif (tanpa filter tanggal)
         $poDraftCount = PurchaseOrder::where('status', 'draft')->count();
-        $poProgCount  = PurchaseOrder::where('status', 'in_progress')->count();
+        $poProgCount = PurchaseOrder::where('status', 'in_progress')->count();
 
         // Ambil semua PO draft & in_progress, urutkan yang paling baru dulu.
         $openPos = PurchaseOrder::with(['customer', 'area'])
@@ -48,9 +57,9 @@ class AdminAppController extends Controller
         // supaya Blade kamu tidak perlu diubah banyak
         return view('adminapp.dashboard', [
             'poTodayDraft' => $poDraftCount,
-            'poTodayProg'  => $poProgCount,
-            'posToday'     => $filteredPos,
-            'allPosToday'  => $openPos,
+            'poTodayProg' => $poProgCount,
+            'posToday' => $filteredPos,
+            'allPosToday' => $openPos,
             'statusFilter' => $statusFilter,
         ]);
     }
@@ -60,7 +69,7 @@ class AdminAppController extends Controller
         $today = Carbon::today();
 
         // 🔹 ambil master customer aktif
-        $customers = Customer::select('id','name','phone','address','area_id')
+        $customers = Customer::select('id', 'name', 'phone', 'address', 'area_id')
             ->where('active', true)
             ->orderBy('name')
             ->get();
@@ -68,26 +77,26 @@ class AdminAppController extends Controller
         // (kalau kamu juga mau master produk buat detail item)
         $products = Product::where('active', true)
             ->orderBy('name')
-            ->get('id','name','phone');
+            ->get('id', 'name', 'phone');
 
-        $poDraft = PurchaseOrder::with(['customer','area'])
-            ->whereDate('created_at',$today)
-            ->where('status','draft')
+        $poDraft = PurchaseOrder::with(['customer', 'area'])
+            ->whereDate('created_at', $today)
+            ->where('status', 'draft')
             ->latest('created_at')
             ->get();
 
-        $poProg = PurchaseOrder::with(['customer','area'])
-            ->whereDate('created_at',$today)
-            ->where('status','in_progress')
+        $poProg = PurchaseOrder::with(['customer', 'area'])
+            ->whereDate('created_at', $today)
+            ->where('status', 'in_progress')
             ->latest('created_at')
             ->get();
 
         $areas = Area::orderBy('name')
-            ->pluck('name','id');
-        
-        $products = Product::where('active',true)
+            ->pluck('name', 'id');
+
+        $products = Product::where('active', true)
             ->orderBy('name')
-            ->get(['id','name','base_price']);
+            ->get(['id', 'name', 'base_price']);
 
         $previewPo = $this
             ->previewPoNumber();
@@ -96,18 +105,19 @@ class AdminAppController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'type']);
 
-        return view('adminapp.orders', compact('poDraft','poProg','customers','areas','products','previewPo', 'cashAccounts'));
+        return view('adminapp.orders', compact('poDraft', 'poProg', 'customers', 'areas', 'products', 'previewPo', 'cashAccounts'));
     }
 
     public function ordersShow(PurchaseOrder $po)
     {
-        $po->load(['customer','area','items.product', 'cashAccount', 'deliveryOrders']);
+        $po->load(['customer', 'area', 'items.product', 'cashAccount', 'deliveryOrders']);
+
         return view('adminapp.order_show', compact('po'));
     }
 
     public function ordersEdit(PurchaseOrder $po)
     {
-        $po->load(['customer','area','items.product', 'deliveryOrders']);
+        $po->load(['customer', 'area', 'items.product', 'deliveryOrders']);
 
         if ($this->purchaseOrderIsLockedForEdit($po)) {
             return redirect()
@@ -127,7 +137,7 @@ class AdminAppController extends Controller
             ->get();
 
         $areas = Area::orderBy('name')
-            ->pluck('name','id');
+            ->pluck('name', 'id');
 
         $productIds = $po->items->pluck('product_id')->filter()->all();
 
@@ -140,68 +150,68 @@ class AdminAppController extends Controller
                 }
             })
             ->orderBy('name')
-            ->get(['id','name','base_price']);
+            ->get(['id', 'name', 'base_price']);
 
         $cashAccounts = CashAccount::where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'name', 'type']);
 
-        return view('adminapp.order_edit', compact('po','customers','areas','products', 'cashAccounts'));
+        return view('adminapp.order_edit', compact('po', 'customers', 'areas', 'products', 'cashAccounts'));
     }
 
     public function ordersStore(Request $r)
     {
         $data = $r->validate([
-            'customer_id'     => ['required', Rule::exists('customers', 'id')->where('active', true)],
-            'recipient_name'  => ['required','string','max:100'],
-            'shipping_address'=> ['required','string','max:255'],
-            'area_id'         => ['required','exists:areas,id'],
-            'delivery_date'   => ['required','date'],
-            'delivery_time'   => ['nullable','date_format:H:i'],
-            'discount_amount' => ['nullable','numeric','min:0'],
-            'shipping_cost'   => ['nullable','numeric','min:0'],
-            'payment_type'    => ['required','in:cash,receivable'],
-            'cash_account_id' => ['nullable','exists:cash_accounts,id','required_if:payment_type,cash'],
-            'receivable_days' => ['nullable','integer','min:1','max:365','required_if:payment_type,receivable'],
-            'items'           => ['required','array','min:1'],
-            'items.*.product_id' => ['required','exists:products,id'],
-            'items.*.qty'        => ['required','integer','min:1'],
-            'items.*.notes'      => ['nullable','string','max:255'],
+            'customer_id' => ['required', Rule::exists('customers', 'id')->where('active', true)],
+            'recipient_name' => ['required', 'string', 'max:100'],
+            'shipping_address' => ['required', 'string', 'max:255'],
+            'area_id' => ['required', 'exists:areas,id'],
+            'delivery_date' => ['required', 'date'],
+            'delivery_time' => ['nullable', 'date_format:H:i'],
+            'discount_amount' => ['nullable', 'numeric', 'min:0'],
+            'shipping_cost' => ['nullable', 'numeric', 'min:0'],
+            'payment_type' => ['required', 'in:cash,receivable'],
+            'cash_account_id' => ['nullable', 'exists:cash_accounts,id', 'required_if:payment_type,cash'],
+            'receivable_days' => ['nullable', 'integer', 'min:1', 'max:365', 'required_if:payment_type,receivable'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['required', 'exists:products,id'],
+            'items.*.qty' => ['required', 'integer', 'min:1'],
+            'items.*.notes' => ['nullable', 'string', 'max:255'],
         ]);
 
         $poNumber = $this->generatePoNumber();
 
         $po = PurchaseOrder::create([
-            'po_number'       => $poNumber,
-            'customer_id'     => $data['customer_id'],
-            'recipient_name'  => $data['recipient_name'],
-            'shipping_address'=> $data['shipping_address'],
-            'area_id'         => $data['area_id'],
-            'delivery_date'   => Carbon::parse($data['delivery_date'])->toDateString(),
-            'delivery_time'   => $data['delivery_time'] ?? null,
+            'po_number' => $poNumber,
+            'customer_id' => $data['customer_id'],
+            'recipient_name' => $data['recipient_name'],
+            'shipping_address' => $data['shipping_address'],
+            'area_id' => $data['area_id'],
+            'delivery_date' => Carbon::parse($data['delivery_date'])->toDateString(),
+            'delivery_time' => $data['delivery_time'] ?? null,
             'discount_amount' => $data['discount_amount'] ?? 0,
-            'shipping_cost'   => $data['shipping_cost'] ?? 0,
-            'payment_type'    => $data['payment_type'],
+            'shipping_cost' => $data['shipping_cost'] ?? 0,
+            'payment_type' => $data['payment_type'],
             'cash_account_id' => ($data['payment_type'] ?? 'cash') === 'cash'
                 ? ($data['cash_account_id'] ?? null)
                 : null,
             'receivable_days' => $this->normalizeReceivableDays($data),
-            'due_date'        => $this->calculatePaymentDueDate($data),
-            'cash_received_at'=> null,
-            'cash_received_by'=> null,
+            'due_date' => $this->calculatePaymentDueDate($data),
+            'cash_received_at' => null,
+            'cash_received_by' => null,
             'receivable_status' => $this->defaultReceivableStatus($data),
-            'status'          => 'draft',
-            'created_by'      => Auth::id(),
+            'status' => 'draft',
+            'created_by' => Auth::id(),
         ]);
 
-        $totalQty    = 0;
+        $totalQty = 0;
         $totalAmount = 0;
 
         foreach ($data['items'] as $row) {
             $product = Product::find($row['product_id']);
-            $price   = $product->base_price ?? 0;
-            $qty     = (int) $row['qty'];
-            $notes   = $row['notes'] ?? null;
+            $price = $product->base_price ?? 0;
+            $qty = (int) $row['qty'];
+            $notes = $row['notes'] ?? null;
 
             $subtotal = $price * $qty;
             $totalQty += $qty;
@@ -209,40 +219,40 @@ class AdminAppController extends Controller
 
             PurchaseOrderItem::create([
                 'purchase_order_id' => $po->id,
-                'product_id'        => $product->id,
-                'qty'               => $qty,
-                'unit_price'        => $price,
+                'product_id' => $product->id,
+                'qty' => $qty,
+                'unit_price' => $price,
                 'raw_material_cost' => $product->raw_material_cost,
-                'overhead_cost'     => $product->overhead_cost,
-                'subtotal'          => $subtotal,
-                'notes'             => $notes,
+                'overhead_cost' => $product->overhead_cost,
+                'subtotal' => $subtotal,
+                'notes' => $notes,
             ]);
         }
 
         // total akhir: (sum item - diskon) + ongkir
-        $discount     = $data['discount_amount'] ?? 0;
+        $discount = $data['discount_amount'] ?? 0;
         $shippingCost = $data['shipping_cost'] ?? 0;
 
-        $po->total_qty    = $totalQty;
+        $po->total_qty = $totalQty;
         $po->total_amount = max(0, $totalAmount - $discount + $shippingCost);
         $po->save();
 
         // 🔹 CATAT AUDIT LOG (CREATE)
         AuditLog::create([
-            'user_id'           => Auth::id(),
-            'entity'            => 'purchase_orders',   // bebas: 'purchase_order' / 'po'
-            'entity_id'         => $po->id,
+            'user_id' => Auth::id(),
+            'entity' => 'purchase_orders',   // bebas: 'purchase_order' / 'po'
+            'entity_id' => $po->id,
             'purchase_order_id' => $po->id,            // boleh dipakai juga, sekalian
-            'action'            => 'created',
-            'message'           => sprintf(
+            'action' => 'created',
+            'message' => sprintf(
                 'User %s telah membuat PO dengan ID %s pada %s',
                 Auth::user()->name ?? 'Unknown',
                 $po->po_number,
                 now()->format('d-m-Y H:i')
             ),
-            'before_json'       => null,
-            'after_json'        => json_encode($po->toArray()),
-            'ip_address'        => $r->ip(),
+            'before_json' => null,
+            'after_json' => json_encode($po->toArray()),
+            'ip_address' => $r->ip(),
         ]);
 
         return redirect()
@@ -259,7 +269,7 @@ class AdminAppController extends Controller
         }
 
         $data = $r->validate([
-            'customer_id'      => [
+            'customer_id' => [
                 'required',
                 function (string $attribute, mixed $value, \Closure $fail) use ($po) {
                     $isAllowedCustomer = Customer::query()
@@ -278,21 +288,21 @@ class AdminAppController extends Controller
                     }
                 },
             ],
-            'recipient_name'   => ['required', 'string', 'max:100'],
+            'recipient_name' => ['required', 'string', 'max:100'],
             'shipping_address' => ['required', 'string', 'max:255'],
-            'area_id'          => ['required', 'exists:areas,id'],
-            'delivery_date'    => ['required', 'date'],
-            'delivery_time'    => ['nullable', 'date_format:H:i'],
-            'discount_amount'  => ['nullable', 'numeric', 'min:0'],
-            'shipping_cost'    => ['nullable','numeric','min:0'],
-            'payment_type'     => ['required','in:cash,receivable'],
-            'cash_account_id'  => ['nullable','exists:cash_accounts,id','required_if:payment_type,cash'],
-            'receivable_days'  => ['nullable','integer','min:1','max:365','required_if:payment_type,receivable'],
-            'items'                => ['required', 'array', 'min:1'],
-            'items.*.product_id'   => ['required', 'exists:products,id'],
-            'items.*.qty'          => ['required', 'integer', 'min:1'],
-            'items.*.notes'        => ['nullable', 'string', 'max:255'],
-            'edit_reason'          => ['required', 'string', 'max:1000'],
+            'area_id' => ['required', 'exists:areas,id'],
+            'delivery_date' => ['required', 'date'],
+            'delivery_time' => ['nullable', 'date_format:H:i'],
+            'discount_amount' => ['nullable', 'numeric', 'min:0'],
+            'shipping_cost' => ['nullable', 'numeric', 'min:0'],
+            'payment_type' => ['required', 'in:cash,receivable'],
+            'cash_account_id' => ['nullable', 'exists:cash_accounts,id', 'required_if:payment_type,cash'],
+            'receivable_days' => ['nullable', 'integer', 'min:1', 'max:365', 'required_if:payment_type,receivable'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['required', 'exists:products,id'],
+            'items.*.qty' => ['required', 'integer', 'min:1'],
+            'items.*.notes' => ['nullable', 'string', 'max:255'],
+            'edit_reason' => ['required', 'string', 'max:1000'],
         ]);
 
         $before = [
@@ -303,20 +313,20 @@ class AdminAppController extends Controller
             $paymentState = $this->resolveOrderPaymentStateForUpdate($po, $data);
 
             $po->update([
-                'customer_id'      => $data['customer_id'],
-                'recipient_name'   => $data['recipient_name'],
+                'customer_id' => $data['customer_id'],
+                'recipient_name' => $data['recipient_name'],
                 'shipping_address' => $data['shipping_address'],
-                'area_id'          => $data['area_id'],
-                'delivery_date'    => \Carbon\Carbon::parse($data['delivery_date'])->toDateString(),
-                'delivery_time'    => $data['delivery_time'] ?? null,
-                'discount_amount'  => $data['discount_amount'] ?? 0,
-                'shipping_cost'    => $data['shipping_cost'] ?? 0,
-                'payment_type'     => $data['payment_type'],
-                'cash_account_id'  => ($data['payment_type'] ?? 'cash') === 'cash'
+                'area_id' => $data['area_id'],
+                'delivery_date' => \Carbon\Carbon::parse($data['delivery_date'])->toDateString(),
+                'delivery_time' => $data['delivery_time'] ?? null,
+                'discount_amount' => $data['discount_amount'] ?? 0,
+                'shipping_cost' => $data['shipping_cost'] ?? 0,
+                'payment_type' => $data['payment_type'],
+                'cash_account_id' => ($data['payment_type'] ?? 'cash') === 'cash'
                     ? ($data['cash_account_id'] ?? null)
                     : null,
-                'receivable_days'  => $this->normalizeReceivableDays($data),
-                'due_date'         => $this->calculatePaymentDueDate($data),
+                'receivable_days' => $this->normalizeReceivableDays($data),
+                'due_date' => $this->calculatePaymentDueDate($data),
                 'cash_received_at' => $paymentState['cash_received_at'],
                 'cash_received_by' => $paymentState['cash_received_by'],
                 'receivable_status' => $paymentState['receivable_status'],
@@ -328,13 +338,13 @@ class AdminAppController extends Controller
 
             $po->items()->delete();
 
-            $totalQty    = 0;
+            $totalQty = 0;
             $totalAmount = 0;
 
             foreach ($data['items'] as $row) {
                 $product = Product::find($row['product_id']);
-                $qty     = (int) $row['qty'];
-                $notes   = $row['notes'] ?? null;
+                $qty = (int) $row['qty'];
+                $notes = $row['notes'] ?? null;
 
                 $existing = $existingByProduct->get($product->id)?->first();
                 $price = $existing
@@ -352,20 +362,20 @@ class AdminAppController extends Controller
                 $totalAmount += $subtotal;
 
                 $po->items()->create([
-                    'product_id'        => $product->id,
-                    'qty'               => $qty,
-                    'unit_price'        => $price,
+                    'product_id' => $product->id,
+                    'qty' => $qty,
+                    'unit_price' => $price,
                     'raw_material_cost' => $rawMaterialCost,
-                    'overhead_cost'     => $overheadCost,
-                    'subtotal'          => $subtotal,
-                    'notes'             => $notes,
+                    'overhead_cost' => $overheadCost,
+                    'subtotal' => $subtotal,
+                    'notes' => $notes,
                 ]);
             }
 
-            $discount     = $data['discount_amount'] ?? 0;
+            $discount = $data['discount_amount'] ?? 0;
             $shippingCost = $data['shipping_cost'] ?? 0;
 
-            $po->total_qty    = $totalQty;
+            $po->total_qty = $totalQty;
             $po->total_amount = max(0, $totalAmount - $discount + $shippingCost);
             $po->save();
         });
@@ -373,24 +383,24 @@ class AdminAppController extends Controller
         $po->refresh()->load(['customer', 'area', 'items.product', 'cashAccount']);
 
         AuditLog::create([
-            'user_id'           => Auth::id(),
-            'entity'            => 'purchase_orders',
-            'entity_id'         => $po->id,
+            'user_id' => Auth::id(),
+            'entity' => 'purchase_orders',
+            'entity_id' => $po->id,
             'purchase_order_id' => $po->id,
-            'action'            => 'updated',
-            'message'           => sprintf(
+            'action' => 'updated',
+            'message' => sprintf(
                 'User %s telah mengubah PO %s pada %s. Alasan: %s',
                 Auth::user()->name ?? 'Unknown',
                 $po->po_number,
                 now()->format('d-m-Y H:i'),
                 $data['edit_reason']
             ),
-            'before_json'       => $before,
-            'after_json'        => [
+            'before_json' => $before,
+            'after_json' => [
                 'po' => $po->toArray(),
                 'edit_reason' => $data['edit_reason'],
             ],
-            'ip_address'        => $r->ip(),
+            'ip_address' => $r->ip(),
         ]);
 
         return redirect()
@@ -434,29 +444,29 @@ class AdminAppController extends Controller
         $po->load(['items', 'customer', 'area']);
 
         $before = [
-            'po'    => $po->toArray(),
+            'po' => $po->toArray(),
             'items' => $po->items->toArray(),
         ];
 
         $user = Auth::user();
-        $now  = now()->format('d-m-Y H:i');
+        $now = now()->format('d-m-Y H:i');
 
         // 2) Tulis audit log SAAT PO MASIH ADA
         AuditLog::create([
-            'user_id'           => $user->id,
-            'entity'            => 'purchase_orders',
-            'entity_id'         => $po->id,        // ✅ WAJIB tidak null
+            'user_id' => $user->id,
+            'entity' => 'purchase_orders',
+            'entity_id' => $po->id,        // ✅ WAJIB tidak null
             'purchase_order_id' => $po->id,        // ✅ valid terhadap FK (atau bisa kamu ganti null)
-            'action'            => 'deleted',
-            'message'           => sprintf(
+            'action' => 'deleted',
+            'message' => sprintf(
                 'User %s menghapus PO %s pada %s',
                 $user->name ?? 'Unknown',
                 $po->po_number,
                 $now
             ),
-            'before_json'       => $before,
-            'after_json'        => null,
-            'ip_address'        => $request->ip(),
+            'before_json' => $before,
+            'after_json' => null,
+            'ip_address' => $request->ip(),
         ]);
 
         // 3) Baru hapus PO
@@ -479,8 +489,8 @@ class AdminAppController extends Controller
 
     public function spkIndex()
     {
-    // semua PO yang masih draft, urutkan berdasarkan tgl & jam kirim
-        $poDraftToday = PurchaseOrder::with(['customer','area'])
+        // semua PO yang masih draft, urutkan berdasarkan tgl & jam kirim
+        $poDraftToday = PurchaseOrder::with(['customer', 'area'])
             ->where('status', 'draft')
             ->orderBy('delivery_date')
             ->orderBy('delivery_time')  // kalau kolomnya nullable, ini aman
@@ -492,11 +502,11 @@ class AdminAppController extends Controller
     public function spkStore(Request $r)
     {
         $data = $r->validate([
-            'po_ids'       => ['required','array','min:1'],
-            'po_ids.*'     => ['integer','exists:purchase_orders,id'],
-            'schedule_date'=> ['required','date'],
-            'slot_type'    => ['required','in:fixed_03,fixed_07,fixed_11,custom'],
-            'custom_time'  => ['nullable','date_format:H:i'],
+            'po_ids' => ['required', 'array', 'min:1'],
+            'po_ids.*' => ['integer', 'exists:purchase_orders,id'],
+            'schedule_date' => ['required', 'date'],
+            'slot_type' => ['required', 'in:fixed_03,fixed_07,fixed_11,custom'],
+            'custom_time' => ['nullable', 'date_format:H:i'],
         ]);
 
         // Tentukan jam produksi berdasarkan slot
@@ -504,7 +514,7 @@ class AdminAppController extends Controller
             'fixed_03' => '03:00',
             'fixed_07' => '07:00',
             'fixed_11' => '11:00',
-            'custom'   => $data['custom_time'] ?? '03:00',
+            'custom' => $data['custom_time'] ?? '03:00',
         };
 
         $scheduledAt = Carbon::parse($data['schedule_date'])
@@ -529,50 +539,63 @@ class AdminAppController extends Controller
             return back()
                 ->withErrors([
                     'schedule_date' => 'Tanggal/jam produksi tidak boleh lebih lambat dari tanggal/jam kirim untuk PO: '
-                        . implode(', ', $violations),
+                        .implode(', ', $violations),
                 ])
                 ->withInput();
         }
 
         $spk = Spk::create([
-            'spk_code'           => $this->generateSpkCode(),
-            'scheduled_at'       => $scheduledAt,
-            'slot_type'          => $data['slot_type'],
-            'responsible_user_id'=> auth::id(),
-            'status'             => 'in_process',
-            'created_by'         => auth::id(),
+            'spk_code' => $this->generateSpkCode(),
+            'scheduled_at' => $scheduledAt,
+            'slot_type' => $data['slot_type'],
+            'responsible_user_id' => auth::id(),
+            'status' => 'in_process',
+            'created_by' => auth::id(),
         ]);
 
         // KAITKAN SPK <-> PO via pivot
         $spk->purchaseOrders()->attach($data['po_ids']);
 
         foreach ($pos as $po) {
-        if (Schema::hasColumn('purchase_orders','spk_id')) {
-            $po->spk_id = $spk->id;
+            if (Schema::hasColumn('purchase_orders', 'spk_id')) {
+                $po->spk_id = $spk->id;
+            }
+            $po->status = 'in_progress';
+            $po->save();
         }
-        $po->status = 'in_progress';
-        $po->save();
-    }
 
-    AuditLog::create([
-        'user_id'           => Auth::id(),
-        'entity'            => 'spk',
-        'entity_id'         => $spk->id,
-        'purchase_order_id' => null,
-        'action'            => 'created',
-        'message'           => sprintf(
-            'User %s membuat SPK dengan ID %s pada %s untuk PO: %s',
-            Auth::user()?->name ?? 'Unknown',
-            $spk->spk_code,
-            now()->format('d-m-Y H:i'),
-            $pos->pluck('po_number')->implode(', ')
-        ),
-        'before_json'       => null,
-        'after_json'        => null,
-        'ip_address'        => $r->ip(),
-    ]);
+        AuditLog::create([
+            'user_id' => Auth::id(),
+            'entity' => 'spk',
+            'entity_id' => $spk->id,
+            'purchase_order_id' => null,
+            'action' => 'created',
+            'message' => sprintf(
+                'User %s membuat SPK dengan ID %s pada %s untuk PO: %s',
+                Auth::user()?->name ?? 'Unknown',
+                $spk->spk_code,
+                now()->format('d-m-Y H:i'),
+                $pos->pluck('po_number')->implode(', ')
+            ),
+            'before_json' => null,
+            'after_json' => null,
+            'ip_address' => $r->ip(),
+        ]);
 
-    return back()->with('success', "SPK dengan ID {$spk->spk_code} dibuat. PO terpilih masuk produksi (" . UiLabel::purchaseOrderStatus('in_progress') . ").");
+        // Slot SPK langsung menjadi SPK Produksi di modul inventory, supaya dapur
+        // tinggal membuka Form Kebutuhan -- tidak perlu "Buat dari Slot SPK" lagi.
+        // Kegagalan di sini (mis. produk tanpa resep) tidak membatalkan SPK-nya.
+        $catatanProduksi = '';
+
+        try {
+            $order = app(ProductionOrderService::class)->generateFromSpk($spk, Auth::id());
+            $catatanProduksi = " SPK Produksi {$order->number} ikut tersusun di Inventory.";
+        } catch (\Throwable $e) {
+            report($e);
+            $catatanProduksi = ' SPK Produksi belum bisa disusun otomatis: '.$e->getMessage();
+        }
+
+        return back()->with('success', "SPK dengan ID {$spk->spk_code} dibuat. PO terpilih masuk produksi (".UiLabel::purchaseOrderStatus('in_progress').').'.$catatanProduksi);
     }
 
     protected function normalizeReceivableDays(array $data): ?int
@@ -628,7 +651,7 @@ class AdminAppController extends Controller
 
         $nextSeq = $lastSeq + 1;
 
-        return $prefix . str_pad($nextSeq, 4, '0', STR_PAD_LEFT);
+        return $prefix.str_pad($nextSeq, 4, '0', STR_PAD_LEFT);
     }
 
     protected function previewPoNumber(): string
@@ -640,6 +663,7 @@ class AdminAppController extends Controller
     {
         $today = now()->format('Ymd');
         $seq = str_pad((Spk::whereDate('created_at', today())->count() + 1), 4, '0', STR_PAD_LEFT);
+
         return "SPK-{$today}-{$seq}";
     }
 
@@ -648,6 +672,7 @@ class AdminAppController extends Controller
     {
         $today = now()->format('Ymd');
         $seq = str_pad((DeliveryOrder::whereDate('created_at', today())->count() + 1), 4, '0', STR_PAD_LEFT);
+
         return "DO-{$today}-{$seq}";
     }
 
@@ -655,19 +680,19 @@ class AdminAppController extends Controller
     public function deliveryIndex()
     {
         // PO yang sudah completed & BELUM punya DO
-        $completedPO = PurchaseOrder::with(['customer','area'])
-            ->where('status','completed')
+        $completedPO = PurchaseOrder::with(['customer', 'area'])
+            ->where('status', 'completed')
             ->whereDoesntHave('deliveryOrders')
             ->latest('created_at')
             ->get();
 
         // dropdown area & driver
-        $areas = Area::orderBy('name')->pluck('name','id');
+        $areas = Area::orderBy('name')->pluck('name', 'id');
 
         // ambil user role delivery (Spatie)
         $drivers = User::whereHas('roles', function ($q) {
-                $q->where('name', 'delivery');
-            })
+            $q->where('name', 'delivery');
+        })
             ->whereDoesntHave('roles', function ($q) {
                 $q->where('name', 'superadmin');
             })
@@ -675,27 +700,27 @@ class AdminAppController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        return view('adminapp.delivery', compact('completedPO','areas','drivers'));
+        return view('adminapp.delivery', compact('completedPO', 'areas', 'drivers'));
     }
 
     /** ====== DELIVERY: STORE ====== */
     public function deliveryStore(\Illuminate\Http\Request $r)
     {
         $data = $r->validate([
-            'po_ids'        => ['required','array','min:1'],
-            'po_ids.*'      => ['integer','exists:purchase_orders,id'],
-            'area_id'       => ['required','exists:areas,id'],
-            'schedule_date' => ['required','date'],
-            'schedule_time' => ['required','date_format:H:i'],
-            'driver_user_id'=> ['required', Rule::exists('users', 'id')->where('is_active', true)],
+            'po_ids' => ['required', 'array', 'min:1'],
+            'po_ids.*' => ['integer', 'exists:purchase_orders,id'],
+            'area_id' => ['required', 'exists:areas,id'],
+            'schedule_date' => ['required', 'date'],
+            'schedule_time' => ['required', 'date_format:H:i'],
+            'driver_user_id' => ['required', Rule::exists('users', 'id')->where('is_active', true)],
         ]);
 
         // Ambil PO yang dipilih beserta relasi
-        $pos = PurchaseOrder::with(['customer','area'])
+        $pos = PurchaseOrder::with(['customer', 'area'])
             ->whereIn('id', $data['po_ids'])
             ->get();
 
-    if ($pos->isEmpty()) {
+        if ($pos->isEmpty()) {
             return back()
                 ->withErrors(['po_ids' => 'Tidak ada PO yang valid dipilih.'])
                 ->withInput();
@@ -706,12 +731,12 @@ class AdminAppController extends Controller
 
         // Buat DO (status: ready)
         $do = DeliveryOrder::create([
-            'do_code'        => $this->generateDoCode(),
-            'area_id'        => $data['area_id'],
-            'scheduled_at'   => $scheduledAt,
+            'do_code' => $this->generateDoCode(),
+            'area_id' => $data['area_id'],
+            'scheduled_at' => $scheduledAt,
             'driver_user_id' => $data['driver_user_id'],
-            'status'         => 'ready',
-            'created_by'     => Auth::id(),
+            'status' => 'ready',
+            'created_by' => Auth::id(),
         ]);
 
         // *** LINK PO ⇄ DO via pivot ***
@@ -720,49 +745,49 @@ class AdminAppController extends Controller
         // AUDIT LOG per PO: PO dijadwalkan ke DO
         foreach ($pos as $po) {
             AuditLog::create([
-                'user_id'           => Auth::id(),
-                'entity'            => 'purchase_orders',
-                'entity_id'         => $po->id,
+                'user_id' => Auth::id(),
+                'entity' => 'purchase_orders',
+                'entity_id' => $po->id,
                 'purchase_order_id' => $po->id,
-                'action'            => 'scheduled_for_delivery',
-                'message'           => sprintf(
+                'action' => 'scheduled_for_delivery',
+                'message' => sprintf(
                     'PO %s dijadwalkan ke DO %s oleh %s pada %s',
                     $po->po_number,
                     $do->do_code,
                     Auth::user()->name ?? 'Unknown',
                     now()->format('d-m-Y H:i')
                 ),
-                'before_json'       => null,
-                'after_json'        => null,
-                'ip_address'        => $r->ip(),
+                'before_json' => null,
+                'after_json' => null,
+                'ip_address' => $r->ip(),
             ]);
         }
 
         // (opsional) bisa juga tambahin 1 audit untuk entity = 'delivery_order'
         AuditLog::create([
-            'user_id'           => Auth::id(),
-            'entity'            => 'delivery_orders',
-            'entity_id'         => $do->id,
+            'user_id' => Auth::id(),
+            'entity' => 'delivery_orders',
+            'entity_id' => $do->id,
             'purchase_order_id' => null,
-            'action'            => 'created',
-            'message'           => sprintf(
+            'action' => 'created',
+            'message' => sprintf(
                 'DO %s dibuat untuk %d PO oleh %s pada %s',
                 $do->do_code,
                 $pos->count(),
                 Auth::user()->name ?? 'Unknown',
                 now()->format('d-m-Y H:i')
             ),
-            'before_json'       => null,
-            'after_json'        => json_encode([
-                'do'  => $do->toArray(),
+            'before_json' => null,
+            'after_json' => json_encode([
+                'do' => $do->toArray(),
                 'pos' => $pos->pluck('po_number')->all(),
             ]),
-            'ip_address'        => $r->ip(),
+            'ip_address' => $r->ip(),
         ]);
 
         return redirect()
             ->route('adminapp.delivery.index')
-            ->with('success', "DO dengan ID {$do->do_code} dibuat (status: " . UiLabel::deliveryStatus('ready') . ").");
+            ->with('success', "DO dengan ID {$do->do_code} dibuat (status: ".UiLabel::deliveryStatus('ready').').');
     }
 
     public function ordersMissingCosts(Request $request)
@@ -788,7 +813,7 @@ class AdminAppController extends Controller
             'impactedOrders' => $impactedOrders,
             'productIds' => $productIds,
             'dateFrom' => $dateFrom->toDateString(),
-            'dateTo'   => $dateTo->toDateString(),
+            'dateTo' => $dateTo->toDateString(),
         ]);
     }
 
@@ -798,8 +823,8 @@ class AdminAppController extends Controller
         $productsMissingCosts = $this->fetchProductsMissingCosts($dateFrom, $dateTo);
 
         $fileName = 'menu_tanpa_hpp_ohc_'
-            . $dateFrom->format('Ymd') . '_' . $dateTo->format('Ymd')
-            . '_' . now()->format('His') . '.xlsx';
+            .$dateFrom->format('Ymd').'_'.$dateTo->format('Ymd')
+            .'_'.now()->format('His').'.xlsx';
 
         return Excel::download(
             new ProductsExport($productsMissingCosts),
@@ -810,7 +835,7 @@ class AdminAppController extends Controller
     protected function fetchProductsMissingCosts(Carbon $dateFrom, Carbon $dateTo): \Illuminate\Database\Eloquent\Collection
     {
         $fromTs = $dateFrom->copy()->startOfDay();
-        $toTs   = $dateTo->copy()->endOfDay();
+        $toTs = $dateTo->copy()->endOfDay();
 
         $products = Product::query()
             ->where(function ($query) {
@@ -857,7 +882,7 @@ class AdminAppController extends Controller
         $status = $request->input('status');
         $menuQuery = trim((string) $request->input('menu', ''));
 
-        $ordersQuery = PurchaseOrder::with(['customer','area','items.product', 'deliveryOrders'])
+        $ordersQuery = PurchaseOrder::with(['customer', 'area', 'items.product', 'deliveryOrders'])
             ->whereBetween('created_at', [$dateFrom->startOfDay(), $dateTo->endOfDay()]);
 
         if ($status) {
@@ -866,19 +891,19 @@ class AdminAppController extends Controller
 
         if ($menuQuery !== '') {
             $ordersQuery->whereHas('items.product', function ($query) use ($menuQuery) {
-                $query->where('name', 'like', '%' . $menuQuery . '%');
+                $query->where('name', 'like', '%'.$menuQuery.'%');
             });
         }
 
         $orders = $ordersQuery->orderByDesc('created_at')->get();
 
         return view('adminapp.reports.orders', [
-            'orders'      => $orders,
+            'orders' => $orders,
             'ordersCount' => $orders->count(),
-            'dateFrom'    => $dateFrom->toDateString(),
-            'dateTo'      => $dateTo->toDateString(),
-            'status'      => $status,
-            'menuQuery'   => $menuQuery,
+            'dateFrom' => $dateFrom->toDateString(),
+            'dateTo' => $dateTo->toDateString(),
+            'status' => $status,
+            'menuQuery' => $menuQuery,
         ]);
     }
 
@@ -888,7 +913,7 @@ class AdminAppController extends Controller
         $status = $request->input('status');
         $menuQuery = trim((string) $request->input('menu', ''));
 
-        $ordersQuery = PurchaseOrder::with(['customer','area','items.product', 'deliveryOrders'])
+        $ordersQuery = PurchaseOrder::with(['customer', 'area', 'items.product', 'deliveryOrders'])
             ->whereBetween('created_at', [$dateFrom->startOfDay(), $dateTo->endOfDay()]);
 
         if ($status) {
@@ -897,16 +922,16 @@ class AdminAppController extends Controller
 
         if ($menuQuery !== '') {
             $ordersQuery->whereHas('items.product', function ($query) use ($menuQuery) {
-                $query->where('name', 'like', '%' . $menuQuery . '%');
+                $query->where('name', 'like', '%'.$menuQuery.'%');
             });
         }
 
         $orders = $ordersQuery->orderByDesc('created_at')->get();
 
-        $fileName = 'laporan_po_' . $dateFrom->format('Ymd') . '_' . $dateTo->format('Ymd') . '.csv';
+        $fileName = 'laporan_po_'.$dateFrom->format('Ymd').'_'.$dateTo->format('Ymd').'.csv';
 
         $headers = [
-            'Content-Type'        => 'text/csv',
+            'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"$fileName\"",
         ];
 
@@ -919,10 +944,11 @@ class AdminAppController extends Controller
                 $menuSummary = $o->items
                     ->map(function ($item) {
                         $name = $item->product->name ?? 'Produk';
-                        $text = $name . ' x' . (int) $item->qty;
+                        $text = $name.' x'.(int) $item->qty;
                         if (! empty($item->notes)) {
-                            $text .= ' (' . $item->notes . ')';
+                            $text .= ' ('.$item->notes.')';
                         }
+
                         return $text;
                     })
                     ->implode('; ');
@@ -949,7 +975,7 @@ class AdminAppController extends Controller
         $status = $request->input('status');
         $menuQuery = trim((string) $request->input('menu', ''));
 
-        $ordersQuery = PurchaseOrder::with(['customer','area','items.product', 'deliveryOrders'])
+        $ordersQuery = PurchaseOrder::with(['customer', 'area', 'items.product', 'deliveryOrders'])
             ->whereBetween('created_at', [$dateFrom->startOfDay(), $dateTo->endOfDay()]);
 
         if ($status) {
@@ -958,17 +984,17 @@ class AdminAppController extends Controller
 
         if ($menuQuery !== '') {
             $ordersQuery->whereHas('items.product', function ($query) use ($menuQuery) {
-                $query->where('name', 'like', '%' . $menuQuery . '%');
+                $query->where('name', 'like', '%'.$menuQuery.'%');
             });
         }
 
         $orders = $ordersQuery->orderByDesc('created_at')->get();
 
         return view('adminapp.reports.orders_pdf', [
-            'orders'      => $orders,
-            'dateFrom'    => $dateFrom->toDateString(),
-            'dateTo'      => $dateTo->toDateString(),
-            'status'      => $status,
+            'orders' => $orders,
+            'dateFrom' => $dateFrom->toDateString(),
+            'dateTo' => $dateTo->toDateString(),
+            'status' => $status,
         ]);
     }
 
@@ -993,10 +1019,10 @@ class AdminAppController extends Controller
         $dateFrom = Carbon::parse($reportData['dateFrom']);
         $dateTo = Carbon::parse($reportData['dateTo']);
 
-        $fileName = 'laporan_produksi_' . $dateFrom->format('Ymd') . '_' . $dateTo->format('Ymd') . '.csv';
+        $fileName = 'laporan_produksi_'.$dateFrom->format('Ymd').'_'.$dateTo->format('Ymd').'.csv';
 
         $headers = [
-            'Content-Type'        => 'text/csv',
+            'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"$fileName\"",
         ];
 
@@ -1045,9 +1071,9 @@ class AdminAppController extends Controller
         }
 
         $spks = Spk::with([
-                'purchaseOrders.customer:id,name',
-                'purchaseOrders.items.product:id,name',
-            ])
+            'purchaseOrders.customer:id,name',
+            'purchaseOrders.items.product:id,name',
+        ])
             ->whereBetween('scheduled_at', [$dateFrom->startOfDay(), $dateTo->endOfDay()])
             ->when($status, fn ($query) => $query->where('status', $status))
             ->orderByDesc('scheduled_at')
@@ -1098,8 +1124,8 @@ class AdminAppController extends Controller
                     'qty' => $qty,
                     'amount' => $amount,
                     'notes' => $notes,
-                    'menu_text' => $productName . ' x' . number_format($qty, 0, ',', '.'),
-                    'price_text' => 'Rp ' . number_format($amount, 0, ',', '.'),
+                    'menu_text' => $productName.' x'.number_format($qty, 0, ',', '.'),
+                    'price_text' => 'Rp '.number_format($amount, 0, ',', '.'),
                 ];
             })
             ->values();
@@ -1107,12 +1133,12 @@ class AdminAppController extends Controller
         $notesLines = collect();
 
         if (filled($spk->notes)) {
-            $notesLines->push('SPK: ' . $spk->notes);
+            $notesLines->push('SPK: '.$spk->notes);
         }
 
         $itemLines->each(function (array $line) use ($notesLines) {
             foreach ($line['notes'] as $note) {
-                $notesLines->push($line['product_name'] . ': ' . $note);
+                $notesLines->push($line['product_name'].': '.$note);
             }
         });
 
@@ -1124,7 +1150,7 @@ class AdminAppController extends Controller
             'item_lines' => $itemLines,
             'menu_summary' => $itemLines->isNotEmpty() ? $itemLines->pluck('menu_text')->implode('; ') : '-',
             'price_summary' => $itemLines->isNotEmpty()
-                ? $itemLines->pluck('price_text')->implode('; ') . ' | Total Rp ' . number_format($totalAmount, 0, ',', '.')
+                ? $itemLines->pluck('price_text')->implode('; ').' | Total Rp '.number_format($totalAmount, 0, ',', '.')
                 : '-',
             'notes_lines' => $notesLines->filter()->unique()->values(),
             'notes_summary' => $notesLines->filter()->unique()->isNotEmpty()
@@ -1140,7 +1166,7 @@ class AdminAppController extends Controller
         [$dateFrom, $dateTo] = $this->parseDateRange($request);
         $status = $request->input('status');
 
-        $doQuery = DeliveryOrder::with(['area','driver'])
+        $doQuery = DeliveryOrder::with(['area', 'driver'])
             ->whereBetween('scheduled_at', [$dateFrom->startOfDay(), $dateTo->endOfDay()]);
 
         if ($status) {
@@ -1150,11 +1176,11 @@ class AdminAppController extends Controller
         $dos = $doQuery->orderByDesc('scheduled_at')->get();
 
         return view('adminapp.reports.delivery', [
-            'dos'      => $dos,
-            'doCount'  => $dos->count(),
+            'dos' => $dos,
+            'doCount' => $dos->count(),
             'dateFrom' => $dateFrom->toDateString(),
-            'dateTo'   => $dateTo->toDateString(),
-            'status'   => $status,
+            'dateTo' => $dateTo->toDateString(),
+            'status' => $status,
         ]);
     }
 
@@ -1163,7 +1189,7 @@ class AdminAppController extends Controller
         [$dateFrom, $dateTo] = $this->parseDateRange($request);
         $status = $request->input('status');
 
-        $doQuery = DeliveryOrder::with(['area','driver'])
+        $doQuery = DeliveryOrder::with(['area', 'driver'])
             ->whereBetween('scheduled_at', [$dateFrom->startOfDay(), $dateTo->endOfDay()]);
 
         if ($status) {
@@ -1172,10 +1198,10 @@ class AdminAppController extends Controller
 
         $dos = $doQuery->orderByDesc('scheduled_at')->get();
 
-        $fileName = 'laporan_delivery_' . $dateFrom->format('Ymd') . '_' . $dateTo->format('Ymd') . '.csv';
+        $fileName = 'laporan_delivery_'.$dateFrom->format('Ymd').'_'.$dateTo->format('Ymd').'.csv';
 
         $headers = [
-            'Content-Type'        => 'text/csv',
+            'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"$fileName\"",
         ];
 
@@ -1206,7 +1232,7 @@ class AdminAppController extends Controller
         [$dateFrom, $dateTo] = $this->parseDateRange($request);
         $status = $request->input('status');
 
-        $doQuery = DeliveryOrder::with(['area','driver'])
+        $doQuery = DeliveryOrder::with(['area', 'driver'])
             ->whereBetween('scheduled_at', [$dateFrom->startOfDay(), $dateTo->endOfDay()]);
 
         if ($status) {
@@ -1216,10 +1242,10 @@ class AdminAppController extends Controller
         $dos = $doQuery->orderByDesc('scheduled_at')->get();
 
         return view('adminapp.reports.delivery_pdf', [
-            'dos'      => $dos,
+            'dos' => $dos,
             'dateFrom' => $dateFrom->toDateString(),
-            'dateTo'   => $dateTo->toDateString(),
-            'status'   => $status,
+            'dateTo' => $dateTo->toDateString(),
+            'status' => $status,
         ]);
     }
 
@@ -1252,14 +1278,14 @@ class AdminAppController extends Controller
             ->orderByDesc('created_at')
             ->paginate(50)
             ->withQueryString();
-    
+
         // Untuk dropdown filter
         $users = User::whereDoesntHave('roles', function ($q) {
-        $q->where('name', 'superadmin');
+            $q->where('name', 'superadmin');
         })
-        ->where('is_active', true)
-        ->orderBy('name')
-        ->get();
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
 
         $availableEntities = AuditLog::select('entity')
             ->distinct()
@@ -1274,15 +1300,15 @@ class AdminAppController extends Controller
             ->values();
 
         return view('adminapp.audit.index', [
-            'logs'             => $logs,
-            'users'            => $users,
-            'availableEntities'=> $availableEntities,
+            'logs' => $logs,
+            'users' => $users,
+            'availableEntities' => $availableEntities,
             'availableActions' => $availableActions,
-            'dateFrom'         => $dateFrom->toDateString(),
-            'dateTo'           => $dateTo->toDateString(),
-            'userId'           => $userId,
-            'entity'           => $entity,
-            'action'           => $action,
+            'dateFrom' => $dateFrom->toDateString(),
+            'dateTo' => $dateTo->toDateString(),
+            'userId' => $userId,
+            'entity' => $entity,
+            'action' => $action,
         ]);
     }
 
@@ -1302,7 +1328,7 @@ class AdminAppController extends Controller
         // Dropdown customer
         $customers = Customer::where('active', true)
             ->orderBy('name')
-            ->get(['id','name']);
+            ->get(['id', 'name']);
 
         $results = collect();
         $selectedCustomer = null;
@@ -1311,13 +1337,13 @@ class AdminAppController extends Controller
             $selectedCustomer = $customers->firstWhere('id', (int) $customerId);
 
             $results = PurchaseOrderItem::query()
-                ->selectRaw("
+                ->selectRaw('
                     products.id   as product_id,
                     products.name as product_name,
                     SUM(purchase_order_items.qty)      as total_qty,
                     COUNT(purchase_order_items.id)     as total_orders,
                     SUM(purchase_order_items.subtotal) as total_amount
-                ")
+                ')
                 ->join('purchase_orders', 'purchase_orders.id', '=', 'purchase_order_items.purchase_order_id')
                 ->join('products', 'products.id', '=', 'purchase_order_items.product_id')
                 ->where('purchase_orders.customer_id', $customerId)
@@ -1333,13 +1359,13 @@ class AdminAppController extends Controller
         }
 
         return view('adminapp.reports.bestseller', [
-            'customers'        => $customers,
+            'customers' => $customers,
             'selectedCustomer' => $selectedCustomer,
-            'results'          => $results,
-            'dateFrom'         => $dateFrom->toDateString(),
-            'dateTo'           => $dateTo->toDateString(),
-            'limit'            => $limit,
-            'customerId'       => $customerId,
+            'results' => $results,
+            'dateFrom' => $dateFrom->toDateString(),
+            'dateTo' => $dateTo->toDateString(),
+            'limit' => $limit,
+            'customerId' => $customerId,
         ]);
     }
 
@@ -1361,13 +1387,13 @@ class AdminAppController extends Controller
         $customer = Customer::find($customerId);
 
         $results = PurchaseOrderItem::query()
-            ->selectRaw("
+            ->selectRaw('
                 products.id   as product_id,
                 products.name as product_name,
                 SUM(purchase_order_items.qty)      as total_qty,
                 COUNT(purchase_order_items.id)     as total_orders,
                 SUM(purchase_order_items.subtotal) as total_amount
-            ")
+            ')
             ->join('purchase_orders', 'purchase_orders.id', '=', 'purchase_order_items.purchase_order_id')
             ->join('products', 'products.id', '=', 'purchase_order_items.product_id')
             ->where('purchase_orders.customer_id', $customerId)
@@ -1382,11 +1408,11 @@ class AdminAppController extends Controller
             ->get();
 
         $fileName = 'best_seller_'
-            . ($customer?->name ? str_replace(' ', '_', strtolower($customer->name)) : 'customer')
-            . '_' . $dateFrom->format('Ymd') . '_' . $dateTo->format('Ymd') . '.csv';
+            .($customer?->name ? str_replace(' ', '_', strtolower($customer->name)) : 'customer')
+            .'_'.$dateFrom->format('Ymd').'_'.$dateTo->format('Ymd').'.csv';
 
         $headers = [
-            'Content-Type'        => 'text/csv',
+            'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"$fileName\"",
         ];
 
@@ -1406,14 +1432,14 @@ class AdminAppController extends Controller
             // Header kolom
             fputcsv($handle, ['#', 'Produk', 'Total Qty', 'Frekuensi Order', 'Total Omzet']);
 
-            $grandQty   = 0;
-            $grandFreq  = 0;
+            $grandQty = 0;
+            $grandFreq = 0;
             $grandTotal = 0;
-            $no         = 1;
+            $no = 1;
 
             foreach ($results as $row) {
-                $grandQty   += $row->total_qty;
-                $grandFreq  += $row->total_orders;
+                $grandQty += $row->total_qty;
+                $grandFreq += $row->total_orders;
                 $grandTotal += $row->total_amount;
 
                 fputcsv($handle, [
@@ -1452,13 +1478,13 @@ class AdminAppController extends Controller
         $customer = Customer::find($customerId);
 
         $results = PurchaseOrderItem::query()
-            ->selectRaw("
+            ->selectRaw('
                 products.id   as product_id,
                 products.name as product_name,
                 SUM(purchase_order_items.qty)      as total_qty,
                 COUNT(purchase_order_items.id)     as total_orders,
                 SUM(purchase_order_items.subtotal) as total_amount
-            ")
+            ')
             ->join('purchase_orders', 'purchase_orders.id', '=', 'purchase_order_items.purchase_order_id')
             ->join('products', 'products.id', '=', 'purchase_order_items.product_id')
             ->where('purchase_orders.customer_id', $customerId)
@@ -1473,11 +1499,11 @@ class AdminAppController extends Controller
             ->get();
 
         return view('adminapp.reports.bestseller_pdf', [
-            'customer'  => $customer,
-            'results'   => $results,
-            'dateFrom'  => $dateFrom->toDateString(),
-            'dateTo'    => $dateTo->toDateString(),
-            'limit'     => $limit,
+            'customer' => $customer,
+            'results' => $results,
+            'dateFrom' => $dateFrom->toDateString(),
+            'dateTo' => $dateTo->toDateString(),
+            'limit' => $limit,
         ]);
     }
 
@@ -1485,7 +1511,7 @@ class AdminAppController extends Controller
     protected function parseDateRange(Request $request): array
     {
         $from = $request->input('date_from');
-        $to   = $request->input('date_to');
+        $to = $request->input('date_to');
 
         try {
             $dateFrom = $from ? Carbon::parse($from) : Carbon::today();

@@ -704,16 +704,30 @@
         @apply rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-brand-700;
     }
 
-    .shell-section-title {
-        @apply px-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400;
+    /* Grup & item meniru sidebar Filament (label grup + chevron, item berikon)
+       supaya sidebar Blade dan sidebar Inventory terasa satu keluarga. */
+    .shell-group summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .shell-group-label {
+        @apply flex cursor-pointer select-none list-none items-center gap-x-2 px-2 py-1.5 text-sm font-medium text-gray-500 transition-colors duration-150 hover:text-gray-800;
+    }
+
+    .shell-chevron {
+        @apply h-4 w-4 text-gray-400 transition-transform duration-200 ease-out;
+    }
+
+    .shell-group:not([open]) .shell-chevron {
+        @apply rotate-180;
     }
 
     .shell-icon {
-        @apply h-4 w-4 shrink-0 text-gray-400;
+        @apply h-5 w-5 shrink-0 text-gray-400 transition-colors duration-150;
     }
 
     .shell-item {
-        @apply flex items-center gap-x-2.5 rounded-lg px-2 py-2 text-sm font-medium text-gray-600 transition-[background-color,color,transform] duration-150 ease-out hover:bg-gray-100 hover:text-gray-900 active:scale-[0.98];
+        @apply flex items-center gap-x-3 rounded-lg px-2 py-2 text-sm font-medium text-gray-700 transition-[background-color,color,transform] duration-150 ease-out hover:bg-gray-100 active:scale-[0.98];
     }
 
     .shell-item:focus-visible {
@@ -725,7 +739,7 @@
     }
 
     .shell-item-active {
-        @apply bg-brand-50 text-brand-700;
+        @apply bg-gray-100 text-brand-600;
         view-transition-name: sh-nav-active;
     }
 

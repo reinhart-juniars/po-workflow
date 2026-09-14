@@ -50,25 +50,32 @@
       <p class="shell-app-name">{{ \App\Support\Navigation::appLabel($shellApp) }}</p>
     </div>
 
-    <nav class="flex-1 space-y-6 overflow-y-auto px-4 pb-6" aria-label="Menu {{ \App\Support\Navigation::appLabel($shellApp) }}">
+    <nav class="flex-1 space-y-5 overflow-y-auto px-4 pb-6" aria-label="Menu {{ \App\Support\Navigation::appLabel($shellApp) }}">
       @foreach ($shellSections as $section)
-        <div>
-          <p class="shell-section-title">{{ $section['label'] }}</p>
-          <div class="mt-1.5 space-y-0.5">
+        <details class="shell-group" open>
+          <summary class="shell-group-label">
+            <span class="flex-1">{{ $section['label'] }}</span>
+            @svg('heroicon-m-chevron-up', 'shell-chevron')
+          </summary>
+          <div class="mt-1 space-y-0.5">
             @foreach ($section['items'] as $item)
               <a href="{{ $item['url'] }}" class="shell-item {{ $item['active'] ? 'shell-item-active' : '' }}" @if ($item['active']) aria-current="page" @endif>
-                <span class="shell-bullet"></span>
+                @if ($item['icon'])
+                  @svg($item['icon'], 'shell-icon')
+                @else
+                  <span class="shell-bullet"></span>
+                @endif
                 <span class="flex-1 truncate">{{ $item['label'] }}</span>
               </a>
             @endforeach
           </div>
-        </div>
+        </details>
       @endforeach
 
       {{-- Di layar kecil bilah aplikasi tidak muat di atas: ditaruh di sini --}}
       <div class="border-t border-gray-100 pt-4 lg:hidden">
-        <p class="shell-section-title">Aplikasi</p>
-        <div class="mt-1.5 space-y-0.5">
+        <p class="shell-group-label">Aplikasi</p>
+        <div class="mt-1 space-y-0.5">
           @foreach (\App\Support\Navigation::tabs($shellUser, $shellApp) as $tab)
             <a href="{{ $tab['url'] }}" class="shell-item {{ $tab['active'] ? 'shell-item-active' : '' }}">
               @svg($tab['icon'], 'shell-icon')

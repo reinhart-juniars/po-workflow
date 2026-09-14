@@ -81,8 +81,20 @@ class ProductionOrderResource extends Resource
                             ->default(ProductionOrder::STATUS_DRAFT),
 
                         Forms\Components\Placeholder::make('spk')
-                            ->label('Slot SPK po-workflow')
-                            ->content(fn (?ProductionOrder $record) => $record?->spk?->spk_code ?? 'Disusun manual'),
+                            ->label('Slot SPK & PO')
+                            ->content(function (?ProductionOrder $record) {
+                                $spk = $record?->spk;
+
+                                if (! $spk) {
+                                    return 'Disusun manual';
+                                }
+
+                                // Rantai Admin -> Produksi: nomor PO di slot ini
+                                // ditautkan balik ke halaman PO di Admin App.
+                                $links = $spk->purchaseOrders->map(fn ($po) => '<a href="'.e(route('adminapp.orders.show', $po)).'" class="text-primary-600 underline underline-offset-2">'.e($po->po_number).'</a>')->implode(', ');
+
+                                return new \Illuminate\Support\HtmlString(e($spk->spk_code).($links !== '' ? ' &middot; PO: '.$links : ' &middot; tanpa PO'));
+                            }),
 
                         Forms\Components\Textarea::make('notes')
                             ->label('Catatan')

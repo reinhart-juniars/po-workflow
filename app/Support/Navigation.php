@@ -48,7 +48,7 @@ class Navigation
      * boleh menyempitkan lebih jauh dari peran aplikasinya; tanpa keduanya,
      * item mengikuti peran aplikasi.
      *
-     * @return array<string, array<string, list<array{label: string, route: string, match?: string|list<string>, roles?: list<string>, can?: string}>>>
+     * @return array<string, array<string, list<array{label: string, route: string, match?: string|list<string>, roles?: list<string>, can?: string, icon?: string}>>>
      */
     public static function menus(): array
     {
@@ -57,78 +57,78 @@ class Navigation
         return [
             'superadmin' => [
                 'Ringkasan' => [
-                    ['label' => 'Dashboard', 'route' => 'superadmin.dashboard'],
+                    ['label' => 'Dashboard', 'route' => 'superadmin.dashboard', 'icon' => 'heroicon-o-home'],
                 ],
                 'Sistem' => [
-                    ['label' => 'Backup Database', 'route' => 'superadmin.backup.index', 'match' => 'superadmin.backup.*'],
+                    ['label' => 'Backup Database', 'route' => 'superadmin.backup.index', 'match' => 'superadmin.backup.*', 'icon' => 'heroicon-o-circle-stack'],
                 ],
             ],
             'owner' => [
                 'Ringkasan' => [
-                    ['label' => 'Dashboard', 'route' => 'ownerapp.dashboard'],
+                    ['label' => 'Dashboard', 'route' => 'ownerapp.dashboard', 'icon' => 'heroicon-o-home'],
                 ],
                 'Manajemen' => [
-                    ['label' => 'Master User', 'route' => 'ownerapp.users.index', 'match' => 'ownerapp.users.*', 'roles' => $ownerOnly],
-                    ['label' => 'Analisa HPP', 'route' => 'ownerapp.hpp-analysis'],
-                    ['label' => 'Audit Logs', 'route' => 'ownerapp.audit.index', 'match' => 'ownerapp.audit.*'],
+                    ['label' => 'Master User', 'route' => 'ownerapp.users.index', 'match' => 'ownerapp.users.*', 'icon' => 'heroicon-o-users', 'roles' => $ownerOnly],
+                    ['label' => 'Analisa HPP', 'route' => 'ownerapp.hpp-analysis', 'icon' => 'heroicon-o-calculator'],
+                    ['label' => 'Audit Logs', 'route' => 'ownerapp.audit.index', 'match' => 'ownerapp.audit.*', 'icon' => 'heroicon-o-document-magnifying-glass'],
                 ],
             ],
             'admin' => [
                 'Ringkasan' => [
-                    ['label' => 'Dashboard', 'route' => 'adminapp.dashboard'],
+                    ['label' => 'Dashboard', 'route' => 'adminapp.dashboard', 'icon' => 'heroicon-o-home'],
                 ],
                 'Master Data' => [
-                    ['label' => 'Master Menu', 'route' => 'adminapp.products.index', 'match' => 'adminapp.products.*'],
-                    ['label' => 'Master Customer', 'route' => 'adminapp.customers.index', 'match' => 'adminapp.customers.*'],
+                    ['label' => 'Master Menu', 'route' => 'adminapp.products.index', 'match' => 'adminapp.products.*', 'icon' => 'heroicon-o-squares-2x2'],
+                    ['label' => 'Master Customer', 'route' => 'adminapp.customers.index', 'match' => 'adminapp.customers.*', 'icon' => 'heroicon-o-user-group'],
                 ],
                 'Operasional' => [
-                    ['label' => 'Purchase Orders', 'route' => 'adminapp.orders.index', 'match' => 'adminapp.orders.*'],
-                    ['label' => 'SPK', 'route' => 'adminapp.spk.index', 'match' => 'adminapp.spk.*'],
-                    ['label' => 'Delivery', 'route' => 'adminapp.delivery.index', 'match' => 'adminapp.delivery.*'],
-                    ['label' => 'Menu Tanpa HPP/OHC', 'route' => 'adminapp.reports.missing-costs', 'match' => 'adminapp.reports.missing-costs*'],
+                    ['label' => 'Purchase Orders', 'route' => 'adminapp.orders.index', 'match' => 'adminapp.orders.*', 'icon' => 'heroicon-o-clipboard-document-list'],
+                    ['label' => 'SPK', 'route' => 'adminapp.spk.index', 'match' => 'adminapp.spk.*', 'icon' => 'heroicon-o-calendar-days'],
+                    ['label' => 'Delivery', 'route' => 'adminapp.delivery.index', 'match' => 'adminapp.delivery.*', 'icon' => 'heroicon-o-truck'],
+                    ['label' => 'Menu Tanpa HPP/OHC', 'route' => 'adminapp.reports.missing-costs', 'match' => 'adminapp.reports.missing-costs*', 'icon' => 'heroicon-o-exclamation-triangle'],
                 ],
                 'Laporan' => [
-                    ['label' => 'Laporan PO', 'route' => 'adminapp.reports.orders', 'match' => 'adminapp.reports.orders*'],
-                    ['label' => 'Laporan Produksi', 'route' => 'adminapp.reports.production', 'match' => 'adminapp.reports.production*'],
-                    ['label' => 'Laporan Delivery', 'route' => 'adminapp.reports.delivery', 'match' => 'adminapp.reports.delivery*'],
-                    ['label' => 'Laporan Best Seller', 'route' => 'adminapp.reports.bestseller', 'match' => 'adminapp.reports.bestseller*'],
+                    ['label' => 'Laporan PO', 'route' => 'adminapp.reports.orders', 'match' => 'adminapp.reports.orders*', 'icon' => 'heroicon-o-document-chart-bar'],
+                    ['label' => 'Laporan Produksi', 'route' => 'adminapp.reports.production', 'match' => 'adminapp.reports.production*', 'icon' => 'heroicon-o-chart-bar'],
+                    ['label' => 'Laporan Delivery', 'route' => 'adminapp.reports.delivery', 'match' => 'adminapp.reports.delivery*', 'icon' => 'heroicon-o-presentation-chart-line'],
+                    ['label' => 'Laporan Best Seller', 'route' => 'adminapp.reports.bestseller', 'match' => 'adminapp.reports.bestseller*', 'icon' => 'heroicon-o-trophy'],
                 ],
             ],
             'accounting' => [
                 'Ringkasan' => [
-                    ['label' => 'Dashboard', 'route' => 'accountingapp.dashboard'],
+                    ['label' => 'Dashboard', 'route' => 'accountingapp.dashboard', 'icon' => 'heroicon-o-home'],
                 ],
                 'Master Data' => [
-                    ['label' => 'Akun Kas', 'route' => 'accountingapp.cash-accounts.index', 'match' => 'accountingapp.cash-accounts.*'],
-                    ['label' => 'Kategori Pemasukan', 'route' => 'accountingapp.income-categories.index', 'match' => 'accountingapp.income-categories.*'],
-                    ['label' => 'Kategori Pengeluaran', 'route' => 'accountingapp.categories.index', 'match' => 'accountingapp.categories.*'],
+                    ['label' => 'Akun Kas', 'route' => 'accountingapp.cash-accounts.index', 'match' => 'accountingapp.cash-accounts.*', 'icon' => 'heroicon-o-wallet'],
+                    ['label' => 'Kategori Pemasukan', 'route' => 'accountingapp.income-categories.index', 'match' => 'accountingapp.income-categories.*', 'icon' => 'heroicon-o-tag'],
+                    ['label' => 'Kategori Pengeluaran', 'route' => 'accountingapp.categories.index', 'match' => 'accountingapp.categories.*', 'icon' => 'heroicon-o-tag'],
                 ],
                 'Setup Awal' => [
-                    ['label' => 'Saldo Awal', 'route' => 'accountingapp.opening-balances.index', 'match' => 'accountingapp.opening-balances.*'],
-                    ['label' => 'Adjustment Neraca', 'route' => 'accountingapp.balance-sheet-adjustments.index', 'match' => 'accountingapp.balance-sheet-adjustments.*', 'roles' => $ownerOnly],
-                    ['label' => 'Adjustment Laba Rugi', 'route' => 'accountingapp.profit-loss-adjustments.index', 'match' => 'accountingapp.profit-loss-adjustments.*', 'roles' => $ownerOnly],
+                    ['label' => 'Saldo Awal', 'route' => 'accountingapp.opening-balances.index', 'match' => 'accountingapp.opening-balances.*', 'icon' => 'heroicon-o-banknotes'],
+                    ['label' => 'Adjustment Neraca', 'route' => 'accountingapp.balance-sheet-adjustments.index', 'match' => 'accountingapp.balance-sheet-adjustments.*', 'icon' => 'heroicon-o-adjustments-horizontal', 'roles' => $ownerOnly],
+                    ['label' => 'Adjustment Laba Rugi', 'route' => 'accountingapp.profit-loss-adjustments.index', 'match' => 'accountingapp.profit-loss-adjustments.*', 'icon' => 'heroicon-o-adjustments-horizontal', 'roles' => $ownerOnly],
                 ],
                 'Transaksi' => [
-                    ['label' => 'Pemasukan Lain', 'route' => 'accountingapp.other-incomes.index', 'match' => 'accountingapp.other-incomes.*'],
-                    ['label' => 'Closing Penjualan', 'route' => 'accountingapp.sales-closings.index', 'match' => 'accountingapp.sales-closings.*'],
-                    ['label' => 'Pengeluaran', 'route' => 'accountingapp.expenses.index', 'match' => 'accountingapp.expenses.*'],
-                    ['label' => 'Transfer Antar Akun', 'route' => 'accountingapp.cash-account-transfers.index', 'match' => 'accountingapp.cash-account-transfers.*'],
+                    ['label' => 'Pemasukan Lain', 'route' => 'accountingapp.other-incomes.index', 'match' => 'accountingapp.other-incomes.*', 'icon' => 'heroicon-o-arrow-down-tray'],
+                    ['label' => 'Closing Penjualan', 'route' => 'accountingapp.sales-closings.index', 'match' => 'accountingapp.sales-closings.*', 'icon' => 'heroicon-o-lock-closed'],
+                    ['label' => 'Pengeluaran', 'route' => 'accountingapp.expenses.index', 'match' => 'accountingapp.expenses.*', 'icon' => 'heroicon-o-arrow-up-tray'],
+                    ['label' => 'Transfer Antar Akun', 'route' => 'accountingapp.cash-account-transfers.index', 'match' => 'accountingapp.cash-account-transfers.*', 'icon' => 'heroicon-o-arrows-right-left'],
                 ],
                 'Monitoring' => [
-                    ['label' => 'Monitoring Hutang', 'route' => 'accountingapp.payables.index', 'match' => 'accountingapp.payables.*'],
-                    ['label' => 'Monitoring Piutang', 'route' => 'accountingapp.periods.index', 'match' => 'accountingapp.periods.*'],
-                    ['label' => 'Monitoring Pembelian Stok', 'route' => 'accountingapp.inventory-purchases.index', 'match' => 'accountingapp.inventory-purchases.*'],
+                    ['label' => 'Monitoring Hutang', 'route' => 'accountingapp.payables.index', 'match' => 'accountingapp.payables.*', 'icon' => 'heroicon-o-receipt-percent'],
+                    ['label' => 'Monitoring Piutang', 'route' => 'accountingapp.periods.index', 'match' => 'accountingapp.periods.*', 'icon' => 'heroicon-o-eye'],
+                    ['label' => 'Monitoring Pembelian Stok', 'route' => 'accountingapp.inventory-purchases.index', 'match' => 'accountingapp.inventory-purchases.*', 'icon' => 'heroicon-o-shopping-cart'],
                 ],
                 'Kontrol Periode' => [
-                    ['label' => 'Status Periode', 'route' => 'accountingapp.period-closings.index', 'match' => 'accountingapp.period-closings.*'],
+                    ['label' => 'Status Periode', 'route' => 'accountingapp.period-closings.index', 'match' => 'accountingapp.period-closings.*', 'icon' => 'heroicon-o-calendar'],
                 ],
                 'Laporan' => [
-                    ['label' => 'Laporan Cashflow', 'route' => 'accountingapp.reports.cashflow'],
-                    ['label' => 'Laporan Penjualan', 'route' => 'accountingapp.reports.sales', 'match' => 'accountingapp.reports.sales*'],
-                    ['label' => 'Laporan Laba Rugi', 'route' => 'accountingapp.reports.profit-loss', 'match' => 'accountingapp.reports.profit-loss*'],
-                    ['label' => 'Laporan Neraca', 'route' => 'accountingapp.reports.balance-sheet', 'match' => 'accountingapp.reports.balance-sheet*'],
-                    ['label' => 'Laporan Pemakaian Bahan', 'route' => 'accountingapp.reports.inventory-usage', 'match' => 'accountingapp.reports.inventory-usage*'],
-                    ['label' => 'Laporan Final', 'route' => 'accountingapp.reports.final', 'match' => 'accountingapp.reports.final*'],
+                    ['label' => 'Laporan Cashflow', 'route' => 'accountingapp.reports.cashflow', 'icon' => 'heroicon-o-arrow-trending-up'],
+                    ['label' => 'Laporan Penjualan', 'route' => 'accountingapp.reports.sales', 'match' => 'accountingapp.reports.sales*', 'icon' => 'heroicon-o-chart-bar'],
+                    ['label' => 'Laporan Laba Rugi', 'route' => 'accountingapp.reports.profit-loss', 'match' => 'accountingapp.reports.profit-loss*', 'icon' => 'heroicon-o-scale'],
+                    ['label' => 'Laporan Neraca', 'route' => 'accountingapp.reports.balance-sheet', 'match' => 'accountingapp.reports.balance-sheet*', 'icon' => 'heroicon-o-document-text'],
+                    ['label' => 'Laporan Pemakaian Bahan', 'route' => 'accountingapp.reports.inventory-usage', 'match' => 'accountingapp.reports.inventory-usage*', 'icon' => 'heroicon-o-cube'],
+                    ['label' => 'Laporan Final', 'route' => 'accountingapp.reports.final', 'match' => 'accountingapp.reports.final*', 'icon' => 'heroicon-o-document-check'],
                 ],
             ],
             // Nama seksi = $navigationGroup resource/page Filament; urutan item
@@ -159,22 +159,22 @@ class Navigation
             ],
             'sales' => [
                 'Ringkasan' => [
-                    ['label' => 'Dashboard', 'route' => 'salesapp.dashboard'],
+                    ['label' => 'Dashboard', 'route' => 'salesapp.dashboard', 'icon' => 'heroicon-o-home'],
                 ],
                 'Laporan' => [
-                    ['label' => 'Laporan Sales Final & Retur', 'route' => 'salesapp.reports.final-retur', 'match' => ['salesapp.reports.final-retur', 'salesapp.reports']],
-                    ['label' => 'Laporan Waste', 'route' => 'salesapp.reports.waste', 'match' => 'salesapp.reports.waste*'],
-                    ['label' => 'Laporan Penjualan', 'route' => 'salesapp.reports.sales', 'match' => 'salesapp.reports.sales*'],
+                    ['label' => 'Laporan Sales Final & Retur', 'route' => 'salesapp.reports.final-retur', 'match' => ['salesapp.reports.final-retur', 'salesapp.reports'], 'icon' => 'heroicon-o-document-chart-bar'],
+                    ['label' => 'Laporan Waste', 'route' => 'salesapp.reports.waste', 'match' => 'salesapp.reports.waste*', 'icon' => 'heroicon-o-trash'],
+                    ['label' => 'Laporan Penjualan', 'route' => 'salesapp.reports.sales', 'match' => 'salesapp.reports.sales*', 'icon' => 'heroicon-o-chart-bar'],
                 ],
             ],
             'production' => [
                 'Ringkasan' => [
-                    ['label' => 'Dashboard Produksi', 'route' => 'productionapp.dashboard', 'match' => 'productionapp.*'],
+                    ['label' => 'Dashboard Produksi', 'route' => 'productionapp.dashboard', 'match' => 'productionapp.*', 'icon' => 'heroicon-o-fire'],
                 ],
             ],
             'delivery' => [
                 'Ringkasan' => [
-                    ['label' => 'Dashboard Pengiriman', 'route' => 'deliveryapp.dashboard', 'match' => 'deliveryapp.*'],
+                    ['label' => 'Dashboard Pengiriman', 'route' => 'deliveryapp.dashboard', 'match' => 'deliveryapp.*', 'icon' => 'heroicon-o-truck'],
                 ],
             ],
         ];
@@ -208,7 +208,7 @@ class Navigation
     /**
      * Sidebar satu aplikasi untuk pengguna ini: seksi yang tidak kosong saja.
      *
-     * @return list<array{label: string, items: list<array{label: string, url: string, active: bool}>}>
+     * @return list<array{label: string, items: list<array{label: string, url: string, active: bool, icon: ?string}>}>
      */
     public static function sidebar(string $app, ?User $user): array
     {
@@ -226,7 +226,7 @@ class Navigation
                     continue;
                 }
 
-                $visible[] = ['label' => $item['label'], 'url' => route($item['route']), 'active' => self::isActive($item)];
+                $visible[] = ['label' => $item['label'], 'url' => route($item['route']), 'active' => self::isActive($item), 'icon' => $item['icon'] ?? null];
             }
 
             if ($visible !== []) {

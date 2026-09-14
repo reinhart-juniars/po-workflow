@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
+use App\Models\PurchaseOrder;
+use App\Models\Spk;
+use App\Support\UiLabel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
-use App\Models\{PurchaseOrder, PurchaseOrderItem, Product, Customer, Area, Spk};
-use App\Models\AuditLog;
-use App\Support\UiLabel;
 
 class ProductionAppController extends Controller
 {
@@ -21,10 +21,10 @@ class ProductionAppController extends Controller
         }
 
         $allPos = PurchaseOrder::with([
-                'customer',
-                'area',
-                'spks' => fn ($q) => $q->orderBy('scheduled_at', 'asc'),
-            ])
+            'customer',
+            'area',
+            'spks' => fn ($q) => $q->orderBy('scheduled_at', 'asc')->with('productionOrder'),
+        ])
             ->where('status', 'in_progress')
             ->orderBy('po_number')
             ->get();
@@ -35,6 +35,24 @@ class ProductionAppController extends Controller
             ->values();
 
         return view('productionapp.dashboard', compact('pos', 'allPos', 'scheduleFilter'));
+    }
+
+    /**
+     * Susun SPK Produksi (modul inventory) dari slot SPK yang belum punya --
+     * untuk slot yang dibuat sebelum integrasi. Lalu buka Form Kebutuhannya.
+     */
+    public function createProductionOrder(\App\Models\Spk $spk)
+    {
+        abort_unless(auth()->user()?->can('production.manage'), 403);
+
+        try {
+            $order = app(\App\Services\ProductionOrderService::class)->generateFromSpk($spk, auth()->id());
+        } catch (\Throwable $e) {
+            return back()->with('error', 'SPK Produksi belum bisa disusun: '.$e->getMessage());
+        }
+
+        return redirect()->route('filament.admin.resources.production-orders.kebutuhan', ['record' => $order])
+            ->with('success', "SPK Produksi {$order->number} tersusun dari {$spk->spk_code}.");
     }
 
     public function show(PurchaseOrder $po)
@@ -56,7 +74,7 @@ class ProductionAppController extends Controller
     public function complete(Request $request, PurchaseOrder $po)
     {
         if ($po->status !== 'in_progress') {
-            return back()->with('error', 'PO tidak berstatus ' . UiLabel::purchaseOrderStatus('in_progress') . '.');
+            return back()->with('error', 'PO tidak berstatus '.UiLabel::purchaseOrderStatus('in_progress').'.');
         }
         $before = $po->toArray();
 
@@ -82,20 +100,20 @@ class ProductionAppController extends Controller
         $after = $po->fresh()->toArray();
 
         AuditLog::create([
-            'user_id'           => Auth::id(),
-            'entity'            => 'purchase_order',
-            'entity_id'         => $po->id,
+            'user_id' => Auth::id(),
+            'entity' => 'purchase_order',
+            'entity_id' => $po->id,
             'purchase_order_id' => $po->id,
-            'action'            => 'completed_production',
-            'message'           => sprintf(
+            'action' => 'completed_production',
+            'message' => sprintf(
                 'PO %s diselesaikan di produksi oleh %s pada %s',
                 $po->po_number,
                 Auth::user()->name ?? 'Unknown',
                 now()->format('d-m-Y H:i')
             ),
-            'before_json'       => json_encode($before),
-            'after_json'        => json_encode($after),
-            'ip_address'        => $request->ip(),
+            'before_json' => json_encode($before),
+            'after_json' => json_encode($after),
+            'ip_address' => $request->ip(),
         ]);
 
         if ($po->payment_type === 'cash') {
@@ -154,7 +172,7 @@ class ProductionAppController extends Controller
 
         return redirect()
             ->route('productionapp.dashboard')
-            ->with('success', "PO {$po->po_number} ditandai " . UiLabel::purchaseOrderStatus('completed') . '.');
+            ->with('success', "PO {$po->po_number} ditandai ".UiLabel::purchaseOrderStatus('completed').'.');
     }
 
     protected function syncRelatedSpkStatuses(PurchaseOrder $po): void
@@ -190,7 +208,7 @@ class ProductionAppController extends Controller
     public function cancel(Request $request, PurchaseOrder $po)
     {
         if ($po->status !== 'in_progress') {
-            return back()->with('error', 'Hanya PO berstatus ' . UiLabel::purchaseOrderStatus('in_progress') . ' yang bisa dibatalkan.');
+            return back()->with('error', 'Hanya PO berstatus '.UiLabel::purchaseOrderStatus('in_progress').' yang bisa dibatalkan.');
         }
 
         $validated = $request->validate([
@@ -232,12 +250,12 @@ class ProductionAppController extends Controller
         $after = $po->fresh()->toArray();
 
         AuditLog::create([
-            'user_id'           => Auth::id(),
-            'entity'            => 'purchase_order',
-            'entity_id'         => $po->id,
+            'user_id' => Auth::id(),
+            'entity' => 'purchase_order',
+            'entity_id' => $po->id,
             'purchase_order_id' => $po->id,
-            'action'            => 'cancelled_by_customer',
-            'message'           => sprintf(
+            'action' => 'cancelled_by_customer',
+            'message' => sprintf(
                 'PO %s dibatalkan oleh %s pada %s. Alasan: %s. SPK terkait dilepas: %s.',
                 $po->po_number,
                 Auth::user()->name ?? 'Unknown',
@@ -245,13 +263,13 @@ class ProductionAppController extends Controller
                 $validated['cancel_reason'],
                 $previousSpks ? collect($previousSpks)->pluck('spk_code')->join(', ') : '-'
             ),
-            'before_json'       => json_encode($before),
-            'after_json'        => json_encode($after + ['detached_spks' => $previousSpks]),
-            'ip_address'        => $request->ip(),
+            'before_json' => json_encode($before),
+            'after_json' => json_encode($after + ['detached_spks' => $previousSpks]),
+            'ip_address' => $request->ip(),
         ]);
 
         return redirect()
             ->route('productionapp.dashboard')
-            ->with('success', "PO {$po->po_number} ditandai " . UiLabel::purchaseOrderStatus('cancelled') . '.');
+            ->with('success', "PO {$po->po_number} ditandai ".UiLabel::purchaseOrderStatus('cancelled').'.');
     }
 }
