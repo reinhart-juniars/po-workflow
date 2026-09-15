@@ -1,5 +1,5 @@
 {{--
-  Cangkang 3S Business Control System untuk seluruh halaman Blade.
+  Cangkang 3S ONE (Business Control System) untuk seluruh halaman Blade.
 
   Susunannya yang sudah dikenal pengguna: bilah aplikasi di atas (Owner /
   Admin / Accounting / Inventory / ...), menu aplikasi yang sedang dibuka di
@@ -24,7 +24,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>{{ $pageTitle }} · 3S BCS</title>
+  <title>{{ $pageTitle }} · 3S ONE</title>
   @vite(['resources/css/app.css', 'resources/css/shell.css'])
   @stack('styles')
 </head>
@@ -37,9 +37,9 @@
     <div class="flex h-16 shrink-0 items-center border-b border-gray-950/5 px-6">
       <a href="{{ $shellHome }}" class="flex items-center gap-3">
         @include('partials.brand-mark', ['size' => 'md'])
-        <span class="leading-tight">
-          <span class="block text-[9px] font-semibold uppercase tracking-[0.18em] text-gray-500">3S Business</span>
-          <span class="block text-sm font-bold text-gray-900">Control System</span>
+<span class="leading-tight">
+          <span class="block text-sm font-bold tracking-tight text-gray-900">3S ONE</span>
+          <span class="block text-[9px] font-semibold uppercase tracking-[0.18em] text-gray-500">Business Control System</span>
         </span>
       </a>
     </div>

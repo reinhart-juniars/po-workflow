@@ -5,12 +5,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Masuk · 3S Business Control System</title>
+    <title>Masuk · 3S ONE</title>
     @vite(['resources/css/app.css', 'resources/css/shell.css'])
 </head>
 
 {{--
-  Halaman masuk: satu pintu untuk seluruh 3S BCS. Dua bidang datar -- panel
+  Halaman masuk: satu pintu untuk seluruh 3S ONE. Dua bidang datar -- panel
   gelap berisi identitas, panel putih berisi form -- tanpa kabut/gradasi.
 --}}
 <body class="min-h-full bg-gray-50">
@@ -18,7 +18,10 @@
         <section class="hidden flex-col justify-between bg-slate-950 px-12 py-12 text-white lg:flex">
             <div class="flex items-center gap-3">
                 @include('partials.brand-mark', ['size' => 'lg'])
-                <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">Business Control System</p>
+                <div class="leading-tight">
+                    <p class="text-lg font-bold tracking-tight text-white">3S ONE</p>
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">Business Control System</p>
+                </div>
             </div>
 
             <div>
@@ -30,7 +33,7 @@
                 </p>
             </div>
 
-            <p class="text-xs text-slate-500">W3S Catering · 3S BCS</p>
+            <p class="text-xs text-slate-500">W3S Catering · 3S ONE</p>
         </section>
 
         <section class="flex items-center justify-center px-5 py-8 sm:px-8">
@@ -38,12 +41,12 @@
                 <div class="mb-8 flex items-center gap-3 lg:hidden">
                     @include('partials.brand-mark', ['size' => 'md'])
                     <div class="leading-tight">
-                        <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">3S Business</p>
-                        <p class="text-sm font-bold text-slate-900">Control System</p>
+                        <p class="text-sm font-bold tracking-tight text-slate-900">3S ONE</p>
+                        <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Business Control System</p>
                     </div>
                 </div>
 
-                <h2 class="font-display text-3xl tracking-tight text-slate-900">Masuk</h2>
+                <h2 class="font-display text-3xl tracking-tight text-slate-900">Masuk ke 3S ONE</h2>
                 <p class="mt-2 text-sm text-slate-500">Pakai username atau email beserta password.</p>
 
                 @if ($errors->any())

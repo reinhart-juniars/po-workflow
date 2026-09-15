@@ -6,7 +6,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 /**
- * Satu-satunya definisi navigasi 3S Business Control System.
+ * Satu-satunya definisi navigasi 3S ONE (Business Control System).
  *
  * Dua tingkat, seperti yang sudah dikenal pengguna: **aplikasi** di bilah
  * atas (Owner, Admin, Accounting, Inventory, Sales, Production, Delivery,
@@ -251,7 +251,7 @@ class Navigation
 
     public static function appLabel(?string $app): string
     {
-        return self::apps()[$app]['label'] ?? '3S BCS';
+        return self::apps()[$app]['label'] ?? '3S ONE';
     }
 
     /** Beranda pengguna: dashboard peran utamanya. */

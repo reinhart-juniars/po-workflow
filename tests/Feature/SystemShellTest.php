@@ -5,7 +5,7 @@ use App\Support\Navigation;
 use Spatie\Permission\Models\Role;
 
 /**
- * Cangkang 3S BCS: bilah aplikasi di atas + sidebar menu aplikasi, satu
+ * Cangkang 3S ONE: bilah aplikasi di atas + sidebar menu aplikasi, satu
  * definisi (App\Support\Navigation) yang dirender sama oleh layout Blade dan
  * panel Filament; satu pintu masuk; tidak ada domain yang punya dua halaman.
  */
@@ -71,7 +71,8 @@ it('menampilkan bilah aplikasi yang sama di halaman blade dan halaman filament',
 
     foreach ([$blade, $filament] as $response) {
         $response
-            ->assertSee('Control System')
+            ->assertSee('3S ONE')
+            ->assertSee('Business Control System')
             ->assertSee('class="sh-tab', false)
             ->assertSee(route('ownerapp.dashboard'), false)
             ->assertSee(route('accountingapp.dashboard'), false)

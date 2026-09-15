@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Vite;
 
 /**
  * Panel Filament untuk modul inventory / resep / produksi -- bagian dari
- * 3S Business Control System, bukan aplikasi terpisah: sidebar & menunya
+ * 3S ONE (Business Control System), bukan aplikasi terpisah: sidebar & menunya
  * dibaca dari App\Support\Navigation yang sama dengan layout Blade, login
  * satu pintu (/login), sesi yang sama, tampilan yang sama.
  *
@@ -38,7 +38,7 @@ class AdminPanelProvider extends PanelProvider
 
             // Identitas visual mengikuti aplikasi Blade (resources/css/app.css):
             // biru brand, abu slate, Public Sans, tanpa mode gelap.
-            ->brandName('3S BCS')
+            ->brandName('3S ONE')
             ->brandLogo(fn () => view('filament.brand'))
             ->brandLogoHeight('2.75rem')
             ->colors([

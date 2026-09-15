@@ -1,5 +1,5 @@
 {{--
-  Bilah aplikasi 3S BCS: tab Owner / Admin / Accounting / Inventory / ...
+  Bilah aplikasi 3S ONE: tab Owner / Admin / Accounting / Inventory / ...
   sesuai peran pengguna. Dipakai layout Blade dan topbar Filament, jadi
   hanya memakai kelas dari resources/css/shell.css.
 
