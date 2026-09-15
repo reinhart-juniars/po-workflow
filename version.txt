@@ -18,3 +18,4 @@ v.2.3.7 tambah menu closing penjualan
 v.2.3.8 patch untuk menu 3s dan snapshot dan edit Harga
 v.2.3.9 patch ubah laporan final penjualan dan laporan final
 v.2.3.10 patch sesuaikan laporan laba rugi, dan patch kecil di admin app dan owner app
+v.3.0 modul inventory terpadu (item, pembelian, opname, resep & HPP, SPK produksi, form kebutuhan, ledger stok), cangkang 3S ONE satu login untuk semua app, peran inventory

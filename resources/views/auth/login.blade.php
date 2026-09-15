@@ -33,7 +33,7 @@
                 </p>
             </div>
 
-            <p class="text-xs text-slate-500">W3S Catering · 3S ONE</p>
+            <p class="text-xs text-slate-500">W3S Catering · 3S ONE {{ \App\Support\AppVersion::label() }}</p>
         </section>
 
         <section class="flex items-center justify-center px-5 py-8 sm:px-8">
@@ -42,7 +42,7 @@
                     @include('partials.brand-mark', ['size' => 'md'])
                     <div class="leading-tight">
                         <p class="text-sm font-bold tracking-tight text-slate-900">3S ONE</p>
-                        <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Business Control System</p>
+                        <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Business Control System · {{ \App\Support\AppVersion::label() }}</p>
                     </div>
                 </div>
 
