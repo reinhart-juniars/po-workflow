@@ -36,7 +36,7 @@ class Navigation
             'owner' => ['label' => 'Owner', 'icon' => 'heroicon-o-building-storefront', 'dashboard' => 'ownerapp.dashboard', 'pattern' => 'owner-app*', 'roles' => ['owner', 'superadmin']],
             'admin' => ['label' => 'Admin', 'icon' => 'heroicon-o-clipboard-document-list', 'dashboard' => 'adminapp.dashboard', 'pattern' => 'admin-app*', 'roles' => ['admin', 'owner', 'superadmin']],
             'accounting' => ['label' => 'Accounting', 'icon' => 'heroicon-o-banknotes', 'dashboard' => 'accountingapp.dashboard', 'pattern' => 'accounting-app*', 'roles' => ['accounting', 'owner', 'superadmin']],
-            'inventory' => ['label' => 'Inventory', 'icon' => 'heroicon-o-cube', 'dashboard' => 'filament.admin.resources.inventory-items.index', 'pattern' => 'inventory*', 'roles' => User::PANEL_ROLES],
+            'inventory' => ['label' => 'Inventory', 'icon' => 'heroicon-o-cube', 'dashboard' => 'filament.admin.pages.dashboard', 'pattern' => 'inventory*', 'roles' => User::PANEL_ROLES],
             'sales' => ['label' => 'Sales', 'icon' => 'heroicon-o-shopping-bag', 'dashboard' => 'salesapp.dashboard', 'pattern' => 'sales-app*', 'roles' => ['sales', 'owner', 'superadmin']],
             'production' => ['label' => 'Production', 'icon' => 'heroicon-o-fire', 'dashboard' => 'productionapp.dashboard', 'pattern' => 'production-app*', 'roles' => ['production', 'owner', 'superadmin']],
             'delivery' => ['label' => 'Delivery', 'icon' => 'heroicon-o-truck', 'dashboard' => 'deliveryapp.dashboard', 'pattern' => 'delivery-app*', 'roles' => ['delivery', 'owner', 'superadmin']],
@@ -135,11 +135,12 @@ class Navigation
             // = $navigationSort. Sidebar panel dirender Filament sendiri.
             'inventory' => [
                 'Inventory' => [
+                    ['label' => 'Dashboard', 'route' => 'filament.admin.pages.dashboard', 'can' => 'inventory.view'],
                     ['label' => 'Item Inventaris', 'route' => 'filament.admin.resources.inventory-items.index', 'can' => 'inventory.view'],
                     ['label' => 'Pembelian Bahan Baku', 'route' => 'filament.admin.resources.inventory-purchases.index', 'can' => 'inventory.view'],
                     ['label' => 'Stock Opname', 'route' => 'filament.admin.resources.stock-opnames.index', 'can' => 'inventory.view'],
                     ['label' => 'Saldo Awal Stok', 'route' => 'filament.admin.resources.inventory-openings.index', 'can' => 'inventory.view'],
-                    ['label' => 'Stok Minimum', 'route' => 'filament.admin.pages.dashboard', 'can' => 'inventory.view'],
+                    ['label' => 'Pengaturan Inventory', 'route' => 'filament.admin.pages.pengaturan-inventory', 'can' => 'settings.manage'],
                 ],
                 'Resep & HPP' => [
                     ['label' => 'Resep & Menu', 'route' => 'filament.admin.resources.recipes.index', 'can' => 'recipe.view'],
@@ -152,9 +153,6 @@ class Navigation
                     ['label' => 'Form Kebutuhan', 'route' => 'filament.admin.resources.requisitions.index', 'can' => 'production.view'],
                     ['label' => 'Ledger Stok', 'route' => 'filament.admin.resources.inventory-movements.index', 'can' => 'ledger.view'],
                     ['label' => 'Pelaksana', 'route' => 'filament.admin.resources.production-workers.index', 'can' => 'production.view'],
-                ],
-                'Sistem' => [
-                    ['label' => 'Pengaturan', 'route' => 'filament.admin.pages.pengaturan', 'can' => 'settings.manage'],
                 ],
             ],
             'sales' => [

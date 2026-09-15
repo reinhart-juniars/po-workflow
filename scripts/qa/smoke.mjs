@@ -41,7 +41,7 @@ const PAGES = [
   '/inventory/recipes', '/inventory/recipes/create', '/inventory/recipe-mismatches',
   '/inventory/production-orders', '/inventory/production-orders/create', '/inventory/requisitions', '/inventory/inventory-movements',
   '/inventory/production-workers', '/inventory/hpp-comparison-report',
-  '/inventory/pengaturan', '/inventory/stok-minimum', '/accounting-app/reports/inventory-usage', '/owner-app', '/accounting-app', '/admin-app/orders',
+  '/inventory/pengaturan-inventory', '/inventory/dashboard', '/accounting-app/reports/inventory-usage', '/owner-app', '/accounting-app', '/admin-app/orders',
 ];
 
 const report = { pages: [], flow: [], errors: [], downloads: [] };

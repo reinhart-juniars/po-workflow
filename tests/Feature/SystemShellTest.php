@@ -64,7 +64,7 @@ it('menampilkan bilah aplikasi yang sama di halaman blade dan halaman filament',
             ->assertSee('class="sh-tab', false)
             ->assertSee(route('ownerapp.dashboard'), false)
             ->assertSee(route('accountingapp.dashboard'), false)
-            ->assertSee(route('filament.admin.resources.inventory-items.index'), false)
+            ->assertSee(route('filament.admin.pages.dashboard'), false)
             ->assertSee(route('salesapp.dashboard'), false);
     }
 
@@ -105,13 +105,14 @@ it('menyaring tab dan menu menurut peran', function () {
 
     $this->actingAs($produksi)->get('/inventory/production-orders')->assertOk()
         ->assertSee('SPK Produksi')
-        ->assertDontSee('Pengaturan');
+        ->assertDontSee('Pengaturan Inventory');
 
-    // Positive control: owner melihat semua tab dan Pengaturan (di halaman Blade,
-    // karena navigasi Filament dipasang sekali per proses).
+    // Positive control: owner melihat semua tab dan Pengaturan Inventory
+    // (dari definisi menu, karena navigasi Filament dipasang sekali per proses).
     $owner = penggunaShell('owner');
     expect(collect(Navigation::tabs($owner))->pluck('key')->all())->toBe(['owner', 'admin', 'accounting', 'inventory', 'sales', 'production', 'delivery']);
-    expect(collect(Navigation::sidebar('inventory', $owner))->pluck('label')->all())->toBe(['Inventory', 'Resep & HPP', 'Produksi', 'Sistem']);
+    expect(collect(Navigation::sidebar('inventory', $owner))->pluck('label')->all())->toBe(['Inventory', 'Resep & HPP', 'Produksi']);
+    expect(collect(collect(Navigation::sidebar('inventory', $owner))->firstWhere('label', 'Inventory')['items'])->pluck('label')->all())->toContain('Pengaturan Inventory');
 
     $akunting = penggunaShell('accounting');
     expect(collect(Navigation::sidebar('accounting', $akunting))->firstWhere('label', 'Setup Awal')['items'])->toHaveCount(1); // adjustment hanya owner

@@ -17,7 +17,7 @@ Legenda kolom "Wajib": W = wajib untuk serah terima, O = opsional/dicatat saja.
 | A2 | `production` buka Inventory → Item Inventaris → Tambah | Ditolak (403 / tombol tidak ada) | W | | |
 | A3 | `accounting` buka Form Kebutuhan draft | Tidak ada tombol Susun/Simpan/Setujui | W | | |
 | A4 | `admin` buka form yang sama | Tombol Setujui ada | W | | |
-| A5 | `admin` buka Sistem → Pengaturan | Ditolak; `owner` bisa | W | | |
+| A5 | `admin` buka Inventory → Pengaturan Inventory | Ditolak; `owner` bisa | W | | |
 | A6 | `owner` buka Pengeluaran (Accounting) lalu klik tab Inventory di bilah atas | Bilah aplikasi sama di kedua halaman (tab aktif berpindah dengan animasi), sidebar berganti ke menu Inventory: Inventory, Resep & HPP, Produksi, Sistem | W | | |
 | A7 | Klik `/admin/...` lama atau menu lama Master Item di Akunting | Mendarat di halaman inventory yang sesuai | O | | |
 

@@ -17,8 +17,9 @@ use Filament\Pages\Page;
 use InvalidArgumentException;
 
 /**
- * Halaman Pengaturan modul. Formnya dibangun dari SettingRegistry, jadi
- * pengaturan baru cukup didaftarkan di sana. Kunci disimpan sebagai state
+ * Pengaturan aplikasi Inventory (resep/HPP, form kebutuhan, penomoran) --
+ * bukan pengaturan seluruh sistem. Formnya dibangun dari SettingRegistry,
+ * jadi pengaturan baru cukup didaftarkan di sana. Kunci disimpan sebagai state
  * form dengan titik diganti '__' karena Livewire membaca titik sebagai path.
  */
 class ModuleSettings extends Page implements HasForms
@@ -27,17 +28,17 @@ class ModuleSettings extends Page implements HasForms
 
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
 
-    protected static ?string $navigationGroup = 'Sistem';
+    protected static ?string $navigationGroup = 'Inventory';
 
-    protected static ?string $navigationLabel = 'Pengaturan';
+    protected static ?string $navigationLabel = 'Pengaturan Inventory';
 
-    protected static ?int $navigationSort = 20;
+    protected static ?int $navigationSort = 90;
 
-    protected static ?string $slug = 'pengaturan';
+    protected static ?string $slug = 'pengaturan-inventory';
 
     protected static string $view = 'filament.pages.module-settings';
 
-    protected static ?string $title = 'Pengaturan Modul';
+    protected static ?string $title = 'Pengaturan Inventory';
 
     /** @var array<string, mixed> */
     public ?array $data = [];

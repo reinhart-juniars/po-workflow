@@ -32,13 +32,11 @@
   <input type="checkbox" id="shell-nav-toggle" class="peer sr-only">
 
   {{-- Sidebar: menu aplikasi yang sedang dibuka --}}
-  <aside class="shell-sidebar fixed inset-y-0 left-0 z-40 flex w-[17rem] -translate-x-full flex-col border-r border-gray-200 bg-white transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] peer-checked:translate-x-0 lg:translate-x-0">
-    <div class="flex h-16 shrink-0 items-center px-5">
+  <aside class="shell-sidebar fixed inset-y-0 left-0 z-40 flex w-80 -translate-x-full flex-col border-r border-gray-200 bg-white transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] peer-checked:translate-x-0 lg:translate-x-0">
+    {{-- Ukuran & jarak persis sidebar Filament: header h-16 px-6, nav px-6 py-8, jarak grup 1.75rem --}}
+    <div class="flex h-16 shrink-0 items-center px-6">
       <a href="{{ $shellHome }}" class="flex items-center gap-3">
-        <span class="flex h-10 w-10 flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-brand-700 text-white shadow-sm ring-1 ring-slate-900/10 leading-none">
-          <span class="text-[7px] font-semibold uppercase tracking-[0.24em] text-cyan-200">3S</span>
-          <span class="mt-0.5 text-[10px] font-bold tracking-[0.16em]">BCS</span>
-        </span>
+        @include('partials.brand-mark', ['size' => 'md'])
         <span class="leading-tight">
           <span class="block text-[9px] font-semibold uppercase tracking-[0.18em] text-gray-500">3S Business</span>
           <span class="block text-sm font-bold text-gray-900">Control System</span>
@@ -46,11 +44,9 @@
       </a>
     </div>
 
-    <div class="px-5 pb-3">
+    <nav class="flex flex-1 flex-col gap-y-7 overflow-y-auto px-6 py-8" aria-label="Menu {{ \App\Support\Navigation::appLabel($shellApp) }}">
       <p class="shell-app-name">{{ \App\Support\Navigation::appLabel($shellApp) }}</p>
-    </div>
 
-    <nav class="flex-1 space-y-5 overflow-y-auto px-4 pb-6" aria-label="Menu {{ \App\Support\Navigation::appLabel($shellApp) }}">
       @foreach ($shellSections as $section)
         <details class="shell-group" open>
           <summary class="shell-group-label">
@@ -90,7 +86,7 @@
   {{-- Penutup sidebar di layar kecil --}}
   <label for="shell-nav-toggle" class="fixed inset-0 z-30 hidden bg-gray-950/40 peer-checked:block lg:peer-checked:hidden"></label>
 
-  <div class="flex min-h-screen flex-col lg:pl-[17rem]">
+  <div class="flex min-h-screen flex-col lg:pl-80">
     <header class="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-gray-200 bg-white/90 px-4 backdrop-blur sm:px-6 lg:px-8">
       <label for="shell-nav-toggle" class="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 lg:hidden" aria-label="Menu">
         @svg('heroicon-o-bars-3', 'h-6 w-6')

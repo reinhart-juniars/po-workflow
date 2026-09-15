@@ -144,7 +144,7 @@
 
 /* Nama aplikasi di atas sidebar (Blade memakai .shell-app-name dari app.css) */
 .sh-app-name {
-  margin: 0 0 12px;
+  margin: 0;
   padding: 6px 12px;
   border-radius: 8px;
   background: var(--sh-brand-50);

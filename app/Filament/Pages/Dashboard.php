@@ -9,26 +9,43 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Dashboard as BaseDashboard;
 
 /**
- * Dashboard panel. Selain widget stok minimum, alert-nya juga disampaikan
- * sebagai notifikasi sekali per hari per sesi supaya orang yang langsung
- * menuju halaman lain tetap tahu ada bahan di bawah ambang.
+ * Dashboard aplikasi Inventory: ringkasan yang perlu ditangani (stok
+ * minimum, SPK produksi terbuka, resep belum tertaut, konversi), SPK
+ * produksi terdekat, dan perubahan harga terakhir. Alert stok minimum juga
+ * disampaikan sebagai notifikasi sekali per hari per sesi.
  */
 class Dashboard extends BaseDashboard
 {
     protected const ALERT_SESSION_KEY = 'inventory_stock_alert_notified_on';
 
-    protected static ?string $navigationIcon = 'heroicon-o-bell-alert';
+    protected static ?string $navigationIcon = 'heroicon-o-home';
 
-    // Bukan beranda panel: beranda sistem adalah dashboard peran (Blade).
-    protected static string $routePath = 'stok-minimum';
+    // Akar /inventory dialihkan ke dashboard peran (Blade); dashboard
+    // aplikasi Inventory sendiri ada di /inventory/dashboard.
+    protected static string $routePath = 'dashboard';
 
     protected static ?string $navigationGroup = 'Inventory';
 
-    protected static ?string $navigationLabel = 'Stok Minimum';
+    protected static ?string $navigationLabel = 'Dashboard';
 
-    protected static ?int $navigationSort = 50;
+    protected static ?int $navigationSort = 0;
 
-    protected static ?string $title = 'Stok Minimum';
+    protected static ?string $title = 'Dashboard Inventory';
+
+    public function getWidgets(): array
+    {
+        return [
+            \App\Filament\Widgets\InventoryOverviewWidget::class,
+            \App\Filament\Widgets\LowStockAlertWidget::class,
+            \App\Filament\Widgets\UpcomingProductionWidget::class,
+            \App\Filament\Widgets\RecentPriceChangesWidget::class,
+        ];
+    }
+
+    public function getColumns(): int|string|array
+    {
+        return 1;
+    }
 
     public static function canAccess(): bool
     {

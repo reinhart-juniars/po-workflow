@@ -90,12 +90,12 @@ it('menolak nilai di luar batas dan pilihan yang tidak dikenal', function () {
 });
 
 it('hanya membuka halaman pengaturan untuk peran berizin settings.manage', function () {
-    $this->actingAs(penggunaPengaturan('admin'))->get('/inventory/pengaturan')->assertForbidden();
+    $this->actingAs(penggunaPengaturan('admin'))->get('/inventory/pengaturan-inventory')->assertForbidden();
 
     // Tombolnya tersembunyi, metodenya pun ditolak.
     Livewire::actingAs(penggunaPengaturan('admin'))->test(ModuleSettings::class)->assertForbidden();
 
-    $this->actingAs(penggunaPengaturan('owner'))->get('/inventory/pengaturan')->assertOk()->assertSee('Pengaturan Modul');
+    $this->actingAs(penggunaPengaturan('owner'))->get('/inventory/pengaturan-inventory')->assertOk()->assertSee('Pengaturan Inventory');
 });
 
 it('memakai OHC dan profit bawaan dari pengaturan saat membuat resep baru', function () {
