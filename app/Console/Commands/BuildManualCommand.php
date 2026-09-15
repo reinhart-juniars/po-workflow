@@ -28,7 +28,27 @@ class BuildManualCommand extends Command
             return self::FAILURE;
         }
 
-        $pdf = Pdf::loadHTML(file_get_contents($source))->setPaper('a4', 'portrait');
+        // Gambar (img/*.jpg) disematkan sebagai data URI supaya PDF-nya
+        // berdiri sendiri dan dompdf tidak perlu izin membaca berkas lokal.
+        $html = preg_replace_callback(
+            '/src="(img\/[^"]+)"/',
+            function (array $m) {
+                $file = base_path('docs/panduan/'.$m[1]);
+
+                if (! is_file($file)) {
+                    $this->warn('Gambar tidak ditemukan: '.$m[1]);
+
+                    return $m[0];
+                }
+
+                $mime = str_ends_with($file, '.png') ? 'image/png' : 'image/jpeg';
+
+                return 'src="data:'.$mime.';base64,'.base64_encode(file_get_contents($file)).'"';
+            },
+            file_get_contents($source),
+        );
+
+        $pdf = Pdf::loadHTML($html)->setPaper('a4', 'portrait');
         file_put_contents($output, $pdf->output());
 
         $this->info('Panduan ditulis ke '.$output.' ('.number_format(filesize($output) / 1024).' KB)');

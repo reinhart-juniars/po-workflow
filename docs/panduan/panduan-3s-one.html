@@ -48,6 +48,9 @@
   .step.act { background: #3455db; color: #fff; border-color: #3455db; }
   .num { display: inline-block; width: 14pt; height: 14pt; border-radius: 7pt; background: #3455db; color: #fff; text-align: center; font-size: 8.5pt; line-height: 14pt; margin-right: 4pt; }
   .toc td { padding: 2pt 0; border-bottom: 1px dotted #cbd5e1; }
+  .fig { margin: 8pt 0 12pt; page-break-inside: avoid; }
+  .fig img { width: 100%; border: 1px solid #cbd5e1; border-radius: 4pt; }
+  .fig .cap { font-size: 8.5pt; color: #64748b; margin-top: 3pt; }
 </style>
 </head>
 <body>
@@ -59,7 +62,7 @@
   <div class="sub">Business Control System</div>
   <p style="margin-top: 24pt; font-size: 14pt;">Panduan Pengguna</p>
   <p class="muted">Satu sistem untuk pesanan, produksi, stok, dan keuangan<br>W3S Catering</p>
-  <div class="meta">Versi 3.0 · September 2026</div>
+  <div class="meta">Versi 3.0</div>
 </div>
 
 <!-- ============ DAFTAR ISI ============ -->
@@ -169,6 +172,7 @@
     <li>Akun baru mendapat password sementara dari Owner dan <b>wajib menggantinya</b> saat pertama masuk.</li>
     <li>Versi sistem tertulis di pojok halaman masuk (misalnya <i>v3.0</i>) — sebutkan ini bila melapor masalah.</li>
   </ul>
+  <div class="fig"><img src="img/login.jpg" alt="Halaman masuk. Versi sistem tertulis di kiri bawah."><div class="cap">Halaman masuk. Versi sistem tertulis di kiri bawah.</div></div>
 
   <h3>Tata letak layar</h3>
   <table class="grid">
@@ -178,6 +182,7 @@
     <tr><td><b>Lonceng</b> (di Inventory)</td><td>Pemberitahuan untuk Anda: form yang menunggu persetujuan Anda, barang yang sudah bisa dibelanjakan, form yang ditolak, dan sebagainya. Tekan <i>Buka form</i> untuk langsung ke halamannya.</td></tr>
     <tr><td><b>Inisial nama</b> (pojok kanan)</td><td>Profil, ganti password, keluar.</td></tr>
   </table>
+  <div class="fig"><img src="img/owner-dashboard.jpg" alt="Tata letak: bilah aplikasi di atas, menu aplikasi di kiri, isi halaman di tengah (contoh: Dashboard Owner)."><div class="cap">Tata letak: bilah aplikasi di atas, menu aplikasi di kiri, isi halaman di tengah (contoh: Dashboard Owner).</div></div>
 
   <h3>Tombol dan tanda yang sering ditemui</h3>
   <ul>
@@ -203,6 +208,8 @@
     <tr><td>Menu Tanpa HPP/OHC</td><td>Daftar menu yang belum punya resep/harga pokok — perlu dilengkapi di Inventory › Resep & Menu.</td></tr>
     <tr><td>Laporan PO / Produksi / Delivery / Best Seller</td><td>Rekap operasional per periode.</td></tr>
   </table>
+  <div class="fig"><img src="img/admin-orders.jpg" alt="Admin › Purchase Orders: daftar pesanan pelanggan."><div class="cap">Admin › Purchase Orders: daftar pesanan pelanggan.</div></div>
+  <div class="fig"><img src="img/admin-spk.jpg" alt="Admin › SPK: pesanan dikelompokkan ke slot jadwal masak. Menyimpan SPK otomatis membuat SPK Produksi di Inventory."><div class="cap">Admin › SPK: pesanan dikelompokkan ke slot jadwal masak. Menyimpan SPK otomatis membuat SPK Produksi di Inventory.</div></div>
 
   <h3>Sales</h3>
   <table class="grid">
@@ -212,18 +219,21 @@
     <tr><td>Laporan Waste</td><td>Produk yang terbuang.</td></tr>
     <tr><td>Laporan Penjualan</td><td>Rekap penjualan per periode (juga terbaca Accounting).</td></tr>
   </table>
+  <div class="fig"><img src="img/sales-dashboard.jpg" alt="Sales › Dashboard."><div class="cap">Sales › Dashboard.</div></div>
 
   <h3>Production</h3>
   <table class="grid">
     <tr><th style="width: 28%">Menu</th><th>Untuk apa</th></tr>
     <tr><td>Dashboard Produksi</td><td>Jadwal masak hari ini per SPK. Dari sini ada tombol ke <b>Form Kebutuhan</b> di Inventory (Bab 8).</td></tr>
   </table>
+  <div class="fig"><img src="img/production-dashboard.jpg" alt="Production › Dashboard Produksi: jadwal masak per SPK, dengan tautan ke Form Kebutuhan."><div class="cap">Production › Dashboard Produksi: jadwal masak per SPK, dengan tautan ke Form Kebutuhan.</div></div>
 
   <h3>Delivery</h3>
   <table class="grid">
     <tr><th style="width: 28%">Menu</th><th>Untuk apa</th></tr>
     <tr><td>Dashboard Pengiriman</td><td>Daftar kiriman, status, dan bukti kirim (foto/penerima).</td></tr>
   </table>
+  <div class="fig"><img src="img/delivery-dashboard.jpg" alt="Delivery › Dashboard Pengiriman."><div class="cap">Delivery › Dashboard Pengiriman.</div></div>
 </div>
 
 <!-- ============ 6. ACCOUNTING ============ -->
@@ -239,6 +249,7 @@
     <tr><td><b>Kontrol Periode</b><br>Status Periode</td><td>Menutup buku bulanan. Setelah ditutup, transaksi bulan itu terkunci; perubahan hanya lewat penyesuaian yang tercatat.</td></tr>
     <tr><td><b>Laporan</b><br>Cashflow, Penjualan, Laba Rugi, Neraca, Pemakaian Bahan, Laporan Final</td><td>Laporan keuangan per periode; bisa diekspor Excel/PDF.</td></tr>
   </table>
+  <div class="fig"><img src="img/accounting-cashflow.jpg" alt="Accounting › Laporan Cashflow: sisi Debet (uang masuk) dan Kredit (uang keluar) berdampingan."><div class="cap">Accounting › Laporan Cashflow: sisi Debet (uang masuk) dan Kredit (uang keluar) berdampingan.</div></div>
 
   <h3>Hubungan dengan Inventory</h3>
   <ul>
@@ -263,6 +274,8 @@
     <tr><td>Saldo Awal Stok</td><td>Nilai stok awal periode.</td></tr>
     <tr><td>Pengaturan Inventory</td><td>Angka bawaan: % OHC dan profit resep, sumber angka HPP, pembulatan belanja, perlakuan barang ditolak, penomoran dokumen. Hanya Owner.</td></tr>
   </table>
+  <div class="fig"><img src="img/inventory-dashboard.jpg" alt="Inventory › Dashboard: bahan di bawah stok minimum, antrean form yang menunggu Anda, SPK terdekat, perubahan harga."><div class="cap">Inventory › Dashboard: bahan di bawah stok minimum, antrean form yang menunggu Anda, SPK terdekat, perubahan harga.</div></div>
+  <div class="fig"><img src="img/inventory-items.jpg" alt="Inventory › Item Inventaris: daftar bahan beserta harga per satuan."><div class="cap">Inventory › Item Inventaris: daftar bahan beserta harga per satuan.</div></div>
 
   <h3>Kelompok Resep & HPP</h3>
   <table class="grid">
@@ -272,6 +285,8 @@
     <tr><td>Bahan Belum Cocok</td><td>Nama bahan di resep yang belum terhubung ke daftar bahan. Tautkan, buat baru, atau abaikan.</td></tr>
     <tr><td>Perbandingan HPP</td><td>Membandingkan HPP menurut resep × produksi dengan HPP menurut opname, per periode. Dasar Owner memutuskan sumber HPP mana yang dipakai laporan.</td></tr>
   </table>
+  <div class="fig"><img src="img/hpp.jpg" alt="Resep & Menu › Analisa HPP: HPP per porsi, OHC, profit, harga jual; baris yang menahan perhitungan dilipat di bawahnya."><div class="cap">Resep & Menu › Analisa HPP: HPP per porsi, OHC, profit, harga jual; baris yang menahan perhitungan dilipat di bawahnya.</div></div>
+  <div class="fig"><img src="img/konversi-belum.jpg" alt="Konversi Satuan › Belum Diatur: pasangan satuan yang perlu aturan supaya biaya resep terhitung."><div class="cap">Konversi Satuan › Belum Diatur: pasangan satuan yang perlu aturan supaya biaya resep terhitung.</div></div>
 
   <h3>Kelompok Produksi</h3>
   <table class="grid">
@@ -281,6 +296,9 @@
     <tr><td>Kartu Stok</td><td>Catatan keluar-masuk tiap bahan (saldo awal, pembelian, pemakaian, penyesuaian). Hanya dibaca — terisi otomatis dari form.</td></tr>
     <tr><td>Pelaksana</td><td>Daftar orang dapur untuk lembar kerja.</td></tr>
   </table>
+  <div class="fig"><img src="img/spk-produksi.jpg" alt="SPK Produksi: menu & jumlah yang harus dimasak; tombol Form Kebutuhan, dan menu Lainnya untuk lembar kerja, plating, cetak."><div class="cap">SPK Produksi: menu & jumlah yang harus dimasak; tombol Form Kebutuhan, dan menu Lainnya untuk lembar kerja, plating, cetak.</div></div>
+  <div class="fig"><img src="img/kartu-stok.jpg" alt="Kartu Stok: keluar-masuk tiap bahan dengan saldo berjalan — terisi otomatis."><div class="cap">Kartu Stok: keluar-masuk tiap bahan dengan saldo berjalan — terisi otomatis.</div></div>
+  <div class="fig"><img src="img/pembelian.jpg" alt="Pembelian Bahan Baku: catatan pembelian beserta kondisi Baik / Tidak Baik dan nilai barang rusak."><div class="cap">Pembelian Bahan Baku: catatan pembelian beserta kondisi Baik / Tidak Baik dan nilai barang rusak.</div></div>
 </div>
 
 <!-- ============ 8. FORM KEBUTUHAN ============ -->
@@ -296,6 +314,7 @@
     <span class="step"><b>4.</b> Simpan</span>
     <span class="step act"><b>5.</b> Ajukan ke Supervisor Gudang</span>
   </div>
+  <div class="fig"><img src="img/form-produksi.jpg" alt="Meja 1 (Produksi): isi Stok Awal, Beli terhitung sendiri, lalu Ajukan ke Supervisor Gudang."><div class="cap">Meja 1 (Produksi): isi Stok Awal, Beli terhitung sendiri, lalu Ajukan ke Supervisor Gudang.</div></div>
   <div class="down">&#8595;</div>
   <div class="lane">
     <div class="title">Meja 2 · Supervisor Gudang</div>
@@ -304,6 +323,8 @@
     <span class="step act">Setujui</span>
     <span class="step" style="border-color:#e11d48;">atau <b>Tolak</b> + alasan → form kembali ke Meja 1 dengan catatan merah</span>
   </div>
+  <div class="fig"><img src="img/lonceng.jpg" alt="Lonceng di pojok kanan atas: supervisor gudang menerima pemberitahuan form yang menunggu, dengan tombol Buka form."><div class="cap">Lonceng di pojok kanan atas: supervisor gudang menerima pemberitahuan form yang menunggu, dengan tombol Buka form.</div></div>
+  <div class="fig"><img src="img/form-supervisor.jpg" alt="Meja 2 (Supervisor Gudang): hanya tombol Setujui / Tolak; tabel memuat harga master dan perkiraan biaya per bahan."><div class="cap">Meja 2 (Supervisor Gudang): hanya tombol Setujui / Tolak; tabel memuat harga master dan perkiraan biaya per bahan.</div></div>
   <div class="down">&#8595;</div>
   <div class="lane">
     <div class="title">Meja 3 · Staf Gudang (saat barang datang)</div>
@@ -313,6 +334,7 @@
     <span class="step">Simpan</span>
     <span class="step act">Periksa</span>
   </div>
+  <div class="fig"><img src="img/form-gudang.jpg" alt="Meja 3 (Staf Gudang): cara pembayaran di atas, lalu per bahan Diterima, Ditolak (otomatis), alasan, perlakuan, dan harga beli."><div class="cap">Meja 3 (Staf Gudang): cara pembayaran di atas, lalu per bahan Diterima, Ditolak (otomatis), alasan, perlakuan, dan harga beli.</div></div>
   <div class="down">&#8595;</div>
   <div class="lane">
     <div class="title">Meja 4 · Produksi (setelah masak)</div>
@@ -401,6 +423,7 @@
     <tr><td>Analisa HPP</td><td>Profit hitungan vs profit nyata per periode: Penjualan − Bahan Baku − OHC, dengan target % per bulan.</td></tr>
     <tr><td>Audit Logs</td><td>Jejak siapa mengubah apa dan kapan (akun, pesanan, transaksi).</td></tr>
   </table>
+  <div class="fig"><img src="img/master-user.jpg" alt="Owner › Master User: membuat akun dan memilih peran (bisa lebih dari satu)."><div class="cap">Owner › Master User: membuat akun dan memilih peran (bisa lebih dari satu).</div></div>
 
   <h3>Peran yang tersedia di Master User</h3>
   <p>Owner, Admin, Accounting, Inventory (staf gudang), Supervisor Gudang, Sales, Production, Delivery. Untuk menunjuk siapa yang <b>menyetujui</b> Form Kebutuhan, beri peran <b>Supervisor Gudang</b>.</p>

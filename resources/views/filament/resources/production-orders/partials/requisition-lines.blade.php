@@ -34,9 +34,9 @@
         @else
             <col style="width: 56px"><col style="width: 60px">
             @if ($receivingVisible)
-                <col style="width: 84px"><col style="width: 56px">
+                <col style="width: 84px"><col style="width: 66px">
                 @if ($stage === 'receiving')
-                    <col style="width: 122px"><col style="width: 126px"><col style="width: 96px">
+                    <col style="width: 112px"><col style="width: 126px"><col style="width: 96px">
                 @else
                     <col style="width: 130px"><col style="width: 90px">
                 @endif
