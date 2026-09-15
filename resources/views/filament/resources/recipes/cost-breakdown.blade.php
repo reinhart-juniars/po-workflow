@@ -7,21 +7,58 @@
 @endphp
 
 <x-filament-panels::page>
+    {{-- Angka dulu, baru masalahnya: strip KPI satu baris (sh-kpi di shell.css)
+         karena CSS Filament tidak memuat md:grid-cols-* aplikasi. --}}
+    <div class="sh-kpi" style="--cols: 4">
+        @foreach ([
+            ['HPP per ' . $recipe->yield_unit, $cost['hpp_per_yield'], 'Dari rincian bahan'],
+            ['OHC', $cost['ohc'], round((float) $recipe->ohc_pct * 100, 2) . '% dari HPP'],
+            ['Profit Hitungan', $cost['profit'], round((float) $recipe->profit_pct * 100, 2) . '% dari HPP + OHC'],
+            ['Harga Jual', $cost['harga_jual_dipakai'], $cost['pakai_target'] ? 'Memakai harga target' : 'Hasil hitungan'],
+        ] as [$label, $value, $note])
+            <div class="sh-kpi-cell">
+                <p class="sh-kpi-label">{{ $label }}</p>
+                <p class="sh-kpi-value">{{ $rupiah($value) }}</p>
+                <p class="sh-kpi-note">{{ $note }}</p>
+            </div>
+        @endforeach
+    </div>
+
+    <div class="sh-kpi" style="--cols: 3">
+        <div class="sh-kpi-cell">
+            <p class="sh-kpi-label">Total Biaya (HPP + OHC)</p>
+            <p class="sh-kpi-value">{{ $rupiah($cost['total_biaya']) }}</p>
+        </div>
+        <div class="sh-kpi-cell">
+            <p class="sh-kpi-label">Profit Aktual</p>
+            <p class="sh-kpi-value {{ $cost['profit_ok'] ? 'is-ok' : 'is-bad' }}">{{ $rupiah($cost['profit_aktual']) }}</p>
+            <p class="sh-kpi-note">{{ number_format($cost['profit_pct_aktual'] * 100, 1, ',', '.') }}% dari biaya</p>
+        </div>
+        <div class="sh-kpi-cell">
+            <p class="sh-kpi-label">Margin terhadap Harga Jual</p>
+            <p class="sh-kpi-value">{{ number_format($cost['margin_pct_aktual'] * 100, 1, ',', '.') }}%</p>
+        </div>
+    </div>
+
     @if ($cost['uses_snapshot'])
         <x-filament::section>
             <div class="text-sm text-warning-600 dark:text-warning-400">
-                Resep ini belum punya rincian bahan. Angka di bawah disalin dari Excel, bukan hasil
+                Resep ini belum punya rincian bahan. Angka di atas disalin dari Excel, bukan hasil
                 perhitungan dari bahan — isi rincian bahannya agar HPP mengikuti harga terbaru.
             </div>
         </x-filament::section>
     @endif
 
     @if ($cost['issues'])
-        <x-filament::section heading="Yang menahan perhitungan">
-            <x-slot name="description">
-                Baris berikut tidak ikut terhitung. Selama ini belum beres, HPP di halaman ini lebih
-                kecil daripada biaya sebenarnya.
-            </x-slot>
+        {{-- Dilipat: daftarnya bisa belasan baris dan mendorong rincian ke bawah. --}}
+        <x-filament::section
+            :heading="count($cost['issues']) . ' baris menahan perhitungan'"
+            description="Baris ini tidak ikut terhitung; selama belum beres, HPP di atas lebih kecil daripada biaya sebenarnya."
+            icon="heroicon-m-exclamation-triangle"
+            icon-color="danger"
+            collapsible
+            collapsed
+        >
             <ul class="list-disc space-y-1 pl-5 text-sm text-danger-600 dark:text-danger-400">
                 @foreach ($cost['issues'] as $issue)
                     <li>{{ $issue }}</li>
@@ -30,50 +67,9 @@
         </x-filament::section>
     @endif
 
-    <div class="grid gap-4 md:grid-cols-4">
-        @foreach ([
-            ['HPP per ' . $recipe->yield_unit, $cost['hpp_per_yield'], 'Dari rincian bahan.'],
-            ['OHC', $cost['ohc'], round((float) $recipe->ohc_pct * 100, 2) . '% dari HPP'],
-            ['Profit Hitungan', $cost['profit'], round((float) $recipe->profit_pct * 100, 2) . '% dari HPP+OHC'],
-            ['Harga Jual', $cost['harga_jual_dipakai'], $cost['pakai_target'] ? 'Memakai harga target' : 'Hasil hitungan'],
-        ] as [$label, $value, $note])
-            <x-filament::section>
-                <div class="text-sm text-gray-500 dark:text-gray-400">{{ $label }}</div>
-                <div class="mt-1 text-xl font-semibold">{{ $rupiah($value) }}</div>
-                <div class="mt-1 text-xs text-gray-400">{{ $note }}</div>
-            </x-filament::section>
-        @endforeach
-    </div>
-
-    <x-filament::section heading="Penilaian Profit">
-        <div class="grid gap-4 text-sm md:grid-cols-3">
-            <div>
-                <div class="text-gray-500 dark:text-gray-400">Total Biaya (HPP + OHC)</div>
-                <div class="mt-1 font-semibold">{{ $rupiah($cost['total_biaya']) }}</div>
-            </div>
-            <div>
-                <div class="text-gray-500 dark:text-gray-400">Profit Aktual</div>
-                <div @class([
-                    'mt-1 font-semibold',
-                    'text-success-600 dark:text-success-400' => $cost['profit_ok'],
-                    'text-danger-600 dark:text-danger-400' => ! $cost['profit_ok'],
-                ])>
-                    {{ $rupiah($cost['profit_aktual']) }}
-                    ({{ number_format($cost['profit_pct_aktual'] * 100, 1, ',', '.') }}% dari biaya)
-                </div>
-            </div>
-            <div>
-                <div class="text-gray-500 dark:text-gray-400">Margin terhadap Harga Jual</div>
-                <div class="mt-1 font-semibold">
-                    {{ number_format($cost['margin_pct_aktual'] * 100, 1, ',', '.') }}%
-                </div>
-            </div>
-        </div>
-    </x-filament::section>
-
     <x-filament::section :heading="'Rincian Biaya (' . count($cost['lines']) . ' baris)'">
         <div class="overflow-x-auto">
-            <table class="w-full text-sm">
+            <table class="sh-table">
                 <thead>
                     <tr class="border-b border-gray-200 text-left dark:border-gray-700">
                         <th class="py-2 pr-4 font-medium">Bahan / Sub-Menu</th>
@@ -140,7 +136,7 @@
         @endif
 
         <div class="mt-4 overflow-x-auto">
-            <table class="w-full text-sm">
+            <table class="sh-table">
                 <thead>
                     <tr class="border-b border-gray-200 text-left dark:border-gray-700">
                         <th class="py-2 pr-4 font-medium">Bahan</th>

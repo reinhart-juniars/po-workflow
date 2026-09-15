@@ -14,7 +14,7 @@
         </x-slot>
 
         <div class="overflow-x-auto">
-            <table class="w-full text-sm">
+            <table class="sh-table">
                 <thead>
                     <tr class="border-b border-gray-200 text-left dark:border-gray-700">
                         <th class="py-2 pr-4 font-medium">Bucket</th>

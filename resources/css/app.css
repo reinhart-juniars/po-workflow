@@ -207,6 +207,28 @@
         @apply border-t border-slate-100;
     }
 
+    /* Worksheet dua sisi (Debet | Kredit): tiap sisi tepat setengah lebar
+       tabel, judul sisi di tengah, dan garis pemisah di antara keduanya. */
+    .data-table.data-table-split {
+        @apply table-fixed;
+    }
+
+    .data-table-split col.split-desc {
+        width: 32%;
+    }
+
+    .data-table-split col.split-amount {
+        width: 18%;
+    }
+
+    .data-table-split thead th.split-title {
+        @apply border-b border-slate-200 text-center;
+    }
+
+    .data-table-split .split-start {
+        @apply border-l border-slate-200;
+    }
+
     .status-badge {
         @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold;
     }

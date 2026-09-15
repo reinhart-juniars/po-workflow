@@ -154,7 +154,9 @@ it('menampilkan pasangan satuan yang tertahan pada halaman butuh aturan', functi
 
     Livewire::test(MissingUnitConversions::class)
         ->assertSee('Ayam Fillet')
-        ->assertSee('Buat aturan');
+        ->assertSee('Buat aturan')
+        ->assertSeeHtml('class="sh-kpi" style="--cols: 4"')
+        ->assertDontSeeHtml('md:grid-cols');
 
     InventoryUnitConversion::query()->create([
         'inventory_item_id' => $this->ayam->id,

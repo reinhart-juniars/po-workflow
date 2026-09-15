@@ -5,39 +5,35 @@
 @endphp
 
 <x-filament-panels::page>
-    <div class="grid gap-4 md:grid-cols-4">
-        <x-filament::section>
-            <div class="text-sm text-gray-500 dark:text-gray-400">SPK Produksi</div>
-            <div class="mt-1 text-lg font-semibold">{{ $order->number }}</div>
-            <div class="mt-1 text-xs text-gray-400">
-                {{ $order->production_date->format('d/m/Y') }} {{ $order->production_time }} · {{ $order->statusLabel() }}
-            </div>
-        </x-filament::section>
+    <div class="sh-kpi" style="--cols: 4">
+        <div class="sh-kpi-cell">
+            <p class="sh-kpi-label">SPK Produksi</p>
+            <p class="sh-kpi-value">{{ $order->number }}</p>
+            <p class="sh-kpi-note">{{ $order->production_date->format('d/m/Y') }} {{ $order->production_time }} · {{ $order->statusLabel() }}</p>
+        </div>
 
-        <x-filament::section>
-            <div class="text-sm text-gray-500 dark:text-gray-400">Status Form</div>
-            <div class="mt-1 text-lg font-semibold">{{ $requisition?->statusLabel() ?? 'Belum disusun' }}</div>
+        <div class="sh-kpi-cell">
+            <p class="sh-kpi-label">Status Form</p>
+            <p class="sh-kpi-value">{{ $requisition?->statusLabel() ?? 'Belum disusun' }}</p>
             @if ($requisition)
-                <div class="mt-1 text-xs text-gray-400">{{ $requisition->number }}</div>
+                <p class="sh-kpi-note">{{ $requisition->number }}</p>
             @endif
-        </x-filament::section>
+        </div>
 
-        <x-filament::section>
-            <div class="text-sm text-gray-500 dark:text-gray-400">Jejak Persetujuan</div>
-            <div class="mt-1 space-y-0.5 text-xs">
+        <div class="sh-kpi-cell">
+            <p class="sh-kpi-label">Jejak Persetujuan</p>
+            <div class="sh-kpi-lines">
                 <div>Dibuat: {{ $requisition?->preparedBy?->name ?? '-' }} {{ $requisition?->prepared_at?->format('d/m H:i') }}</div>
                 <div>Disetujui: {{ $requisition?->approvedBy?->name ?? '-' }} {{ $requisition?->approved_at?->format('d/m H:i') }}</div>
                 <div>Diperiksa: {{ $requisition?->checkedBy?->name ?? '-' }} {{ $requisition?->checked_at?->format('d/m H:i') }}</div>
             </div>
-        </x-filament::section>
+        </div>
 
-        <x-filament::section>
-            <div class="text-sm text-gray-500 dark:text-gray-400">Perkiraan Biaya Bahan</div>
-            <div class="mt-1 text-lg font-semibold">
-                {{ $requisition ? $rupiah($requisition->lines->sum(fn ($l) => (float) $l->required_qty * (float) ($l->unit_price ?? 0))) : '-' }}
-            </div>
-            <div class="mt-1 text-xs text-gray-400">Kebutuhan × harga satuan bahan.</div>
-        </x-filament::section>
+        <div class="sh-kpi-cell">
+            <p class="sh-kpi-label">Perkiraan Biaya Bahan</p>
+            <p class="sh-kpi-value">{{ $requisition ? $rupiah($requisition->lines->sum(fn ($l) => (float) $l->required_qty * (float) ($l->unit_price ?? 0))) : '-' }}</p>
+            <p class="sh-kpi-note">Kebutuhan × harga satuan bahan</p>
+        </div>
     </div>
 
     @if (! $requisition)
@@ -56,7 +52,7 @@
             @endif
 
             <div class="overflow-x-auto">
-                <table class="w-full text-sm">
+                <table class="sh-table">
                     <thead>
                         <tr class="border-b border-gray-200 text-left dark:border-gray-700">
                             <th class="py-2 pr-4 font-medium">Bahan</th>

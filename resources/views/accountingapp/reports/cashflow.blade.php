@@ -144,16 +144,22 @@
             Ringkasan Cashflow Periode {{ $dateFrom->format('d M Y') }} - {{ $dateTo->format('d M Y') }}
         </div>
         <div class="data-table-wrap">
-            <table class="data-table">
+            <table class="data-table data-table-split">
+                <colgroup>
+                    <col class="split-desc">
+                    <col class="split-amount">
+                    <col class="split-desc">
+                    <col class="split-amount">
+                </colgroup>
                 <thead>
                     <tr>
-                        <th colspan="2" class="text-center">Debet</th>
-                        <th colspan="2" class="text-center">Kredit</th>
+                        <th colspan="2" class="split-title">Debet</th>
+                        <th colspan="2" class="split-title split-start">Kredit</th>
                     </tr>
                     <tr>
                         <th>Keterangan</th>
                         <th class="text-right">Nominal</th>
-                        <th>Keterangan</th>
+                        <th class="split-start">Keterangan</th>
                         <th class="text-right">Nominal</th>
                     </tr>
                 </thead>
@@ -172,7 +178,7 @@
                             <td class="text-right">
                                 {{ $incomeRow ? 'Rp ' . number_format((float) $incomeRow['amount'], 0, ',', '.') : '' }}
                             </td>
-                            <td>{{ $expenseRow['label'] ?? '' }}</td>
+                            <td class="split-start">{{ $expenseRow['label'] ?? '' }}</td>
                             <td class="text-right">
                                 {{ $expenseRow ? 'Rp ' . number_format((float) $expenseRow['amount'], 0, ',', '.') : '' }}
                             </td>
@@ -183,7 +189,7 @@
                         <td>Total Pemasukan</td>
                         <td class="text-right">Rp
                             {{ number_format((float) ($cashflowSummary['total_income'] ?? 0), 0, ',', '.') }}</td>
-                        <td>Total Pengeluaran</td>
+                        <td class="split-start">Total Pengeluaran</td>
                         <td class="text-right">Rp
                             {{ number_format((float) ($cashflowSummary['total_expense'] ?? 0), 0, ',', '.') }}</td>
                     </tr>
@@ -191,7 +197,7 @@
                         <td>Saldo Awal</td>
                         <td class="text-right">Rp
                             {{ number_format((float) ($cashflowSummary['opening_balance'] ?? 0), 0, ',', '.') }}</td>
-                        <td>Saldo Akhir</td>
+                        <td class="split-start">Saldo Akhir</td>
                         <td class="text-right">Rp
                             {{ number_format((float) ($cashflowSummary['ending_balance'] ?? 0), 0, ',', '.') }}</td>
                     </tr>
@@ -199,7 +205,7 @@
                         <td>Grand Total</td>
                         <td class="text-right">Rp
                             {{ number_format((float) ($cashflowSummary['grand_total'] ?? 0), 0, ',', '.') }}</td>
-                        <td>Grand Total</td>
+                        <td class="split-start">Grand Total</td>
                         <td class="text-right">Rp
                             {{ number_format((float) ($cashflowSummary['grand_total'] ?? 0), 0, ',', '.') }}</td>
                     </tr>

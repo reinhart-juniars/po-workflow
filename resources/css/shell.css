@@ -325,6 +325,81 @@
   margin-inline: 8px;
 }
 
+/* ---------- Strip KPI untuk halaman kustom panel ----------
+   CSS Filament tidak memuat utilitas responsif Tailwind aplikasi (md:grid-cols-*),
+   jadi kartu ringkasan di view kustom jatuh jadi satu kolom penuh. Strip ini:
+   satu kartu, sel berjajar dipisah garis rambut, tinggi ~64px. --cols = jumlah sel. */
+.sh-kpi {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--sh-line);
+  border-radius: 12px;
+  background: var(--sh-line);
+  box-shadow: var(--sh-shadow-sm);
+}
+
+.sh-kpi-cell {
+  min-width: 0;
+  padding: 12px 16px;
+  background: var(--sh-surface);
+}
+
+.sh-kpi-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--sh-ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sh-kpi-value {
+  margin: 2px 0 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+  letter-spacing: -0.01em;
+  color: var(--sh-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.sh-kpi-value.is-ok { color: #059669; }
+.sh-kpi-value.is-bad { color: var(--sh-danger); }
+
+.sh-kpi-note {
+  margin: 2px 0 0;
+  font-size: 11px;
+  line-height: 16px;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sh-kpi-lines { margin: 2px 0 0; font-size: 12px; line-height: 16px; color: var(--sh-ink-2); }
+
+@media (max-width: 767px) {
+  .sh-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ---------- Tabel tulisan tangan di view kustom panel ----------
+   Kolom pertama mengambil sisa lebar; kolom lain menyusut ke isinya dan
+   tidak dipatahkan, supaya angka rupiah tidak jatuh ke dua baris. */
+.sh-table { width: 100%; font-size: 14px; border-collapse: collapse; }
+.sh-table th, .sh-table td { padding: 8px 12px; vertical-align: top; text-align: left; }
+.sh-table th { font-weight: 500; color: var(--sh-ink-3); border-bottom: 1px solid var(--sh-line); white-space: nowrap; }
+.sh-table td { border-bottom: 1px solid #f1f5f9; }
+.sh-table tbody tr:last-child td { border-bottom: 0; }
+.sh-table th:first-child, .sh-table td:first-child { padding-left: 0; width: 100%; }
+.sh-table th:last-child, .sh-table td:last-child { padding-right: 0; }
+.sh-table th:not(:first-child), .sh-table td:not(:first-child) { white-space: nowrap; }
+.sh-table .text-right, .sh-table [class*="text-right"] { text-align: right; font-variant-numeric: tabular-nums; }
+.sh-table tfoot td { border-top: 1px solid var(--sh-line); border-bottom: 0; font-weight: 600; }
+
 /* ---------- Permukaan browser ---------- */
 ::selection {
   background: var(--sh-brand-100);

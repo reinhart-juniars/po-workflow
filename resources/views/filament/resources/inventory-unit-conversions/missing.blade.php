@@ -4,20 +4,20 @@
         $rows = $this->getRows();
     @endphp
 
-    <div class="grid gap-4 md:grid-cols-4">
+    <div class="sh-kpi" style="--cols: 4">
         @foreach ([
-            ['Pasangan Satuan', $summary['pasangan'], 'Tiap pasangan butuh satu aturan.'],
-            ['Baris Resep Tertahan', $summary['baris'], 'Baris yang biayanya dihitung nol.'],
-            ['Punya Usulan Angka', $summary['usulan'], 'Terbaca dari nama bahan; tetap perlu dibenarkan.'],
+            ['Pasangan Satuan', $summary['pasangan'], 'Tiap pasangan butuh satu aturan'],
+            ['Baris Resep Tertahan', $summary['baris'], 'Biayanya dihitung nol'],
+            ['Punya Usulan Angka', $summary['usulan'], 'Dari nama bahan; tetap perlu dibenarkan'],
             ['Bahan Terdampak', $summary['bahan'], null],
         ] as [$label, $value, $note])
-            <x-filament::section>
-                <div class="text-sm text-gray-500 dark:text-gray-400">{{ $label }}</div>
-                <div class="mt-1 text-xl font-semibold">{{ number_format((float) $value, 0, ',', '.') }}</div>
+            <div class="sh-kpi-cell">
+                <p class="sh-kpi-label">{{ $label }}</p>
+                <p class="sh-kpi-value">{{ number_format((float) $value, 0, ',', '.') }}</p>
                 @if ($note)
-                    <div class="mt-1 text-xs text-gray-400">{{ $note }}</div>
+                    <p class="sh-kpi-note">{{ $note }}</p>
                 @endif
-            </x-filament::section>
+            </div>
         @endforeach
     </div>
 
@@ -28,7 +28,7 @@
         </x-slot>
 
         <div class="overflow-x-auto">
-            <table class="w-full text-sm">
+            <table class="sh-table">
                 <thead>
                     <tr class="border-b border-gray-200 text-left dark:border-gray-700">
                         <th class="py-2 pr-4 font-medium">Bahan</th>

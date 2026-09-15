@@ -143,7 +143,12 @@ it('menampilkan rincian hpp beserta hal yang menahannya', function () {
     Livewire::test(RecipeResource\Pages\RecipeCostBreakdown::class, ['record' => $recipe->id])
         ->assertSee('Rp 300,00')
         // Baris yang tidak terhitung harus terlihat, bukan diam-diam nol.
-        ->assertSee('belum ditautkan');
+        ->assertSee('belum ditautkan')
+        ->assertSee('1 baris menahan perhitungan')
+        // Ringkasan memakai strip KPI satu baris (CSS Filament tidak memuat
+        // md:grid-cols-* aplikasi, jadi grid Tailwind jatuh ke satu kolom).
+        ->assertSeeHtml('class="sh-kpi" style="--cols: 4"')
+        ->assertDontSeeHtml('md:grid-cols');
 });
 
 it('menghitung kebutuhan bahan untuk jumlah produksi yang diminta', function () {

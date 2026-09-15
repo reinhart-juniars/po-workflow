@@ -135,7 +135,12 @@ function cashflowEndingBalance(User $user): float
     $response = get(route('accountingapp.reports.cashflow', [
         'date_from' => '2026-02-01',
         'date_to' => '2026-02-28',
-    ]))->assertOk();
+    ]))->assertOk()
+        // Worksheet Debet | Kredit: dua sisi selebar sama (colgroup 32/18/32/18)
+        // dengan garis pemisah, bukan lebar otomatis yang timpang.
+        ->assertSee('data-table data-table-split', false)
+        ->assertSee('<col class="split-desc">', false)
+        ->assertSee('class="split-title split-start">Kredit', false);
 
     return round((float) $response->viewData('cashflowSummary')['ending_balance'], 2);
 }
