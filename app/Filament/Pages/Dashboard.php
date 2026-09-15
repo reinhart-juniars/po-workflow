@@ -24,7 +24,7 @@ class Dashboard extends BaseDashboard
     // aplikasi Inventory sendiri ada di /inventory/dashboard.
     protected static string $routePath = 'dashboard';
 
-    protected static ?string $navigationGroup = 'Inventory';
+    protected static ?string $navigationGroup = 'Ringkasan';
 
     protected static ?string $navigationLabel = 'Dashboard';
 

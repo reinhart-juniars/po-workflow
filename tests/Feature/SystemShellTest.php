@@ -36,6 +36,17 @@ it('mendefinisikan setiap halaman sekali dan menunjuk route yang ada', function 
     }
 });
 
+it('membuka setiap sidebar aplikasi dengan grup Ringkasan berisi Dashboard', function () {
+    // Struktur grup pertama sama di semua app (termasuk Inventory) supaya
+    // jarak dan susunan sidebar Blade dan Filament identik.
+    foreach (Navigation::menus() as $app => $sections) {
+        expect(array_key_first($sections))->toBe('Ringkasan', "Grup pertama sidebar {$app} bukan Ringkasan.");
+        expect($sections['Ringkasan'])->toHaveCount(1, "Grup Ringkasan {$app} berisi lebih dari Dashboard.");
+        expect($sections['Ringkasan'][0]['label'])->toStartWith('Dashboard');
+        expect($sections['Ringkasan'][0]['route'])->toBe(Navigation::apps()[$app]['dashboard']);
+    }
+});
+
 it('mendaftarkan setiap resource dan halaman filament ke menu aplikasi inventory dengan grup yang sama', function () {
     $menu = Navigation::menus()['inventory'];
     $routes = collect($menu)->flatten(1)->pluck('route')->all();
@@ -111,7 +122,7 @@ it('menyaring tab dan menu menurut peran', function () {
     // (dari definisi menu, karena navigasi Filament dipasang sekali per proses).
     $owner = penggunaShell('owner');
     expect(collect(Navigation::tabs($owner))->pluck('key')->all())->toBe(['owner', 'admin', 'accounting', 'inventory', 'sales', 'production', 'delivery']);
-    expect(collect(Navigation::sidebar('inventory', $owner))->pluck('label')->all())->toBe(['Inventory', 'Resep & HPP', 'Produksi']);
+    expect(collect(Navigation::sidebar('inventory', $owner))->pluck('label')->all())->toBe(['Ringkasan', 'Inventory', 'Resep & HPP', 'Produksi']);
     expect(collect(collect(Navigation::sidebar('inventory', $owner))->firstWhere('label', 'Inventory')['items'])->pluck('label')->all())->toContain('Pengaturan Inventory');
 
     $akunting = penggunaShell('accounting');

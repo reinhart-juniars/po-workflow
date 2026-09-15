@@ -693,7 +693,7 @@
     }
 
     .shell-app-name {
-        @apply mb-2 rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-bold uppercase leading-[1.125rem] tracking-[0.14em] text-brand-700;
+        @apply rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-bold uppercase leading-[1.125rem] tracking-[0.14em] text-brand-700;
     }
 
     /* Sama dengan .sh-app-name di shell.css (Filament); Blade memakai kelas ini. */
@@ -704,8 +704,10 @@
         display: none;
     }
 
+    /* Tombol grup Filament: py-2 (tinggi 40), label leading-6, chevron
+       menempel di tepi dalam padding (inset 8px dari tepi kanan grup). */
     .shell-group-label {
-        @apply flex cursor-pointer select-none list-none items-center gap-x-3 px-2 text-sm font-medium leading-6 text-gray-500 transition-colors duration-150 hover:text-gray-800;
+        @apply flex cursor-pointer select-none list-none items-center gap-x-3 px-2 py-2 text-sm font-medium leading-6 text-gray-500 transition-colors duration-150 hover:text-gray-800;
     }
 
     .shell-chevron {

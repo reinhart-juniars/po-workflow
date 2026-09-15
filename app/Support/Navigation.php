@@ -134,8 +134,10 @@ class Navigation
             // Nama seksi = $navigationGroup resource/page Filament; urutan item
             // = $navigationSort. Sidebar panel dirender Filament sendiri.
             'inventory' => [
-                'Inventory' => [
+                'Ringkasan' => [
                     ['label' => 'Dashboard', 'route' => 'filament.admin.pages.dashboard', 'can' => 'inventory.view'],
+                ],
+                'Inventory' => [
                     ['label' => 'Item Inventaris', 'route' => 'filament.admin.resources.inventory-items.index', 'can' => 'inventory.view'],
                     ['label' => 'Pembelian Bahan Baku', 'route' => 'filament.admin.resources.inventory-purchases.index', 'can' => 'inventory.view'],
                     ['label' => 'Stock Opname', 'route' => 'filament.admin.resources.stock-opnames.index', 'can' => 'inventory.view'],

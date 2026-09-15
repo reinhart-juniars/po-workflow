@@ -54,7 +54,7 @@
             <span class="flex-1">{{ $section['label'] }}</span>
             @svg('heroicon-m-chevron-up', 'shell-chevron')
           </summary>
-          <div class="mt-3 space-y-1">
+          <div class="mt-1 space-y-1">
             @foreach ($section['items'] as $item)
               <a href="{{ $item['url'] }}" class="shell-item {{ $item['active'] ? 'shell-item-active' : '' }}" @if ($item['active']) aria-current="page" @endif>
                 @if ($item['icon'])
@@ -72,7 +72,7 @@
       {{-- Di layar kecil bilah aplikasi tidak muat di atas: ditaruh di sini --}}
       <div class="-mx-2 border-t border-gray-100 pt-4 lg:hidden">
         <p class="shell-group-label">Aplikasi</p>
-        <div class="mt-3 space-y-1">
+        <div class="mt-1 space-y-1">
           @foreach (\App\Support\Navigation::tabs($shellUser, $shellApp) as $tab)
             <a href="{{ $tab['url'] }}" class="shell-item {{ $tab['active'] ? 'shell-item-active' : '' }}">
               @svg($tab['icon'], 'shell-icon')
