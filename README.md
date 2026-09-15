@@ -24,6 +24,7 @@ menggantikan HPP residual opname dengan pemakaian bahan riil dari resep × produ
 Dokumen:
 
 - `version.txt` — riwayat rilis; **baris terakhirnya** jadi nomor versi yang tampil di halaman masuk (`App\Support\AppVersion`). Rilis baru = tambah satu baris `v.X.Y keterangan`.
+- [docs/PANDUAN-3S-ONE.pdf](docs/PANDUAN-3S-ONE.pdf) — **Panduan Pengguna** (bahasa awam, dengan diagram alur). Sumbernya `docs/panduan/panduan-3s-one.html`; bangun ulang dengan `php artisan panduan:pdf`.
 - [docs/ACCESS.md](docs/ACCESS.md) — izin & matriks peran, cara mengubahnya
 - [docs/CUTOVER.md](docs/CUTOVER.md) — runbook deploy, migrasi data, rollback
 - [docs/UAT.md](docs/UAT.md) — checklist UAT Bagian A bersama Owner
