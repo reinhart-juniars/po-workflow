@@ -204,7 +204,10 @@
   letter-spacing: 0.02em;
 }
 
+/* Nama disembunyikan di layar sempit; aturan di sini (bukan kelas Tailwind)
+   karena CSS Filament tidak memuat utilitas responsif aplikasi. */
 .sh-user-name {
+  display: none;
   font-size: 13.5px;
   font-weight: 600;
   color: var(--sh-ink-2);
@@ -212,6 +215,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+@media (min-width: 640px) {
+  .sh-user-name { display: inline; }
 }
 
 .sh-user-menu {
@@ -318,6 +325,10 @@
 .fi-sidebar-item-active .fi-sidebar-item-button {
   view-transition-name: sh-nav-active;
 }
+
+/* Menu pengguna bawaan Filament diganti partial user-menu (hook USER_MENU_BEFORE). */
+.fi-topbar .fi-user-menu { display: none; }
+.fi-topbar .sh-user { margin-left: 4px; }
 
 /* Topbar Filament: bilah aplikasi mengisi ruang di antara tombol sidebar dan menu pengguna */
 .fi-topbar nav > .sh-appbar {

@@ -86,6 +86,12 @@ it('menampilkan bilah aplikasi yang sama di halaman blade dan halaman filament',
         $response
             ->assertSee('3S ONE')
             ->assertSee('Business Control System')
+            // Menu pengguna yang sama: avatar inisial + nama + Profil Akun / Keluar.
+            ->assertSee('class="sh-user"', false)
+            ->assertSee('class="sh-avatar"', false)
+            ->assertSee($owner->name)
+            ->assertSee('Profil Akun')
+            ->assertSee('Keluar')
             ->assertSee('class="sh-tab', false)
             ->assertSee(route('ownerapp.dashboard'), false)
             ->assertSee(route('accountingapp.dashboard'), false)

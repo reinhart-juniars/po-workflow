@@ -15,7 +15,6 @@
     $shellApp = $appKey ?? \App\Support\Navigation::currentApp() ?? 'owner';
     $shellSections = \App\Support\Navigation::sidebar($shellApp, $shellUser);
     $shellHome = $shellUser ? \App\Support\Navigation::dashboardUrl($shellUser) : url('/');
-    $shellInitials = collect(explode(' ', trim((string) $shellUser?->name)))->filter()->take(2)->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('') ?: 'U';
     $mainWidth = ($wide ?? false) ? 'max-w-none' : (($narrow ?? false) ? 'max-w-3xl' : 'max-w-7xl');
     $pageTitle = trim(($title ?? '') !== '' ? $title.' · '.\App\Support\Navigation::appLabel($shellApp) : \App\Support\Navigation::appLabel($shellApp));
 @endphp
@@ -98,25 +97,7 @@
       </div>
       <p class="min-w-0 flex-1 truncate text-sm font-semibold text-gray-800 lg:hidden">{{ $title ?? \App\Support\Navigation::appLabel($shellApp) }}</p>
 
-      @if ($shellUser)
-        <details class="sh-user">
-          <summary>
-            <span class="sh-avatar">{{ $shellInitials }}</span>
-            <span class="sh-user-name hidden sm:inline">{{ $shellUser->name }}</span>
-          </summary>
-          <div class="sh-user-menu">
-            <div class="sh-user-menu-head">
-              <strong>{{ $shellUser->name }}</strong>
-              <span>{{ $shellUser->roles->pluck('name')->implode(', ') }}</span>
-            </div>
-            <a href="{{ route('profile.edit') }}">@svg('heroicon-m-user-circle') Profil Akun</a>
-            <form method="POST" action="{{ url('/logout') }}">
-              @csrf
-              <button type="submit" class="is-danger">@svg('heroicon-m-arrow-left-on-rectangle') Keluar</button>
-            </form>
-          </div>
-        </details>
-      @endif
+      @include('partials.user-menu')
     </header>
 
     <main class="shell-main mx-auto w-full {{ $mainWidth }} flex-1 space-y-4 px-4 py-6 sm:px-6 lg:px-8">
@@ -144,14 +125,5 @@
     </main>
   </div>
 
-  <script>
-    // Menu pengguna menutup saat klik di luar / Escape (details tidak melakukannya sendiri).
-    document.addEventListener('click', (e) => {
-      document.querySelectorAll('details.sh-user[open]').forEach((d) => { if (!d.contains(e.target)) d.removeAttribute('open'); });
-    });
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') document.querySelectorAll('details.sh-user[open]').forEach((d) => d.removeAttribute('open'));
-    });
-  </script>
 </body>
 </html>

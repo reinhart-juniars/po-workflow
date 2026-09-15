@@ -7,7 +7,6 @@ use App\Http\Middleware\ForcePasswordChange;
 use App\Support\Navigation;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Navigation\MenuItem;
 use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -58,13 +57,6 @@ class AdminPanelProvider extends PanelProvider
             // ditolak/diperiksa -> produksi (RequisitionService::notify).
             ->databaseNotifications() // layout Blade tidak punya pencarian global; disamakan
 
-            ->userMenuItems([
-                MenuItem::make()
-                    ->label('Profil Akun')
-                    ->url(fn () => route('profile.edit'))
-                    ->icon('heroicon-m-user-circle'),
-            ])
-
             // Sidebar = menu aplikasi Inventory: nama & urutan grupnya dari
             // Navigation::menus()['inventory']; resource/page mendaftar sendiri
             // ke grup itu. Grup tanpa item untuk peran tertentu otomatis hilang.
@@ -78,6 +70,9 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(PanelsRenderHook::HEAD_END, fn () => Vite::withEntryPoints(['resources/css/shell.css'])->toHtml())
             ->renderHook(PanelsRenderHook::TOPBAR_START, fn () => view('partials.app-bar', ['currentApp' => 'inventory']))
             ->renderHook(PanelsRenderHook::SIDEBAR_NAV_START, fn () => '<p class="sh-app-name">Inventory</p>')
+            // Menu pengguna yang sama dengan header Blade (avatar inisial + nama);
+            // menu bawaan Filament (avatar dari ui-avatars.com) disembunyikan di shell.css.
+            ->renderHook(PanelsRenderHook::USER_MENU_BEFORE, fn () => view('partials.user-menu'))
 
             // Panel memakai grup middleware 'web' milik aplikasi ini, bukan
             // daftar sendiri, supaya cookie, sesi, dan CSRF-nya persis sama
