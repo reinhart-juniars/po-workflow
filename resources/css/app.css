@@ -705,11 +705,11 @@
     }
 
     .shell-group-label {
-        @apply flex cursor-pointer select-none list-none items-center gap-x-2 px-2 py-1.5 text-sm font-medium text-gray-500 transition-colors duration-150 hover:text-gray-800;
+        @apply flex cursor-pointer select-none list-none items-center gap-x-3 px-2 text-sm font-medium leading-6 text-gray-500 transition-colors duration-150 hover:text-gray-800;
     }
 
     .shell-chevron {
-        @apply h-4 w-4 text-gray-400 transition-transform duration-200 ease-out;
+        @apply h-5 w-5 text-gray-400 transition-transform duration-200 ease-out;
     }
 
     .shell-group:not([open]) .shell-chevron {

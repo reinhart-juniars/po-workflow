@@ -34,7 +34,7 @@
   {{-- Sidebar: menu aplikasi yang sedang dibuka --}}
   <aside class="shell-sidebar fixed inset-y-0 left-0 z-40 flex w-80 -translate-x-full flex-col border-r border-gray-200 bg-white transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] peer-checked:translate-x-0 lg:translate-x-0">
     {{-- Ukuran & jarak persis sidebar Filament: header h-16 px-6, nav px-6 py-8, jarak grup 1.75rem --}}
-    <div class="flex h-16 shrink-0 items-center px-6">
+    <div class="flex h-16 shrink-0 items-center border-b border-gray-950/5 px-6">
       <a href="{{ $shellHome }}" class="flex items-center gap-3">
         @include('partials.brand-mark', ['size' => 'md'])
         <span class="leading-tight">
@@ -44,16 +44,17 @@
       </a>
     </div>
 
+    {{-- Grup & item bergeser -mx-2 seperti fi-sidebar-nav-groups: ikon di x=24, item mulai x=16 --}}
     <nav class="flex flex-1 flex-col gap-y-7 overflow-y-auto px-6 py-8" aria-label="Menu {{ \App\Support\Navigation::appLabel($shellApp) }}">
       <p class="shell-app-name">{{ \App\Support\Navigation::appLabel($shellApp) }}</p>
 
       @foreach ($shellSections as $section)
-        <details class="shell-group" open>
+        <details class="shell-group -mx-2" open>
           <summary class="shell-group-label">
             <span class="flex-1">{{ $section['label'] }}</span>
             @svg('heroicon-m-chevron-up', 'shell-chevron')
           </summary>
-          <div class="mt-1 space-y-0.5">
+          <div class="mt-3 space-y-1">
             @foreach ($section['items'] as $item)
               <a href="{{ $item['url'] }}" class="shell-item {{ $item['active'] ? 'shell-item-active' : '' }}" @if ($item['active']) aria-current="page" @endif>
                 @if ($item['icon'])
@@ -69,9 +70,9 @@
       @endforeach
 
       {{-- Di layar kecil bilah aplikasi tidak muat di atas: ditaruh di sini --}}
-      <div class="border-t border-gray-100 pt-4 lg:hidden">
+      <div class="-mx-2 border-t border-gray-100 pt-4 lg:hidden">
         <p class="shell-group-label">Aplikasi</p>
-        <div class="mt-1 space-y-0.5">
+        <div class="mt-3 space-y-1">
           @foreach (\App\Support\Navigation::tabs($shellUser, $shellApp) as $tab)
             <a href="{{ $tab['url'] }}" class="shell-item {{ $tab['active'] ? 'shell-item-active' : '' }}">
               @svg($tab['icon'], 'shell-icon')
