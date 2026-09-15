@@ -29,13 +29,20 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'owner',
         'admin',
         'accounting',
+        'inventory',
         'production',
     ];
 
+    /**
+     * Peran yang bisa dipilih Owner di Master User. `inventory` = staf
+     * inventory/gudang: hanya membuka aplikasi Inventory (izin bawaannya di
+     * ModuleAccess::DEFAULT_MATRIX), tanpa aplikasi Blade manapun.
+     */
     public const MANAGEABLE_ROLES = [
         'owner',
         'admin',
         'accounting',
+        'inventory',
         'sales',
         'production',
         'delivery',
@@ -46,6 +53,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'owner' => 'ownerapp.dashboard',
         'admin' => 'adminapp.dashboard',
         'accounting' => 'accountingapp.dashboard',
+        'inventory' => 'filament.admin.pages.dashboard',
         'sales' => 'salesapp.dashboard',
         'production' => 'productionapp.dashboard',
         'delivery' => 'deliveryapp.dashboard',

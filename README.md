@@ -57,7 +57,7 @@ bila tidak ada.
 
 ## Keamanan
 
-- Halaman inventory (`/inventory/...`) hanya untuk peran `superadmin`, `owner`, `admin`, `accounting`, `production`;
+- Halaman inventory (`/inventory/...`) hanya untuk peran `superadmin`, `owner`, `admin`, `accounting`, `inventory` (staf gudang, dipilih di Master User), `production`;
   setiap resource dijaga policy berbasis izin modul (`tests/Feature/Security/`). Halaman Blade dijaga `ensure.role`.
 - Tes arsitektur menolak resource/halaman panel baru yang tidak punya policy/`canAccess`.
 - Rahasia hanya di `.env` (gitignored; di server mode 600 milik user deploy).

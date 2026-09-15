@@ -74,6 +74,16 @@ class ModuleAccess
             'requisition.check',
             'ledger.view',
         ],
+        // Staf inventory/gudang: kelola bahan, pembelian, opname, saldo awal,
+        // cocokkan nama bahan resep, dan periksa form kebutuhan saat barang
+        // dibeli. Tidak menyusun/menyetujui/menutup SPK produksi.
+        'inventory' => [
+            'inventory.view', 'inventory.manage',
+            'recipe.view', 'recipe.manage',
+            'production.view',
+            'requisition.check',
+            'ledger.view',
+        ],
         'production' => [
             'inventory.view',
             'recipe.view',

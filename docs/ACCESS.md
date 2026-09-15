@@ -29,19 +29,25 @@ policy membuat build merah).
 
 ## Matriks bawaan
 
-| Izin | owner | admin | accounting | production |
-|---|:-:|:-:|:-:|:-:|
-| inventory.view | ✓ | ✓ | ✓ | ✓ |
-| inventory.manage | ✓ | ✓ | ✓ | – |
-| recipe.view | ✓ | ✓ | ✓ | ✓ |
-| recipe.manage | ✓ | ✓ | – | – |
-| production.view | ✓ | ✓ | ✓ | ✓ |
-| production.manage | ✓ | ✓ | – | ✓ |
-| production.complete | ✓ | ✓ | – | ✓ |
-| requisition.approve | ✓ | ✓ | – | – |
-| requisition.check | ✓ | ✓ | ✓ | – |
-| ledger.view | ✓ | ✓ | ✓ | ✓ |
-| settings.manage | ✓ | – | – | – |
+| Izin | owner | admin | accounting | inventory | production |
+|---|:-:|:-:|:-:|:-:|:-:|
+| inventory.view | ✓ | ✓ | ✓ | ✓ | ✓ |
+| inventory.manage | ✓ | ✓ | ✓ | ✓ | – |
+| recipe.view | ✓ | ✓ | ✓ | ✓ | ✓ |
+| recipe.manage | ✓ | ✓ | – | ✓ | – |
+| production.view | ✓ | ✓ | ✓ | ✓ | ✓ |
+| production.manage | ✓ | ✓ | – | – | ✓ |
+| production.complete | ✓ | ✓ | – | – | ✓ |
+| requisition.approve | ✓ | ✓ | – | – | – |
+| requisition.check | ✓ | ✓ | ✓ | ✓ | – |
+| ledger.view | ✓ | ✓ | ✓ | ✓ | ✓ |
+| settings.manage | ✓ | – | – | – | – |
+
+Peran **`inventory`** (staf inventory/gudang) dipilih Owner di Master User dan hanya
+membuka aplikasi Inventory -- tidak punya aplikasi Blade manapun. Dia mengelola bahan,
+pembelian, opname, saldo awal, mencocokkan nama bahan resep, dan memeriksa Form
+Kebutuhan saat barang dibeli; menyusun/menyetujui/menutup SPK produksi tetap di
+produksi/admin/owner.
 
 `sales` dan `delivery` tidak membuka panel sama sekali (bukan `PANEL_ROLES`). Peran
 `production` **ditambahkan** ke `PANEL_ROLES` di Phase 4 karena Form Kebutuhan

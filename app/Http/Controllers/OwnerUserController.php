@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
 
 class OwnerUserController extends Controller
@@ -32,7 +33,7 @@ class OwnerUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
             'roles' => ['required', 'array', 'min:1'],
-            'roles.*' => ['required', 'string', 'distinct', 'in:owner,admin,accounting,sales,production,delivery'],
+            'roles.*' => ['required', 'string', 'distinct', Rule::in(User::manageableRoles())],
             'is_active' => ['nullable'],
         ]);
         $roles = collect($data['roles'])->unique()->values()->all();
@@ -83,7 +84,7 @@ class OwnerUserController extends Controller
     {
         $data = $request->validate([
             'roles' => ['required', 'array', 'min:1'],
-            'roles.*' => ['required', 'string', 'distinct', 'in:owner,admin,accounting,sales,production,delivery'],
+            'roles.*' => ['required', 'string', 'distinct', Rule::in(User::manageableRoles())],
         ]);
         $newRoles = collect($data['roles'])->unique()->values()->all();
 
