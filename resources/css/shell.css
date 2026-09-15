@@ -10,17 +10,18 @@
 */
 
 :root {
+  /* Shade primary Filament dari #3455db; palet abu = slate (sama dengan panel). */
   --sh-brand: #3455db;
-  --sh-brand-600: #2644bd;
-  --sh-brand-700: #1d3493;
-  --sh-brand-50: #eef2ff;
-  --sh-brand-100: #e0e7ff;
+  --sh-brand-600: #2f4dc5;
+  --sh-brand-700: #2740a4;
+  --sh-brand-50: #ebeefb;
+  --sh-brand-100: #ccd5f6;
   --sh-ink: #0f172a;
   --sh-ink-2: #334155;
   --sh-ink-3: #64748b;
   --sh-line: #e2e8f0;
   --sh-surface: #ffffff;
-  --sh-bg: #f4f6fb;
+  --sh-bg: #f8fafc;
   --sh-danger: #e11d48;
   --sh-radius: 12px;
   --sh-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
@@ -196,7 +197,7 @@
   width: 32px;
   height: 32px;
   border-radius: 999px;
-  background: linear-gradient(135deg, var(--sh-brand) 0%, var(--sh-brand-700) 100%);
+  background: var(--sh-brand-700);
   color: #fff;
   font-size: 12px;
   font-weight: 700;

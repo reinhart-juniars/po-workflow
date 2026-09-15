@@ -14,9 +14,10 @@
         --ink-900: #0f172a;
     }
 
+    /* Latar halaman = slate-50, sama dengan panel Filament. */
     body {
         @apply min-h-screen font-body text-slate-800;
-        background: #f4f6fb;
+        background: #f8fafc;
     }
 
     h1,
@@ -684,7 +685,7 @@
    ------------------------------------------------------------------ */
 @layer components {
     .shell-body {
-        background: #f4f6fb;
+        background: #f8fafc;
     }
 
     .shell-body .app-card,
@@ -693,7 +694,7 @@
     }
 
     .shell-app-name {
-        @apply rounded-lg bg-brand-50 px-3 py-1.5 text-xs font-bold uppercase leading-[1.125rem] tracking-[0.14em] text-brand-700;
+        @apply rounded-lg bg-brand-100 px-3 py-1.5 text-xs font-bold uppercase leading-[1.125rem] tracking-[0.14em] text-brand-700;
     }
 
     /* Sama dengan .sh-app-name di shell.css (Filament); Blade memakai kelas ini. */

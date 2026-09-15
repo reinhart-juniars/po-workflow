@@ -1,4 +1,5 @@
 import defaultTheme from "tailwindcss/defaultTheme";
+import colors from "tailwindcss/colors";
 import forms from "@tailwindcss/forms";
 
 /** @type {import('tailwindcss').Config} */
@@ -17,12 +18,22 @@ module.exports = {
                 display: ['"Space Grotesk"', ...defaultTheme.fontFamily.sans],
             },
             colors: {
+                // Sama persis dengan palet panel Filament (AdminPanelProvider):
+                // abu = slate, brand = shade yang Filament hasilkan dari #3455db.
+                // Dengan begitu sidebar/bilah Blade dan Filament satu warna.
+                gray: colors.slate,
                 brand: {
-                    50: "#f5f8ff",
-                    100: "#e8eeff",
+                    50: "#f5f7fd",
+                    100: "#ebeefb",
+                    200: "#ccd5f6",
+                    300: "#aebbf1",
+                    400: "#7188e6",
                     500: "#3455db",
-                    600: "#2644bd",
-                    700: "#1d3493",
+                    600: "#2f4dc5",
+                    700: "#2740a4",
+                    800: "#1f3383",
+                    900: "#192a6b",
+                    950: "#101a42",
                 },
             },
         },

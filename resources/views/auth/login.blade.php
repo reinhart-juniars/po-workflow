@@ -13,7 +13,7 @@
   Halaman masuk: satu pintu untuk seluruh 3S BCS. Dua bidang datar -- panel
   gelap berisi identitas, panel putih berisi form -- tanpa kabut/gradasi.
 --}}
-<body class="min-h-full bg-[#f4f6fb]">
+<body class="min-h-full bg-gray-50">
     <main class="grid min-h-dvh lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <section class="hidden flex-col justify-between bg-slate-950 px-12 py-12 text-white lg:flex">
             <div class="flex items-center gap-3">
