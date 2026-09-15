@@ -59,7 +59,8 @@ Alternatif: menu Superadmin → Backup di aplikasi (DatabaseBackupService), lalu
 
 ```bash
 php artisan migrate --force
-php artisan access:sync             # izin modul ke peran (idempoten)
+php artisan access:sync             # izin modul ke peran (idempoten) -- termasuk peran inventory & inventory-supervisor
+# .env: APP_LOCALE=id (kerangka panel -- tombol, pencarian, lonceng notifikasi -- berbahasa Indonesia)
 php artisan config:cache && php artisan route:cache && php artisan view:cache
 ```
 

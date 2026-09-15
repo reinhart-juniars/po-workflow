@@ -53,7 +53,10 @@ class AdminPanelProvider extends PanelProvider
             ->darkMode(false)
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth('full')
-            ->globalSearch(false) // layout Blade tidak punya pencarian global; disamakan
+            ->globalSearch(false)
+            // Lonceng: form diajukan -> supervisor gudang; disetujui -> gudang;
+            // ditolak/diperiksa -> produksi (RequisitionService::notify).
+            ->databaseNotifications() // layout Blade tidak punya pencarian global; disamakan
 
             ->userMenuItems([
                 MenuItem::make()

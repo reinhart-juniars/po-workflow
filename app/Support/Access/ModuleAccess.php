@@ -84,6 +84,15 @@ class ModuleAccess
             'requisition.check',
             'ledger.view',
         ],
+        // Supervisor gudang: seperti staf inventory, ditambah menyetujui /
+        // menolak Form Kebutuhan yang diajukan produksi.
+        'inventory-supervisor' => [
+            'inventory.view', 'inventory.manage',
+            'recipe.view', 'recipe.manage',
+            'production.view',
+            'requisition.approve', 'requisition.check',
+            'ledger.view',
+        ],
         'production' => [
             'inventory.view',
             'recipe.view',

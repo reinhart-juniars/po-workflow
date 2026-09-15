@@ -7,6 +7,7 @@ use App\Filament\Resources\InventoryUnitConversionResource;
 use App\Filament\Resources\ProductionOrderResource;
 use App\Filament\Resources\RecipeMismatchResource;
 use App\Filament\Resources\RecipeResource;
+use App\Filament\Resources\RequisitionResource;
 use App\Models\InventoryItem;
 use App\Models\ProductionOrder;
 use App\Models\Recipe;
@@ -48,13 +49,35 @@ class InventoryOverviewWidget extends BaseWidget
 
         if ($user?->can('production.view')) {
             $spkTerbuka = ProductionOrder::query()->open()->count();
-            $formMenunggu = Requisition::query()->whereIn('status', [Requisition::STATUS_DRAFT, Requisition::STATUS_APPROVED])->count();
+            $formDraft = Requisition::query()->where('status', Requisition::STATUS_DRAFT)->count();
 
             $stats[] = Stat::make('SPK Produksi terbuka', $spkTerbuka)
-                ->description($formMenunggu.' form kebutuhan menunggu setujui/periksa')
+                ->description($formDraft.' form kebutuhan masih disusun produksi')
                 ->descriptionIcon('heroicon-m-fire')
-                ->color($formMenunggu > 0 ? 'warning' : 'gray')
+                ->color('gray')
                 ->url(ProductionOrderResource::getUrl('index'));
+        }
+
+        // Antrean per meja: supervisor gudang melihat yang menunggu persetujuan,
+        // gudang melihat yang menunggu penerimaan barang.
+        if ($user?->can('requisition.approve')) {
+            $menungguSetuju = Requisition::query()->where('status', Requisition::STATUS_SUBMITTED)->count();
+
+            $stats[] = Stat::make('Form menunggu persetujuan', $menungguSetuju)
+                ->description($menungguSetuju > 0 ? 'Diajukan produksi; setujui atau tolak' : 'Tidak ada antrean')
+                ->descriptionIcon('heroicon-m-hand-thumb-up')
+                ->color($menungguSetuju > 0 ? 'warning' : 'success')
+                ->url(RequisitionResource::getUrl('index', ['tableFilters' => ['status' => ['value' => Requisition::STATUS_SUBMITTED]]]));
+        }
+
+        if ($user?->can('requisition.check')) {
+            $menungguTerima = Requisition::query()->where('status', Requisition::STATUS_APPROVED)->count();
+
+            $stats[] = Stat::make('Form menunggu penerimaan barang', $menungguTerima)
+                ->description($menungguTerima > 0 ? 'Disetujui; catat diterima/ditolak & harga beli' : 'Tidak ada antrean')
+                ->descriptionIcon('heroicon-m-truck')
+                ->color($menungguTerima > 0 ? 'warning' : 'success')
+                ->url(RequisitionResource::getUrl('index', ['tableFilters' => ['status' => ['value' => Requisition::STATUS_APPROVED]]]));
         }
 
         if ($user?->can('recipe.view')) {

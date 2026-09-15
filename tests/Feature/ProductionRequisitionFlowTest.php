@@ -123,13 +123,16 @@ it('tidak menyetujui form yang stok awalnya belum diisi', function () {
     $service = app(RequisitionService::class);
     $requisition = $service->build($order)['requisition'];
 
-    expect(fn () => $service->approve($requisition))->toThrow(RuntimeException::class, 'Stok Awal');
+    expect(fn () => $service->submit($requisition))->toThrow(RuntimeException::class, 'Stok Awal');
+    // Belum diajukan -> supervisor pun tidak bisa menyetujui.
+    expect(fn () => $service->approve($requisition))->toThrow(RuntimeException::class, 'belum diajukan');
 
     foreach ($requisition->lines as $line) {
         $service->fillOpeningStock($line, 0);
     }
 
     // Kontrol positif: setelah seluruh stok diisi, form bisa disetujui.
+    $service->submit($requisition->fresh());
     $service->approve($requisition->fresh());
 
     expect($requisition->fresh()->status)->toBe(Requisition::STATUS_APPROVED)
@@ -154,6 +157,7 @@ it('memposting saldo awal dan pembelian ke ledger hanya saat diperiksa, sekali s
     expect(fn () => $service->check($requisition->fresh()))->toThrow(RuntimeException::class);
     expect(InventoryMovement::query()->count())->toBe(0);
 
+    $service->submit($requisition->fresh());
     $service->approve($requisition->fresh());
     bayarTunai($requisition->fresh());
     $service->check($requisition->fresh());
@@ -186,6 +190,7 @@ it('hanya memasukkan jumlah yang diterima layak ke ledger, bukan yang datang rus
     // Jumlah diterima hanya bisa dicatat setelah disetujui, sebelum diperiksa.
     expect(fn () => $service->recordReceivedQty($tepung->fresh(), 1))->toThrow(RuntimeException::class);
 
+    $service->submit($requisition->fresh());
     $service->approve($requisition->fresh());
 
     // 0,5 kg dari 1,5 kg tepung datang rusak -> diterima 1. Melebihi Beli ditolak.
@@ -223,6 +228,7 @@ it('tidak memposting saldo awal lagi untuk bahan yang sudah punya ledger', funct
         $service->fillOpeningStock($line, 4);
     }
 
+    $service->submit($requisition->fresh());
     $service->approve($requisition->fresh());
     bayarTunai($requisition->fresh());
     $service->check($requisition->fresh());
@@ -251,6 +257,7 @@ it('memposting pemakaian dan penyesuaian saat spk ditutup, lalu menolak penutupa
     // Sebelum diperiksa, penutupan ditolak dan ledger tetap kosong.
     expect(fn () => $completion->complete($order->fresh()))->toThrow(RuntimeException::class);
 
+    $service->submit($requisition->fresh());
     $service->approve($requisition->fresh());
     bayarTunai($requisition->fresh());
     $service->check($requisition->fresh());
@@ -286,6 +293,7 @@ it('membawa pemakaian resep ke laporan pemakaian bahan sebagai pembanding residu
     foreach ($requisition->lines as $line) {
         $service->fillOpeningStock($line, 0);
     }
+    $service->submit($requisition->fresh());
     $service->approve($requisition->fresh());
     bayarTunai($requisition->fresh());
     $service->check($requisition->fresh());

@@ -21,9 +21,9 @@
         </div>
 
         <div class="sh-kpi-cell">
-            <p class="sh-kpi-label">Jejak Persetujuan</p>
+            <p class="sh-kpi-label">Jejak</p>
             <div class="sh-kpi-lines">
-                <div>Dibuat: {{ $requisition?->preparedBy?->name ?? '-' }} {{ $requisition?->prepared_at?->format('d/m H:i') }}</div>
+                <div>Diajukan: {{ $requisition?->submittedBy?->name ?? '-' }} {{ $requisition?->submitted_at?->format('d/m H:i') }}</div>
                 <div>Disetujui: {{ $requisition?->approvedBy?->name ?? '-' }} {{ $requisition?->approved_at?->format('d/m H:i') }}</div>
                 <div>Diperiksa: {{ $requisition?->checkedBy?->name ?? '-' }} {{ $requisition?->checked_at?->format('d/m H:i') }}</div>
             </div>
@@ -89,17 +89,20 @@
             </div>
         </x-filament::section>
     @else
+        @php $notice = $this->stageNotice(); @endphp
+
+        {{-- Penolakan supervisor tetap tampil sampai form diajukan ulang. --}}
+        @if ($requisition->wasRejected())
+            <x-filament::section icon="heroicon-m-hand-thumb-down" icon-color="danger"
+                :heading="'Ditolak supervisor gudang' . ($requisition->rejectedBy ? ' — ' . $requisition->rejectedBy->name : '') . ' · ' . $requisition->rejected_at?->format('d/m/Y H:i')">
+                <p class="text-sm text-danger-600 dark:text-danger-400">{{ $requisition->rejection_reason }}</p>
+                <p class="mt-1 text-sm text-gray-500">Perbaiki isian, Simpan, lalu Ajukan lagi.</p>
+            </x-filament::section>
+        @endif
+
         <x-filament::section heading="Kebutuhan, Stok & Pembelian">
             <x-slot name="description">
-                @if ($requisition->isDraft())
-                    Isi Stok Awal hasil hitungan fisik; Beli = Kebutuhan − Stok Awal dan boleh dibulatkan ke kemasan. Simpan lalu Setujui.
-                @elseif ($requisition->isApproved())
-                    Saat barang datang: isi Diterima (yang ditolak = Beli − Diterima, beri alasannya), Harga Beli dari nota, dan cara pembayaran. Simpan, lalu tekan "Periksa" — stok, pembelian, dan kas/hutang tercatat sekaligus.
-                @elseif (! $order->isCompleted())
-                    Barang sudah tercatat masuk. Isi Pemakaian Aktual dan Sisa Stok bila dihitung, lalu Tutup SPK.
-                @else
-                    SPK sudah ditutup; pemakaian sudah dicatat ke kartu stok.
-                @endif
+                {{ $notice['text'] }}
             </x-slot>
 
             {{-- Header cara pembayaran (form Filament) + tabel bahan (satu baris per bahan). --}}

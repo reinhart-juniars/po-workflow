@@ -39,7 +39,7 @@
                                 <select name="roles[]" class="role-builder-select" data-role-select>
                                     <option value="">Pilih role</option>
                                     @foreach ($availableRoles as $r)
-                                        <option value="{{ $r }}" @selected($selectedRole === $r)>{{ ucfirst($r) }}</option>
+                                        <option value="{{ $r }}" @selected($selectedRole === $r)>{{ \App\Models\User::roleLabel($r) }}</option>
                                     @endforeach
                                 </select>
                                 <button type="button" class="role-builder-remove hidden" data-role-remove
@@ -113,7 +113,7 @@
                                                         <select name="roles[]" class="role-builder-select" data-role-select>
                                                             <option value="">Pilih role</option>
                                                             @foreach ($availableRoles as $r)
-                                                                <option value="{{ $r }}" @selected($selectedRole === $r)>{{ ucfirst($r) }}</option>
+                                                                <option value="{{ $r }}" @selected($selectedRole === $r)>{{ \App\Models\User::roleLabel($r) }}</option>
                                                             @endforeach
                                                         </select>
                                                         <button type="button" class="role-builder-remove hidden"

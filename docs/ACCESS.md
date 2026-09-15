@@ -29,19 +29,25 @@ policy membuat build merah).
 
 ## Matriks bawaan
 
-| Izin | owner | admin | accounting | inventory | production |
-|---|:-:|:-:|:-:|:-:|:-:|
-| inventory.view | ✓ | ✓ | ✓ | ✓ | ✓ |
-| inventory.manage | ✓ | ✓ | ✓ | ✓ | – |
-| recipe.view | ✓ | ✓ | ✓ | ✓ | ✓ |
-| recipe.manage | ✓ | ✓ | – | ✓ | – |
-| production.view | ✓ | ✓ | ✓ | ✓ | ✓ |
-| production.manage | ✓ | ✓ | – | – | ✓ |
-| production.complete | ✓ | ✓ | – | – | ✓ |
-| requisition.approve | ✓ | ✓ | – | – | – |
-| requisition.check | ✓ | ✓ | ✓ | ✓ | – |
-| ledger.view | ✓ | ✓ | ✓ | ✓ | ✓ |
-| settings.manage | ✓ | – | – | – | – |
+| Izin | owner | admin | accounting | inventory | inventory-supervisor | production |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|
+| inventory.view | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| inventory.manage | ✓ | ✓ | ✓ | ✓ | ✓ | – |
+| recipe.view | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| recipe.manage | ✓ | ✓ | – | ✓ | ✓ | – |
+| production.view | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| production.manage | ✓ | ✓ | – | – | – | ✓ |
+| production.complete | ✓ | ✓ | – | – | – | ✓ |
+| requisition.approve | ✓ | ✓ | – | – | ✓ | – |
+| requisition.check | ✓ | ✓ | ✓ | ✓ | ✓ | – |
+| ledger.view | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| settings.manage | ✓ | – | – | – | – | – |
+
+Peran **`inventory-supervisor`** (Supervisor Gudang) = staf inventory + `requisition.approve`:
+dialah yang menyetujui atau menolak Form Kebutuhan yang **diajukan** produksi (status
+`submitted`). Owner/admin tetap bisa menyetujui sebagai cadangan. Alur meja:
+produksi *Ajukan* → supervisor *Setujui* / *Tolak* (kembali ke produksi dengan alasan) →
+gudang *Periksa* → produksi *Tutup SPK*; tiap perpindahan mengirim notifikasi lonceng.
 
 Peran **`inventory`** (staf inventory/gudang) dipilih Owner di Master User dan hanya
 membuka aplikasi Inventory -- tidak punya aplikasi Blade manapun. Dia mengelola bahan,

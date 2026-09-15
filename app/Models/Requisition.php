@@ -18,6 +18,9 @@ class Requisition extends Model
 {
     public const STATUS_DRAFT = 'draft';
 
+    /** Diajukan produksi; menunggu supervisor gudang menyetujui atau menolak. */
+    public const STATUS_SUBMITTED = 'submitted';
+
     public const STATUS_APPROVED = 'approved';
 
     public const STATUS_CHECKED = 'checked';
@@ -28,8 +31,13 @@ class Requisition extends Model
         'status',
         'prepared_by',
         'prepared_at',
+        'submitted_by',
+        'submitted_at',
         'approved_by',
         'approved_at',
+        'rejected_by',
+        'rejected_at',
+        'rejection_reason',
         'checked_by',
         'checked_at',
         'notes',
@@ -42,7 +50,9 @@ class Requisition extends Model
 
     protected $casts = [
         'prepared_at' => 'datetime',
+        'submitted_at' => 'datetime',
         'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
         'checked_at' => 'datetime',
         'due_date' => 'date',
     ];
@@ -76,6 +86,7 @@ class Requisition extends Model
     {
         return [
             self::STATUS_DRAFT => 'Dibuat / Diisi',
+            self::STATUS_SUBMITTED => 'Diajukan',
             self::STATUS_APPROVED => 'Disetujui',
             self::STATUS_CHECKED => 'Diperiksa',
         ];
@@ -91,9 +102,20 @@ class Requisition extends Model
         return $this->status === self::STATUS_DRAFT;
     }
 
+    public function isSubmitted(): bool
+    {
+        return $this->status === self::STATUS_SUBMITTED;
+    }
+
     public function isApproved(): bool
     {
         return $this->status === self::STATUS_APPROVED;
+    }
+
+    /** Pernah ditolak supervisor dan belum diajukan ulang. */
+    public function wasRejected(): bool
+    {
+        return $this->isDraft() && $this->rejected_at !== null;
     }
 
     public function isChecked(): bool
@@ -132,9 +154,19 @@ class Requisition extends Model
         return $this->belongsTo(User::class, 'prepared_by');
     }
 
+    public function submittedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'submitted_by');
+    }
+
     public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function rejectedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
     }
 
     public function checkedBy(): BelongsTo

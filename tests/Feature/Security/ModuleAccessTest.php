@@ -130,19 +130,30 @@ it('memisahkan tahap form kebutuhan: menyusun, menyetujui, memeriksa, dan menutu
     $draftCase = fn (string $role) => Livewire::actingAs(penggunaBerperan($role))
         ->test(RequisitionForm::class, ['record' => $order->id]);
 
-    // Produksi menyusun & mengisi, tetapi tidak menyetujui.
+    // Produksi menyusun, mengisi, dan mengajukan -- tidak menyetujui.
     $draftCase('production')
         ->assertActionVisible('susun')
         ->assertActionVisible('simpan')
+        ->assertActionVisible('ajukan')
         ->assertActionHidden('setujui');
 
     // Akunting hanya membaca pada tahap draft.
     $draftCase('accounting')
         ->assertActionHidden('susun')
         ->assertActionHidden('simpan')
+        ->assertActionHidden('ajukan')
         ->assertActionHidden('setujui');
 
-    // Admin menyetujui (positive control untuk dua tolakan di atas).
+    // Belum diajukan: supervisor gudang pun belum bisa menyetujui.
+    $draftCase('inventory-supervisor')->assertActionHidden('setujui')->assertActionHidden('tolak');
+
+    $requisition->update(['status' => Requisition::STATUS_SUBMITTED]);
+
+    // Diajukan: supervisor gudang menyetujui / menolak; produksi & staf gudang tidak.
+    $draftCase('inventory-supervisor')->assertActionVisible('setujui')->assertActionVisible('tolak');
+    $draftCase('production')->assertActionHidden('setujui')->assertActionHidden('tolak')->assertActionHidden('simpan');
+    $draftCase('inventory')->assertActionHidden('setujui')->assertActionHidden('tolak');
+    // Admin tetap bisa (cadangan) -- positive control.
     $draftCase('admin')->assertActionVisible('setujui');
 
     $requisition->update(['status' => Requisition::STATUS_APPROVED]);

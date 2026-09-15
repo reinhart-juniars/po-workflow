@@ -32,6 +32,7 @@ function formDisetujui(): array
     // Tepung: kebutuhan 2 kg, stok 0 -> beli 2. Minyak: stok cukup, tidak beli.
     $service->fillOpeningStock($requisition->lines->firstWhere('inventory_item_id', $d['tepung']->id), 0);
     $service->fillOpeningStock($requisition->lines->firstWhere('inventory_item_id', $d['minyak']->id), 5);
+    $service->submit($requisition->fresh());
     $service->approve($requisition->fresh());
 
     return $d + ['order' => $order, 'requisition' => $requisition->fresh(), 'service' => $service];

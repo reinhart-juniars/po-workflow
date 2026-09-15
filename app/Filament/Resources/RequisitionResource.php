@@ -61,7 +61,8 @@ class RequisitionResource extends Resource
                     ->color(fn (?string $state) => match ($state) {
                         Requisition::STATUS_CHECKED => 'success',
                         Requisition::STATUS_APPROVED => 'info',
-                        default => 'warning',
+                        Requisition::STATUS_SUBMITTED => 'warning',
+                        default => 'gray',
                     })
                     ->sortable(),
 
@@ -93,7 +94,7 @@ class RequisitionResource extends Resource
     {
         // Yang menunggu tindakan: belum disetujui, atau sudah disetujui tetapi
         // barangnya belum diperiksa.
-        $count = Requisition::query()->whereIn('status', [Requisition::STATUS_DRAFT, Requisition::STATUS_APPROVED])->count();
+        $count = Requisition::query()->whereIn('status', [Requisition::STATUS_DRAFT, Requisition::STATUS_SUBMITTED, Requisition::STATUS_APPROVED])->count();
 
         return $count > 0 ? (string) $count : null;
     }

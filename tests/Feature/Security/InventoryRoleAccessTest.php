@@ -18,7 +18,10 @@ use function Pest\Laravel\get;
 it('membiarkan owner memberi peran inventory dari master user, dan menolak peran yang tidak dikenal', function () {
     actingAs(penggunaBerperan('owner'));
 
-    get(route('ownerapp.users.index'))->assertOk()->assertSee('value="inventory"', false);
+    get(route('ownerapp.users.index'))->assertOk()
+        ->assertSee('value="inventory"', false)
+        ->assertSee('value="inventory-supervisor"', false)
+        ->assertSee('Supervisor Gudang');
 
     from(route('ownerapp.users.index'))->post(route('ownerapp.users.store'), [
         'name' => 'Staf Gudang', 'email' => 'gudang@example.com', 'roles' => ['inventory'], 'is_active' => '1',

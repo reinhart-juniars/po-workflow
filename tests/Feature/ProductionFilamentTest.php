@@ -112,8 +112,16 @@ it('menjalankan form kebutuhan dari susun sampai spk ditutup lewat halaman', fun
         ->and((float) $line->purchase_qty)->toBe(0.75)
         ->and($line->notes)->toBe('stok rak 2');
 
-    // Setujui -> Periksa: ledger terisi saldo awal + pembelian.
+    // Ajukan (produksi) -> Setujui (supervisor) -> Periksa: ledger terisi saldo awal + pembelian.
     Livewire::test(ProductionOrderResource\Pages\RequisitionForm::class, ['record' => $order->id])
+        ->assertActionHidden('setujui')
+        ->callAction('ajukan')
+        ->assertHasNoActionErrors();
+    expect($requisition->fresh()->status)->toBe(Requisition::STATUS_SUBMITTED);
+
+    Livewire::test(ProductionOrderResource\Pages\RequisitionForm::class, ['record' => $order->id])
+        ->assertActionHidden('ajukan')
+        ->assertActionHidden('simpan')
         ->callAction('setujui')
         ->assertHasNoActionErrors();
     expect($requisition->fresh()->status)->toBe(Requisition::STATUS_APPROVED);
@@ -154,17 +162,18 @@ it('menjalankan form kebutuhan dari susun sampai spk ditutup lewat halaman', fun
         ->and((float) InventoryMovement::query()->ofType(InventoryMovement::TYPE_USAGE)->sum('qty'))->toBe(-1.1);
 });
 
-it('tidak menampilkan tombol setujui sebelum form disusun dan menolak persetujuan tanpa stok awal', function () {
+it('tidak menampilkan tombol ajukan sebelum form disusun dan menolak pengajuan tanpa stok awal', function () {
     $order = app(\App\Services\ProductionOrderService::class)->generateFromSpk($this->spk, $this->user->id);
 
     Livewire::test(ProductionOrderResource\Pages\RequisitionForm::class, ['record' => $order->id])
-        ->assertActionHidden('setujui')
+        ->assertActionHidden('ajukan')
         ->callAction('susun')
-        ->assertActionVisible('setujui')
+        ->assertActionVisible('ajukan')
+        ->assertActionHidden('setujui')
         // Stok Awal belum diisi: layanan menolak, dan penolakannya harus sampai
         // ke pengguna sebagai notifikasi -- bukan menghilang di balik halaman.
-        ->callAction('setujui')
-        ->assertNotified('Belum bisa disetujui');
+        ->callAction('ajukan')
+        ->assertNotified('Belum bisa diajukan');
 
     expect($order->fresh()->requisition->status)->toBe(Requisition::STATUS_DRAFT);
 });
@@ -203,6 +212,7 @@ it('menampilkan daftar form, ledger, dan perbandingan hpp', function () {
     $service = app(\App\Services\RequisitionService::class);
     $requisition = $service->build($order)['requisition'];
     $service->fillOpeningStock($requisition->lines[0], 0);
+    $service->submit($requisition->fresh());
     $service->approve($requisition->fresh());
     bayarTunai($requisition->fresh());
     $service->check($requisition->fresh());

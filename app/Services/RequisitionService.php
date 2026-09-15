@@ -9,8 +9,12 @@ use App\Models\InventoryPurchase;
 use App\Models\ProductionOrder;
 use App\Models\Requisition;
 use App\Models\RequisitionLine;
+use App\Models\User;
 use App\Support\Settings\Settings;
+use Filament\Notifications\Actions\Action as NotificationAction;
+use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification as LaravelNotification;
 use RuntimeException;
 
 /**
@@ -18,9 +22,11 @@ use RuntimeException;
  *
  * Alur persetujuannya bertingkat dan tidak bisa dilompati:
  *
- *   draft    (Dibuat/Diisi)  -> angka kebutuhan dari resep; dapur mengisi
+ *   draft     (Dibuat/Diisi) -> angka kebutuhan dari resep; dapur mengisi
  *                               Stok Awal, Beli dihitung otomatis
- *   approved (Disetujui)     -> isian dikunci; menunggu barang dibeli
+ *   submitted (Diajukan)     -> produksi mengajukan; supervisor gudang
+ *                               menyetujui, atau menolak kembali ke draft
+ *   approved  (Disetujui)    -> isian dikunci; menunggu barang dibeli
  *   checked  (Diperiksa)     -> barang sudah dibeli & diperiksa; saldo awal
  *                               dan pembelian diposting ke ledger
  *
@@ -142,10 +148,10 @@ class RequisitionService
     }
 
     /**
-     * Setujui form. Seluruh Stok Awal harus sudah terisi -- form yang belum
-     * diisi bukan form yang bisa disetujui.
+     * Produksi mengajukan form ke supervisor gudang. Seluruh Stok Awal harus
+     * sudah terisi -- form yang belum diisi bukan form yang bisa diajukan.
      */
-    public function approve(Requisition $requisition, ?int $userId = null): Requisition
+    public function submit(Requisition $requisition, ?int $userId = null): Requisition
     {
         if (! $requisition->isDraft()) {
             throw new RuntimeException('Form '.$requisition->number.' sudah '.mb_strtolower($requisition->statusLabel()).'.');
@@ -154,7 +160,7 @@ class RequisitionService
         $blank = $requisition->lines()->whereNull('opening_stock_qty')->count();
 
         if ($blank > 0) {
-            throw new RuntimeException("Masih ada {$blank} baris yang Stok Awal-nya belum diisi. Form baru bisa disetujui setelah seluruh stok dihitung.");
+            throw new RuntimeException("Masih ada {$blank} baris yang Stok Awal-nya belum diisi. Form baru bisa diajukan setelah seluruh stok dihitung.");
         }
 
         if ($requisition->lines()->count() === 0) {
@@ -162,10 +168,47 @@ class RequisitionService
         }
 
         $requisition->update([
+            'status' => Requisition::STATUS_SUBMITTED,
+            'submitted_by' => $userId,
+            'submitted_at' => now(),
+        ]);
+
+        $this->notify(
+            'requisition.approve',
+            $requisition->number.' menunggu persetujuan',
+            'Diajukan oleh '.($requisition->submittedBy?->name ?? 'produksi').' untuk '.$requisition->productionOrder->number.' ('.$requisition->lines()->count().' bahan).',
+            $requisition,
+            $userId,
+        );
+
+        return $requisition;
+    }
+
+    /**
+     * Supervisor gudang menyetujui form yang diajukan. Stok Awal & Beli
+     * terkunci sejak itu; gudang mulai belanja / menerima barang.
+     */
+    public function approve(Requisition $requisition, ?int $userId = null): Requisition
+    {
+        if (! $requisition->isSubmitted()) {
+            throw new RuntimeException($requisition->isDraft()
+                ? 'Form '.$requisition->number.' belum diajukan produksi; yang disetujui adalah form yang sudah diajukan.'
+                : 'Form '.$requisition->number.' sudah '.mb_strtolower($requisition->statusLabel()).'.');
+        }
+
+        $requisition->update([
             'status' => Requisition::STATUS_APPROVED,
             'approved_by' => $userId,
             'approved_at' => now(),
         ]);
+
+        $this->notify(
+            'requisition.check',
+            $requisition->number.' disetujui, siap dibelanjakan',
+            'Disetujui oleh '.($requisition->approvedBy?->name ?? 'supervisor').'. Catat penerimaan barang, lalu Periksa.',
+            $requisition,
+            $userId,
+        );
 
         return $requisition;
     }
@@ -326,6 +369,75 @@ class RequisitionService
         return $blockers;
     }
 
+    /**
+     * Supervisor gudang menolak form yang diajukan: kembali ke draft supaya
+     * produksi memperbaiki lalu mengajukan ulang. Alasan wajib dan tercatat
+     * (siapa, kapan, kenapa) sampai form diajukan lagi.
+     */
+    public function reject(Requisition $requisition, string $reason, ?int $userId = null): Requisition
+    {
+        if (! $requisition->isSubmitted()) {
+            throw new RuntimeException('Form '.$requisition->number.' tidak sedang menunggu persetujuan.');
+        }
+
+        if (trim($reason) === '') {
+            throw new RuntimeException('Alasan penolakan wajib diisi supaya produksi tahu apa yang harus diperbaiki.');
+        }
+
+        $requisition->update([
+            'status' => Requisition::STATUS_DRAFT,
+            'submitted_by' => null,
+            'submitted_at' => null,
+            'rejected_by' => $userId,
+            'rejected_at' => now(),
+            'rejection_reason' => trim($reason),
+        ]);
+
+        $this->notify(
+            'production.manage',
+            $requisition->number.' ditolak supervisor gudang',
+            trim($reason).' — perbaiki lalu ajukan lagi.',
+            $requisition,
+            $userId,
+            'danger',
+        );
+
+        return $requisition;
+    }
+
+    /**
+     * Kirim notifikasi lonceng ke semua pengguna aktif yang punya izin
+     * tertentu (lewat perannya), kecuali pelaku sendiri.
+     */
+    protected function notify(string $permission, string $title, string $body, Requisition $requisition, ?int $actorId, string $status = 'info'): void
+    {
+        $recipients = User::query()
+            ->where('is_active', true)
+            ->permission($permission)
+            ->when($actorId, fn ($q) => $q->whereKeyNot($actorId))
+            ->get();
+
+        if ($recipients->isEmpty()) {
+            return;
+        }
+
+        $notification = Notification::make()
+            ->title($title)
+            ->body($body)
+            ->status($status)
+            ->actions([
+                NotificationAction::make('buka')
+                    ->label('Buka form')
+                    ->button()
+                    ->url(\App\Filament\Resources\ProductionOrderResource::getUrl('kebutuhan', ['record' => $requisition->production_order_id])),
+            ]);
+
+        // Dikirim langsung, bukan lewat antrean: sendToDatabase() Filament
+        // ShouldQueue, dan server ini tidak menjalankan queue worker -- lonceng
+        // yang menunggu worker tidak pernah sampai.
+        LaravelNotification::sendNow($recipients, $notification->toDatabase());
+    }
+
     public function check(Requisition $requisition, ?int $userId = null): Requisition
     {
         if (! $requisition->isApproved()) {
@@ -399,6 +511,15 @@ class RequisitionService
                 'checked_by' => $userId,
                 'checked_at' => now(),
             ]);
+
+            $this->notify(
+                'production.complete',
+                $requisition->number.' diperiksa, barang sudah masuk',
+                'Bahan untuk '.$order->number.' tercatat di kartu stok. Isi pemakaian aktual lalu Tutup SPK setelah produksi.',
+                $requisition,
+                $userId,
+                'success',
+            );
 
             return $requisition;
         });

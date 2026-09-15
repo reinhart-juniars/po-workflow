@@ -30,7 +30,26 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'admin',
         'accounting',
         'inventory',
+        'inventory-supervisor',
         'production',
+    ];
+
+    /** Nama peran untuk ditampilkan. */
+    public static function roleLabel(string $role): string
+    {
+        return self::ROLE_LABELS[$role] ?? ucfirst($role);
+    }
+
+    public const ROLE_LABELS = [
+        'superadmin' => 'Superadmin',
+        'owner' => 'Owner',
+        'admin' => 'Admin',
+        'accounting' => 'Accounting',
+        'inventory' => 'Inventory (staf gudang)',
+        'inventory-supervisor' => 'Supervisor Gudang',
+        'sales' => 'Sales',
+        'production' => 'Production',
+        'delivery' => 'Delivery',
     ];
 
     /**
@@ -43,6 +62,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'admin',
         'accounting',
         'inventory',
+        'inventory-supervisor',
         'sales',
         'production',
         'delivery',
@@ -54,6 +74,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'admin' => 'adminapp.dashboard',
         'accounting' => 'accountingapp.dashboard',
         'inventory' => 'filament.admin.pages.dashboard',
+        'inventory-supervisor' => 'filament.admin.pages.dashboard',
         'sales' => 'salesapp.dashboard',
         'production' => 'productionapp.dashboard',
         'delivery' => 'deliveryapp.dashboard',

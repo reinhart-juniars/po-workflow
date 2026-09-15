@@ -16,6 +16,7 @@ use Filament\Actions;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -135,7 +136,51 @@ class RequisitionForm extends Page implements HasForms
             return 'receiving';
         }
 
+        if ($requisition->isSubmitted()) {
+            return 'locked';
+        }
+
         return $this->getOrder()->isCompleted() ? 'locked' : 'actuals';
+    }
+
+    /**
+     * Keterangan meja untuk pengguna yang sedang membuka form: apa yang
+     * terjadi sekarang dan siapa yang harus bertindak.
+     */
+    public function stageNotice(): array
+    {
+        $requisition = $this->getRequisition();
+        $user = auth()->user();
+
+        if (! $requisition) {
+            return ['color' => 'gray', 'text' => 'Form belum disusun. Produksi menekan "Susun Form" untuk membuat baris kebutuhan dari resep × jumlah menu.'];
+        }
+
+        if ($requisition->isDraft()) {
+            return $user?->can('production.manage')
+                ? ['color' => 'info', 'text' => 'Meja produksi: isi Stok Awal hasil hitungan fisik (Beli = Kebutuhan − Stok Awal, boleh dibulatkan ke kemasan), Simpan, lalu Ajukan ke supervisor gudang.']
+                : ['color' => 'gray', 'text' => 'Masih disusun produksi; belum diajukan ke supervisor gudang.'];
+        }
+
+        if ($requisition->isSubmitted()) {
+            return $user?->can('requisition.approve')
+                ? ['color' => 'warning', 'text' => 'Meja supervisor gudang: periksa angka Stok Awal & Beli, lalu Setujui — atau Tolak dengan alasan supaya produksi memperbaiki.']
+                : ['color' => 'gray', 'text' => 'Diajukan '.($requisition->submittedBy?->name ?? '').' '.$requisition->submitted_at?->format('d/m H:i').'; menunggu persetujuan supervisor gudang. Isian terkunci.'];
+        }
+
+        if ($requisition->isApproved()) {
+            return $user?->can('requisition.check')
+                ? ['color' => 'info', 'text' => 'Meja gudang: saat barang datang isi Diterima (ditolak = Beli − Diterima, beri alasannya), Harga Beli dari nota, dan cara pembayaran. Simpan, lalu Periksa — stok, pembelian, dan kas/hutang tercatat sekaligus.']
+                : ['color' => 'gray', 'text' => 'Disetujui '.($requisition->approvedBy?->name ?? '').'; gudang sedang belanja / menerima barang. Isian terkunci sampai diperiksa.'];
+        }
+
+        if (! $this->getOrder()->isCompleted()) {
+            return $user?->can('production.manage')
+                ? ['color' => 'info', 'text' => 'Meja produksi: barang sudah masuk kartu stok. Setelah produksi, isi Pemakaian Aktual dan Sisa Stok bila dihitung, lalu Tutup SPK.']
+                : ['color' => 'gray', 'text' => 'Diperiksa '.($requisition->checkedBy?->name ?? '').'; menunggu produksi menutup SPK.'];
+        }
+
+        return ['color' => 'success', 'text' => 'SPK sudah ditutup; pemakaian sudah dicatat ke kartu stok.'];
     }
 
     public function form(Form $form): Form
@@ -149,7 +194,7 @@ class RequisitionForm extends Page implements HasForms
         // Kolom tiap tahap baru muncul saat tahapnya tiba: tahap Dibuat hanya
         // Kebutuhan/Stok Awal/Beli; penerimaan (Diterima, Ditolak, Harga Beli)
         // sejak Disetujui; pemakaian sejak Diperiksa.
-        $receivingVisible = $requisition !== null && ! $requisition->isDraft();
+        $receivingVisible = $requisition !== null && ($requisition->isApproved() || $requisition->isChecked());
         $actualsVisible = $requisition?->isChecked() ?? false;
 
         return $form
@@ -291,6 +336,10 @@ class RequisitionForm extends Page implements HasForms
             return false;
         }
 
+        if ($requisition->isSubmitted()) {
+            return false; // menunggu keputusan supervisor gudang; tidak ada yang mengisi
+        }
+
         return $requisition->isApproved()
             ? $user->can('requisition.check')
             : $user->can('production.manage');
@@ -346,22 +395,46 @@ class RequisitionForm extends Page implements HasForms
                     $requisition = $this->getRequisition();
 
                     return $requisition !== null
+                        && ! $requisition->isSubmitted()
                         && static::canFill($requisition)
                         && ($requisition->isDraft() || $requisition->isApproved() || ($requisition->isChecked() && ! $this->getOrder()->fresh()->isCompleted()));
                 })
                 ->action(fn () => $this->save()),
 
+            // Meja produksi: mengajukan. Meja supervisor gudang: menyetujui /
+            // menolak. Tombolnya tidak pernah tampil bersamaan.
+            Actions\Action::make('ajukan')
+                ->label('Ajukan ke Supervisor Gudang')
+                ->authorize('production.manage')
+                ->icon('heroicon-m-paper-airplane')
+                ->color('info')
+                ->visible(fn () => $this->getRequisition()?->isDraft() ?? false)
+                ->requiresConfirmation()
+                ->modalDescription('Setelah diajukan, Stok Awal dan Beli tidak bisa diubah sampai supervisor gudang menyetujui atau menolak.')
+                ->action(function () {
+                    $this->save();
+
+                    try {
+                        app(RequisitionService::class)->submit($this->getRequisition(), auth()->id());
+                    } catch (Throwable $e) {
+                        Notification::make()->danger()->title('Belum bisa diajukan')->body($e->getMessage())->send();
+
+                        return;
+                    }
+
+                    Notification::make()->success()->title('Form diajukan ke supervisor gudang')->send();
+                    $this->fillFromRequisition();
+                }),
+
             Actions\Action::make('setujui')
                 ->label('Setujui')
                 ->authorize('requisition.approve')
                 ->icon('heroicon-m-hand-thumb-up')
-                ->color('info')
-                ->visible(fn () => $this->getRequisition()?->isDraft() ?? false)
+                ->color('success')
+                ->visible(fn () => $this->getRequisition()?->isSubmitted() ?? false)
                 ->requiresConfirmation()
-                ->modalDescription('Setelah disetujui, Stok Awal dan Beli dikunci.')
+                ->modalDescription('Stok Awal dan Beli dikunci; gudang mulai belanja / menerima barang.')
                 ->action(function () {
-                    $this->save();
-
                     try {
                         app(RequisitionService::class)->approve($this->getRequisition(), auth()->id());
                     } catch (Throwable $e) {
@@ -371,6 +444,33 @@ class RequisitionForm extends Page implements HasForms
                     }
 
                     Notification::make()->success()->title('Form disetujui')->send();
+                    $this->fillFromRequisition();
+                }),
+
+            Actions\Action::make('tolak')
+                ->label('Tolak')
+                ->authorize('requisition.approve')
+                ->icon('heroicon-m-hand-thumb-down')
+                ->color('danger')
+                ->visible(fn () => $this->getRequisition()?->isSubmitted() ?? false)
+                ->form([
+                    Textarea::make('reason')
+                        ->label('Alasan penolakan')
+                        ->helperText('Dibaca produksi untuk memperbaiki form; form kembali ke tahap Dibuat.')
+                        ->rows(3)
+                        ->required()
+                        ->maxLength(255),
+                ])
+                ->action(function (array $data) {
+                    try {
+                        app(RequisitionService::class)->reject($this->getRequisition(), (string) $data['reason'], auth()->id());
+                    } catch (Throwable $e) {
+                        Notification::make()->danger()->title('Gagal menolak')->body($e->getMessage())->send();
+
+                        return;
+                    }
+
+                    Notification::make()->warning()->title('Form dikembalikan ke produksi')->send();
                     $this->fillFromRequisition();
                 }),
 

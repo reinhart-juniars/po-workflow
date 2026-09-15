@@ -13,6 +13,8 @@
     $receivingVisible = in_array($stage, ['receiving', 'actuals', 'locked'], true) && ($requisition?->isApproved() || $requisition?->isChecked());
     $actualsVisible = $requisition?->isChecked() ?? false;
     $roundUp = app(\App\Support\Settings\Settings::class)->bool('requisition.round_purchase_up') ? 'true' : 'false';
+    // Meja supervisor: nilai perkiraan per bahan supaya keputusan setujui/tolak punya dasar.
+    $showEstimate = $stage === 'draft' || ($requisition?->isSubmitted() ?? false);
     $defaultTreatment = app(\App\Support\Settings\Settings::class)->get('requisition.reject_default_treatment');
 @endphp
 
@@ -27,6 +29,8 @@
         <col style="width: 76px">
         @if ($stage === 'draft')
             <col style="width: 104px"><col style="width: 104px"><col style="width: 100px"><col style="width: 180px">
+        @elseif ($showEstimate)
+            <col style="width: 90px"><col style="width: 90px"><col style="width: 110px"><col style="width: 120px"><col style="width: 180px">
         @else
             <col style="width: 56px"><col style="width: 60px">
             @if ($receivingVisible)
@@ -51,6 +55,9 @@
             <th class="num">Beli</th>
             @if ($stage === 'draft')
                 <th class="num">Harga Master</th>
+            @elseif ($showEstimate)
+                <th class="num">Harga Master</th>
+                <th class="num">Perkiraan</th>
             @endif
             @if ($receivingVisible)
                 <th class="num">Diterima</th>
@@ -90,6 +97,10 @@
                 @else
                     <td class="num sh-grid-muted">{{ $qty($line['opening_stock_qty']) }}</td>
                     <td class="num">{{ $qty($line['purchase_qty']) }}</td>
+                    @if ($showEstimate)
+                        <td class="num sh-grid-muted">{{ $rupiah($line['unit_price']) }}</td>
+                        <td class="num">{{ $rupiah((float) $line['purchase_qty'] * (float) ($line['unit_price'] ?? 0)) }}</td>
+                    @endif
                 @endif
 
                 @if ($receivingVisible)
