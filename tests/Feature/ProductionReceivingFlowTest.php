@@ -190,6 +190,10 @@ it('membiarkan pemegang izin Periksa (inventory) mengisi penerimaan lewat halama
     $this->actingAs($buat('inventory'));
     Livewire::test(RequisitionForm::class, ['record' => $d['order']->id])
         ->assertSee('Pembayaran belanja')
+        // Baris bahan = satu tabel (satu baris per bahan), bukan Repeater kartu.
+        ->assertSeeHtml('class="sh-grid"')
+        ->assertSeeHtml('wire:model="data.lines.0.received_qty"')
+        ->assertDontSeeHtml('fi-fo-repeater')
         ->fillForm([
             'payment_type' => 'cash',
             'expense_category_id' => $bayar['category']->id,

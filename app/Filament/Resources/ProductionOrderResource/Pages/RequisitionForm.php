@@ -14,8 +14,6 @@ use App\Services\ProductionOrderService;
 use App\Services\RequisitionService;
 use Filament\Actions;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -58,7 +56,12 @@ class RequisitionForm extends Page implements HasForms
 
     public function getTitle(): string
     {
-        return 'Form Kebutuhan — '.$this->getOrder()->number;
+        return 'Form Kebutuhan';
+    }
+
+    public function getSubheading(): ?string
+    {
+        return $this->getOrder()->number;
     }
 
     public function getOrder(): ProductionOrder
@@ -109,6 +112,30 @@ class RequisitionForm extends Page implements HasForms
                 ])->values()->all()
                 : [],
         ]);
+    }
+
+    /**
+     * Tahap isian baris saat ini: draft (Stok Awal & Beli), receiving
+     * (Diterima, Ditolak, Harga Beli), actuals (Pemakaian & Sisa), locked.
+     * Dibaca view tabel bahan untuk memilih kolom mana yang berupa input.
+     */
+    public function lineStage(): string
+    {
+        $requisition = $this->getRequisition();
+
+        if (! $requisition) {
+            return 'locked';
+        }
+
+        if ($requisition->isDraft()) {
+            return 'draft';
+        }
+
+        if ($requisition->isApproved()) {
+            return 'receiving';
+        }
+
+        return $this->getOrder()->isCompleted() ? 'locked' : 'actuals';
     }
 
     public function form(Form $form): Form
@@ -176,133 +203,6 @@ class RequisitionForm extends Page implements HasForms
                             ->disabled(! $receivingOpen)
                             ->dehydrated($receivingOpen),
                     ]),
-
-                Repeater::make('lines')
-                    ->label('')
-                    ->addable(false)
-                    ->deletable(false)
-                    ->reorderable(false)
-                    ->collapsible(false)
-                    ->itemLabel(fn (array $state) => $state['name'] ?? '')
-                    ->schema([
-                        \Filament\Forms\Components\Hidden::make('id'),
-
-                        Placeholder::make('kebutuhan')
-                            ->label('Kebutuhan')
-                            ->content(fn ($get) => static::qty($get('required_qty')).' '.$get('unit')),
-
-                        TextInput::make('opening_stock_qty')
-                            ->label('Stok Awal')
-                            ->numeric()
-                            ->minValue(0)
-                            ->step('any')
-                            ->suffix(fn ($get) => $receivingVisible ? null : $get('unit'))
-                            ->disabled(! $draft)
-                            ->dehydrated($draft)
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(function ($state, $get, $set) {
-                                // Rumus form kertas: Beli = Kebutuhan - Stok Awal.
-                                $set('purchase_qty', round(max((float) $get('required_qty') - (float) $state, 0), 4));
-                            }),
-
-                        TextInput::make('purchase_qty')
-                            ->label('Beli')
-                            ->numeric()
-                            ->minValue(0)
-                            ->step('any')
-                            ->suffix(fn ($get) => $receivingVisible ? null : $get('unit'))
-                            ->disabled(! $draft)
-                            ->dehydrated($draft)
-                            ->helperText($draft ? 'Boleh dibulatkan ke kemasan.' : null),
-
-                        Placeholder::make('harga')
-                            ->label('Harga Master')
-                            ->visible(! $receivingVisible)
-                            ->content(fn ($get) => $get('unit_price') === null ? '-' : 'Rp '.number_format((float) $get('unit_price'), 2, ',', '.')),
-
-                        TextInput::make('received_qty')
-                            ->label('Diterima')
-                            ->numeric()
-                            ->minValue(0)
-                            ->step('any')
-                            ->suffix(fn ($get) => $receivingVisible ? null : $get('unit'))
-                            ->placeholder('= beli')
-                            ->visible($receivingVisible)
-                            ->disabled(! $receivingOpen)
-                            ->dehydrated($receivingOpen)
-                            ->live(onBlur: true),
-
-                        // Ditolak = Beli - Diterima: dihitung, tidak diketik, supaya
-                        // tidak ada barang yang "hilang" di antara keduanya.
-                        Placeholder::make('ditolak')
-                            ->label('Ditolak')
-                            ->visible($receivingVisible)
-                            ->content(fn ($get) => static::qty(max((float) $get('purchase_qty') - (float) ($get('received_qty') ?? $get('purchase_qty')), 0)).' '.$get('unit')),
-
-                        TextInput::make('rejected_reason')
-                            ->label('Alasan Ditolak')
-                            ->maxLength(255)
-                            ->placeholder('mis. busuk, kemasan rusak')
-                            ->columnSpan(2)
-                            ->visible($receivingVisible)
-                            ->disabled(! $receivingOpen)
-                            ->dehydrated($receivingOpen),
-
-                        Select::make('rejected_treatment')
-                            ->label('Perlakuan')
-                            ->options(RequisitionLine::rejectTreatmentOptions())
-                            ->native(false)
-                            ->placeholder(app(\App\Support\Settings\Settings::class)->get('requisition.reject_default_treatment') === RequisitionLine::REJECT_PAID ? 'bawaan: dibayar' : 'bawaan: retur')
-                            ->columnSpan(2)
-                            ->visible($receivingVisible)
-                            ->disabled(! $receivingOpen)
-                            ->dehydrated($receivingOpen),
-
-                        TextInput::make('purchase_price')
-                            ->label('Harga Beli')
-                            ->numeric()
-                            ->minValue(0)
-                            ->step('any')
-                            ->prefix('Rp')
-                            ->placeholder(fn ($get) => $get('unit_price') === null ? 'wajib: master kosong' : number_format((float) $get('unit_price'), 0, ',', '.'))
-                            ->helperText(fn ($get) => $receivingOpen ? 'per '.$get('unit').', dari nota; kosong = harga master' : 'per '.$get('unit'))
-                            ->columnSpan(2)
-                            ->visible($receivingVisible)
-                            ->disabled(! $receivingOpen)
-                            ->dehydrated($receivingOpen),
-
-                        TextInput::make('actual_used_qty')
-                            ->label('Pemakaian Aktual')
-                            ->numeric()
-                            ->minValue(0)
-                            ->step('any')
-                            ->suffix(fn ($get) => $receivingVisible ? null : $get('unit'))
-                            ->placeholder('= kebutuhan')
-                            ->visible($actualsVisible)
-                            ->disabled(! $actualsOpen)
-                            ->dehydrated($actualsOpen),
-
-                        TextInput::make('remaining_qty')
-                            ->label('Sisa Stok')
-                            ->numeric()
-                            ->minValue(0)
-                            ->step('any')
-                            ->suffix(fn ($get) => $receivingVisible ? null : $get('unit'))
-                            ->placeholder('tidak dihitung')
-                            ->visible($actualsVisible)
-                            ->disabled(! $actualsOpen)
-                            ->dehydrated($actualsOpen),
-
-                        TextInput::make('notes')
-                            ->label('Catatan')
-                            ->maxLength(255)
-                            ->columnSpan($receivingVisible ? 1 : 2)
-                            ->disabled(! ($draft || $receivingOpen || $actualsOpen))
-                            ->dehydrated($draft || $receivingOpen || $actualsOpen),
-                    ])
-                    // Draft: 4 kolom angka + harga + catatan(2). Penerimaan: +Diterima,
-                    // Ditolak, Alasan(2), Perlakuan(2), Harga Beli(2). Pemakaian: +2.
-                    ->columns($actualsVisible ? 14 : ($receivingVisible ? 12 : 6)),
             ])
             ->statePath('data');
     }
@@ -323,7 +223,10 @@ class RequisitionForm extends Page implements HasForms
 
         $service = app(RequisitionService::class);
         $completion = app(ProductionCompletionService::class);
+        // Header (cara pembayaran) lewat form Filament; baris bahan dibaca
+        // langsung dari $data karena dirender sebagai tabel, bukan Repeater.
         $state = $this->form->getState();
+        $rows = array_values((array) ($this->data['lines'] ?? []));
 
         try {
             if ($requisition->isApproved()) {
@@ -336,7 +239,7 @@ class RequisitionForm extends Page implements HasForms
                 ]);
             }
 
-            foreach ($state['lines'] ?? [] as $row) {
+            foreach ($rows as $row) {
                 $line = $requisition->lines->firstWhere('id', (int) ($row['id'] ?? 0));
 
                 if (! $line) {
@@ -532,17 +435,24 @@ class RequisitionForm extends Page implements HasForms
                     $this->fillFromRequisition();
                 }),
 
-            Actions\Action::make('cetak')
-                ->label('Cetak Form')
-                ->icon('heroicon-m-printer')
-                ->color('gray')
-                ->visible(fn () => $this->getRequisition() !== null)
-                ->action(fn () => app(ProductionDocumentService::class)->requisitionPdf($this->getRequisition())),
+            // Aksi sekunder dikelompokkan supaya bilah tombol tidak melebar
+            // melampaui layar laptop (1366px) dan mendorong judul ke dua baris.
+            Actions\ActionGroup::make([
+                Actions\Action::make('cetak')
+                    ->label('Cetak Form')
+                    ->icon('heroicon-m-printer')
+                    ->visible(fn () => $this->getRequisition() !== null)
+                    ->action(fn () => app(ProductionDocumentService::class)->requisitionPdf($this->getRequisition())),
 
-            Actions\Action::make('kembali')
-                ->label('SPK')
+                Actions\Action::make('kembali')
+                    ->label('Buka SPK Produksi')
+                    ->icon('heroicon-m-fire')
+                    ->url(fn () => ProductionOrderResource::getUrl('edit', ['record' => $this->getOrder()])),
+            ])
+                ->label('Lainnya')
+                ->icon('heroicon-m-ellipsis-horizontal')
                 ->color('gray')
-                ->url(fn () => ProductionOrderResource::getUrl('edit', ['record' => $this->getOrder()])),
+                ->button(),
         ];
     }
 

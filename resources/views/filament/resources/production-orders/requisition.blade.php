@@ -102,7 +102,16 @@
                 @endif
             </x-slot>
 
+            {{-- Header cara pembayaran (form Filament) + tabel bahan (satu baris per bahan). --}}
             {{ $this->form }}
+
+            <div class="mt-6">
+                @include('filament.resources.production-orders.partials.requisition-lines', [
+                    'stage' => $this->lineStage(),
+                    'lines' => $this->data['lines'] ?? [],
+                    'requisition' => $requisition,
+                ])
+            </div>
         </x-filament::section>
     @endif
 </x-filament-panels::page>
