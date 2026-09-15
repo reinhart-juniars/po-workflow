@@ -103,6 +103,16 @@ it('barang ditolak yang tetap dibayar menjadi pembelian Tidak Baik (kerugian) ta
         ->and((float) CashOut::query()->sum('amount'))->toBe(20000.0)
         ->and((float) InventoryPurchase::query()->addsToStock()->sum('total_value'))->toBe(15000.0)
         ->and((float) InventoryPurchase::query()->damaged()->sum('total_value'))->toBe(5000.0);
+
+    // Cetak Form setelah penerimaan: PDF memuat ditolak + alasannya + total aktual.
+    // (Pernah gagal ParseError karena @endif menempel di tag; view dirender di sini.)
+    $html = view('pdf.requisition', ['requisition' => $d['requisition']->fresh(['lines', 'productionOrder'])])->render();
+    expect($html)->toContain('kemasan pecah')->toContain('dibayar')->toContain('Total pembelian')->toContain('Tunai');
+
+    $this->actingAs(User::factory()->create(['is_active' => true, 'force_password_change' => false])->assignRole('owner'));
+    Livewire::test(RequisitionForm::class, ['record' => $d['order']->id])
+        ->callAction('cetak')
+        ->assertFileDownloaded($d['requisition']->number.'.pdf');
 });
 
 it('pembelian kredit membentuk hutang ke supplier, bukan kas keluar', function () {

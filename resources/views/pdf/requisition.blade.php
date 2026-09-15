@@ -51,7 +51,12 @@
                 <td class="right">{!! $line->opening_stock_qty === null ? '<span class="fill"></span>' : $qty($line->opening_stock_qty) !!}</td>
                 <td class="right">{!! $line->purchase_qty === null ? '<span class="fill"></span>' : $qty($line->purchase_qty) !!}</td>
                 <td class="right">{!! $line->received_qty === null ? '<span class="fill"></span>' : $qty($line->received_qty) !!}</td>
-                <td class="right">{!! $line->received_qty === null ? '<span class="fill"></span>' : $qty($line->rejectedQty()) !!}@if ($line->rejectedQty() > 0 && $line->rejected_reason)<br><span class="muted">{{ $line->rejected_reason }}@if ($line->rejected_treatment === \App\Models\RequisitionLine::REJECT_PAID) · dibayar@endif</span>@endif</td>
+                <td class="right">
+                    {!! $line->received_qty === null ? '<span class="fill"></span>' : $qty($line->rejectedQty()) !!}
+                    @if ($line->rejectedQty() > 0 && $line->rejected_reason)
+                        <br><span class="muted">{{ $line->rejected_reason }}{{ $line->rejected_treatment === \App\Models\RequisitionLine::REJECT_PAID ? ' · dibayar' : '' }}</span>
+                    @endif
+                </td>
                 <td class="right">{{ $rupiah($sudahDiterima ? $line->purchasePrice() : $line->unit_price) }}</td>
                 <td class="right">{{ $rupiah($sudahDiterima ? $line->purchaseValue() + $line->damagedValue() : (float) ($line->purchase_qty ?? 0) * (float) ($line->unit_price ?? 0)) }}</td>
                 <td class="right">{!! $line->actual_used_qty === null ? '<span class="fill"></span>' : $qty($line->actual_used_qty) !!}</td>
@@ -59,7 +64,11 @@
             </tr>
         @endforeach
         <tr class="total">
-            <td colspan="9" class="right">{{ $sudahDiterima ? 'Total pembelian' : 'Perkiraan total pembelian' }}@if ($requisition->paymentTypeLabel()) ({{ $requisition->paymentTypeLabel() }}@if ($requisition->supplier_name) · {{ $requisition->supplier_name }}@endif)@endif</td>
+            @php
+                $bayar = $requisition->paymentTypeLabel();
+                $bayar = $bayar ? ' ('.$bayar.($requisition->supplier_name ? ' · '.$requisition->supplier_name : '').')' : '';
+            @endphp
+            <td colspan="9" class="right">{{ $sudahDiterima ? 'Total pembelian' : 'Perkiraan total pembelian' }}{{ $bayar }}</td>
             <td class="right">{{ $rupiah($sudahDiterima ? $totalAktual : $totalBeli) }}</td>
             <td colspan="2"></td>
         </tr>
