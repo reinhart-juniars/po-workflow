@@ -90,7 +90,7 @@
                 @elseif (! $order->isCompleted())
                     Barang sudah tercatat masuk. Isi Pemakaian Aktual dan Sisa Stok bila dihitung, lalu Tutup SPK.
                 @else
-                    SPK sudah ditutup; pemakaian sudah diposting ke ledger.
+                    SPK sudah ditutup; pemakaian sudah dicatat ke kartu stok.
                 @endif
             </x-slot>
 

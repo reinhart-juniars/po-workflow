@@ -54,8 +54,8 @@ class SettingRegistry
                 'label' => 'Sumber pemakaian bahan untuk HPP',
                 'type' => self::TYPE_SELECT,
                 'default' => 'residual',
-                'options' => ['residual' => 'Residual opname (Saldo Awal + Beli - Sisa)', 'resep' => 'Ledger resep x produksi (+ penyesuaian sisa fisik)'],
-                'help' => 'Ganti ke ledger resep hanya setelah Perbandingan HPP beberapa periode disetujui Owner. Berlaku ke Laporan Pemakaian Bahan, Laba Rugi, dan Neraca.',
+                'options' => ['residual' => 'Residual opname (Saldo Awal + Beli - Sisa)', 'resep' => 'Resep x produksi dari kartu stok (+ penyesuaian sisa fisik)'],
+                'help' => 'Ganti ke resep x produksi hanya setelah Perbandingan HPP beberapa periode disetujui Owner. Berlaku ke Laporan Pemakaian Bahan, Laba Rugi, dan Neraca.',
             ],
             'hpp.comparison_default_range' => [
                 'group' => 'Resep & HPP',

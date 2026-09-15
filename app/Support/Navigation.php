@@ -153,7 +153,7 @@ class Navigation
                 'Produksi' => [
                     ['label' => 'SPK Produksi', 'route' => 'filament.admin.resources.production-orders.index', 'can' => 'production.view'],
                     ['label' => 'Form Kebutuhan', 'route' => 'filament.admin.resources.requisitions.index', 'can' => 'production.view'],
-                    ['label' => 'Ledger Stok', 'route' => 'filament.admin.resources.inventory-movements.index', 'can' => 'ledger.view'],
+                    ['label' => 'Kartu Stok', 'route' => 'filament.admin.resources.inventory-movements.index', 'can' => 'ledger.view'],
                     ['label' => 'Pelaksana', 'route' => 'filament.admin.resources.production-workers.index', 'can' => 'production.view'],
                 ],
             ],

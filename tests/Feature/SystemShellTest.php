@@ -47,6 +47,19 @@ it('membuka setiap sidebar aplikasi dengan grup Ringkasan berisi Dashboard', fun
     }
 });
 
+it('memakai istilah Indonesia di menu dan halaman kartu stok, bukan "ledger"', function () {
+    // User gudang mengenal "Kartu Stok"; "ledger" hanya nama internal
+    // (izin ledger.view, InventoryLedgerService).
+    $labels = collect(Navigation::menus())->flatMap(fn ($sections) => collect($sections)->flatten(1))->pluck('label');
+    expect($labels->filter(fn ($l) => stripos($l, 'ledger') !== false)->all())->toBe([]);
+    expect($labels->all())->toContain('Kartu Stok');
+
+    expect(collect(\App\Support\Access\ModuleAccess::PERMISSIONS)->filter(fn ($l) => stripos($l, 'ledger') !== false)->all())->toBe([]);
+
+    $this->actingAs(penggunaShell('owner'))->get('/inventory/inventory-movements')
+        ->assertOk()->assertSee('Kartu Stok')->assertDontSee('Ledger');
+});
+
 it('mendaftarkan setiap resource dan halaman filament ke menu aplikasi inventory dengan grup yang sama', function () {
     $menu = Navigation::menus()['inventory'];
     $routes = collect($menu)->flatten(1)->pluck('route')->all();

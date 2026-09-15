@@ -37,10 +37,10 @@ class ModuleAccess
         'recipe.manage' => 'Kelola resep (termasuk import/export dan pencocokan bahan)',
         'production.view' => 'Lihat SPK produksi, form kebutuhan, lembar kerja, plating',
         'production.manage' => 'Kelola SPK produksi (susun, isi form, lembar kerja, pelaksana)',
-        'production.complete' => 'Tutup SPK produksi (posting pemakaian ke ledger)',
+        'production.complete' => 'Tutup SPK produksi (posting pemakaian ke kartu stok)',
         'requisition.approve' => 'Setujui form kebutuhan',
         'requisition.check' => 'Periksa form kebutuhan (barang dibeli)',
-        'ledger.view' => 'Lihat ledger stok dan perbandingan HPP',
+        'ledger.view' => 'Lihat kartu stok dan perbandingan HPP',
         'settings.manage' => 'Ubah pengaturan modul',
     ];
 

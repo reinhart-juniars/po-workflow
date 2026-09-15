@@ -217,9 +217,9 @@ class MigrationValidationService
         $yatim = InventoryMovement::query()->whereDoesntHave('item')->count();
 
         return [
-            $this->finding($negatif->isNotEmpty() ? self::WARN : self::INFO, 'Bahan bersaldo ledger negatif', $negatif->count(),
+            $this->finding($negatif->isNotEmpty() ? self::WARN : self::INFO, 'Bahan bersaldo kartu stok negatif', $negatif->count(),
                 $negatif->isNotEmpty() ? 'Pemakaian diposting melebihi stok tercatat; periksa Stok Awal form kebutuhan pertama.' : 'Semua saldo >= 0.'),
-            $this->finding($yatim > 0 ? self::ERROR : self::INFO, 'Gerakan ledger tanpa bahan', $yatim, 'Baris ledger menunjuk bahan yang sudah tidak ada.'),
+            $this->finding($yatim > 0 ? self::ERROR : self::INFO, 'Mutasi stok tanpa bahan', $yatim, 'Baris kartu stok menunjuk bahan yang sudah tidak ada.'),
         ];
     }
 
@@ -233,7 +233,7 @@ class MigrationValidationService
             ->whereHas('productionOrder', fn ($q) => $q->whereIn('status', [ProductionOrder::STATUS_COMPLETED, ProductionOrder::STATUS_CANCELLED]))->count();
 
         return [
-            $this->finding($tanpaForm > 0 ? self::WARN : self::INFO, 'SPK Produksi selesai tanpa Form Kebutuhan', $tanpaForm, 'Pemakaiannya tidak pernah diposting ke ledger.'),
+            $this->finding($tanpaForm > 0 ? self::WARN : self::INFO, 'SPK Produksi selesai tanpa Form Kebutuhan', $tanpaForm, 'Pemakaiannya tidak pernah dicatat ke kartu stok.'),
             $this->finding($formMenggantung > 0 ? self::WARN : self::INFO, 'Form Kebutuhan menggantung pada SPK selesai/batal', $formMenggantung, 'Status form tidak sejalan dengan SPK-nya.'),
         ];
     }

@@ -277,7 +277,7 @@ class InventoryUsageService
             'label' => 'Total Pemakaian',
             'value' => (float) ($summary['usage'] ?? 0),
             'notes' => ($summary['usage_source'] ?? 'residual') === 'resep'
-                ? 'Dari ledger resep x produksi (pemakaian + penyesuaian sisa fisik); residual opname Rp '.number_format((float) ($summary['usage_residual'] ?? 0), 2, ',', '.').' hanya pembanding.'
+                ? 'Dari resep x produksi (kartu stok: pemakaian + penyesuaian sisa fisik); residual opname Rp '.number_format((float) ($summary['usage_residual'] ?? 0), 2, ',', '.').' hanya pembanding.'
                 : null,
         ]);
 

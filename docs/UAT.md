@@ -61,9 +61,9 @@ Legenda kolom "Wajib": W = wajib untuk serah terima, O = opsional/dicatat saja.
 | D6 | Isi Stok Awal semua baris → Simpan → muat ulang | Isian tersimpan; Beli menyesuaikan (Kebutuhan − Stok Awal) | W | | |
 | D7 | Setujui (`admin`/`owner`) | Status Disetujui; Stok Awal & Beli terkunci | W | | |
 | D7a | Pada tahap Disetujui, isi kolom Diterima lebih kecil dari Beli untuk satu bahan (barang datang rusak) | Tersimpan; kolom lain terkunci | W | | |
-| D8 | Periksa (`accounting`/`admin`) | Status Diperiksa; Ledger Stok berisi opening (hanya bahan tanpa riwayat) + purchase **sejumlah Diterima** (bahan rusak tidak menambah stok) | W | | |
+| D8 | Periksa (`accounting`/`admin`) | Status Diperiksa; Kartu Stok berisi opening (hanya bahan tanpa riwayat) + purchase **sejumlah Diterima** (bahan rusak tidak menambah stok) | W | | |
 | D9 | Cetak Form | PDF dengan kolom tanda tangan | W | | |
-| D10 | Isi Pemakaian Aktual & Sisa Stok → Tutup SPK (`production`) | Status SPK selesai; ledger usage (negatif) + adjustment; notifikasi nilai pemakaian | W | | |
+| D10 | Isi Pemakaian Aktual & Sisa Stok → Tutup SPK (`production`) | Status SPK selesai; Kartu Stok berisi usage (negatif) + adjustment; notifikasi nilai pemakaian | W | | |
 | D11 | Coba Tutup SPK lagi / Periksa lagi | Ditolak (tidak bisa diulang) | W | | |
 | D12 | Perbandingan HPP, periode tanggal produksi | Kolom Pemakaian Resep & Penyesuaian terisi; residual opname di sampingnya | W | | |
 | D13 | Pengaturan: aktifkan "Wajib isi Sisa Stok" → Tutup SPK lain tanpa sisa | Ditolak dengan pesan jumlah bahan yang belum diisi | O | | |
@@ -78,7 +78,7 @@ Legenda kolom "Wajib": W = wajib untuk serah terima, O = opsional/dicatat saja.
 | E3 | Bandingkan 5 bahan acak: harga kemasan & isi | Sama | W | | |
 | E4 | SPK riwayat Master Menu (17) tampil di SPK Produksi tab Selesai | Ada, tidak bisa diedit | O | | |
 | E5 | Perbandingan HPP resep vs residual opname untuk 2 periode lampau | Angka dicatat, dibahas; Owner memutuskan kapan opname berhenti jadi sumber utama | W | | |
-| E6 | Setelah disetujui: Pengaturan → "Sumber pemakaian bahan untuk HPP" = Ledger resep | Laporan Laba Rugi "Bahan Baku Terpakai" & Laporan Pemakaian Bahan berganti ke angka resep; residual tetap tampil sebagai pembanding | W | | |
+| E6 | Setelah disetujui: Pengaturan → "Sumber pemakaian bahan untuk HPP" = Resep x produksi | Laporan Laba Rugi "Bahan Baku Terpakai" & Laporan Pemakaian Bahan berganti ke angka resep; residual tetap tampil sebagai pembanding | W | | |
 
 ## F. Paralel HPP (definition of done Phase 3)
 

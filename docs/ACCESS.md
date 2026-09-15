@@ -18,10 +18,10 @@ policy membuat build merah).
 | `inventory.view` / `inventory.manage` | Item Inventaris, Pembelian Bahan Baku, Stock Opname, Saldo Awal, Konversi Satuan, Laporan Mutasi Stok (+ import/export) |
 | `recipe.view` / `recipe.manage` | Resep & Menu, Analisa HPP, Bahan Belum Cocok (tautkan/buat/abaikan), import/export resep |
 | `production.view` / `production.manage` | SPK Produksi (buat dari slot, segarkan, siap, batalkan), Form Kebutuhan (susun, isi, simpan), Lembar Kerja, Plating, Pelaksana |
-| `production.complete` | Tutup SPK (posting pemakaian & penyesuaian ke ledger) |
+| `production.complete` | Tutup SPK (posting pemakaian & penyesuaian ke kartu stok) |
 | `requisition.approve` | Setujui Form Kebutuhan |
-| `requisition.check` | Periksa Form Kebutuhan (barang dibeli; posting saldo awal & pembelian ke ledger) |
-| `ledger.view` | Ledger Stok, Perbandingan HPP |
+| `requisition.check` | Periksa Form Kebutuhan (barang dibeli; posting saldo awal & pembelian ke kartu stok) |
+| `ledger.view` | Kartu Stok (di UI; kunci izinnya tetap `ledger`), Perbandingan HPP |
 | `settings.manage` | Pengaturan modul |
 
 `view` = daftar & detail; `manage` = tambah/ubah/hapus. Superadmin lolos semua lewat

@@ -79,7 +79,7 @@
         <div class="text-xl font-semibold text-amber-700">{{ number_format($summary['usage'], 2, ',', '.') }}</div>
         <div class="mt-1 text-xs text-slate-500">
           @if (($summary['usage_source'] ?? 'residual') === 'resep')
-            Sumber HPP: ledger resep (pemakaian + penyesuaian). Residual opname: {{ number_format($summary['usage_residual'] ?? 0, 2, ',', '.') }}
+            Sumber HPP: resep x produksi dari kartu stok (pemakaian + penyesuaian). Residual opname: {{ number_format($summary['usage_residual'] ?? 0, 2, ',', '.') }}
           @else
             Sumber HPP: residual opname (Bahan Baku Lama + Pembelian − Sisa Stok).
           @endif

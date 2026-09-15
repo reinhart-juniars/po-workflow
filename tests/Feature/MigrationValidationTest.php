@@ -101,7 +101,7 @@ it('menandai saldo ledger negatif dan form kebutuhan yang menggantung', function
         'unit_price' => 10000, 'total_value' => -30000, 'moved_at' => now()->toDateString(),
     ]);
 
-    expect(temuan('Bahan bersaldo ledger negatif'))->toMatchArray(['level' => 'warn', 'count' => 1])
+    expect(temuan('Bahan bersaldo kartu stok negatif'))->toMatchArray(['level' => 'warn', 'count' => 1])
         ->and(temuan('Form Kebutuhan menggantung pada SPK selesai/batal'))->toMatchArray(['level' => 'warn', 'count' => 1]);
 });
 

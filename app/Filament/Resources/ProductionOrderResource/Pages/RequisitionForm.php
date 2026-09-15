@@ -329,7 +329,7 @@ class RequisitionForm extends Page implements HasForms
                 ->color('success')
                 ->visible(fn () => $this->getRequisition()?->isApproved() ?? false)
                 ->requiresConfirmation()
-                ->modalDescription('Menandai barang sudah dibeli & diperiksa. Stok Awal (untuk bahan yang belum punya ledger) dan jumlah Diterima (= Beli bila kosong) akan dicatat ke ledger stok. Langkah ini tidak bisa diulang.')
+                ->modalDescription('Menandai barang sudah dibeli & diperiksa. Stok Awal (untuk bahan yang belum punya kartu stok) dan jumlah Diterima (= Beli bila kosong) akan dicatat ke kartu stok. Langkah ini tidak bisa diulang.')
                 ->action(function () {
                     // Isian "Diterima" yang belum disimpan ikut dibawa.
                     $this->save();
@@ -342,7 +342,7 @@ class RequisitionForm extends Page implements HasForms
                         return;
                     }
 
-                    Notification::make()->success()->title('Barang tercatat masuk ke ledger')->send();
+                    Notification::make()->success()->title('Barang tercatat masuk ke kartu stok')->send();
                     $this->fillFromRequisition();
                 }),
 
@@ -353,7 +353,7 @@ class RequisitionForm extends Page implements HasForms
                 ->color('warning')
                 ->visible(fn () => ($this->getRequisition()?->isChecked() ?? false) && ! $this->getOrder()->fresh()->isCompleted())
                 ->requiresConfirmation()
-                ->modalDescription('Pemakaian bahan (aktual bila diisi, kebutuhan resep bila tidak) diposting ke ledger. Sisa stok yang diisi menjadi penyesuaian. Langkah ini tidak bisa diulang.')
+                ->modalDescription('Pemakaian bahan (aktual bila diisi, kebutuhan resep bila tidak) dicatat ke kartu stok. Sisa stok yang diisi menjadi penyesuaian. Langkah ini tidak bisa diulang.')
                 ->action(function () {
                     $this->save();
 

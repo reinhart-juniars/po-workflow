@@ -12,7 +12,8 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
 /**
- * Ledger kuantitas stok per bahan -- hanya dibaca.
+ * Kartu Stok: ledger kuantitas per bahan -- hanya dibaca. Di UI disebut
+ * "Kartu Stok" (istilah gudang yang dikenal user), bukan "ledger".
  *
  * Barisnya lahir dari Form Kebutuhan (saldo awal, pembelian) dan penutupan
  * SPK (pemakaian, penyesuaian). Tidak ada tombol tambah/ubah/hapus: ledger
@@ -26,13 +27,13 @@ class InventoryMovementResource extends Resource
 
     protected static ?string $navigationGroup = 'Produksi';
 
-    protected static ?string $navigationLabel = 'Ledger Stok';
+    protected static ?string $navigationLabel = 'Kartu Stok';
 
     protected static ?int $navigationSort = 50;
 
-    protected static ?string $modelLabel = 'Gerakan Stok';
+    protected static ?string $modelLabel = 'Mutasi Stok';
 
-    protected static ?string $pluralModelLabel = 'Ledger Stok';
+    protected static ?string $pluralModelLabel = 'Kartu Stok';
 
     public static function canCreate(): bool
     {

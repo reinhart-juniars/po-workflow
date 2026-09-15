@@ -40,7 +40,7 @@ class ProductionCompletionService
         }
 
         if ($requisition->productionOrder->isCompleted()) {
-            throw new RuntimeException('SPK Produksi sudah ditutup; pemakaiannya sudah diposting ke ledger.');
+            throw new RuntimeException('SPK Produksi sudah ditutup; pemakaiannya sudah dicatat ke kartu stok.');
         }
 
         if ($actualUsedQty !== null && $actualUsedQty < 0) {

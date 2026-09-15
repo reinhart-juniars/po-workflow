@@ -77,7 +77,7 @@ class InventoryOverviewWidget extends BaseWidget
                 ->url(InventoryUnitConversionResource::getUrl('missing'));
         }
 
-        $sumber = app(Settings::class)->get('hpp.usage_source') === 'resep' ? 'Ledger resep × produksi' : 'Residual opname';
+        $sumber = app(Settings::class)->get('hpp.usage_source') === 'resep' ? 'Resep × produksi (kartu stok)' : 'Residual opname';
         $stats[] = Stat::make('Sumber HPP aktif', $sumber)
             ->description(InventoryItem::query()->ingredients()->where('is_active', true)->count().' bahan aktif')
             ->descriptionIcon('heroicon-m-cube')
