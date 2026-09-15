@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\ProductionOrderResource\Pages;
 
 use App\Filament\Resources\ProductionOrderResource;
+use App\Models\CashAccount;
+use App\Models\ExpenseCategory;
 use App\Models\ProductionOrder;
 use App\Models\Requisition;
 use App\Models\RequisitionLine;
@@ -11,12 +13,16 @@ use App\Services\ProductionDocumentService;
 use App\Services\ProductionOrderService;
 use App\Services\RequisitionService;
 use Filament\Actions;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
 use Filament\Resources\Pages\Page;
@@ -79,6 +85,11 @@ class RequisitionForm extends Page implements HasForms
         $requisition = $this->getRequisition();
 
         $this->form->fill([
+            'payment_type' => $requisition?->payment_type,
+            'expense_category_id' => $requisition?->expense_category_id ?? app(RequisitionService::class)->defaultPurchaseCategoryId(),
+            'cash_account_id' => $requisition?->cash_account_id,
+            'supplier_name' => $requisition?->supplier_name,
+            'due_date' => $requisition?->due_date?->toDateString(),
             'lines' => $requisition
                 ? $requisition->lines->map(fn (RequisitionLine $line) => [
                     'id' => $line->id,
@@ -88,6 +99,9 @@ class RequisitionForm extends Page implements HasForms
                     'opening_stock_qty' => $line->opening_stock_qty === null ? null : (float) $line->opening_stock_qty,
                     'purchase_qty' => $line->purchase_qty === null ? null : (float) $line->purchase_qty,
                     'received_qty' => $line->received_qty === null ? null : (float) $line->received_qty,
+                    'rejected_reason' => $line->rejected_reason,
+                    'rejected_treatment' => $line->rejected_treatment,
+                    'purchase_price' => $line->purchase_price === null ? null : (float) $line->purchase_price,
                     'unit_price' => $line->unit_price === null ? null : (float) $line->unit_price,
                     'actual_used_qty' => $line->actual_used_qty === null ? null : (float) $line->actual_used_qty,
                     'remaining_qty' => $line->remaining_qty === null ? null : (float) $line->remaining_qty,
@@ -105,8 +119,64 @@ class RequisitionForm extends Page implements HasForms
         $receivingOpen = $requisition?->isApproved() ?? false;
         $actualsOpen = ($requisition?->isChecked() ?? false) && ! $order->isCompleted();
 
+        // Kolom tiap tahap baru muncul saat tahapnya tiba: tahap Dibuat hanya
+        // Kebutuhan/Stok Awal/Beli; penerimaan (Diterima, Ditolak, Harga Beli)
+        // sejak Disetujui; pemakaian sejak Diperiksa.
+        $receivingVisible = $requisition !== null && ! $requisition->isDraft();
+        $actualsVisible = $requisition?->isChecked() ?? false;
+
         return $form
             ->schema([
+                Section::make('Pembayaran belanja')
+                    ->description('Saat Periksa, pembelian bahan baku beserta kas keluar / hutangnya dibuat otomatis per bahan sesuai jumlah diterima dan harga beli.')
+                    ->visible($receivingVisible)
+                    ->columns(4)
+                    ->schema([
+                        Select::make('payment_type')
+                            ->label('Jenis Pembayaran')
+                            ->options(Requisition::paymentTypeOptions())
+                            ->native(false)
+                            ->live()
+                            ->disabled(! $receivingOpen)
+                            ->dehydrated($receivingOpen),
+
+                        Select::make('expense_category_id')
+                            ->label('Kategori Pengeluaran')
+                            ->options(fn () => ExpenseCategory::query()
+                                ->where('expense_mode', ExpenseCategory::MODE_INVENTORY_PURCHASE)
+                                ->where('is_active', true)
+                                ->orderBy('name')
+                                ->pluck('name', 'id'))
+                            ->native(false)
+                            ->searchable()
+                            ->visible(fn (Get $get) => $get('payment_type') === 'cash')
+                            ->disabled(! $receivingOpen)
+                            ->dehydrated($receivingOpen),
+
+                        Select::make('cash_account_id')
+                            ->label('Akun Kas')
+                            ->options(fn () => CashAccount::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id'))
+                            ->native(false)
+                            ->searchable()
+                            ->visible(fn (Get $get) => $get('payment_type') === 'cash')
+                            ->disabled(! $receivingOpen)
+                            ->dehydrated($receivingOpen),
+
+                        TextInput::make('supplier_name')
+                            ->label('Supplier')
+                            ->maxLength(255)
+                            ->visible(fn (Get $get) => $get('payment_type') !== null)
+                            ->disabled(! $receivingOpen)
+                            ->dehydrated($receivingOpen),
+
+                        DatePicker::make('due_date')
+                            ->label('Jatuh Tempo')
+                            ->native(false)
+                            ->visible(fn (Get $get) => $get('payment_type') === 'payable')
+                            ->disabled(! $receivingOpen)
+                            ->dehydrated($receivingOpen),
+                    ]),
+
                 Repeater::make('lines')
                     ->label('')
                     ->addable(false)
@@ -126,7 +196,7 @@ class RequisitionForm extends Page implements HasForms
                             ->numeric()
                             ->minValue(0)
                             ->step('any')
-                            ->suffix(fn ($get) => $get('unit'))
+                            ->suffix(fn ($get) => $receivingVisible ? null : $get('unit'))
                             ->disabled(! $draft)
                             ->dehydrated($draft)
                             ->live(onBlur: true)
@@ -140,33 +210,75 @@ class RequisitionForm extends Page implements HasForms
                             ->numeric()
                             ->minValue(0)
                             ->step('any')
-                            ->suffix(fn ($get) => $get('unit'))
+                            ->suffix(fn ($get) => $receivingVisible ? null : $get('unit'))
                             ->disabled(! $draft)
                             ->dehydrated($draft)
                             ->helperText($draft ? 'Boleh dibulatkan ke kemasan.' : null),
+
+                        Placeholder::make('harga')
+                            ->label('Harga Master')
+                            ->visible(! $receivingVisible)
+                            ->content(fn ($get) => $get('unit_price') === null ? '-' : 'Rp '.number_format((float) $get('unit_price'), 2, ',', '.')),
 
                         TextInput::make('received_qty')
                             ->label('Diterima')
                             ->numeric()
                             ->minValue(0)
                             ->step('any')
-                            ->suffix(fn ($get) => $get('unit'))
+                            ->suffix(fn ($get) => $receivingVisible ? null : $get('unit'))
                             ->placeholder('= beli')
+                            ->visible($receivingVisible)
                             ->disabled(! $receivingOpen)
                             ->dehydrated($receivingOpen)
-                            ->helperText($receivingOpen ? 'Kurangi bila ada yang datang rusak / tidak baik.' : null),
+                            ->live(onBlur: true),
 
-                        Placeholder::make('harga')
-                            ->label('Harga Satuan')
-                            ->content(fn ($get) => $get('unit_price') === null ? '-' : 'Rp '.number_format((float) $get('unit_price'), 2, ',', '.')),
+                        // Ditolak = Beli - Diterima: dihitung, tidak diketik, supaya
+                        // tidak ada barang yang "hilang" di antara keduanya.
+                        Placeholder::make('ditolak')
+                            ->label('Ditolak')
+                            ->visible($receivingVisible)
+                            ->content(fn ($get) => static::qty(max((float) $get('purchase_qty') - (float) ($get('received_qty') ?? $get('purchase_qty')), 0)).' '.$get('unit')),
+
+                        TextInput::make('rejected_reason')
+                            ->label('Alasan Ditolak')
+                            ->maxLength(255)
+                            ->placeholder('mis. busuk, kemasan rusak')
+                            ->columnSpan(2)
+                            ->visible($receivingVisible)
+                            ->disabled(! $receivingOpen)
+                            ->dehydrated($receivingOpen),
+
+                        Select::make('rejected_treatment')
+                            ->label('Perlakuan')
+                            ->options(RequisitionLine::rejectTreatmentOptions())
+                            ->native(false)
+                            ->placeholder(app(\App\Support\Settings\Settings::class)->get('requisition.reject_default_treatment') === RequisitionLine::REJECT_PAID ? 'bawaan: dibayar' : 'bawaan: retur')
+                            ->columnSpan(2)
+                            ->visible($receivingVisible)
+                            ->disabled(! $receivingOpen)
+                            ->dehydrated($receivingOpen),
+
+                        TextInput::make('purchase_price')
+                            ->label('Harga Beli')
+                            ->numeric()
+                            ->minValue(0)
+                            ->step('any')
+                            ->prefix('Rp')
+                            ->placeholder(fn ($get) => $get('unit_price') === null ? 'wajib: master kosong' : number_format((float) $get('unit_price'), 0, ',', '.'))
+                            ->helperText(fn ($get) => $receivingOpen ? 'per '.$get('unit').', dari nota; kosong = harga master' : 'per '.$get('unit'))
+                            ->columnSpan(2)
+                            ->visible($receivingVisible)
+                            ->disabled(! $receivingOpen)
+                            ->dehydrated($receivingOpen),
 
                         TextInput::make('actual_used_qty')
                             ->label('Pemakaian Aktual')
                             ->numeric()
                             ->minValue(0)
                             ->step('any')
-                            ->suffix(fn ($get) => $get('unit'))
+                            ->suffix(fn ($get) => $receivingVisible ? null : $get('unit'))
                             ->placeholder('= kebutuhan')
+                            ->visible($actualsVisible)
                             ->disabled(! $actualsOpen)
                             ->dehydrated($actualsOpen),
 
@@ -175,18 +287,22 @@ class RequisitionForm extends Page implements HasForms
                             ->numeric()
                             ->minValue(0)
                             ->step('any')
-                            ->suffix(fn ($get) => $get('unit'))
+                            ->suffix(fn ($get) => $receivingVisible ? null : $get('unit'))
                             ->placeholder('tidak dihitung')
+                            ->visible($actualsVisible)
                             ->disabled(! $actualsOpen)
                             ->dehydrated($actualsOpen),
 
                         TextInput::make('notes')
                             ->label('Catatan')
                             ->maxLength(255)
+                            ->columnSpan($receivingVisible ? 1 : 2)
                             ->disabled(! ($draft || $receivingOpen || $actualsOpen))
                             ->dehydrated($draft || $receivingOpen || $actualsOpen),
                     ])
-                    ->columns(8),
+                    // Draft: 4 kolom angka + harga + catatan(2). Penerimaan: +Diterima,
+                    // Ditolak, Alasan(2), Perlakuan(2), Harga Beli(2). Pemakaian: +2.
+                    ->columns($actualsVisible ? 14 : ($receivingVisible ? 12 : 6)),
             ])
             ->statePath('data');
     }
@@ -194,19 +310,32 @@ class RequisitionForm extends Page implements HasForms
     /** Simpan isian sesuai tahap form saat ini. */
     public function save(): void
     {
-        abort_unless(auth()->user()?->can('production.manage'), 403);
-
         $requisition = $this->getRequisition();
 
         if (! $requisition) {
             return;
         }
 
+        // Siapa yang boleh mengisi mengikuti tahapnya: produksi menyusun
+        // (draft) dan mencatat pemakaian (checked); penerimaan barang diisi
+        // pemegang izin Periksa (inventory/accounting/admin).
+        abort_unless(static::canFill($requisition), 403);
+
         $service = app(RequisitionService::class);
         $completion = app(ProductionCompletionService::class);
         $state = $this->form->getState();
 
         try {
+            if ($requisition->isApproved()) {
+                $service->recordPaymentHeader($requisition, [
+                    'payment_type' => $state['payment_type'] ?? null,
+                    'expense_category_id' => $state['expense_category_id'] ?? null,
+                    'cash_account_id' => $state['cash_account_id'] ?? null,
+                    'supplier_name' => $state['supplier_name'] ?? null,
+                    'due_date' => $state['due_date'] ?? null,
+                ]);
+            }
+
             foreach ($state['lines'] ?? [] as $row) {
                 $line = $requisition->lines->firstWhere('id', (int) ($row['id'] ?? 0));
 
@@ -223,7 +352,13 @@ class RequisitionForm extends Page implements HasForms
 
                     $line->fresh()->update(['notes' => $row['notes'] ?? null]);
                 } elseif ($requisition->isApproved()) {
-                    $service->recordReceivedQty($line, static::number($row['received_qty'] ?? null));
+                    $service->recordReceipt(
+                        $line,
+                        static::number($row['received_qty'] ?? null),
+                        $row['rejected_reason'] ?? null,
+                        $row['rejected_treatment'] ?? null,
+                        static::number($row['purchase_price'] ?? null),
+                    );
                     $line->fresh()->update(['notes' => $row['notes'] ?? null]);
                 } elseif ($requisition->isChecked() && ! $this->getOrder()->isCompleted()) {
                     $completion->recordActuals(
@@ -242,6 +377,20 @@ class RequisitionForm extends Page implements HasForms
 
         Notification::make()->success()->title('Isian tersimpan')->send();
         $this->fillFromRequisition();
+    }
+
+    /** Izin mengisi form pada tahapnya saat ini. */
+    public static function canFill(Requisition $requisition): bool
+    {
+        $user = auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        return $requisition->isApproved()
+            ? $user->can('requisition.check')
+            : $user->can('production.manage');
     }
 
     /**
@@ -290,11 +439,11 @@ class RequisitionForm extends Page implements HasForms
             Actions\Action::make('simpan')
                 ->label('Simpan Isian')
                 ->icon('heroicon-m-check')
-                ->authorize('production.manage')
                 ->visible(function () {
                     $requisition = $this->getRequisition();
 
                     return $requisition !== null
+                        && static::canFill($requisition)
                         && ($requisition->isDraft() || $requisition->isApproved() || ($requisition->isChecked() && ! $this->getOrder()->fresh()->isCompleted()));
                 })
                 ->action(fn () => $this->save()),
@@ -329,7 +478,7 @@ class RequisitionForm extends Page implements HasForms
                 ->color('success')
                 ->visible(fn () => $this->getRequisition()?->isApproved() ?? false)
                 ->requiresConfirmation()
-                ->modalDescription('Menandai barang sudah dibeli & diperiksa. Stok Awal (untuk bahan yang belum punya kartu stok) dan jumlah Diterima (= Beli bila kosong) akan dicatat ke kartu stok. Langkah ini tidak bisa diulang.')
+                ->modalDescription('Menandai barang sudah diterima & diperiksa. Jumlah Diterima (= Beli bila kosong) dicatat ke kartu stok dengan harga beli, pembelian bahan baku beserta kas keluar / hutangnya dibuat otomatis, dan barang ditolak yang tetap dibayar masuk Kerugian Barang Rusak. Langkah ini tidak bisa diulang.')
                 ->action(function () {
                     // Isian "Diterima" yang belum disimpan ikut dibawa.
                     $this->save();
@@ -342,7 +491,16 @@ class RequisitionForm extends Page implements HasForms
                         return;
                     }
 
-                    Notification::make()->success()->title('Barang tercatat masuk ke kartu stok')->send();
+                    $fresh = $this->getRequisition();
+                    $jumlah = $fresh?->purchases()->count() ?? 0;
+                    $nilai = (float) ($fresh?->purchases()->sum('total_value') ?? 0);
+
+                    Notification::make()->success()
+                        ->title('Barang tercatat masuk ke kartu stok')
+                        ->body($jumlah > 0
+                            ? $jumlah.' pembelian bahan baku dibuat ('.($fresh->paymentTypeLabel() ?? '').'), Rp '.number_format($nilai, 0, ',', '.').'.'
+                            : 'Tidak ada pembelian: seluruh kebutuhan dipenuhi dari stok.')
+                        ->send();
                     $this->fillFromRequisition();
                 }),
 

@@ -2,11 +2,14 @@
 
 namespace App\Services;
 
+use App\Models\ExpenseCategory;
+use App\Models\InventoryItem;
 use App\Models\InventoryMovement;
 use App\Models\InventoryPurchase;
 use App\Models\ProductionOrder;
 use App\Models\Requisition;
 use App\Models\RequisitionLine;
+use App\Support\Settings\Settings;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -31,6 +34,7 @@ class RequisitionService
     public function __construct(
         protected ProductionOrderService $orders,
         protected InventoryLedgerService $ledger,
+        protected InventoryPurchaseFlowService $purchases,
     ) {}
 
     /**
@@ -185,10 +189,28 @@ class RequisitionService
      */
     public function recordReceivedQty(RequisitionLine $line, ?float $receivedQty): RequisitionLine
     {
+        return $this->recordReceipt($line, $receivedQty);
+    }
+
+    /**
+     * Catat penerimaan satu baris: jumlah diterima, alasan & perlakuan barang
+     * yang ditolak, dan harga beli aktual dari nota. Ditolak selalu = Beli -
+     * Diterima; yang disimpan hanya alasan dan perlakuannya.
+     *
+     * Kelengkapan (alasan wajib bila ada yang ditolak) baru dituntut saat
+     * Periksa, supaya isian bisa disimpan bertahap.
+     */
+    public function recordReceipt(
+        RequisitionLine $line,
+        ?float $receivedQty,
+        ?string $rejectedReason = null,
+        ?string $rejectedTreatment = null,
+        ?float $purchasePrice = null,
+    ): RequisitionLine {
         $requisition = $line->requisition;
 
         if (! $requisition->isApproved()) {
-            throw new RuntimeException('Form '.$requisition->number.' belum disetujui atau sudah diperiksa; jumlah diterima hanya dicatat di antaranya.');
+            throw new RuntimeException('Form '.$requisition->number.' belum disetujui atau sudah diperiksa; penerimaan hanya dicatat di antaranya.');
         }
 
         if ($receivedQty !== null && $receivedQty < 0) {
@@ -199,10 +221,109 @@ class RequisitionService
             throw new RuntimeException('Diterima untuk '.$line->name.' melebihi Beli ('.(float) $line->purchase_qty.' '.$line->unit.'). Kelebihan kiriman dicatat sebagai pembelian terpisah.');
         }
 
+        if ($rejectedTreatment !== null && ! array_key_exists($rejectedTreatment, RequisitionLine::rejectTreatmentOptions())) {
+            throw new RuntimeException('Perlakuan barang ditolak tidak dikenal: '.$rejectedTreatment);
+        }
+
+        if ($purchasePrice !== null && $purchasePrice < 0) {
+            throw new RuntimeException('Harga beli tidak boleh negatif.');
+        }
+
         $line->received_qty = $receivedQty === null ? null : round($receivedQty, 4);
+        $line->rejected_qty = $line->rejectedQty();
+        $line->rejected_reason = $line->rejected_qty > 0 ? ($rejectedReason ?: null) : null;
+        $line->rejected_treatment = $line->rejected_qty > 0
+            ? ($rejectedTreatment ?? app(Settings::class)->get('requisition.reject_default_treatment'))
+            : null;
+        $line->purchase_price = $purchasePrice === null ? null : round($purchasePrice, 4);
         $line->save();
 
         return $line;
+    }
+
+    /**
+     * Cara pembayaran belanja untuk form ini (tunai: kategori + akun kas;
+     * kredit: supplier + jatuh tempo). Dipakai saat Periksa untuk membuat
+     * pembelian bahan baku beserta kas keluar / hutangnya.
+     *
+     * @param  array{payment_type?: ?string, expense_category_id?: mixed, cash_account_id?: mixed, supplier_name?: ?string, due_date?: mixed}  $data
+     */
+    public function recordPaymentHeader(Requisition $requisition, array $data): Requisition
+    {
+        if (! $requisition->isApproved()) {
+            throw new RuntimeException('Form '.$requisition->number.' belum disetujui atau sudah diperiksa; cara pembayaran hanya dicatat di antaranya.');
+        }
+
+        $type = $data['payment_type'] ?? null;
+
+        if ($type !== null && ! array_key_exists($type, Requisition::paymentTypeOptions())) {
+            throw new RuntimeException('Jenis pembayaran tidak dikenal: '.$type);
+        }
+
+        $requisition->update([
+            'payment_type' => $type,
+            'expense_category_id' => $type === 'cash' ? ($data['expense_category_id'] ?: $this->defaultPurchaseCategoryId()) : null,
+            'cash_account_id' => $type === 'cash' ? ($data['cash_account_id'] ?: null) : null,
+            'supplier_name' => filled($data['supplier_name'] ?? null) ? trim((string) $data['supplier_name']) : null,
+            'due_date' => $type === 'payable' ? ($data['due_date'] ?: null) : null,
+        ]);
+
+        return $requisition;
+    }
+
+    /** Kategori Pembelian Stok bawaan bila hanya ada satu yang aktif. */
+    public function defaultPurchaseCategoryId(): ?int
+    {
+        $ids = ExpenseCategory::query()
+            ->where('expense_mode', ExpenseCategory::MODE_INVENTORY_PURCHASE)
+            ->where('is_active', true)
+            ->pluck('id');
+
+        return $ids->count() === 1 ? (int) $ids->first() : null;
+    }
+
+    /**
+     * Yang menghalangi Periksa. Kosong berarti siap.
+     *
+     * @return list<string>
+     */
+    public function checkBlockers(Requisition $requisition): array
+    {
+        $blockers = [];
+        $lines = $requisition->lines()->get();
+        $adaPembelian = false;
+
+        foreach ($lines as $line) {
+            if ($line->rejectedQty() > 0 && blank($line->rejected_reason)) {
+                $blockers[] = $line->name.': '.$this->qty($line->rejectedQty()).' '.$line->unit.' ditolak tanpa alasan.';
+            }
+
+            if ($line->receivedQty() > 0 && ($line->purchasePrice() === null || $line->purchasePrice() <= 0)) {
+                $blockers[] = $line->name.': harga beli belum diisi.';
+            }
+
+            if ($line->receivedQty() > 0 || $line->damagedValue() > 0) {
+                $adaPembelian = true;
+            }
+        }
+
+        if ($adaPembelian) {
+            if ($requisition->payment_type === null) {
+                $blockers[] = 'Pilih cara pembayaran belanja (tunai / kredit).';
+            } elseif ($requisition->payment_type === 'cash') {
+                if (! $requisition->cash_account_id) {
+                    $blockers[] = 'Pilih akun kas untuk pembelian tunai.';
+                }
+
+                if (! $requisition->expense_category_id) {
+                    $blockers[] = 'Pilih kategori pengeluaran (Pembelian Stok) untuk pembelian tunai.';
+                }
+            } elseif (blank($requisition->supplier_name)) {
+                $blockers[] = 'Isi nama supplier untuk pembelian kredit.';
+            }
+        }
+
+        return $blockers;
     }
 
     public function check(Requisition $requisition, ?int $userId = null): Requisition
@@ -211,14 +332,24 @@ class RequisitionService
             throw new RuntimeException('Form '.$requisition->number.' belum disetujui, atau sudah diperiksa.');
         }
 
+        $blockers = $this->checkBlockers($requisition);
+
+        if ($blockers !== []) {
+            throw new RuntimeException('Belum bisa diperiksa: '.implode(' ', $blockers));
+        }
+
         return DB::transaction(function () use ($requisition, $userId) {
             $order = $requisition->productionOrder;
             $date = $order->production_date->toDateString();
             $lines = $requisition->lines()->get();
             $fresh = $this->ledger->withoutHistory($lines->pluck('inventory_item_id')->all());
+            $updateMasterPrice = app(Settings::class)->bool('requisition.update_master_price');
 
             foreach ($lines as $line) {
                 $price = $line->unit_price === null ? null : (float) $line->unit_price;
+                // Pembelian dinilai dengan harga beli aktual (bila dicatat), bukan
+                // harga master saat form disusun.
+                $buyPrice = $line->purchasePrice();
 
                 if (in_array($line->inventory_item_id, $fresh, true) && $line->opening_stock_qty !== null) {
                     $this->ledger->post(
@@ -246,7 +377,7 @@ class RequisitionService
                         $line->receivedQty(),
                         $line->unit,
                         $date,
-                        $price,
+                        $buyPrice,
                         [
                             'requisition_line_id' => $line->id,
                             'production_order_id' => $order->id,
@@ -254,6 +385,12 @@ class RequisitionService
                             'created_by' => $userId,
                         ],
                     );
+                }
+
+                $this->recordPurchases($requisition, $line, $date, $userId);
+
+                if ($updateMasterPrice) {
+                    $this->syncMasterPrice($requisition, $line);
                 }
             }
 
@@ -265,6 +402,91 @@ class RequisitionService
 
             return $requisition;
         });
+    }
+
+    /**
+     * Pembelian bahan baku dari satu baris: yang diterima (kondisi Baik) dan,
+     * bila barang ditolak tetap dibayar, satu lagi berkondisi Tidak Baik yang
+     * nilainya masuk Kerugian Barang Rusak. Kas keluar / hutangnya ikut
+     * terbentuk lewat InventoryPurchaseFlowService, jalur yang sama dengan
+     * modul Pengeluaran.
+     */
+    protected function recordPurchases(Requisition $requisition, RequisitionLine $line, string $date, ?int $userId): void
+    {
+        $price = $line->purchasePrice();
+
+        if ($price === null || $price <= 0) {
+            return;
+        }
+
+        $base = [
+            'inventory_item_id' => $line->inventory_item_id,
+            'requisition_id' => $requisition->id,
+            'transaction_date' => $date,
+            'unit_cost' => $price,
+            'payment_type' => $requisition->payment_type,
+            'expense_category_id' => $requisition->expense_category_id,
+            'cash_account_id' => $requisition->cash_account_id,
+            'supplier_name' => $requisition->supplier_name,
+            'due_date' => $requisition->due_date?->toDateString(),
+        ];
+
+        if ($line->receivedQty() > 0) {
+            $purchase = $this->purchases->create($base + [
+                'qty' => $line->receivedQty(),
+                'condition' => InventoryPurchase::CONDITION_GOOD,
+                'notes' => 'Pembelian '.$line->name.' untuk '.$requisition->number,
+            ], $userId);
+
+            $line->inventory_purchase_id = $purchase->id;
+        }
+
+        if ($line->damagedValue() > 0) {
+            $damaged = $this->purchases->create($base + [
+                'qty' => $line->rejectedQty(),
+                'condition' => InventoryPurchase::CONDITION_DAMAGED,
+                'condition_notes' => $line->rejected_reason,
+                'notes' => 'Barang ditolak (dibayar) '.$line->name.' untuk '.$requisition->number,
+            ], $userId);
+
+            $line->damaged_purchase_id = $damaged->id;
+        }
+
+        $line->save();
+    }
+
+    /**
+     * Harga beli dari nota menjadi harga master bahan (SSOT harga), tercatat
+     * di histori harga dengan sumber nomor form -- supaya HPP resep berikutnya
+     * memakai harga terbaru dan lonjakannya bisa dijelaskan.
+     */
+    protected function syncMasterPrice(Requisition $requisition, RequisitionLine $line): void
+    {
+        $price = $line->purchasePrice();
+
+        if ($line->purchase_price === null || $price === null || $price <= 0 || $line->receivedQty() <= 0) {
+            return;
+        }
+
+        $item = InventoryItem::query()->find($line->inventory_item_id);
+
+        if (! $item || $item->unit !== $line->unit || abs((float) ($item->effectiveUnitPrice() ?? 0) - $price) < 0.00005) {
+            return;
+        }
+
+        $previous = InventoryItem::$priceChangeSource;
+        InventoryItem::$priceChangeSource = 'Form '.$requisition->number;
+
+        try {
+            $item->update(['unit_price' => $price]);
+        } finally {
+            InventoryItem::$priceChangeSource = $previous;
+        }
+    }
+
+    protected function qty(float $value): string
+    {
+        return rtrim(rtrim(number_format($value, 4, ',', '.'), '0'), ',');
     }
 
     /**

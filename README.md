@@ -18,7 +18,7 @@ menggantikan HPP residual opname dengan pemakaian bahan riil dari resep × produ
 |---|---|---|
 | 1 | Item inventaris bertingkat (bucket → bahan), pembelian, opname, saldo awal, laporan mutasi, import/export Excel | Inventory |
 | 2 | Resep & sub-resep, Analisa HPP, aturan konversi satuan per bahan + pendeteksi pasangan yang belum diatur, Bahan Belum Cocok (pencocokan nama), import/export resep | Inventory |
-| 3 | SPK Produksi dari slot SPK/PO, Form Kebutuhan bertahap (Dibuat → Disetujui → Diperiksa → Tutup SPK), kartu stok per bahan, lembar kerja, plating, PDF, Perbandingan HPP resep vs opname | Produksi |
+| 3 | SPK Produksi dari slot SPK/PO, Form Kebutuhan bertahap (Dibuat → Disetujui → Penerimaan barang: diterima/ditolak/harga beli → Diperiksa: kartu stok + Pembelian Bahan Baku + kas/hutang otomatis → Tutup SPK), kartu stok per bahan, lembar kerja, plating, PDF, Perbandingan HPP resep vs opname | Produksi |
 | 4 | Izin modul (spatie permission) per peran, Pengaturan modul, cangkang & menu 3S terpadu (satu sumber untuk Blade dan Filament), validasi & pembersihan pasca migrasi, runbook cutover & UAT | Sistem |
 
 Dokumen:

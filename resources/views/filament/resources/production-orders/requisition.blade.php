@@ -29,11 +29,23 @@
             </div>
         </div>
 
-        <div class="sh-kpi-cell">
-            <p class="sh-kpi-label">Perkiraan Biaya Bahan</p>
-            <p class="sh-kpi-value">{{ $requisition ? $rupiah($requisition->lines->sum(fn ($l) => (float) $l->required_qty * (float) ($l->unit_price ?? 0))) : '-' }}</p>
-            <p class="sh-kpi-note">Kebutuhan × harga satuan bahan</p>
-        </div>
+        @if ($requisition?->isChecked())
+            @php
+                $pembelian = $requisition->purchases()->get();
+                $rusak = $pembelian->where('condition', \App\Models\InventoryPurchase::CONDITION_DAMAGED)->sum('total_value');
+            @endphp
+            <div class="sh-kpi-cell">
+                <p class="sh-kpi-label">Pembelian Tercatat</p>
+                <p class="sh-kpi-value">{{ $rupiah($pembelian->sum('total_value')) }}</p>
+                <p class="sh-kpi-note">{{ $pembelian->count() }} pembelian · {{ $requisition->paymentTypeLabel() ?? '-' }}@if ($rusak > 0) · rusak {{ $rupiah($rusak) }}@endif</p>
+            </div>
+        @else
+            <div class="sh-kpi-cell">
+                <p class="sh-kpi-label">Perkiraan Biaya Bahan</p>
+                <p class="sh-kpi-value">{{ $requisition ? $rupiah($requisition->lines->sum(fn ($l) => (float) $l->required_qty * (float) ($l->unit_price ?? 0))) : '-' }}</p>
+                <p class="sh-kpi-note">Kebutuhan × harga master bahan</p>
+            </div>
+        @endif
     </div>
 
     @if (! $requisition)
@@ -82,7 +94,7 @@
                 @if ($requisition->isDraft())
                     Isi Stok Awal hasil hitungan fisik; Beli = Kebutuhan − Stok Awal dan boleh dibulatkan ke kemasan. Simpan lalu Setujui.
                 @elseif ($requisition->isApproved())
-                    Isian dikunci. Tekan "Periksa" setelah barang dibeli dan diperiksa.
+                    Saat barang datang: isi Diterima (yang ditolak = Beli − Diterima, beri alasannya), Harga Beli dari nota, dan cara pembayaran. Simpan, lalu tekan "Periksa" — stok, pembelian, dan kas/hutang tercatat sekaligus.
                 @elseif (! $order->isCompleted())
                     Barang sudah tercatat masuk. Isi Pemakaian Aktual dan Sisa Stok bila dihitung, lalu Tutup SPK.
                 @else

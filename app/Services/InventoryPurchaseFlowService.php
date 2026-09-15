@@ -62,6 +62,53 @@ class InventoryPurchaseFlowService
         return $purchase->refresh();
     }
 
+    /**
+     * Buat pembelian baru beserta jurnal kas/hutangnya.
+     *
+     * Dipakai Form Kebutuhan saat Periksa: satu pembelian per baris bahan
+     * dengan qty & harga beli yang sebenarnya, supaya nilai per bahan terbaca
+     * di HPP dan nota tidak perlu diinput ulang oleh accounting.
+     *
+     * @param  array<string, mixed>  $data  inventory_item_id, transaction_date, qty, unit_cost,
+     *                                      payment_type, expense_category_id/cash_account_id (tunai),
+     *                                      supplier_name/due_date (kredit), condition, condition_notes,
+     *                                      requisition_id, notes
+     */
+    public function create(array $data, ?int $actorId = null): InventoryPurchase
+    {
+        // Nilai dihitung dari harga presisi penuh (harga per gram bisa 4 desimal),
+        // baru harga satuannya disimpan 2 desimal.
+        $qty = round((float) $data['qty'], 2);
+        $unitCost = round((float) $data['unit_cost'], 2);
+        $data['total_cost'] = round((float) $data['qty'] * (float) $data['unit_cost'], 2);
+        $data = $this->normalize($data);
+        $this->assertFlowRequirements($data);
+
+        return DB::transaction(function () use ($data, $qty, $unitCost, $actorId) {
+            $purchase = InventoryPurchase::query()->create([
+                'inventory_item_id' => $data['inventory_item_id'],
+                'requisition_id' => $data['requisition_id'] ?? null,
+                'transaction_date' => $data['transaction_date'],
+                'qty' => $qty,
+                'unit_cost' => $unitCost,
+                'total_value' => $data['total_cost'],
+                'payment_type' => $data['payment_type'],
+                'condition' => $data['condition'] ?? InventoryPurchase::CONDITION_GOOD,
+                'condition_notes' => $data['condition_notes'] ?? null,
+                'condition_checked_at' => now(),
+                'condition_checked_by' => $actorId,
+                'supplier_name' => $data['supplier_name'] ?? null,
+                'notes' => $data['notes'] ?? null,
+                'created_by' => $actorId,
+                'updated_by' => $actorId,
+            ]);
+
+            $this->syncFinancialFlow($purchase, $data, $actorId);
+
+            return $purchase->refresh();
+        });
+    }
+
     /** Hapus pembelian beserta jurnal yang menempel padanya. */
     public function delete(InventoryPurchase $purchase): void
     {

@@ -1,16 +1,9 @@
 <?php
 
-use App\Models\Area;
-use App\Models\Customer;
-use App\Models\InventoryItem;
 use App\Models\InventoryMovement;
-use App\Models\Product;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderLine;
-use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
-use App\Models\Recipe;
-use App\Models\RecipeItem;
 use App\Models\Requisition;
 use App\Models\Spk;
 use App\Models\User;
@@ -32,62 +25,7 @@ use Spatie\Permission\Models\Role;
  * belum diperiksa, menghasilkan HPP yang salah tanpa satu pun peringatan --
  * dan angka itu yang akan menggantikan residual opname di Laba Rugi.
  */
-function siapkanProduksi(): array
-{
-    $bucket = InventoryItem::query()->create([
-        'name' => 'Bahan Baku', 'unit' => 'All',
-        'category' => InventoryItem::CATEGORY_RAW_MATERIAL, 'is_active' => true,
-    ]);
-
-    $tepung = InventoryItem::query()->create([
-        'parent_id' => $bucket->id, 'name' => 'Tepung Terigu', 'unit' => 'kg',
-        'category' => InventoryItem::CATEGORY_RAW_MATERIAL, 'unit_price' => 12000, 'is_active' => true,
-    ]);
-
-    $minyak = InventoryItem::query()->create([
-        'parent_id' => $bucket->id, 'name' => 'Minyak Goreng', 'unit' => 'liter',
-        'category' => InventoryItem::CATEGORY_RAW_MATERIAL, 'unit_price' => 20000, 'is_active' => true,
-    ]);
-
-    $product = Product::query()->create(['name' => 'Gorengan 10K', 'unit' => 'porsi', 'base_price' => 10000, 'active' => true]);
-    $tanpaResep = Product::query()->create(['name' => 'Es Teh', 'unit' => 'cup', 'base_price' => 5000, 'active' => true]);
-
-    // Resep untuk 10 porsi: 250 gr tepung + 150 ml minyak.
-    $recipe = Recipe::query()->create([
-        'name' => 'Gorengan', 'jenis' => Recipe::JENIS_UTAMA, 'product_id' => $product->id,
-        'yield_qty' => 10, 'yield_unit' => 'porsi', 'ohc_pct' => 0.4, 'profit_pct' => 0.25,
-    ]);
-    RecipeItem::query()->create(['recipe_id' => $recipe->id, 'inventory_item_id' => $tepung->id, 'raw_name' => 'tepung', 'qty' => 250, 'unit' => 'gr']);
-    RecipeItem::query()->create(['recipe_id' => $recipe->id, 'inventory_item_id' => $minyak->id, 'raw_name' => 'minyak', 'qty' => 150, 'unit' => 'ml']);
-
-    $area = Area::query()->create(['name' => 'Area Produksi', 'code' => 'APR']);
-    $customer = Customer::query()->create(['name' => 'Pelanggan Produksi', 'area_id' => $area->id, 'is_lapak' => false]);
-
-    $pj = User::factory()->create(['is_active' => true, 'force_password_change' => false]);
-    $spk = Spk::query()->create([
-        'scheduled_at' => '2026-09-15 07:00:00', 'slot_type' => 'fixed_07',
-        'status' => 'draft', 'responsible_user_id' => $pj->id,
-    ]);
-
-    $pos = [];
-
-    foreach ([30, 50] as $qty) {
-        $po = PurchaseOrder::query()->create([
-            'customer_id' => $customer->id, 'recipient_name' => 'Pelanggan', 'shipping_address' => 'Jl.',
-            'area_id' => $area->id, 'delivery_date' => '2026-09-15', 'delivery_time' => '09:00:00',
-            'payment_type' => 'cash', 'status' => 'pending',
-            'created_by' => $pj->id, 'updated_by' => $pj->id,
-        ]);
-        PurchaseOrderItem::query()->create(['purchase_order_id' => $po->id, 'product_id' => $product->id, 'qty' => $qty, 'unit' => 'porsi']);
-        $spk->purchaseOrders()->attach($po->id);
-        $pos[] = $po;
-    }
-
-    // Item yang produknya belum punya resep.
-    PurchaseOrderItem::query()->create(['purchase_order_id' => $pos[0]->id, 'product_id' => $tanpaResep->id, 'qty' => 20, 'unit' => 'cup']);
-
-    return compact('bucket', 'tepung', 'minyak', 'recipe', 'spk', 'pos', 'product', 'tanpaResep');
-}
+// siapkanProduksi() ada di tests/Pest.php (dipakai juga oleh tes penerimaan barang).
 
 it('menyusun spk produksi dari po lewat produk ke resep', function () {
     $d = siapkanProduksi();
@@ -217,6 +155,7 @@ it('memposting saldo awal dan pembelian ke ledger hanya saat diperiksa, sekali s
     expect(InventoryMovement::query()->count())->toBe(0);
 
     $service->approve($requisition->fresh());
+    bayarTunai($requisition->fresh());
     $service->check($requisition->fresh());
 
     // Tepung: opening 0,5 + purchase 1,5 = 2 kg. Minyak: opening 3, tanpa purchase.
@@ -253,6 +192,10 @@ it('hanya memasukkan jumlah yang diterima layak ke ledger, bukan yang datang rus
     $service->recordReceivedQty($tepung->fresh(), 1.0);
     expect(fn () => $service->recordReceivedQty($tepung->fresh(), 2.0))->toThrow(RuntimeException::class, 'melebihi Beli');
 
+    // Yang ditolak wajib beralasan, dan belanja wajib punya cara pembayaran.
+    expect(fn () => $service->check($requisition->fresh()))->toThrow(RuntimeException::class, 'ditolak tanpa alasan');
+    $service->recordReceipt($tepung->fresh(), 1.0, 'datang rusak');
+    bayarTunai($requisition->fresh());
     $service->check($requisition->fresh());
 
     // Tepung: opening 0,5 + diterima 1 = 1,5 (bukan 2). Minyak tanpa catatan diterima: masuk sejumlah Beli.
@@ -281,6 +224,7 @@ it('tidak memposting saldo awal lagi untuk bahan yang sudah punya ledger', funct
     }
 
     $service->approve($requisition->fresh());
+    bayarTunai($requisition->fresh());
     $service->check($requisition->fresh());
 
     // Stok Awal 4 kg di form kedua bukan saldo pembuka; kalau diposting lagi,
@@ -308,6 +252,7 @@ it('memposting pemakaian dan penyesuaian saat spk ditutup, lalu menolak penutupa
     expect(fn () => $completion->complete($order->fresh()))->toThrow(RuntimeException::class);
 
     $service->approve($requisition->fresh());
+    bayarTunai($requisition->fresh());
     $service->check($requisition->fresh());
 
     // Dapur mencatat: tepung dipakai 2,2 kg (lebih dari resep), sisa fisik 0.
@@ -342,6 +287,7 @@ it('membawa pemakaian resep ke laporan pemakaian bahan sebagai pembanding residu
         $service->fillOpeningStock($line, 0);
     }
     $service->approve($requisition->fresh());
+    bayarTunai($requisition->fresh());
     $service->check($requisition->fresh());
     app(ProductionCompletionService::class)->complete($order->fresh());
 

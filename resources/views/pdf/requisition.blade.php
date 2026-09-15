@@ -11,6 +11,8 @@
     $qty = fn ($v) => $v === null ? '' : rtrim(rtrim(number_format((float) $v, 4, ',', '.'), '0'), ',');
     $rupiah = fn ($v) => $v === null ? '' : number_format((float) $v, 0, ',', '.');
     $totalBeli = $requisition->lines->sum(fn ($l) => (float) ($l->purchase_qty ?? 0) * (float) ($l->unit_price ?? 0));
+    $sudahDiterima = ! $requisition->isDraft();
+    $totalAktual = $requisition->lines->sum(fn ($l) => $l->purchaseValue() + $l->damagedValue());
 @endphp
 
 <h1>Form Kebutuhan, Stok &amp; Pembelian Barang</h1>
@@ -32,8 +34,9 @@
             <th class="right" style="width: 64px">Stok Awal</th>
             <th class="right" style="width: 64px">Beli</th>
             <th class="right" style="width: 56px">Diterima</th>
+            <th class="right" style="width: 56px">Ditolak</th>
             <th class="right" style="width: 64px">Harga</th>
-            <th class="right" style="width: 72px">Perkiraan</th>
+            <th class="right" style="width: 72px">{{ $sudahDiterima ? 'Nilai' : 'Perkiraan' }}</th>
             <th class="right" style="width: 64px">Pemakaian</th>
             <th class="right" style="width: 56px">Sisa</th>
         </tr>
@@ -48,15 +51,16 @@
                 <td class="right">{!! $line->opening_stock_qty === null ? '<span class="fill"></span>' : $qty($line->opening_stock_qty) !!}</td>
                 <td class="right">{!! $line->purchase_qty === null ? '<span class="fill"></span>' : $qty($line->purchase_qty) !!}</td>
                 <td class="right">{!! $line->received_qty === null ? '<span class="fill"></span>' : $qty($line->received_qty) !!}</td>
-                <td class="right">{{ $rupiah($line->unit_price) }}</td>
-                <td class="right">{{ $rupiah((float) ($line->purchase_qty ?? 0) * (float) ($line->unit_price ?? 0)) }}</td>
+                <td class="right">{!! $line->received_qty === null ? '<span class="fill"></span>' : $qty($line->rejectedQty()) !!}@if ($line->rejectedQty() > 0 && $line->rejected_reason)<br><span class="muted">{{ $line->rejected_reason }}@if ($line->rejected_treatment === \App\Models\RequisitionLine::REJECT_PAID) · dibayar@endif</span>@endif</td>
+                <td class="right">{{ $rupiah($sudahDiterima ? $line->purchasePrice() : $line->unit_price) }}</td>
+                <td class="right">{{ $rupiah($sudahDiterima ? $line->purchaseValue() + $line->damagedValue() : (float) ($line->purchase_qty ?? 0) * (float) ($line->unit_price ?? 0)) }}</td>
                 <td class="right">{!! $line->actual_used_qty === null ? '<span class="fill"></span>' : $qty($line->actual_used_qty) !!}</td>
                 <td class="right">{!! $line->remaining_qty === null ? '<span class="fill"></span>' : $qty($line->remaining_qty) !!}</td>
             </tr>
         @endforeach
         <tr class="total">
-            <td colspan="8" class="right">Perkiraan total pembelian</td>
-            <td class="right">{{ $rupiah($totalBeli) }}</td>
+            <td colspan="9" class="right">{{ $sudahDiterima ? 'Total pembelian' : 'Perkiraan total pembelian' }}@if ($requisition->paymentTypeLabel()) ({{ $requisition->paymentTypeLabel() }}@if ($requisition->supplier_name) · {{ $requisition->supplier_name }}@endif)@endif</td>
+            <td class="right">{{ $rupiah($sudahDiterima ? $totalAktual : $totalBeli) }}</td>
             <td colspan="2"></td>
         </tr>
     </tbody>

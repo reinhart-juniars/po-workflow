@@ -60,8 +60,9 @@ Legenda kolom "Wajib": W = wajib untuk serah terima, O = opsional/dicatat saja.
 | D5 | Form Kebutuhan → Susun Form (`production`) | Baris per bahan: Kebutuhan, Stok Awal kosong, Beli = usulan; masalah konversi disebutkan | W | | |
 | D6 | Isi Stok Awal semua baris → Simpan → muat ulang | Isian tersimpan; Beli menyesuaikan (Kebutuhan − Stok Awal) | W | | |
 | D7 | Setujui (`admin`/`owner`) | Status Disetujui; Stok Awal & Beli terkunci | W | | |
-| D7a | Pada tahap Disetujui, isi kolom Diterima lebih kecil dari Beli untuk satu bahan (barang datang rusak) | Tersimpan; kolom lain terkunci | W | | |
-| D8 | Periksa (`accounting`/`admin`) | Status Diperiksa; Kartu Stok berisi opening (hanya bahan tanpa riwayat) + purchase **sejumlah Diterima** (bahan rusak tidak menambah stok) | W | | |
+| D7a | Penerimaan barang (`inventory`/`accounting`/`admin`): isi Diterima lebih kecil dari Beli untuk satu bahan, Alasan Ditolak, Perlakuan (Retur / Dibayar), Harga Beli dari nota, dan cara pembayaran (Tunai: kategori + akun kas; Kredit: supplier + jatuh tempo) → Simpan | Tersimpan; Ditolak = Beli − Diterima tampil otomatis; peran `production` tidak bisa menyimpan di tahap ini | W | | |
+| D7b | Periksa tanpa alasan tolak / harga beli / cara pembayaran | Ditolak dengan pesan "Belum bisa diperiksa: …" yang menyebut kekurangannya | W | | |
+| D8 | Periksa (`inventory`/`accounting`/`admin`) | Status Diperiksa; Kartu Stok berisi opening (hanya bahan tanpa riwayat) + purchase **sejumlah Diterima dengan Harga Beli**; Pembelian Bahan Baku dibuat otomatis per bahan (tertaut ke form) beserta Kas Keluar / Hutang senilai sama; barang ditolak-**Dibayar** menjadi pembelian Tidak Baik (Kerugian Barang Rusak), ditolak-**Retur** tidak dibayar; harga master bahan mengikuti Harga Beli (histori harga: "Form FKB-…") bila pengaturannya aktif | W | | |
 | D9 | Cetak Form | PDF dengan kolom tanda tangan | W | | |
 | D10 | Isi Pemakaian Aktual & Sisa Stok → Tutup SPK (`production`) | Status SPK selesai; Kartu Stok berisi usage (negatif) + adjustment; notifikasi nilai pemakaian | W | | |
 | D11 | Coba Tutup SPK lagi / Periksa lagi | Ditolak (tidak bisa diulang) | W | | |

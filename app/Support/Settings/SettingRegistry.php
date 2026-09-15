@@ -71,6 +71,21 @@ class SettingRegistry
                 'default' => false,
                 'help' => 'Usulan Beli (Kebutuhan - Stok Awal) dibulatkan ke bilangan bulat satuan harga, karena pembelian biasanya per kemasan utuh.',
             ],
+            'requisition.reject_default_treatment' => [
+                'group' => 'Form Kebutuhan',
+                'label' => 'Perlakuan bawaan barang ditolak',
+                'type' => self::TYPE_SELECT,
+                'default' => 'retur',
+                'options' => ['retur' => 'Retur / tidak dibayar', 'dibayar' => 'Dibayar (kerugian barang rusak)'],
+                'help' => 'Dipakai bila petugas penerimaan tidak memilih perlakuan untuk barang yang ditolak.',
+            ],
+            'requisition.update_master_price' => [
+                'group' => 'Form Kebutuhan',
+                'label' => 'Harga beli memperbarui harga master bahan',
+                'type' => self::TYPE_BOOL,
+                'default' => true,
+                'help' => 'Saat Periksa, harga beli dari nota menjadi harga bahan (tercatat di histori harga) sehingga HPP resep memakai harga terbaru.',
+            ],
             'production.require_remaining_on_close' => [
                 'group' => 'Form Kebutuhan',
                 'label' => 'Wajib isi Sisa Stok sebelum Tutup SPK',

@@ -120,14 +120,25 @@ it('menjalankan form kebutuhan dari susun sampai spk ditutup lewat halaman', fun
 
     // Tahap Disetujui: kolom Diterima terbuka; 0,25 kg datang rusak -> diterima 0,5.
     // Periksa memakai isian yang belum disimpan itu.
+    // Cara pembayaran & alasan tolak ikut diisi di halaman yang sama.
+    $bayar = bayarTunai($requisition->fresh());
     Livewire::test(ProductionOrderResource\Pages\RequisitionForm::class, ['record' => $order->id])
-        ->fillForm(['lines' => [['id' => $line->id, 'received_qty' => 0.5]]])
+        ->fillForm([
+            'payment_type' => 'cash',
+            'expense_category_id' => $bayar['category']->id,
+            'cash_account_id' => $bayar['cash_account']->id,
+            'lines' => [['id' => $line->id, 'received_qty' => 0.5, 'rejected_reason' => 'kemasan sobek', 'purchase_price' => 13000]],
+        ])
         ->callAction('periksa')
         ->assertHasNoActionErrors();
     expect($requisition->fresh()->status)->toBe(Requisition::STATUS_CHECKED)
         ->and((float) $line->fresh()->received_qty)->toBe(0.5)
+        ->and($line->fresh()->rejected_reason)->toBe('kemasan sobek')
         ->and(InventoryMovement::query()->count())->toBe(2)
-        ->and((float) InventoryMovement::query()->ofType(InventoryMovement::TYPE_PURCHASE)->sum('qty'))->toBe(0.5);
+        ->and((float) InventoryMovement::query()->ofType(InventoryMovement::TYPE_PURCHASE)->sum('qty'))->toBe(0.5)
+        // Pembelian 0,5 kg x Rp 13.000 tercatat tunai; harga master ikut nota.
+        ->and((float) $requisition->fresh()->purchases()->sum('total_value'))->toBe(6500.0)
+        ->and((float) $line->fresh()->item->unit_price)->toBe(13000.0);
 
     // Catat aktual 1,1 kg lalu tutup: pemakaian terposting, SPK selesai.
     Livewire::test(ProductionOrderResource\Pages\RequisitionForm::class, ['record' => $order->id])
@@ -193,6 +204,7 @@ it('menampilkan daftar form, ledger, dan perbandingan hpp', function () {
     $requisition = $service->build($order)['requisition'];
     $service->fillOpeningStock($requisition->lines[0], 0);
     $service->approve($requisition->fresh());
+    bayarTunai($requisition->fresh());
     $service->check($requisition->fresh());
     app(\App\Services\ProductionCompletionService::class)->complete($order->fresh());
 

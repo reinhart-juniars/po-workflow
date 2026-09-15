@@ -33,13 +33,30 @@ class Requisition extends Model
         'checked_by',
         'checked_at',
         'notes',
+        'payment_type',
+        'expense_category_id',
+        'cash_account_id',
+        'supplier_name',
+        'due_date',
     ];
 
     protected $casts = [
         'prepared_at' => 'datetime',
         'approved_at' => 'datetime',
         'checked_at' => 'datetime',
+        'due_date' => 'date',
     ];
+
+    /** @return array<string, string> */
+    public static function paymentTypeOptions(): array
+    {
+        return ['cash' => 'Tunai', 'payable' => 'Kredit (Hutang)'];
+    }
+
+    public function paymentTypeLabel(): ?string
+    {
+        return self::paymentTypeOptions()[$this->payment_type] ?? null;
+    }
 
     protected static function booted(): void
     {
@@ -98,6 +115,16 @@ class Requisition extends Model
     public function purchases(): HasMany
     {
         return $this->hasMany(InventoryPurchase::class);
+    }
+
+    public function cashAccount(): BelongsTo
+    {
+        return $this->belongsTo(CashAccount::class);
+    }
+
+    public function expenseCategory(): BelongsTo
+    {
+        return $this->belongsTo(ExpenseCategory::class);
     }
 
     public function preparedBy(): BelongsTo

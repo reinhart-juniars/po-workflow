@@ -17,7 +17,12 @@ class InventoryPurchase extends Model
     protected static function booted(): void
     {
         static::saving(function (self $inventoryPurchase) {
-            $inventoryPurchase->total_value = (float) $inventoryPurchase->qty * (float) $inventoryPurchase->unit_cost;
+            // Nilai mengikuti qty x harga satuan, kecuali nilainya sendiri yang
+            // diisi eksplisit: harga per gram (4 desimal) dibulatkan ke 2 desimal
+            // di unit_cost, jadi qty x unit_cost bisa kehilangan rupiah.
+            if (! $inventoryPurchase->isDirty('total_value') || $inventoryPurchase->total_value === null) {
+                $inventoryPurchase->total_value = (float) $inventoryPurchase->qty * (float) $inventoryPurchase->unit_cost;
+            }
         });
     }
 

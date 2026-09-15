@@ -20,7 +20,7 @@ policy membuat build merah).
 | `production.view` / `production.manage` | SPK Produksi (buat dari slot, segarkan, siap, batalkan), Form Kebutuhan (susun, isi, simpan), Lembar Kerja, Plating, Pelaksana |
 | `production.complete` | Tutup SPK (posting pemakaian & penyesuaian ke kartu stok) |
 | `requisition.approve` | Setujui Form Kebutuhan |
-| `requisition.check` | Periksa Form Kebutuhan (barang dibeli; posting saldo awal & pembelian ke kartu stok) |
+| `requisition.check` | Penerimaan barang di Form Kebutuhan (Diterima/Ditolak/Harga Beli/cara pembayaran) dan Periksa (posting saldo awal & pembelian ke kartu stok, membuat Pembelian Bahan Baku + kas keluar / hutang) |
 | `ledger.view` | Kartu Stok (di UI; kunci izinnya tetap `ledger`), Perbandingan HPP |
 | `settings.manage` | Pengaturan modul |
 
