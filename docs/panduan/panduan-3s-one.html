@@ -48,6 +48,23 @@
   .step.act { background: #3455db; color: #fff; border-color: #3455db; }
   .num { display: inline-block; width: 14pt; height: 14pt; border-radius: 7pt; background: #3455db; color: #fff; text-align: center; font-size: 8.5pt; line-height: 14pt; margin-right: 4pt; }
   .toc td { padding: 2pt 0; border-bottom: 1px dotted #cbd5e1; }
+  /* Perbandingan sebelum / sesudah: dua kolom, tiap kolom alur vertikal */
+  table.cmp { width: 100%; table-layout: fixed; margin: 6pt 0 10pt; }
+  table.cmp > tbody > tr > td { width: 50%; vertical-align: top; padding: 0 4pt; }
+  .cmp-head { font-weight: bold; font-size: 10pt; text-align: center; padding: 5pt; border-radius: 6pt; margin-bottom: 6pt; }
+  .cmp-head.old { background: #f1f5f9; color: #475569; }
+  .cmp-head.new { background: #3455db; color: #fff; }
+  .vbox { display: block; border: 1.5px solid #94a3b8; border-radius: 6pt; padding: 5pt 7pt; background: #fff; font-size: 9pt; text-align: center; }
+  .vbox b { display: block; font-size: 9.5pt; }
+  .vbox .who { display: block; color: #64748b; font-size: 8pt; margin-top: 1pt; }
+  .vbox.new { border-color: #3455db; }
+  .vbox.auto { border-color: #059669; background: #ecfdf5; }
+  .vbox.paper { border-style: dashed; background: #f8fafc; }
+  .vbox.pain { border-color: #e11d48; background: #fff1f2; color: #9f1239; }
+  .vdown { text-align: center; font-size: 13pt; color: #64748b; line-height: 1.1; }
+  .vdown.auto { color: #059669; font-size: 8pt; font-weight: bold; }
+  .legend { font-size: 8.5pt; color: #64748b; margin-top: 4pt; }
+  .legend span { display: inline-block; width: 9pt; height: 9pt; border-radius: 2pt; border: 1.5px solid #94a3b8; vertical-align: middle; margin: 0 3pt 0 8pt; }
   .fig { margin: 8pt 0 12pt; page-break-inside: avoid; }
   .fig img { width: 100%; border: 1px solid #cbd5e1; border-radius: 4pt; }
   .fig .cap { font-size: 8.5pt; color: #64748b; margin-top: 3pt; }
@@ -72,16 +89,17 @@
     <tr><td>1. Apa itu 3S ONE</td></tr>
     <tr><td>2. Siapa memakai apa</td></tr>
     <tr><td>3. Peta besar: dari pesanan sampai laporan</td></tr>
-    <tr><td>4. Cara masuk dan berkeliling</td></tr>
-    <tr><td>5. Aplikasi Admin, Sales, Production, Delivery</td></tr>
-    <tr><td>6. Aplikasi Accounting</td></tr>
-    <tr><td>7. Aplikasi Inventory</td></tr>
-    <tr><td>8. Form Kebutuhan: dari dapur sampai barang datang (alur lengkap)</td></tr>
-    <tr><td>9. Barang datang: diterima, ditolak, harganya</td></tr>
-    <tr><td>10. Dari mana angka HPP dan stok berasal</td></tr>
-    <tr><td>11. Aplikasi Owner</td></tr>
-    <tr><td>12. Kamus istilah</td></tr>
-    <tr><td>13. Pertanyaan yang sering muncul</td></tr>
+    <tr><td>4. Sebelum dan sesudah Modul Inventory: apa yang berubah</td></tr>
+    <tr><td>5. Cara masuk dan berkeliling</td></tr>
+    <tr><td>6. Aplikasi Admin, Sales, Production, Delivery</td></tr>
+    <tr><td>7. Aplikasi Accounting</td></tr>
+    <tr><td>8. Aplikasi Inventory</td></tr>
+    <tr><td>9. Form Kebutuhan: dari dapur sampai barang datang (alur lengkap)</td></tr>
+    <tr><td>10. Barang datang: diterima, ditolak, harganya</td></tr>
+    <tr><td>11. Dari mana angka HPP dan stok berasal</td></tr>
+    <tr><td>12. Aplikasi Owner</td></tr>
+    <tr><td>13. Kamus istilah</td></tr>
+    <tr><td>14. Pertanyaan yang sering muncul</td></tr>
   </table>
 
   <h2 style="margin-top: 26pt;">1. Apa itu 3S ONE</h2>
@@ -113,7 +131,7 @@
   <p class="small muted" style="margin-top: 6pt;">Satu orang boleh punya lebih dari satu peran (misalnya Admin + Accounting). Peran Owner berdiri sendiri.</p>
 
   <h3>Aplikasi Inventory dipakai bersama</h3>
-  <p>Aplikasi Inventory bukan milik satu bagian. Admin, Accounting, Gudang, dan Produksi sama-sama membukanya — tetapi tiap peran hanya bisa menyentuh bagiannya (lihat Bab 7 dan 8).</p>
+  <p>Aplikasi Inventory bukan milik satu bagian. Admin, Accounting, Gudang, dan Produksi sama-sama membukanya — tetapi tiap peran hanya bisa menyentuh bagiannya (lihat Bab 8 dan 9).</p>
 </div>
 
 <!-- ============ 3. PETA BESAR ============ -->
@@ -163,9 +181,82 @@
   </ul>
 </div>
 
+<!-- ============ 4. SEBELUM & SESUDAH ============ -->
+<div class="page">
+  <h2>4. Sebelum dan sesudah Modul Inventory: apa yang berubah</h2>
+  <p>Sistem 3S sudah dipakai sejak lama untuk pesanan, SPK, pengiriman, dan keuangan. Yang <b>baru</b> di versi 3.0 adalah Modul Inventory yang menyambungkan dapur, gudang, dan buku kas. Diagram ini menunjukkan perjalanan <b>satu pesanan</b> — dulu dan sekarang.</p>
+
+  <table class="cmp">
+    <tr>
+      <td>
+        <div class="cmp-head old">SEBELUM (v2.x)</div>
+        <span class="vbox"><b>Pesanan (PO) & SPK</b><span class="who">Admin · di sistem 3S</span></span>
+        <div class="vdown">&#8595;</div>
+        <span class="vbox paper"><b>Form Kebutuhan di kertas</b><span class="who">Dapur menulis bahan &amp; jumlah</span></span>
+        <div class="vdown">&#8595;</div>
+        <span class="vbox paper"><b>Belanja, nota dikumpulkan</b><span class="who">Gudang / pembelanja</span></span>
+        <div class="vdown">&#8595;</div>
+        <span class="vbox"><b>Nota diketik ke Pengeluaran</b><span class="who">Accounting · input ke-2</span></span>
+        <div class="vdown">&#8595;</div>
+        <span class="vbox"><b>Masak &amp; kirim</b><span class="who">Produksi · Delivery</span></span>
+        <div class="vdown">&#8595;</div>
+        <span class="vbox paper"><b>Resep &amp; HPP di aplikasi lain</b><span class="who">"Master Menu" · login terpisah, harga bahan sendiri</span></span>
+        <div class="vdown">&#8595;</div>
+        <span class="vbox paper"><b>Stok hanya lewat opname</b><span class="who">Pemakaian = Saldo Awal + Beli &#8722; Sisa, per periode</span></span>
+        <div class="vdown">&#8595;</div>
+        <span class="vbox"><b>Laporan keuangan</b><span class="who">Accounting · Owner</span></span>
+      </td>
+      <td>
+        <div class="cmp-head new">SESUDAH (v3.0 · 3S ONE)</div>
+        <span class="vbox new"><b>Pesanan (PO) & SPK</b><span class="who">Admin · sama seperti dulu</span></span>
+        <div class="vdown auto">otomatis &#8595;</div>
+        <span class="vbox auto"><b>SPK Produksi terbentuk sendiri</b><span class="who">menu &amp; jumlah dari SPK</span></span>
+        <div class="vdown auto">otomatis &#8595;</div>
+        <span class="vbox new"><b>Form Kebutuhan digital</b><span class="who">kebutuhan dari resep × jumlah; dapur isi Stok Awal</span></span>
+        <div class="vdown">&#8595;</div>
+        <span class="vbox new"><b>Ajukan &#8594; Setujui / Tolak</b><span class="who">Produksi &#8594; Supervisor Gudang · lonceng</span></span>
+        <div class="vdown">&#8595;</div>
+        <span class="vbox new"><b>Terima barang: diterima, ditolak, harga</b><span class="who">Gudang · input SEKALI</span></span>
+        <div class="vdown auto">otomatis &#8595;</div>
+        <span class="vbox auto"><b>Kartu Stok + Pembelian + Kas/Hutang</b><span class="who">tanpa input accounting</span></span>
+        <div class="vdown">&#8595;</div>
+        <span class="vbox new"><b>Masak, catat pemakaian, kirim</b><span class="who">Produksi · Delivery</span></span>
+        <div class="vdown auto">otomatis &#8595;</div>
+        <span class="vbox auto"><b>HPP &amp; Laporan</b><span class="who">resep, harga bahan, stok: satu sumber</span></span>
+      </td>
+    </tr>
+  </table>
+  <div class="legend">Keterangan: <span style="border-style:dashed;background:#f8fafc"></span> kertas / aplikasi terpisah &nbsp; <span style="border-color:#3455db"></span> diisi orang di 3S ONE &nbsp; <span style="border-color:#059669;background:#ecfdf5"></span> terjadi otomatis</div>
+</div>
+
+<div class="page">
+  <h3>Yang berubah, satu per satu</h3>
+  <table class="grid">
+    <tr><th style="width: 22%">Hal</th><th style="width: 36%">Dulu</th><th>Sekarang</th></tr>
+    <tr><td><b>Login</b></td><td>Dua aplikasi, dua login (3S dan Master Menu).</td><td>Satu login; Inventory adalah tab di bilah atas.</td></tr>
+    <tr><td><b>Jadwal masak</b></td><td>Dapur membaca SPK, menghitung bahan sendiri.</td><td>SPK Produksi &amp; kebutuhan bahan terhitung otomatis dari resep.</td></tr>
+    <tr><td><b>Form Kebutuhan</b></td><td>Kertas: ditulis, ditandatangani, diarsip.</td><td>Digital dengan meja terpisah: produksi mengajukan, supervisor gudang menyetujui/menolak, gudang menerima — tiap langkah tercatat siapa &amp; kapan, plus lonceng.</td></tr>
+    <tr><td><b>Nota belanja</b></td><td>Diketik <b>dua kali</b>: catatan gudang + input accounting ke Pengeluaran.</td><td>Diketik <b>sekali</b> oleh gudang saat barang datang; pembelian, kas keluar / hutang terbentuk sendiri.</td></tr>
+    <tr><td><b>Barang rusak</b></td><td>Tidak berjejak; stok dan uang tetap dianggap masuk.</td><td>Ditolak = Beli &#8722; Diterima, wajib beralasan; retur tidak dibayar, atau dibayar &#8594; Kerugian Barang Rusak. Stok hanya bertambah sebesar yang layak.</td></tr>
+    <tr><td><b>Harga bahan</b></td><td>Dua daftar harga (aplikasi resep dan catatan belanja) yang bisa berbeda.</td><td>Satu daftar (Item Inventaris) dengan histori; harga beli terbaru dari nota langsung memperbarui HPP resep.</td></tr>
+    <tr><td><b>Stok</b></td><td>Hanya angka opname per periode.</td><td>Kartu Stok per bahan: saldo awal, pembelian, pemakaian, penyesuaian — bisa ditelusuri ke SPK mana.</td></tr>
+    <tr><td><b>HPP di laporan</b></td><td>Residual opname saja (Saldo Awal + Beli &#8722; Sisa).</td><td>Bisa dari resep × produksi (kartu stok), dibandingkan dulu dengan opname (Perbandingan HPP) sebelum Owner memilih.</td></tr>
+    <tr><td><b>Peringatan</b></td><td>Tidak ada.</td><td>Stok minimum &amp; antrean form muncul di Dashboard Inventory dan lonceng.</td></tr>
+    <tr><td><b>Siapa boleh apa</b></td><td>Per aplikasi.</td><td>Per peran &amp; per tahap: gudang tidak bisa menyetujui, produksi tidak bisa memeriksa; ada peran Supervisor Gudang.</td></tr>
+  </table>
+
+  <h3>Yang <u>tidak</u> berubah</h3>
+  <ul>
+    <li>Cara admin mencatat pesanan dan menyusun SPK.</li>
+    <li>Cara sales, delivery, dan accounting bekerja sehari-hari — mereka justru mendapat data yang sudah terisi.</li>
+    <li>Laporan keuangan yang sudah ada; hanya sumber angka bahan bakunya yang menjadi lebih rapi.</li>
+  </ul>
+  <div class="tip"><b>Cara membacanya untuk tim:</b> kalau dulu sebuah angka harus <i>diketik dua kali</i> atau <i>dicari di dua tempat</i>, sekarang hampir pasti sudah otomatis. Yang perlu dibiasakan hanya satu: Form Kebutuhan diisi di sistem, bukan di kertas.</div>
+</div>
+
 <!-- ============ 4. MASUK ============ -->
 <div class="page">
-  <h2>4. Cara masuk dan berkeliling</h2>
+  <h2>5. Cara masuk dan berkeliling</h2>
   <h3>Masuk</h3>
   <ul>
     <li>Buka alamat sistem di browser (Chrome disarankan), lalu isi <b>username atau email</b> dan <b>password</b>.</li>
@@ -196,7 +287,7 @@
 
 <!-- ============ 5. ADMIN, SALES, PRODUCTION, DELIVERY ============ -->
 <div class="page">
-  <h2>5. Aplikasi Admin, Sales, Production, Delivery</h2>
+  <h2>6. Aplikasi Admin, Sales, Production, Delivery</h2>
 
   <h3>Admin</h3>
   <table class="grid">
@@ -224,7 +315,7 @@
   <h3>Production</h3>
   <table class="grid">
     <tr><th style="width: 28%">Menu</th><th>Untuk apa</th></tr>
-    <tr><td>Dashboard Produksi</td><td>Jadwal masak hari ini per SPK. Dari sini ada tombol ke <b>Form Kebutuhan</b> di Inventory (Bab 8).</td></tr>
+    <tr><td>Dashboard Produksi</td><td>Jadwal masak hari ini per SPK. Dari sini ada tombol ke <b>Form Kebutuhan</b> di Inventory (Bab 9).</td></tr>
   </table>
   <div class="fig"><img src="img/production-dashboard.jpg" alt="Production › Dashboard Produksi: jadwal masak per SPK, dengan tautan ke Form Kebutuhan."><div class="cap">Production › Dashboard Produksi: jadwal masak per SPK, dengan tautan ke Form Kebutuhan.</div></div>
 
@@ -238,13 +329,13 @@
 
 <!-- ============ 6. ACCOUNTING ============ -->
 <div class="page">
-  <h2>6. Aplikasi Accounting</h2>
+  <h2>7. Aplikasi Accounting</h2>
   <p>Urutan pakainya dari atas ke bawah: siapkan master & saldo awal sekali, catat transaksi setiap hari, pantau, tutup periode, lalu baca laporan.</p>
   <table class="grid">
     <tr><th style="width: 26%">Kelompok / Menu</th><th>Untuk apa</th></tr>
     <tr><td><b>Master Data</b><br>Akun Kas, Kategori Pemasukan, Kategori Pengeluaran</td><td>Daftar rekening/kas dan jenis-jenis pemasukan & pengeluaran. Kategori bertipe <i>Pembelian Stok</i> dipakai otomatis saat gudang menerima bahan.</td></tr>
     <tr><td><b>Setup Awal</b><br>Saldo Awal, Adjustment Neraca, Adjustment Laba Rugi</td><td>Diisi sekali di awal (atau saat koreksi): saldo kas awal dan penyesuaian angka laporan.</td></tr>
-    <tr><td><b>Transaksi</b><br>Pemasukan Lain, Closing Penjualan, Pengeluaran, Transfer Antar Akun</td><td>Catatan uang masuk/keluar harian. <b>Pembelian bahan lewat Form Kebutuhan tidak perlu dicatat lagi di sini</b> — sudah otomatis (Bab 9); Pengeluaran dipakai untuk belanja di luar form.</td></tr>
+    <tr><td><b>Transaksi</b><br>Pemasukan Lain, Closing Penjualan, Pengeluaran, Transfer Antar Akun</td><td>Catatan uang masuk/keluar harian. <b>Pembelian bahan lewat Form Kebutuhan tidak perlu dicatat lagi di sini</b> — sudah otomatis (Bab 10); Pengeluaran dipakai untuk belanja di luar form.</td></tr>
     <tr><td><b>Monitoring</b><br>Hutang, Piutang, Pembelian Stok</td><td>Siapa belum dibayar / belum membayar, dan rekap pembelian bahan.</td></tr>
     <tr><td><b>Kontrol Periode</b><br>Status Periode</td><td>Menutup buku bulanan. Setelah ditutup, transaksi bulan itu terkunci; perubahan hanya lewat penyesuaian yang tercatat.</td></tr>
     <tr><td><b>Laporan</b><br>Cashflow, Penjualan, Laba Rugi, Neraca, Pemakaian Bahan, Laporan Final</td><td>Laporan keuangan per periode; bisa diekspor Excel/PDF.</td></tr>
@@ -253,7 +344,7 @@
 
   <h3>Hubungan dengan Inventory</h3>
   <ul>
-    <li><b>Laporan Pemakaian Bahan</b> dan angka <b>Bahan Baku Terpakai</b> di Laba Rugi berasal dari Inventory (Bab 10).</li>
+    <li><b>Laporan Pemakaian Bahan</b> dan angka <b>Bahan Baku Terpakai</b> di Laba Rugi berasal dari Inventory (Bab 11).</li>
     <li>Barang datang <b>rusak tetapi tetap dibayar</b> masuk pos <b>Kerugian Barang Rusak</b> di Laba Rugi, bukan ke stok.</li>
     <li>Nilai persediaan di Neraca mengikuti stock opname terakhir.</li>
   </ul>
@@ -261,7 +352,7 @@
 
 <!-- ============ 7. INVENTORY ============ -->
 <div class="page">
-  <h2>7. Aplikasi Inventory</h2>
+  <h2>8. Aplikasi Inventory</h2>
   <p>Inilah "dapur data" untuk bahan baku. Menu dibagi tiga kelompok.</p>
 
   <h3>Kelompok Inventory (data bahan & stok)</h3>
@@ -292,7 +383,7 @@
   <table class="grid">
     <tr><th style="width: 26%">Menu</th><th>Untuk apa</th></tr>
     <tr><td>SPK Produksi</td><td>Jadwal masak dari SPK admin: menu & jumlah. Punya Form Kebutuhan, Lembar Kerja (pembagian tugas), Plating, dan cetak PDF.</td></tr>
-    <tr><td>Form Kebutuhan</td><td>Daftar semua form beserta statusnya. Alur lengkapnya di Bab 8.</td></tr>
+    <tr><td>Form Kebutuhan</td><td>Daftar semua form beserta statusnya. Alur lengkapnya di Bab 9.</td></tr>
     <tr><td>Kartu Stok</td><td>Catatan keluar-masuk tiap bahan (saldo awal, pembelian, pemakaian, penyesuaian). Hanya dibaca — terisi otomatis dari form.</td></tr>
     <tr><td>Pelaksana</td><td>Daftar orang dapur untuk lembar kerja.</td></tr>
   </table>
@@ -303,7 +394,7 @@
 
 <!-- ============ 8. FORM KEBUTUHAN ============ -->
 <div class="page">
-  <h2>8. Form Kebutuhan: dari dapur sampai barang datang</h2>
+  <h2>9. Form Kebutuhan: dari dapur sampai barang datang</h2>
   <p>Form Kebutuhan menggantikan form kertas "Kebutuhan, Stok & Pembelian Barang". Satu form untuk satu SPK Produksi. Pekerjaannya <b>berpindah meja</b> — tiap meja hanya melihat tombol untuk bagiannya.</p>
 
   <div class="lane">
@@ -356,7 +447,7 @@
 
 <!-- ============ 9. BARANG DATANG ============ -->
 <div class="page">
-  <h2>9. Barang datang: diterima, ditolak, harganya</h2>
+  <h2>10. Barang datang: diterima, ditolak, harganya</h2>
   <p>Di tahap <b>Disetujui</b>, staf gudang mengisi tabel bahan seperti ini untuk tiap baris:</p>
   <table class="grid">
     <tr><th style="width: 22%">Kolom</th><th>Isi dengan</th></tr>
@@ -395,7 +486,7 @@
 
 <!-- ============ 10. HPP & STOK ============ -->
 <div class="page">
-  <h2>10. Dari mana angka HPP dan stok berasal</h2>
+  <h2>11. Dari mana angka HPP dan stok berasal</h2>
   <p>Supaya angka di laporan bisa dipercaya, tiap angka punya <b>satu sumber</b>:</p>
   <table class="grid">
     <tr><th style="width: 28%">Angka</th><th>Sumbernya</th></tr>
@@ -415,7 +506,7 @@
 
 <!-- ============ 11. OWNER ============ -->
 <div class="page">
-  <h2>11. Aplikasi Owner</h2>
+  <h2>12. Aplikasi Owner</h2>
   <table class="grid">
     <tr><th style="width: 26%">Menu</th><th>Untuk apa</th></tr>
     <tr><td>Dashboard</td><td>Ringkasan seluruh usaha: penjualan, kas, KPI.</td></tr>
@@ -440,7 +531,7 @@
 
 <!-- ============ 12. KAMUS ============ -->
 <div class="page">
-  <h2>12. Kamus istilah</h2>
+  <h2>13. Kamus istilah</h2>
   <table class="grid">
     <tr><th style="width: 24%">Istilah</th><th>Artinya</th></tr>
     <tr><td>PO (Purchase Order)</td><td>Pesanan pelanggan.</td></tr>
@@ -463,7 +554,7 @@
 
 <!-- ============ 13. FAQ ============ -->
 <div>
-  <h2>13. Pertanyaan yang sering muncul</h2>
+  <h2>14. Pertanyaan yang sering muncul</h2>
 
   <h3>Saya tidak melihat tombol Setujui, padahal formnya sudah ada.</h3>
   <p>Tombol Setujui hanya tampil untuk <b>Supervisor Gudang</b> (atau Owner/Admin) dan hanya setelah produksi menekan <b>Ajukan</b>. Kalau status masih "Dibuat / Diisi", giliran dapur dulu.</p>
