@@ -4,6 +4,7 @@ namespace App\Services\MasterMenu;
 
 use App\Models\InventoryItem;
 use App\Models\InventoryMovement;
+use App\Models\Product;
 use App\Models\ProductionOrder;
 use App\Models\Recipe;
 use App\Models\RecipeItem;
@@ -194,13 +195,19 @@ class MigrationValidationService
             "{$konversi['baris']} baris resep tidak terhitung sampai aturannya diisi (Konversi Satuan > Butuh Aturan).");
 
         $aktif = Recipe::query()->where('is_active', true)->count();
-        $terpetakan = Recipe::query()->where('is_active', true)->whereNotNull('product_id')->count();
+        $terpetakan = Recipe::query()->where('is_active', true)->whereHas('products')->count();
         $rows[] = $this->finding(self::INFO, 'Resep aktif terpetakan ke produk penjualan', $terpetakan,
             "dari {$aktif} resep aktif; sisanya tidak ikut SPK Produksi dari slot PO.");
 
-        $produkGanda = Recipe::query()->whereNotNull('product_id')
-            ->selectRaw('product_id, COUNT(*) as jumlah')->groupBy('product_id')->having('jumlah', '>', 1)->count();
-        $rows[] = $this->finding($produkGanda > 0 ? self::ERROR : self::INFO, 'Produk dipetakan ke lebih dari satu resep', $produkGanda, 'SPK Produksi tidak tahu resep mana yang dipakai.');
+        // Produk yang masih perlu resep: tiap porsi yang terjual tanpa resep
+        // tidak masuk HPP resep maupun SPK Produksi otomatis.
+        $menunggu = Product::query()->where('active', true)->awaitingRecipe()->count();
+        $rows[] = $this->finding($menunggu > 0 ? self::WARN : self::INFO, 'Produk aktif belum ditautkan ke resep', $menunggu,
+            'Cocokkan lewat Resep & HPP > Pencocokan Menu, atau tandai "tanpa resep" bila memang tidak dimasak.');
+
+        $resepNonaktif = Product::query()->whereHas('recipe', fn ($q) => $q->where('is_active', false))->count();
+        $rows[] = $this->finding($resepNonaktif > 0 ? self::WARN : self::INFO, 'Produk menunjuk resep nonaktif', $resepNonaktif,
+            'SPK Produksi memperlakukannya seperti tidak punya resep.');
 
         return $rows;
     }

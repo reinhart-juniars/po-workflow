@@ -146,6 +146,7 @@ class Navigation
                 ],
                 'Resep & HPP' => [
                     ['label' => 'Resep & Menu', 'route' => 'filament.admin.resources.recipes.index', 'can' => 'recipe.view'],
+                    ['label' => 'Pencocokan Menu', 'route' => 'filament.admin.pages.pencocokan-menu', 'can' => 'recipe.view'],
                     ['label' => 'Konversi Satuan', 'route' => 'filament.admin.resources.inventory-unit-conversions.index', 'can' => 'inventory.view'],
                     ['label' => 'Bahan Belum Cocok', 'route' => 'filament.admin.resources.recipe-mismatches.index', 'can' => 'recipe.view'],
                     ['label' => 'Perbandingan HPP', 'route' => 'filament.admin.pages.hpp-comparison-report', 'can' => 'ledger.view'],

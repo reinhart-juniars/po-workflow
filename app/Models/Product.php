@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -23,11 +25,14 @@ class Product extends Model
         'profit',
         'active',
         'is_3s',
+        'recipe_id',
+        'needs_recipe',
     ];
 
     protected $casts = [
         'active' => 'boolean',
         'is_3s' => 'boolean',
+        'needs_recipe' => 'boolean',
         'base_price' => 'decimal:2',
         'raw_material_cost' => 'decimal:2',
         'overhead_cost' => 'decimal:2',
@@ -58,6 +63,7 @@ class Product extends Model
             foreach ($tracked as $column) {
                 if ($product->wasChanged($column)) {
                     $product->recordPriceHistory();
+
                     return;
                 }
             }
@@ -107,6 +113,35 @@ class Product extends Model
         return $this->hasMany(SalesActualItem::class);
     }
 
+    /** Resep yang dipakai memasak produk ini (beberapa varian harga boleh berbagi satu resep). */
+    public function recipe(): BelongsTo
+    {
+        return $this->belongsTo(Recipe::class);
+    }
+
+    /** Produk yang masih harus dicocokkan: perlu resep tapi belum ditautkan. */
+    public function scopeAwaitingRecipe(Builder $query): Builder
+    {
+        return $query->where('needs_recipe', true)->whereNull('recipe_id');
+    }
+
+    /**
+     * Porsi terjual `$days` hari terakhir sebagai kolom `porsi_terjual`, untuk
+     * mengurutkan daftar kerja: produk yang paling laku dicocokkan lebih dulu.
+     */
+    public function scopeWithPorsiTerjual(Builder $query, int $days = 90): Builder
+    {
+        $since = now()->subDays($days)->toDateString();
+
+        return $query->addSelect([
+            'porsi_terjual' => SalesActualItem::query()
+                ->join('sales_actuals', 'sales_actuals.id', '=', 'sales_actual_items.sales_actual_id')
+                ->whereColumn('sales_actual_items.product_id', 'products.id')
+                ->where('sales_actuals.sales_date', '>=', $since)
+                ->selectRaw('COALESCE(SUM(sales_actual_items.qty_delivery), 0)'),
+        ]);
+    }
+
     /**
      * Mutator: selalu simpan name dalam huruf besar
      */
@@ -148,8 +183,8 @@ class Product extends Model
             ->when($ignoreId, fn ($query) => $query->whereKeyNot($ignoreId))
             ->where('sku', $candidate)
             ->exists()) {
-            $suffix = '-' . $counter;
-            $candidate = Str::limit($baseSku, 50 - strlen($suffix), '') . $suffix;
+            $suffix = '-'.$counter;
+            $candidate = Str::limit($baseSku, 50 - strlen($suffix), '').$suffix;
             $counter++;
         }
 

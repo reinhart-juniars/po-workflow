@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Product;
 use App\Models\Recipe;
 use App\Services\MasterMenu\MasterMenuAuditService;
 use App\Services\MasterMenu\MasterMenuSource;
@@ -13,10 +14,11 @@ use RuntimeException;
  * Terapkan pemetaan resep -> produk yang cocok persis atau cocok setelah
  * normalisasi nama (skor 100 pada audit).
  *
- * Hanya pasangan yang tidak butuh penilaian manusia yang ditulis; 352 sisanya
- * tetap diputuskan bersama klien lewat tab "Belum Dipetakan" pada Resep.
- * Resep yang sudah punya produk tidak disentuh, dan satu produk tidak boleh
- * jadi milik dua resep -- kalau terjadi, keduanya dilaporkan, bukan ditebak.
+ * Hanya pasangan yang tidak butuh penilaian manusia yang ditulis; sisanya
+ * diputuskan bersama klien lewat halaman Pencocokan Menu. Tautan disimpan di
+ * sisi produk (`products.recipe_id`): produk yang sudah punya resep atau sudah
+ * ditandai "tanpa resep" tidak disentuh, dan satu resep boleh dipakai beberapa
+ * produk (varian harga).
  */
 class MapRecipesToProductsCommand extends Command
 {
@@ -53,7 +55,7 @@ class MapRecipesToProductsCommand extends Command
             ->whereNotNull('product_id');
 
         $recipesBySource = Recipe::query()->whereNotNull('source_recipe_id')->get()->keyBy('source_recipe_id');
-        $takenProducts = Recipe::query()->whereNotNull('product_id')->pluck('id', 'product_id');
+        $products = Product::query()->get(['id', 'recipe_id', 'needs_recipe'])->keyBy('id');
 
         $applied = [];
         $skipped = [];
@@ -68,16 +70,22 @@ class MapRecipesToProductsCommand extends Command
                 continue;
             }
 
-            if ($recipe->product_id !== null) {
-                $skipped[] = [$recipe->name, 'sudah dipetakan; tidak disentuh'];
+            $product = $products->get($row['product_id']);
+
+            if (! $product) {
+                $skipped[] = [$recipe->name, 'produk '.$row['product_name'].' sudah tidak ada'];
 
                 continue;
             }
 
-            $owner = $takenProducts[$row['product_id']] ?? $plannedProducts[$row['product_id']] ?? null;
+            if ($product->recipe_id !== null || ! $product->needs_recipe) {
+                $skipped[] = [$recipe->name, 'produk '.$row['product_name'].' sudah diputuskan; tidak disentuh'];
 
-            if ($owner !== null && $owner !== $recipe->id) {
-                $skipped[] = [$recipe->name, 'produk '.$row['product_name'].' sudah dipakai resep lain; putuskan manual'];
+                continue;
+            }
+
+            if (isset($plannedProducts[$row['product_id']])) {
+                $skipped[] = [$recipe->name, 'produk '.$row['product_name'].' juga cocok dengan resep lain; putuskan manual'];
 
                 continue;
             }
@@ -105,11 +113,11 @@ class MapRecipesToProductsCommand extends Command
 
         DB::transaction(function () use ($applied) {
             foreach ($applied as $a) {
-                $a['recipe']->update(['product_id' => $a['product_id']]);
+                Product::query()->whereKey($a['product_id'])->update(['recipe_id' => $a['recipe']->id]);
             }
         });
 
-        $this->info(count($applied).' resep dipetakan ke produk.');
+        $this->info(count($applied).' produk ditautkan ke resep.');
 
         return self::SUCCESS;
     }

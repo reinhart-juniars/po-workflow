@@ -174,6 +174,20 @@ enum Unit: string
     }
 
     /**
+     * Ejaan baku untuk disimpan: "gr", "g", "grm" semuanya menjadi "gram".
+     * Teks yang tidak dikenali dikembalikan apa adanya (dirapikan spasinya)
+     * supaya satuan lepas tidak hilang diam-diam.
+     */
+    public static function canonical(?string $raw): ?string
+    {
+        if ($raw === null || trim($raw) === '') {
+            return $raw;
+        }
+
+        return self::tryFromAlias($raw)?->value ?? trim(preg_replace('/\s+/', ' ', $raw) ?? $raw);
+    }
+
+    /**
      * Pilihan untuk dropdown, dikelompokkan per besaran.
      *
      * @return array<string, array<string, string>>

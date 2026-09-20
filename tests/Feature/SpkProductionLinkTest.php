@@ -34,7 +34,8 @@ function poDraft(): array
     $bucket = InventoryItem::query()->create(['name' => 'Bahan Baku', 'unit' => 'All', 'category' => InventoryItem::CATEGORY_RAW_MATERIAL, 'is_active' => true]);
     $tepung = InventoryItem::query()->create(['name' => 'Tepung', 'unit' => 'kg', 'unit_price' => 12000, 'parent_id' => $bucket->id, 'category' => InventoryItem::CATEGORY_RAW_MATERIAL, 'is_active' => true]);
     $product = Product::query()->create(['name' => 'Gorengan 10K', 'unit' => 'porsi', 'base_price' => 10000, 'active' => true]);
-    $recipe = Recipe::query()->create(['name' => 'Gorengan', 'product_id' => $product->id, 'yield_qty' => 10, 'yield_unit' => 'porsi', 'ohc_pct' => 0.4, 'profit_pct' => 0.25, 'is_active' => true]);
+    $recipe = Recipe::query()->create(['name' => 'Gorengan', 'yield_qty' => 10, 'yield_unit' => 'porsi', 'ohc_pct' => 0.4, 'profit_pct' => 0.25, 'is_active' => true]);
+    $product->update(['recipe_id' => $recipe->id]);
     RecipeItem::query()->create(['recipe_id' => $recipe->id, 'inventory_item_id' => $tepung->id, 'raw_name' => 'tepung', 'qty' => 250, 'unit' => 'gr']);
 
     $area = Area::query()->create(['name' => 'Area', 'code' => 'AR']);

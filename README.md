@@ -17,7 +17,7 @@ menggantikan HPP residual opname dengan pemakaian bahan riil dari resep × produ
 | Phase | Isi | Di panel |
 |---|---|---|
 | 1 | Item inventaris bertingkat (bucket → bahan), pembelian, opname, saldo awal, laporan mutasi, import/export Excel | Inventory |
-| 2 | Resep & sub-resep, Analisa HPP, aturan konversi satuan per bahan + pendeteksi pasangan yang belum diatur, Bahan Belum Cocok (pencocokan nama), import/export resep | Inventory |
+| 2 | Resep & sub-resep, Analisa HPP, aturan konversi satuan per bahan + pendeteksi pasangan yang belum diatur, Bahan Belum Cocok (pencocokan nama), Pencocokan Menu (master produk Admin App ↔ resep, berbasis porsi terjual 90 hari; satu resep boleh dipakai beberapa varian harga, tautan di `products.recipe_id`; export/import Excel sebagai lembar kerja staf: terima_usulan / resep_id / tanpa_resep per baris, baris kosong tidak diubah), import/export resep | Inventory |
 | 3 | SPK Produksi dari slot SPK/PO, Form Kebutuhan bertahap per meja (Dibuat oleh produksi → Diajukan → Disetujui/Ditolak oleh supervisor gudang, dengan notifikasi lonceng → Penerimaan barang: diterima/ditolak/harga beli → Diperiksa: kartu stok + Pembelian Bahan Baku + kas/hutang otomatis → Tutup SPK), kartu stok per bahan, lembar kerja, plating, PDF, Perbandingan HPP resep vs opname | Produksi |
 | 4 | Izin modul (spatie permission) per peran, Pengaturan modul, cangkang & menu 3S terpadu (satu sumber untuk Blade dan Filament), validasi & pembersihan pasca migrasi, runbook cutover & UAT | Sistem |
 
@@ -35,7 +35,7 @@ Dokumen:
 |---|---|
 | `inventory:audit-master-menu` | Audit rekonsiliasi Master Menu vs po-workflow (Excel) |
 | `inventory:migrate-master-menu {--db} {--database} {--dry-run} {--force}` | Pindahkan bahan, harga, resep, mismatch, pelaksana, template, SPK riwayat (idempoten) |
-| `inventory:map-recipes-to-products {--dry-run}` | Petakan resep → produk yang namanya cocok persis |
+| `inventory:map-recipes-to-products {--dry-run}` | Tautkan produk → resep yang namanya cocok persis (sisanya lewat Pencocokan Menu) |
 | `inventory:validate-migration {--fix} {--fail-on=error}` | Laporan validasi pasca migrasi + pembersihan aman |
 | `access:sync {--reset}` | Sinkronkan izin modul ke peran |
 | `db:clone-to-staging` | Salin database kerja ke `po_workflow_staging` |

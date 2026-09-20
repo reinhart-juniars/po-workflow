@@ -29,7 +29,7 @@ class RecipesExport implements FromCollection, ShouldAutoSize, WithHeadings
     public function collection(): Collection
     {
         $recipes = $this->recipes ?? Recipe::query()
-            ->with(['items' => fn ($query) => $query->orderBy('sort_order')->orderBy('id')])
+            ->with(['items' => fn ($query) => $query->orderBy('sort_order')->orderBy('id'), 'products:id,recipe_id'])
             ->orderBy('name')
             ->get();
 
@@ -86,7 +86,8 @@ class RecipesExport implements FromCollection, ShouldAutoSize, WithHeadings
             $recipe->name,
             $recipe->jenis,
             $recipe->kategori,
-            $recipe->product_id,
+            // Beberapa varian harga boleh memakai satu resep: id dipisah koma.
+            $recipe->products->pluck('id')->implode(','),
             (float) $recipe->yield_qty,
             $recipe->yield_unit,
             // Disimpan sebagai pecahan, ditulis sebagai persen -- begitulah

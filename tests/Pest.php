@@ -73,9 +73,10 @@ function siapkanProduksi(): array
 
     // Resep untuk 10 porsi: 250 gr tepung + 150 ml minyak.
     $recipe = App\Models\Recipe::query()->create([
-        'name' => 'Gorengan', 'jenis' => App\Models\Recipe::JENIS_UTAMA, 'product_id' => $product->id,
+        'name' => 'Gorengan', 'jenis' => App\Models\Recipe::JENIS_UTAMA,
         'yield_qty' => 10, 'yield_unit' => 'porsi', 'ohc_pct' => 0.4, 'profit_pct' => 0.25,
     ]);
+    $product->update(['recipe_id' => $recipe->id]);
     App\Models\RecipeItem::query()->create(['recipe_id' => $recipe->id, 'inventory_item_id' => $tepung->id, 'raw_name' => 'tepung', 'qty' => 250, 'unit' => 'gr']);
     App\Models\RecipeItem::query()->create(['recipe_id' => $recipe->id, 'inventory_item_id' => $minyak->id, 'raw_name' => 'minyak', 'qty' => 150, 'unit' => 'ml']);
 

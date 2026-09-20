@@ -17,10 +17,11 @@ class AdminProductController extends Controller
         $q = trim((string) $request->query('q', ''));
 
         $products = Product::query()
+            ->with('recipe:id,name')
             ->withMax('priceHistories as price_last_changed_at', 'effective_from')
             ->withCount('priceHistories')
             ->when($q !== '', function ($query) use ($q) {
-                $like = '%' . $q . '%';
+                $like = '%'.$q.'%';
                 $query->where(function ($inner) use ($like) {
                     $inner->where('name', 'like', $like)
                         ->orWhere('sku', 'like', $like);
@@ -36,11 +37,11 @@ class AdminProductController extends Controller
 
     public function create()
     {
-        $product = new Product();
+        $product = new Product;
 
         return view('adminapp.products.form', [
             'product' => $product,
-            'mode'    => 'create',
+            'mode' => 'create',
         ]);
     }
 
@@ -64,7 +65,7 @@ class AdminProductController extends Controller
 
         return view('adminapp.products.form', [
             'product' => $product,
-            'mode'    => 'edit',
+            'mode' => 'edit',
         ]);
     }
 
@@ -84,7 +85,7 @@ class AdminProductController extends Controller
 
     public function exportExcel()
     {
-        $fileName = 'master_menu_' . now()->format('Ymd_His') . '.xlsx';
+        $fileName = 'master_menu_'.now()->format('Ymd_His').'.xlsx';
 
         return Excel::download(
             new ProductsExport(Product::query()->orderBy('name')->get()),
@@ -126,7 +127,7 @@ class AdminProductController extends Controller
         } catch (\Throwable $exception) {
             return redirect()
                 ->route('adminapp.products.index')
-                ->with('error', 'Import master menu gagal. ' . $exception->getMessage());
+                ->with('error', 'Import master menu gagal. '.$exception->getMessage());
         }
     }
 
@@ -141,7 +142,7 @@ class AdminProductController extends Controller
         }
 
         try {
-            $import = new ProductsImport();
+            $import = new ProductsImport;
             $import->commitRows($preview['rows']);
             session()->forget(self::IMPORT_PREVIEW_SESSION_KEY);
 
@@ -154,7 +155,7 @@ class AdminProductController extends Controller
         } catch (\Throwable $exception) {
             return redirect()
                 ->route('adminapp.products.index')
-                ->with('error', 'Commit import master menu gagal. ' . $exception->getMessage());
+                ->with('error', 'Commit import master menu gagal. '.$exception->getMessage());
         }
     }
 

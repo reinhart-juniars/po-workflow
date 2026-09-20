@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\Product;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderLine;
 use App\Models\ProductionTask;
 use App\Models\PurchaseOrderItem;
-use App\Models\Recipe;
 use App\Models\Spk;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +16,7 @@ use RuntimeException;
  * Menyusun SPK Produksi dan meledakkan kebutuhan bahannya.
  *
  * Sumber pesanannya adalah PO yang sudah ada di po-workflow, bukan modul Order
- * baru: item PO -> produk -> resep lewat recipes.product_id. Item yang
+ * baru: item PO -> produk -> resep lewat products.recipe_id. Item yang
  * produknya belum punya resep tetap masuk sebagai baris manual yang ditandai,
  * supaya dapur tetap melihat seluruh pesanan dan tahu mana yang belum bisa
  * dihitung bahannya.
@@ -61,11 +61,15 @@ class ProductionOrderService
                 ->orderBy('id')
                 ->get();
 
-            $recipeByProduct = Recipe::query()
-                ->whereIn('product_id', $items->pluck('product_id')->filter()->unique())
-                ->where('is_active', true)
+            // Resep diambil dari sisi produk: beberapa varian harga boleh
+            // berbagi satu resep. Resep nonaktif dianggap tidak ada.
+            $recipeByProduct = Product::query()
+                ->whereIn('id', $items->pluck('product_id')->filter()->unique())
+                ->whereNotNull('recipe_id')
+                ->with('recipe')
                 ->get()
-                ->keyBy('product_id');
+                ->filter(fn (Product $product) => $product->recipe?->is_active)
+                ->mapWithKeys(fn (Product $product) => [$product->id => $product->recipe]);
 
             $existing = $order->lines()->where('source', ProductionOrderLine::SOURCE_PO)->whereNotNull('purchase_order_item_id')->get()->keyBy('purchase_order_item_id');
             $sort = (int) $order->lines()->max('sort_order');

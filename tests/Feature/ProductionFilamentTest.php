@@ -48,9 +48,10 @@ beforeEach(function () {
     $product = Product::query()->create(['name' => 'Gorengan 10K', 'unit' => 'porsi', 'base_price' => 10000, 'active' => true]);
 
     $this->recipe = Recipe::query()->create([
-        'name' => 'Gorengan', 'jenis' => Recipe::JENIS_UTAMA, 'product_id' => $product->id,
+        'name' => 'Gorengan', 'jenis' => Recipe::JENIS_UTAMA,
         'yield_qty' => 10, 'yield_unit' => 'porsi', 'ohc_pct' => 0.4, 'profit_pct' => 0.25,
     ]);
+    $product->update(['recipe_id' => $this->recipe->id]);
     RecipeItem::query()->create(['recipe_id' => $this->recipe->id, 'inventory_item_id' => $this->tepung->id, 'raw_name' => 'tepung', 'qty' => 250, 'unit' => 'gr', 'section' => 'Adonan']);
     RecipeTask::query()->create(['recipe_id' => $this->recipe->id, 'sort_order' => 0, 'task' => 'goreng', 'object' => 'adonan', 'quantity_text' => '10 porsi', 'pic' => 'Mia']);
 
@@ -228,4 +229,38 @@ it('menampilkan daftar form, ledger, dan perbandingan hpp', function () {
     Livewire::test(HppComparisonReport::class)
         ->fillForm(['date_from' => '2026-09-01', 'date_to' => '2026-09-30'])
         ->assertSee('Rp 12.000,00');
+});
+
+it('menampilkan jumlah porsi sebagai bilangan bulat dan menolak pecahan', function () {
+    Livewire::test(ProductionOrderResource\Pages\ListProductionOrders::class)
+        ->callAction('dari_spk', ['spk_id' => $this->spk->id]);
+
+    $order = ProductionOrder::query()->firstWhere('spk_id', $this->spk->id);
+    $line = $order->lines[0];
+
+    // Kolom DB decimal(15,4) menyimpan "40.0000"; form harus menampilkan 40, bukan 40.0000 / 40,00.
+    $page = Livewire::test(ProductionOrderResource\Pages\EditProductionOrder::class, ['record' => $order->getRouteKey()])
+        ->assertFormSet(fn (array $state) => expect($state['lines'])->toHaveCount(1)
+            ->and(collect($state['lines'])->first()['qty'])->toBe(40));
+
+    // Kontrol positif: bilangan bulat tersimpan (item repeater diubah lewat kuncinya sendiri).
+    $withQty = function ($qty) use ($page): array {
+        $lines = $page->get('data.lines');
+        foreach ($lines as &$row) {
+            $row['qty'] = $qty;
+        }
+
+        return $lines;
+    };
+
+    $page->fillForm(['lines' => $withQty(3)])
+        ->call('save')
+        ->assertHasNoFormErrors();
+    expect((float) $line->fresh()->qty)->toBe(3.0);
+
+    // 3,14 porsi ditolak.
+    $page->fillForm(['lines' => $withQty(3.14)])
+        ->call('save')
+        ->assertHasFormErrors();
+    expect((float) $line->fresh()->qty)->toBe(3.0);
 });

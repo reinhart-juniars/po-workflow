@@ -291,7 +291,7 @@ it('memetakan resep ke produk hanya untuk nama yang cocok persis', function () {
     // "NASI SAMBAL MATAH 12K" cocok setelah normalisasi (suffix harga dibuang);
     // "Sambal Matah" tidak punya padanan produk.
     $produk = Product::query()->create(['name' => 'Nasi Sambal Matah 12K', 'unit' => 'porsi', 'base_price' => 12000, 'active' => true]);
-    Product::query()->create(['name' => 'Nasi Goreng Merah', 'unit' => 'porsi', 'base_price' => 10000, 'active' => true]);
+    $mirip = Product::query()->create(['name' => 'Nasi Goreng Merah', 'unit' => 'porsi', 'base_price' => 10000, 'active' => true]);
 
     $this->artisan('inventory:map-recipes-to-products', ['--db' => $this->source->path()])
         ->assertSuccessful();
@@ -299,15 +299,20 @@ it('memetakan resep ke produk hanya untuk nama yang cocok persis', function () {
     $nasi = Recipe::query()->firstWhere('source_recipe_id', 2);
     $sambal = Recipe::query()->firstWhere('source_recipe_id', 1);
 
-    expect($nasi->product_id)->toBe($produk->id)
+    // Tautan hidup di sisi produk.
+    expect($produk->fresh()->recipe_id)->toBe($nasi->id)
+        ->and($nasi->products()->count())->toBe(1)
         // Yang tidak cocok persis tetap kosong: itu keputusan klien.
-        ->and($sambal->product_id)->toBeNull();
+        ->and($sambal->products()->count())->toBe(0)
+        ->and($mirip->fresh()->recipe_id)->toBeNull();
 
-    // Pemetaan yang sudah ada tidak ditimpa saat dijalankan lagi.
-    $lain = Product::query()->create(['name' => 'Produk Lain', 'unit' => 'porsi', 'base_price' => 1, 'active' => true]);
-    $nasi->update(['product_id' => $lain->id]);
+    // Keputusan yang sudah ada tidak ditimpa saat dijalankan lagi: produk
+    // dipindah ke resep lain, dan produk lain ditandai tanpa resep.
+    $produk->update(['recipe_id' => $sambal->id]);
+    $tanpa = Product::query()->create(['name' => 'Nasi Sambal Matah 15K', 'unit' => 'porsi', 'base_price' => 15000, 'active' => true, 'needs_recipe' => false]);
 
     $this->artisan('inventory:map-recipes-to-products', ['--db' => $this->source->path()])->assertSuccessful();
 
-    expect($nasi->fresh()->product_id)->toBe($lain->id);
+    expect($produk->fresh()->recipe_id)->toBe($sambal->id)
+        ->and($tanpa->fresh()->recipe_id)->toBeNull();
 });

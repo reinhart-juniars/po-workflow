@@ -72,13 +72,18 @@ it('menandai bahan tanpa satuan, tanpa harga, duplikat, dan satuan asing', funct
     $this->artisan('inventory:validate-migration', ['--fail-on' => 'none'])->assertSuccessful();
 });
 
-it('menandai resep tanpa bahan, baris belum tertaut, rujukan diri, dan produk ganda', function () {
+it('menandai resep tanpa bahan, baris belum tertaut, rujukan diri, dan produk belum ditautkan', function () {
     $bucket = bucketUji();
     $beras = bahanUji($bucket, 'Beras');
-    $product = \App\Models\Product::query()->create(['name' => 'NASI', 'price' => 10000, 'is_active' => true]);
+    $product = \App\Models\Product::query()->create(['name' => 'NASI', 'unit' => 'porsi', 'base_price' => 10000, 'active' => true]);
+    $menunggu = \App\Models\Product::query()->create(['name' => 'NASI 12K', 'unit' => 'porsi', 'base_price' => 12000, 'active' => true]);
+    \App\Models\Product::query()->create(['name' => 'EXTRA 1K', 'unit' => 'porsi', 'base_price' => 1000, 'active' => true, 'needs_recipe' => false]);
 
-    $kosong = Recipe::query()->create(['name' => 'Kosong', 'yield_qty' => 1, 'yield_unit' => 'porsi', 'ohc_pct' => 0.4, 'profit_pct' => 0.25, 'is_active' => true, 'product_id' => $product->id]);
-    $putar = Recipe::query()->create(['name' => 'Putar', 'yield_qty' => 1, 'yield_unit' => 'porsi', 'ohc_pct' => 0.4, 'profit_pct' => 0.25, 'is_active' => true, 'product_id' => $product->id]);
+    $kosong = Recipe::query()->create(['name' => 'Kosong', 'yield_qty' => 1, 'yield_unit' => 'porsi', 'ohc_pct' => 0.4, 'profit_pct' => 0.25, 'is_active' => true]);
+    $putar = Recipe::query()->create(['name' => 'Putar', 'yield_qty' => 1, 'yield_unit' => 'porsi', 'ohc_pct' => 0.4, 'profit_pct' => 0.25, 'is_active' => true]);
+    $nonaktif = Recipe::query()->create(['name' => 'Lama', 'yield_qty' => 1, 'yield_unit' => 'porsi', 'ohc_pct' => 0.4, 'profit_pct' => 0.25, 'is_active' => false]);
+    $product->update(['recipe_id' => $kosong->id]);
+    \App\Models\Product::query()->create(['name' => 'NASI LAMA', 'unit' => 'porsi', 'base_price' => 10000, 'active' => true, 'recipe_id' => $nonaktif->id]);
     $putar->items()->create(['ref_recipe_id' => $putar->id, 'raw_name' => 'Putar', 'qty' => 1, 'unit' => 'porsi']);
     $putar->items()->create(['raw_name' => 'kecap misterius', 'qty' => 1, 'unit' => 'ml']);
     $putar->items()->create(['inventory_item_id' => $beras->id, 'raw_name' => 'Beras', 'qty' => 1, 'unit' => 'kg']);
@@ -86,8 +91,11 @@ it('menandai resep tanpa bahan, baris belum tertaut, rujukan diri, dan produk ga
     expect(temuan('Resep aktif tanpa satu pun bahan'))->toMatchArray(['level' => 'warn', 'count' => 1])
         ->and(temuan('Baris resep belum tertaut ke bahan'))->toMatchArray(['level' => 'warn', 'count' => 1])
         ->and(temuan('Resep merujuk dirinya sendiri'))->toMatchArray(['level' => 'error', 'count' => 1])
-        ->and(temuan('Produk dipetakan ke lebih dari satu resep'))->toMatchArray(['level' => 'error', 'count' => 1])
-        ->and(temuan('Resep aktif terpetakan ke produk penjualan'))->toMatchArray(['level' => 'info', 'count' => 2]);
+        // Hanya "NASI 12K" yang menunggu: NASI sudah tertaut, EXTRA 1K ditandai tanpa resep,
+        // NASI LAMA menunjuk resep nonaktif dan dilaporkan terpisah.
+        ->and(temuan('Produk aktif belum ditautkan ke resep'))->toMatchArray(['level' => 'warn', 'count' => 1])
+        ->and(temuan('Produk menunjuk resep nonaktif'))->toMatchArray(['level' => 'warn', 'count' => 1])
+        ->and(temuan('Resep aktif terpetakan ke produk penjualan'))->toMatchArray(['level' => 'info', 'count' => 1]);
 });
 
 it('menandai saldo ledger negatif dan form kebutuhan yang menggantung', function () {
@@ -107,10 +115,15 @@ it('menandai saldo ledger negatif dan form kebutuhan yang menggantung', function
 
 it('merapikan nama, mengkanonkan satuan bahan, dan menghapus baris kosong dengan --fix', function () {
     $bucket = bucketUji();
-    $item = bahanUji($bucket, "Tepung   Terigu\t", ['unit' => 'Kg']);
+    $item = bahanUji($bucket, "Tepung   Terigu\t");
     $resep = Recipe::query()->create(['name' => 'Roti  Tawar', 'yield_qty' => 1, 'yield_unit' => 'porsi', 'ohc_pct' => 0.4, 'profit_pct' => 0.25, 'is_active' => true]);
-    $resep->items()->create(['inventory_item_id' => $item->id, 'raw_name' => 'Tepung', 'qty' => 2, 'unit' => 'gr']);
+    $baris = $resep->items()->create(['inventory_item_id' => $item->id, 'raw_name' => 'Tepung', 'qty' => 2, 'unit' => 'gr']);
     $kosong = $resep->items()->create(['raw_name' => '', 'qty' => 0, 'unit' => null]);
+
+    // Model sudah menyimpan ejaan baku; data warisan yang lolos (dump lama)
+    // ditiru lewat query builder yang melewati hook.
+    \Illuminate\Support\Facades\DB::table('inventory_items')->where('id', $item->id)->update(['unit' => 'Kg']);
+    \Illuminate\Support\Facades\DB::table('recipe_items')->where('id', $baris->id)->update(['unit' => 'gr']);
 
     expect(temuan('Nama dengan spasi berlebih (bisa dirapikan --fix)')['count'])->toBe(2)
         ->and(temuan('Satuan bahan ditulis dengan alias (bisa dikanonkan --fix)')['count'])->toBe(1)
@@ -125,7 +138,8 @@ it('merapikan nama, mengkanonkan satuan bahan, dan menghapus baris kosong dengan
         ->and($resep->fresh()->name)->toBe('Roti Tawar')
         ->and($resep->fresh()->name_norm)->toBe(Recipe::normalizeName('Roti Tawar'))
         ->and(RecipeItem::query()->whereKey($kosong->id)->exists())->toBeFalse()
-        // Satuan baris resep dibiarkan seperti ditulis; pengonversi paham aliasnya.
+        // Satuan baris resep warisan disamakan oleh migrasi normalize_unit_aliases,
+        // bukan oleh --fix; pengonversi paham aliasnya.
         ->and($resep->items()->first()->unit)->toBe('gr');
 
     // Positive control: setelah --fix laporan bersih dari peringatan tersebut.

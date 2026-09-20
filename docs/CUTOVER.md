@@ -106,11 +106,12 @@ Ini bukan bug; sistem sengaja tidak menebak. Tampil sebagai badge di panel:
 |---|---|---|
 | ~365 nama bahan belum cocok | Inventory → Bahan Belum Cocok | Admin dapur |
 | ~178 pasangan satuan tanpa aturan konversi (18 teratas menutup separuh baris) | Inventory → Konversi Satuan → Butuh Aturan | Admin dapur |
-| ~352 resep belum dipetakan ke produk penjualan | Inventory → Resep & Menu → tab Belum Dipetakan | Admin + Owner |
+| ~380 produk aktif belum ditautkan ke resep (20 terlaris = ⅔ porsi, 60 = 86%) | Inventory → Pencocokan Menu (urut porsi terjual; Tautkan / Tanpa Resep / Buat Resep) | Admin + Owner |
 
-Resep ikut SPK Produksi hanya bila terpetakan ke produk; HPP resep hanya lengkap bila
-pasangan satuannya punya aturan. Target sebelum go-live: 18 aturan teratas + produk
-yang aktif dijual bulan ini.
+Produk ikut SPK Produksi hanya bila menunjuk resep (`products.recipe_id`; varian harga
+10K/12K boleh berbagi satu resep, produk yang memang tidak dimasak ditandai "tanpa resep");
+HPP resep hanya lengkap bila pasangan satuannya punya aturan. Target sebelum go-live:
+18 aturan teratas + 60 produk terlaris di Pencocokan Menu.
 
 ## 8. Pengguna & peran
 

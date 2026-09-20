@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Support\Units\Unit;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Recipe extends Model
@@ -19,7 +18,6 @@ class Recipe extends Model
     protected $fillable = [
         'name',
         'name_norm',
-        'product_id',
         'jenis',
         'kategori',
         'yield_qty',
@@ -55,6 +53,9 @@ class Recipe extends Model
         // tidak boleh bergantung pada pemanggil untuk mengisinya dengan benar.
         static::saving(function (self $recipe) {
             $recipe->name_norm = self::normalizeName($recipe->name);
+            if ($recipe->isDirty('yield_unit')) {
+                $recipe->yield_unit = Unit::canonical($recipe->yield_unit);
+            }
         });
     }
 
@@ -104,9 +105,14 @@ class Recipe extends Model
         return $this->hasMany(RecipeItem::class)->orderBy('sort_order')->orderBy('id');
     }
 
-    public function product(): BelongsTo
+    /**
+     * Produk penjualan yang dimasak dengan resep ini. Boleh lebih dari satu
+     * karena master produk memisahkan varian harga (10K/12K/15K) yang isinya
+     * sama; satu produk hanya menunjuk satu resep.
+     */
+    public function products(): HasMany
     {
-        return $this->belongsTo(Product::class);
+        return $this->hasMany(Product::class);
     }
 
     /** Template kerja paten menu ini. */
@@ -131,9 +137,9 @@ class Recipe extends Model
         return $query->where('jenis', self::JENIS_SUB);
     }
 
-    /** Resep yang belum dipetakan ke produk yang dijual. */
+    /** Resep yang belum ditautkan ke satu pun produk yang dijual. */
     public function scopeUnmapped(Builder $query): Builder
     {
-        return $query->whereNull('product_id');
+        return $query->whereDoesntHave('products');
     }
 }

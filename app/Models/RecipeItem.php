@@ -27,6 +27,17 @@ class RecipeItem extends Model
         'unit_price_snapshot' => 'decimal:4',
     ];
 
+    protected static function booted(): void
+    {
+        // Satu ejaan per satuan ("gr"/"g" -> "gram"), dari jalur mana pun
+        // barisnya lahir: form, import Excel, atau migrasi Master Menu.
+        static::saving(function (self $item) {
+            if ($item->isDirty('unit')) {
+                $item->unit = Unit::canonical($item->unit);
+            }
+        });
+    }
+
     public function recipe(): BelongsTo
     {
         return $this->belongsTo(Recipe::class);

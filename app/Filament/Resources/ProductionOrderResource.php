@@ -114,7 +114,7 @@ class ProductionOrderResource extends Resource
                             ->addActionLabel('Tambah Baris')
                             ->defaultItems(0)
                             ->disabled(fn (?ProductionOrder $record) => $record !== null && ! $record->isEditable())
-                            ->itemLabel(fn (array $state) => trim(($state['label'] ?? '').' — '.rtrim(rtrim(number_format((float) ($state['qty'] ?? 0), 2, ',', '.'), '0'), ',').' '.($state['unit'] ?? '')))
+                            ->itemLabel(fn (array $state) => trim(($state['label'] ?? '').' — '.number_format((float) ($state['qty'] ?? 0), 0, ',', '.').' '.($state['unit'] ?? '')))
                             ->schema([
                                 Forms\Components\Select::make('kind')
                                     ->label('Jenis')
@@ -145,10 +145,14 @@ class ProductionOrderResource extends Resource
                                     ->required(fn (Get $get) => $get('kind') === ProductionOrderLine::KIND_MANUAL)
                                     ->columnSpan(fn (Get $get) => $get('kind') === ProductionOrderLine::KIND_MENU ? 2 : 4),
 
+                                // Jumlah porsi selalu bilangan bulat: kolom DB decimal(15,4)
+                                // (warisan) jadi nilai lama "20.0000" dibulatkan saat tampil,
+                                // dan input menolak pecahan (3,14 porsi tidak masuk akal).
                                 Forms\Components\TextInput::make('qty')
                                     ->label('Jumlah')
-                                    ->numeric()
-                                    ->step('any')
+                                    ->integer()
+                                    ->minValue(1)
+                                    ->formatStateUsing(fn ($state) => $state === null || $state === '' ? null : (int) round((float) $state))
                                     ->default(1)
                                     ->required(),
 

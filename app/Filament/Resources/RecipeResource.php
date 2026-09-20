@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\RecipeResource\Pages;
 use App\Models\InventoryItem;
+use App\Models\Product;
 use App\Models\Recipe;
 use App\Models\RecipeItem;
 use App\Services\RecipeCostService;
@@ -71,16 +72,27 @@ class RecipeResource extends Resource
                             ->label('Kategori')
                             ->maxLength(255),
 
-                        Forms\Components\Select::make('product_id')
+                        // Tautan disimpan di products.recipe_id (satu resep boleh
+                        // dipakai beberapa varian harga), jadi bukan relasi
+                        // BelongsTo yang bisa diserahkan ke ->relationship().
+                        Forms\Components\Select::make('product_ids')
                             ->label('Produk yang Dijual')
-                            ->relationship('product', 'name')
+                            ->multiple()
+                            ->options(fn () => Product::query()->orderBy('name')->pluck('name', 'id'))
                             ->searchable()
                             ->preload()
                             ->native(false)
                             ->columnSpan(2)
+                            ->dehydrated(false)
+                            ->afterStateHydrated(fn (Forms\Components\Select $component, ?Recipe $record) => $component->state(
+                                $record?->products()->pluck('id')->all() ?? []
+                            ))
+                            ->saveRelationshipsUsing(function (Forms\Components\Select $component, Recipe $record) {
+                                static::syncProducts($record, array_map('intval', (array) $component->getState()));
+                            })
                             ->helperText(
-                                'Menghubungkan resep ini ke produk pada alur penjualan. '
-                                .'Boleh dikosongkan selama pemetaannya belum disepakati.'
+                                'Produk pada alur penjualan yang dimasak dengan resep ini -- varian harga '
+                                .'(10K/12K) boleh dipilih semuanya. Boleh dikosongkan selama pemetaannya belum disepakati.'
                             ),
 
                         Forms\Components\Toggle::make('is_active')
@@ -106,6 +118,7 @@ class RecipeResource extends Resource
                             ->searchable()
                             ->native(false)
                             ->default('porsi')
+                            ->formatStateUsing(fn ($state) => Unit::canonical($state))
                             ->options(fn (?Recipe $record, Get $get) => static::unitOptions($record?->yield_unit, $get('yield_unit'))),
 
                         Forms\Components\TextInput::make('target_price')
@@ -144,14 +157,18 @@ class RecipeResource extends Resource
 
                 Forms\Components\Section::make('Rincian Bahan')
                     ->description('Sebuah baris menunjuk bahan, atau sub-menu, atau belum keduanya. Baris yang belum menunjuk apa pun masuk daftar bahan belum cocok.')
+                    ->collapsible()
                     ->schema([
+                        // Baris terlipat secara bawaan: resep bisa punya 40+ bahan, dan
+                        // yang dibutuhkan saat membuka menu biasanya hanya daftarnya.
                         Forms\Components\Repeater::make('items')
                             ->label('')
                             ->relationship()
                             ->orderColumn('sort_order')
                             ->reorderable()
                             ->collapsible()
-                            ->itemLabel(fn (array $state) => trim(($state['qty'] ?? '').' '.($state['unit'] ?? '').' '.($state['raw_name'] ?? '')) ?: 'Baris baru')
+                            ->collapsed()
+                            ->itemLabel(fn (array $state) => trim(static::formatQty($state['qty'] ?? null).' '.($state['unit'] ?? '').' '.($state['raw_name'] ?? '')) ?: 'Baris baru')
                             ->defaultItems(0)
                             ->addActionLabel('Tambah Baris')
                             ->schema([
@@ -162,17 +179,26 @@ class RecipeResource extends Resource
                                     ->columnSpan(2)
                                     ->helperText('Teks asli dari resep; disimpan apa adanya agar baris salah tautan bisa ditelusuri.'),
 
+                                // Tampil 2 desimal; nilai asli (sampai 4 desimal, warisan
+                                // pembagian per porsi) dipertahankan selama pengguna tidak
+                                // mengubah angkanya, supaya membuka-simpan resep tidak
+                                // menggeser HPP.
                                 Forms\Components\TextInput::make('qty')
                                     ->label('Jumlah')
                                     ->numeric()
                                     ->required()
                                     ->step('any')
-                                    ->default(0),
+                                    ->default(0)
+                                    ->formatStateUsing(fn ($state) => $state === null ? null : static::formatQty($state, '.'))
+                                    ->dehydrateStateUsing(fn ($state, ?RecipeItem $record) => $record !== null && (float) $state === (float) static::formatQty($record->qty, '.')
+                                        ? $record->qty
+                                        : $state),
 
                                 Forms\Components\Select::make('unit')
                                     ->label('Satuan')
                                     ->searchable()
                                     ->native(false)
+                                    ->formatStateUsing(fn ($state) => Unit::canonical($state))
                                     ->options(fn (Get $get) => static::unitOptions($get('unit'))),
 
                                 Forms\Components\Select::make('inventory_item_id')
@@ -301,8 +327,11 @@ class RecipeResource extends Resource
                         default => 'danger',
                     }),
 
-                TextColumn::make('product.name')
+                TextColumn::make('products.name')
                     ->label('Produk')
+                    ->listWithLineBreaks()
+                    ->limitList(2)
+                    ->expandableLimitedList()
                     ->placeholder('Belum dipetakan')
                     ->searchable()
                     ->toggleable(),
@@ -357,6 +386,20 @@ class RecipeResource extends Resource
             $cost['issues'] !== [] => 'Belum Lengkap',
             default => 'Lengkap',
         };
+    }
+
+    /**
+     * Jumlah untuk ditampilkan: paling banyak 2 desimal, nol di belakang dibuang.
+     */
+    public static function formatQty(mixed $value, string $decimalPoint = ','): string
+    {
+        if ($value === null || $value === '') {
+            return '';
+        }
+
+        $formatted = number_format((float) $value, 2, $decimalPoint, '');
+
+        return str_contains($formatted, $decimalPoint) ? rtrim(rtrim($formatted, '0'), $decimalPoint) : $formatted;
     }
 
     /**
@@ -448,5 +491,18 @@ class RecipeResource extends Resource
             'hpp' => Pages\RecipeCostBreakdown::route('/{record}/hpp'),
             'edit' => Pages\EditRecipe::route('/{record}/edit'),
         ];
+    }
+
+    /**
+     * Ganti daftar produk yang menunjuk resep ini. Produk yang dilepas kembali
+     * ke daftar kerja pencocokan; produk yang ditambah otomatis ditandai
+     * perlu resep.
+     *
+     * @param  list<int>  $productIds
+     */
+    public static function syncProducts(Recipe $record, array $productIds): void
+    {
+        Product::query()->where('recipe_id', $record->id)->whereNotIn('id', $productIds)->update(['recipe_id' => null]);
+        Product::query()->whereIn('id', $productIds)->update(['recipe_id' => $record->id, 'needs_recipe' => true]);
     }
 }

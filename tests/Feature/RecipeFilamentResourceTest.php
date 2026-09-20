@@ -298,3 +298,65 @@ it('melepas kembali tautan ketika keputusan dibuka ulang dari daftar', function 
     expect(RecipeItem::query()->unmatched()->count())->toBe(1)
         ->and($mismatch->fresh()->status)->toBe(RecipeMismatch::STATUS_OPEN);
 });
+
+it('menyeragamkan ejaan satuan menjadi satu bentuk baku saat disimpan', function () {
+    Livewire::test(RecipeResource\Pages\CreateRecipe::class)
+        ->fillForm([
+            'name' => 'Gorengan', 'jenis' => Recipe::JENIS_UTAMA, 'yield_qty' => 10, 'yield_unit' => 'prs',
+            'ohc_pct' => 40, 'profit_pct' => 25,
+            'items' => [
+                ['raw_name' => 'tepung', 'inventory_item_id' => $this->tepung->id, 'qty' => 250, 'unit' => 'gr'],
+                ['raw_name' => 'telur', 'qty' => 2, 'unit' => 'btr'],
+            ],
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $recipe = Recipe::query()->firstWhere('name', 'Gorengan');
+
+    expect($recipe->yield_unit)->toBe('porsi')
+        ->and($recipe->items->pluck('unit')->all())->toBe(['gram', 'butir']);
+
+    // Jalur lain (import / migrasi) lewat model yang sama; ejaan tak dikenal dibiarkan.
+    $item = $recipe->items()->create(['raw_name' => 'daun', 'qty' => 1, 'unit' => ' Lbr ']);
+    $asing = $recipe->items()->create(['raw_name' => 'bumbu', 'qty' => 1, 'unit' => 'bnggl']);
+
+    expect($item->fresh()->unit)->toBe('lembar')
+        ->and($asing->fresh()->unit)->toBe('bnggl')
+        ->and(\App\Support\Units\Unit::canonical('G'))->toBe('gram')
+        ->and(\App\Support\Units\Unit::canonical(null))->toBeNull();
+});
+
+it('menampilkan jumlah dengan 2 desimal tanpa menggeser nilai asli saat resep disimpan ulang', function () {
+    $recipe = Recipe::query()->create([
+        'name' => 'Nasi Uduk', 'jenis' => Recipe::JENIS_UTAMA, 'yield_qty' => 1, 'yield_unit' => 'porsi',
+        'ohc_pct' => 0.4, 'profit_pct' => 0.25, 'is_active' => true,
+    ]);
+    // Warisan pembagian per porsi: 4 desimal.
+    $gula = $recipe->items()->create(['raw_name' => 'gula', 'qty' => 0.0769, 'unit' => 'gram', 'inventory_item_id' => $this->tepung->id]);
+    $beras = $recipe->items()->create(['raw_name' => 'beras', 'qty' => 40, 'unit' => 'gram']);
+
+    $page = Livewire::test(RecipeResource\Pages\EditRecipe::class, ['record' => $recipe->getRouteKey()])
+        ->assertFormSet(function (array $state) {
+            $qty = collect($state['items'])->pluck('qty')->all();
+            expect($qty)->toBe(['0.08', '40']);
+        })
+        // Label baris terlipat memakai format Indonesia.
+        ->assertSee('0,08 gram gula')
+        ->assertSee('40 gram beras');
+
+    // Simpan tanpa mengubah apa pun: nilai asli tetap.
+    $page->call('save')->assertHasNoFormErrors();
+    expect((float) $gula->fresh()->qty)->toBe(0.0769)
+        ->and((float) $beras->fresh()->qty)->toBe(40.0);
+
+    // Mengubah angka benar-benar tersimpan.
+    $items = $page->get('data.items');
+    foreach ($items as &$row) {
+        if ($row['raw_name'] === 'gula') {
+            $row['qty'] = '0.1';
+        }
+    }
+    $page->fillForm(['items' => $items])->call('save')->assertHasNoFormErrors();
+    expect((float) $gula->fresh()->qty)->toBe(0.1);
+});

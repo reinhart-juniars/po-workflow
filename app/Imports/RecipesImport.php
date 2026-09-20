@@ -119,7 +119,16 @@ class RecipesImport implements SkipsEmptyRows, ToCollection, WithHeadingRow
             return null;
         }
 
-        if (filled($row['produk_id'] ?? null) && ! Product::query()->whereKey($row['produk_id'])->exists()) {
+        // produk_id boleh berisi beberapa id dipisah koma (varian harga). Hanya
+        // menambah tautan; melepas tautan dilakukan di Pencocokan Menu, karena
+        // kolom kosong juga berarti "resep ini belum dipetakan".
+        $productIds = collect(explode(',', (string) ($row['produk_id'] ?? '')))
+            ->map(fn ($id) => (int) trim($id))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($productIds->isNotEmpty() && Product::query()->whereKey($productIds)->count() !== $productIds->count()) {
             $this->errors[] = "Baris {$lineNumber}: produk_id '{$row['produk_id']}' tidak ditemukan.";
 
             return null;
@@ -130,7 +139,7 @@ class RecipesImport implements SkipsEmptyRows, ToCollection, WithHeadingRow
             'name' => $name,
             'jenis' => $jenis,
             'kategori' => blank($row['kategori'] ?? null) ? null : trim((string) $row['kategori']),
-            'product_id' => blank($row['produk_id'] ?? null) ? null : (int) $row['produk_id'],
+            'product_ids' => $productIds->all(),
             'yield_qty' => $yield,
             'yield_unit' => trim((string) ($row['hasil_satuan'] ?? '')) ?: 'porsi',
             // Kolomnya bernama persen dan selalu dibagi 100; tidak ada tebakan
@@ -194,7 +203,8 @@ class RecipesImport implements SkipsEmptyRows, ToCollection, WithHeadingRow
     protected function save(array $data, array $items): void
     {
         $id = $data['id'];
-        unset($data['id']);
+        $productIds = $data['product_ids'];
+        unset($data['id'], $data['product_ids']);
 
         $recipe = filled($id)
             ? Recipe::query()->find($id)
@@ -206,6 +216,10 @@ class RecipesImport implements SkipsEmptyRows, ToCollection, WithHeadingRow
         } else {
             $recipe = Recipe::query()->create($data);
             $this->created++;
+        }
+
+        if ($productIds !== []) {
+            Product::query()->whereKey($productIds)->update(['recipe_id' => $recipe->id, 'needs_recipe' => true]);
         }
 
         // Rincian diganti seluruhnya: bahan yang dihapus di Excel harus ikut

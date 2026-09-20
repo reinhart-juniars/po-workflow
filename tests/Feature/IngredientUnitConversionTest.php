@@ -181,7 +181,8 @@ it('mendaftar pasangan satuan yang menahan resep dan melepasnya setelah diatur',
 
     expect($rows)->toHaveCount(1)
         ->and($rows[0]['item_name'])->toBe('Ayam Fillet')
-        ->and($rows[0]['from_unit'])->toBe('gr')
+        // Ejaan baku: model menyimpan "gr" sebagai "gram".
+        ->and($rows[0]['from_unit'])->toBe('gram')
         ->and($rows[0]['to_unit'])->toBe('pcs')
         ->and($rows[0]['line_count'])->toBe(2)
         ->and($rows[0]['recipe_count'])->toBe(2);

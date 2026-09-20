@@ -47,6 +47,13 @@ Legenda kolom "Wajib": W = wajib untuk serah terima, O = opsional/dicatat saja.
 | C6 | Jalankan ulang migrasi (staging) lalu cek C4 | Tautan manual tetap ada | O | | |
 | C7 | Export resep → ubah satu qty di Excel → import | Baris berubah; file dengan bahan tak dikenal ditolak utuh | O | | |
 | C8 | Tambah resep baru | OHC/profit bawaan sesuai Pengaturan (40% / 25% bila belum diubah) | W | | |
+| C9 | Pencocokan Menu: baris teratas → Tautkan (usulan sudah terpilih) | Status Sudah tertaut; di Admin App → Master Menu produk itu menampilkan "Resep: …"; KPI "Porsi tercakup" naik | W | | |
+| C10 | Pencocokan Menu: dua varian harga (mis. 10K & 12K) ditautkan ke resep yang sama | Keduanya tertaut; di form resep kolom Produk yang Dijual memuat keduanya | W | | |
+| C11 | Pencocokan Menu: EXTRA / HARGA UP → Tanpa Resep (bisa massal) | Hilang dari daftar kerja; filter Status = Tanpa resep menampilkannya; Lepas mengembalikan | W | | |
+| C12 | Pencocokan Menu: produk paket tanpa resep → Buat Resep | Form resep terbuka dengan nama terusul & produk terpilih; setelah simpan produk tertaut | O | | |
+| C13 | Login `accounting` buka Pencocokan Menu | Daftar terbaca, tombol Tautkan/Tanpa Resep/Import tidak ada; Export tetap ada | O | | |
+| C14 | Pencocokan Menu → Export Excel; isi `terima_usulan` = ya pada 2 baris, `tanpa_resep` = ya pada 1 baris, sisanya biarkan → Import Excel | Notifikasi "2 ditautkan, 1 tanpa resep, N tidak berubah"; produk lain tidak berubah; tautan lama tidak lepas | W | | |
+| C15 | Import berkas dengan satu `resep_id` salah | "Import dibatalkan" dengan nomor baris; tidak ada baris lain yang tersimpan | W | | |
 
 ## D. Produksi & Form Kebutuhan (Phase 3)
 
