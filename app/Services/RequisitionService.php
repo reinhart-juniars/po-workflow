@@ -9,12 +9,9 @@ use App\Models\InventoryPurchase;
 use App\Models\ProductionOrder;
 use App\Models\Requisition;
 use App\Models\RequisitionLine;
-use App\Models\User;
+use App\Support\Notify;
 use App\Support\Settings\Settings;
-use Filament\Notifications\Actions\Action as NotificationAction;
-use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Notification as LaravelNotification;
 use RuntimeException;
 
 /**
@@ -411,31 +408,15 @@ class RequisitionService
      */
     protected function notify(string $permission, string $title, string $body, Requisition $requisition, ?int $actorId, string $status = 'info'): void
     {
-        $recipients = User::query()
-            ->where('is_active', true)
-            ->permission($permission)
-            ->when($actorId, fn ($q) => $q->whereKeyNot($actorId))
-            ->get();
-
-        if ($recipients->isEmpty()) {
-            return;
-        }
-
-        $notification = Notification::make()
-            ->title($title)
-            ->body($body)
-            ->status($status)
-            ->actions([
-                NotificationAction::make('buka')
-                    ->label('Buka form')
-                    ->button()
-                    ->url(\App\Filament\Resources\ProductionOrderResource::getUrl('kebutuhan', ['record' => $requisition->production_order_id])),
-            ]);
-
-        // Dikirim langsung, bukan lewat antrean: sendToDatabase() Filament
-        // ShouldQueue, dan server ini tidak menjalankan queue worker -- lonceng
-        // yang menunggu worker tidak pernah sampai.
-        LaravelNotification::sendNow($recipients, $notification->toDatabase());
+        Notify::permission(
+            $permission,
+            $title,
+            $body,
+            \App\Filament\Resources\ProductionOrderResource::getUrl('kebutuhan', ['record' => $requisition->production_order_id]),
+            $status,
+            $actorId,
+            'Buka form',
+        );
     }
 
     public function check(Requisition $requisition, ?int $userId = null): Requisition

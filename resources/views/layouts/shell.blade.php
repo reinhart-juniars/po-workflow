@@ -97,6 +97,7 @@
       </div>
       <p class="min-w-0 flex-1 truncate text-sm font-semibold text-gray-800 lg:hidden">{{ $title ?? \App\Support\Navigation::appLabel($shellApp) }}</p>
 
+      @include('partials.notification-bell')
       @include('partials.user-menu')
     </header>
 

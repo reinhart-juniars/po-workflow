@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Pages\IdleMenuReport;
 use App\Filament\Pages\ModuleSettings;
 use App\Filament\Resources\InventoryUnitConversionResource;
 use App\Filament\Resources\ProductionOrderResource;
@@ -13,8 +14,10 @@ use App\Models\ProductionOrder;
 use App\Models\Recipe;
 use App\Models\RecipeMismatch;
 use App\Models\Requisition;
+use App\Services\IdleMenuReportService;
 use App\Services\InventoryStockAlertService;
 use App\Services\MissingUnitConversionScanner;
+use App\Services\ProfitGuardService;
 use App\Support\Settings\Settings;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -98,6 +101,36 @@ class InventoryOverviewWidget extends BaseWidget
                 ->descriptionIcon('heroicon-m-scale')
                 ->color($konversi['pasangan'] > 0 ? 'warning' : 'success')
                 ->url(InventoryUnitConversionResource::getUrl('missing'));
+        }
+
+        // Bagian B.2 & B.3: profit menu keseluruhan terhadap batas, dan menu
+        // yang tidak diproduksi dalam rentang bawaan.
+        if ($user?->can('notification.profit') || $user?->can('recipe.view')) {
+            $agg = app(ProfitGuardService::class)->aggregate();
+            $rentang = number_format($agg['lower'], 0, ',', '.').'–'.number_format($agg['upper'], 0, ',', '.').'%';
+
+            $stats[] = Stat::make('Profit menu keseluruhan', $agg['count'] > 0 ? number_format($agg['profit_pct'], 1, ',', '.').'%' : '–')
+                ->description($agg['count'] > 0
+                    ? $agg['count'].' menu terhitung · batas '.$rentang.($agg['skipped'] > 0 ? ' · '.$agg['skipped'].' dilewati' : '')
+                    : 'Belum ada resep yang bersih untuk dihitung ('.$agg['skipped'].' dilewati)')
+                ->descriptionIcon(match ($agg['state']) {
+                    'below' => 'heroicon-m-arrow-trending-down', 'above' => 'heroicon-m-arrow-trending-up', default => 'heroicon-m-check-circle'
+                })
+                ->color(match ($agg['state']) {
+                    'below' => 'danger', 'above' => 'warning', 'none' => 'gray', default => 'success'
+                })
+                ->url($user?->can('settings.manage') ? ModuleSettings::getUrl() : null);
+        }
+
+        if ($user?->can('recipe.view')) {
+            $service = app(IdleMenuReportService::class);
+            $idle = Cache::remember('inventory.dashboard.idle_menu', now()->addMinutes(10), fn () => $service->count());
+
+            $stats[] = Stat::make('Menu tidak diproduksi '.$service->defaultMonths().' bulan terakhir', $idle)
+                ->description('Menu aktif yang tidak muncul di SPK Produksi')
+                ->descriptionIcon('heroicon-m-eye-slash')
+                ->color($idle > 0 ? 'warning' : 'success')
+                ->url(IdleMenuReport::getUrl());
         }
 
         $sumber = app(Settings::class)->get('hpp.usage_source') === 'resep' ? 'Resep × produksi (kartu stok)' : 'Residual opname';

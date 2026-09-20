@@ -91,6 +91,16 @@ Legenda kolom "Wajib": W = wajib untuk serah terima, O = opsional/dicatat saja.
 | E5 | Perbandingan HPP resep vs residual opname untuk 2 periode lampau | Angka dicatat, dibahas; Owner memutuskan kapan opname berhenti jadi sumber utama | W | | |
 | E6 | Setelah disetujui: Pengaturan → "Sumber pemakaian bahan untuk HPP" = Resep x produksi | Laporan Laba Rugi "Bahan Baku Terpakai" & Laporan Pemakaian Bahan berganti ke angka resep; residual tetap tampil sebagai pembanding | W | | |
 
+## G. Bagian B — kebutuhan tambahan
+
+| No | Langkah | Hasil yang diharapkan | Peran | Hasil | Catatan |
+|---|---|---|---|---|---|
+| G1 | Ubah harga satu bahan di Item Inventaris (`admin`) | Owner & accounting menerima lonceng "Harga bahan X naik/turun N%" berisi harga lama → baru dan sumbernya; admin (pelaku) tidak; lonceng tampil di header Owner app maupun Inventory | W | | |
+| G2 | Ubah harga jual satu menu di Admin › Master Menu | Lonceng "Harga jual X naik/turun N%" ke pemegang izin notifikasi harga; tombol Buka membawa ke halaman edit menu | W | | |
+| G3 | Pengaturan Inventory › Profit Menu: set batas bawah/atas (mis. 20 / 60) → `php artisan profit:check` | Dashboard Inventory menampilkan "Profit menu keseluruhan" + rentang; lonceng ke owner/admin hanya saat keadaan berubah (normal ↔ di bawah ↔ di atas), tidak berulang bila tetap | W | | |
+| G4 | Inventory › Resep & HPP › Menu Tidak Diproduksi | Daftar menu aktif tanpa SPK Produksi dalam rentang (bawaan 3 bulan, dari Pengaturan), kolom terakhir diproduksi & terakhir terjual, export Excel; `sales` tidak bisa membuka | W | | |
+| G5 | Admin › Master Data › Katalog Foto Menu: unggah JPG/PNG/WEBP ≤ 5 MB untuk satu menu, ganti, hapus | Foto tampil dengan SKU & harga; berkas lama terhapus saat diganti; PDF ditolak; Sales › Marketing › Katalog Foto Menu hanya melihat (tanpa tombol unggah) | W | | |
+
 ## F. Paralel HPP (definition of done Phase 3)
 
 Diisi tiap akhir bulan selama masa paralel (minimal 2 periode).

@@ -27,11 +27,14 @@ class Product extends Model
         'is_3s',
         'recipe_id',
         'needs_recipe',
+        'photo_path',
+        'photo_updated_at',
     ];
 
     protected $casts = [
         'active' => 'boolean',
         'is_3s' => 'boolean',
+        'photo_updated_at' => 'datetime',
         'needs_recipe' => 'boolean',
         'base_price' => 'decimal:2',
         'raw_material_cost' => 'decimal:2',
@@ -64,8 +67,17 @@ class Product extends Model
                 if ($product->wasChanged($column)) {
                     $product->recordPriceHistory();
 
-                    return;
+                    break;
                 }
+            }
+
+            // Bagian B.1: lonceng perubahan harga jual menu.
+            if ($product->wasChanged('base_price')) {
+                app(\App\Services\PriceChangeNotifier::class)->productPriceChanged(
+                    $product,
+                    $product->getOriginal('base_price') === null ? null : (float) $product->getOriginal('base_price'),
+                    $product->base_price === null ? null : (float) $product->base_price,
+                );
             }
         });
     }
@@ -81,6 +93,12 @@ class Product extends Model
             'reason' => $reason,
             'effective_from' => now(),
         ]);
+    }
+
+    /** URL foto katalog (disk public), null bila belum ada. */
+    public function photoUrl(): ?string
+    {
+        return $this->photo_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($this->photo_path) : null;
     }
 
     public function priceHistories(): HasMany

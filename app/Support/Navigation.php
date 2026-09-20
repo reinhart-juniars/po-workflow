@@ -80,6 +80,7 @@ class Navigation
                 'Master Data' => [
                     ['label' => 'Master Menu', 'route' => 'adminapp.products.index', 'match' => 'adminapp.products.*', 'icon' => 'heroicon-o-squares-2x2'],
                     ['label' => 'Master Customer', 'route' => 'adminapp.customers.index', 'match' => 'adminapp.customers.*', 'icon' => 'heroicon-o-user-group'],
+                    ['label' => 'Katalog Foto Menu', 'route' => 'adminapp.catalog.index', 'match' => 'adminapp.catalog.*', 'icon' => 'heroicon-o-photo'],
                 ],
                 'Operasional' => [
                     ['label' => 'Purchase Orders', 'route' => 'adminapp.orders.index', 'match' => 'adminapp.orders.*', 'icon' => 'heroicon-o-clipboard-document-list'],
@@ -150,6 +151,7 @@ class Navigation
                     ['label' => 'Konversi Satuan', 'route' => 'filament.admin.resources.inventory-unit-conversions.index', 'can' => 'inventory.view'],
                     ['label' => 'Bahan Belum Cocok', 'route' => 'filament.admin.resources.recipe-mismatches.index', 'can' => 'recipe.view'],
                     ['label' => 'Perbandingan HPP', 'route' => 'filament.admin.pages.hpp-comparison-report', 'can' => 'ledger.view'],
+                    ['label' => 'Menu Tidak Diproduksi', 'route' => 'filament.admin.pages.menu-tidak-diproduksi', 'can' => 'recipe.view'],
                 ],
                 'Produksi' => [
                     ['label' => 'SPK Produksi', 'route' => 'filament.admin.resources.production-orders.index', 'can' => 'production.view'],
@@ -166,6 +168,9 @@ class Navigation
                     ['label' => 'Laporan Sales Final & Retur', 'route' => 'salesapp.reports.final-retur', 'match' => ['salesapp.reports.final-retur', 'salesapp.reports'], 'icon' => 'heroicon-o-document-chart-bar'],
                     ['label' => 'Laporan Waste', 'route' => 'salesapp.reports.waste', 'match' => 'salesapp.reports.waste*', 'icon' => 'heroicon-o-trash'],
                     ['label' => 'Laporan Penjualan', 'route' => 'salesapp.reports.sales', 'match' => 'salesapp.reports.sales*', 'icon' => 'heroicon-o-chart-bar'],
+                ],
+                'Marketing' => [
+                    ['label' => 'Katalog Foto Menu', 'route' => 'salesapp.catalog.index', 'match' => 'salesapp.catalog.*', 'icon' => 'heroicon-o-photo'],
                 ],
             ],
             'production' => [

@@ -78,6 +78,12 @@ Route::middleware(['web', 'auth', 'force.password.change'])->group(function () {
 
     Route::put('/profile/password', [UserProfileController::class, 'updatePassword'])
         ->name('profile.password.update');
+
+    // Lonceng header Blade (tabel notifications yang sama dengan lonceng Filament).
+    Route::get('/notifications/{id}/open', [\App\Http\Controllers\NotificationController::class, 'open'])
+        ->name('notifications.open');
+    Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'readAll'])
+        ->name('notifications.read-all');
 });
 
 Route::middleware(['web', 'auth'])->group(function () {
@@ -102,6 +108,10 @@ Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:admin|ow
     ->prefix('admin-app')
     ->name('adminapp.')
     ->group(function () {
+        // Bagian B.4: Katalog Foto Menu (kelola foto)
+        Route::get('/catalog', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\MenuCatalogController::class)->index($r, 'admin'))->name('catalog.index');
+        Route::post('/catalog/{product}/photo', [\App\Http\Controllers\MenuCatalogController::class, 'upload'])->name('catalog.upload');
+        Route::delete('/catalog/{product}/photo', [\App\Http\Controllers\MenuCatalogController::class, 'destroyPhoto'])->name('catalog.photo.destroy');
 
         // Route Dashboard
         Route::get('/', [AdminAppController::class, 'dashboard'])->name('dashboard');
@@ -240,6 +250,8 @@ Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:sales|ow
     ->prefix('sales-app')
     ->name('salesapp.')
     ->group(function () {
+        // Bagian B.4: Katalog Foto Menu (hanya lihat)
+        Route::get('/catalog', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\MenuCatalogController::class)->index($r, 'sales'))->name('catalog.index');
         Route::get('/', [SalesAppController::class, 'dashboard'])->name('dashboard');
         Route::get('/dashboard', function () {
             return redirect()->route('salesapp.dashboard');

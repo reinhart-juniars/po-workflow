@@ -31,10 +31,10 @@
   if (!window.__shUserMenuBound) {
     window.__shUserMenuBound = true;
     document.addEventListener('click', (e) => {
-      document.querySelectorAll('details.sh-user[open]').forEach((d) => { if (!d.contains(e.target)) d.removeAttribute('open'); });
+      document.querySelectorAll('details.sh-user[open], details.sh-bell[open]').forEach((d) => { if (!d.contains(e.target)) d.removeAttribute('open'); });
     });
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') document.querySelectorAll('details.sh-user[open]').forEach((d) => d.removeAttribute('open'));
+      if (e.key === 'Escape') document.querySelectorAll('details.sh-user[open], details.sh-bell[open]').forEach((d) => d.removeAttribute('open'));
     });
   }
 </script>

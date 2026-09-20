@@ -23,6 +23,8 @@ policy membuat build merah).
 | `requisition.check` | Penerimaan barang di Form Kebutuhan (Diterima/Ditolak/Harga Beli/cara pembayaran) dan Periksa (posting saldo awal & pembelian ke kartu stok, membuat Pembelian Bahan Baku + kas keluar / hutang) |
 | `ledger.view` | Kartu Stok (di UI; kunci izinnya tetap `ledger`), Perbandingan HPP |
 | `settings.manage` | Pengaturan modul |
+| `notification.price` | Menerima lonceng perubahan harga bahan & harga jual menu (Bagian B.1) |
+| `notification.profit` | Menerima lonceng profit menu keseluruhan keluar dari batas (Bagian B.2) |
 
 `view` = daftar & detail; `manage` = tambah/ubah/hapus. Superadmin lolos semua lewat
 `Gate::before`, tanpa perlu izin eksplisit.
@@ -42,6 +44,8 @@ policy membuat build merah).
 | requisition.check | ✓ | ✓ | ✓ | ✓ | ✓ | – |
 | ledger.view | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | settings.manage | ✓ | – | – | – | – | – |
+| notification.price | ✓ | ✓ | ✓ | – | ✓ | – |
+| notification.profit | ✓ | ✓ | – | – | – | – |
 
 Peran **`inventory-supervisor`** (Supervisor Gudang) = staf inventory + `requisition.approve`:
 dialah yang menyetujui atau menolak Form Kebutuhan yang **diajukan** produksi (status

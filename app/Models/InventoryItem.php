@@ -133,6 +133,14 @@ class InventoryItem extends Model
      */
     protected static function booted(): void
     {
+        // Hanya bila kolomnya ikut dimuat: model yang diambil sebagian
+        // kolom tidak boleh menulis NULL ke unit.
+        static::saving(function (self $item) {
+            if ($item->isDirty('unit')) {
+                $item->unit = Unit::canonical($item->unit);
+            }
+        });
+
         // Dipisah created/updated: wasRecentlyCreated tetap true seumur
         // instance, jadi tidak bisa dipakai membedakan keduanya di saved().
         static::created(function (self $item) {
@@ -159,6 +167,14 @@ class InventoryItem extends Model
             };
 
             $item->recordPriceHistory($oldUnit, $item->getOriginal('pack_price'), $action);
+
+            // Bagian B.1: lonceng perubahan harga beli bahan, di atas histori.
+            app(\App\Services\PriceChangeNotifier::class)->ingredientChanged(
+                $item,
+                $oldUnit === null ? null : (float) $oldUnit,
+                $newUnit === null ? null : (float) $newUnit,
+                static::$priceChangeSource,
+            );
         });
     }
 

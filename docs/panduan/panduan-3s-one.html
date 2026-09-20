@@ -79,7 +79,7 @@
   <div class="sub">Business Control System</div>
   <p style="margin-top: 24pt; font-size: 14pt;">Panduan Pengguna</p>
   <p class="muted">Satu sistem untuk pesanan, produksi, stok, dan keuangan<br>W3S Catering</p>
-  <div class="meta">Versi 3.0</div>
+  <div class="meta">Versi 3.1</div>
 </div>
 
 <!-- ============ DAFTAR ISI ============ -->
@@ -270,7 +270,7 @@
     <tr><th style="width: 28%">Bagian</th><th>Fungsi</th></tr>
     <tr><td><b>Bilah atas</b></td><td>Tab aplikasi: Owner, Admin, Accounting, Inventory, Sales, Production, Delivery. Hanya yang sesuai peran Anda yang tampil.</td></tr>
     <tr><td><b>Menu kiri</b></td><td>Menu aplikasi yang sedang dibuka, dikelompokkan (Ringkasan, Master Data, Transaksi, Laporan, ...).</td></tr>
-    <tr><td><b>Lonceng</b> (di Inventory)</td><td>Pemberitahuan untuk Anda: form yang menunggu persetujuan Anda, barang yang sudah bisa dibelanjakan, form yang ditolak, dan sebagainya. Tekan <i>Buka form</i> untuk langsung ke halamannya.</td></tr>
+    <tr><td><b>Lonceng</b></td><td>Pemberitahuan untuk Anda, di semua aplikasi: form yang menunggu persetujuan Anda, barang yang sudah bisa dibelanjakan, form yang ditolak, <b>harga bahan / harga jual menu berubah</b>, dan <b>profit menu keluar dari batas</b>. Tekan <i>Buka</i> untuk langsung ke halamannya; <i>Tandai semua dibaca</i> membersihkan angka merahnya.</td></tr>
     <tr><td><b>Inisial nama</b> (pojok kanan)</td><td>Profil, ganti password, keluar.</td></tr>
   </table>
   <div class="fig"><img src="img/owner-dashboard.jpg" alt="Tata letak: bilah aplikasi di atas, menu aplikasi di kiri, isi halaman di tengah (contoh: Dashboard Owner)."><div class="cap">Tata letak: bilah aplikasi di atas, menu aplikasi di kiri, isi halaman di tengah (contoh: Dashboard Owner).</div></div>
@@ -292,7 +292,8 @@
   <h3>Admin</h3>
   <table class="grid">
     <tr><th style="width: 28%">Menu</th><th>Untuk apa</th></tr>
-    <tr><td>Master Menu, Master Customer</td><td>Daftar menu yang dijual (dengan harga) dan daftar pelanggan.</td></tr>
+    <tr><td>Master Menu, Master Customer</td><td>Daftar menu yang dijual (dengan harga) dan daftar pelanggan. Mengubah harga jual menu mengirim lonceng ke Owner.</td></tr>
+    <tr><td>Katalog Foto Menu</td><td>Satu foto resmi per menu, ditandai kode SKU, untuk materi promosi. Admin mengunggah / mengganti / menghapus foto (JPG, PNG, WEBP maks. 5 MB); tim Sales melihatnya di Sales › Marketing.</td></tr>
     <tr><td>Purchase Orders</td><td>Mencatat pesanan pelanggan: menu, jumlah, tanggal & jam kirim, cara bayar.</td></tr>
     <tr><td>SPK</td><td>Mengelompokkan pesanan ke slot jadwal masak. <b>Begitu SPK disimpan, SPK Produksi di Inventory terbentuk otomatis</b> dan dapur bisa menyusun kebutuhan bahannya.</td></tr>
     <tr><td>Delivery</td><td>Memantau pengiriman per pesanan.</td></tr>
@@ -363,7 +364,7 @@
     <tr><td>Pembelian Bahan Baku</td><td>Rekap pembelian bahan beserta kondisi barang (Baik / Tidak Baik). Sebagian besar terisi otomatis dari Form Kebutuhan.</td></tr>
     <tr><td>Stock Opname</td><td>Hasil hitung fisik stok per periode; menjadi dasar nilai persediaan.</td></tr>
     <tr><td>Saldo Awal Stok</td><td>Nilai stok awal periode.</td></tr>
-    <tr><td>Pengaturan Inventory</td><td>Angka bawaan: % OHC dan profit resep, sumber angka HPP, pembulatan belanja, perlakuan barang ditolak, penomoran dokumen. Hanya Owner.</td></tr>
+    <tr><td>Pengaturan Inventory</td><td>Angka bawaan: % OHC dan profit resep, sumber angka HPP, pembulatan belanja, perlakuan barang ditolak, <b>batas bawah/atas profit menu</b>, rentang laporan menu tidak diproduksi, penomoran dokumen. Hanya Owner.</td></tr>
   </table>
   <div class="fig"><img src="img/inventory-dashboard.jpg" alt="Inventory › Dashboard: bahan di bawah stok minimum, antrean form yang menunggu Anda, SPK terdekat, perubahan harga."><div class="cap">Inventory › Dashboard: bahan di bawah stok minimum, antrean form yang menunggu Anda, SPK terdekat, perubahan harga.</div></div>
   <div class="fig"><img src="img/inventory-items.jpg" alt="Inventory › Item Inventaris: daftar bahan beserta harga per satuan."><div class="cap">Inventory › Item Inventaris: daftar bahan beserta harga per satuan.</div></div>
@@ -375,6 +376,7 @@
     <tr><td>Konversi Satuan</td><td>Aturan mengubah satuan resep ke satuan harga (mis. 1 kg = 16 butir). Tanpa aturan ini, biaya baris resep dihitung nol — halaman <i>Konversi yang Belum Diatur</i> menunjukkan mana yang kurang.</td></tr>
     <tr><td>Bahan Belum Cocok</td><td>Nama bahan di resep yang belum terhubung ke daftar bahan. Tautkan, buat baru, atau abaikan.</td></tr>
     <tr><td>Perbandingan HPP</td><td>Membandingkan HPP menurut resep × produksi dengan HPP menurut opname, per periode. Dasar Owner memutuskan sumber HPP mana yang dipakai laporan.</td></tr>
+    <tr><td>Menu Tidak Diproduksi</td><td>Menu aktif yang tidak pernah masuk SPK Produksi dalam rentang yang dipilih (bawaan 3 bulan terakhir), beserta kapan terakhir diproduksi dan terakhir terjual. Bahan evaluasi: dihentikan, dipromosikan ulang, atau sekadar belum punya resep. Bisa diekspor Excel.</td></tr>
   </table>
   <div class="fig"><img src="img/hpp.jpg" alt="Resep & Menu › Analisa HPP: HPP per porsi, OHC, profit, harga jual; baris yang menahan perhitungan dilipat di bawahnya."><div class="cap">Resep & Menu › Analisa HPP: HPP per porsi, OHC, profit, harga jual; baris yang menahan perhitungan dilipat di bawahnya.</div></div>
   <div class="fig"><img src="img/konversi-belum.jpg" alt="Konversi Satuan › Belum Diatur: pasangan satuan yang perlu aturan supaya biaya resep terhitung."><div class="cap">Konversi Satuan › Belum Diatur: pasangan satuan yang perlu aturan supaya biaya resep terhitung.</div></div>
@@ -525,6 +527,8 @@
     <li>Sumber angka HPP untuk laporan (residual opname / resep × produksi).</li>
     <li>Bulatkan usulan Beli ke atas (belanja per kemasan).</li>
     <li>Perlakuan bawaan barang ditolak (retur / dibayar), dan apakah harga beli memperbarui harga master.</li>
+    <li>Batas bawah dan batas atas <b>profit menu keseluruhan</b>. Profit keseluruhan = (total harga jual − total biaya) ÷ total biaya atas semua menu aktif yang resepnya sudah bersih; sistem memeriksanya tiap pagi dan setiap ada perubahan harga, lalu mengirim lonceng hanya saat angkanya <i>masuk atau keluar</i> dari rentang — bukan setiap hari.</li>
+    <li>Rentang bawaan laporan Menu Tidak Diproduksi (bulan).</li>
     <li>Awalan nomor dokumen SPK Produksi dan Form Kebutuhan.</li>
   </ul>
 </div>
@@ -577,7 +581,7 @@
   <h3>Angka di laporan Owner dan laporan Accounting berbeda?</h3>
   <p>Seharusnya tidak, karena sumbernya sama. Cek dulu apakah periode/tanggal yang dipilih sama, dan apakah periode itu sudah ditutup buku. Kalau masih berbeda, laporkan dengan menyebut menu, periode, dan versi sistem (tertera di halaman masuk).</p>
 
-  <p class="muted small" style="margin-top: 20pt;">3S ONE · Panduan Pengguna v3.0 · Dibuat dari sistem yang berjalan, bukan dari rencana — bila layar Anda berbeda dari panduan ini, kemungkinan versi sistem sudah lebih baru.</p>
+  <p class="muted small" style="margin-top: 20pt;">3S ONE · Panduan Pengguna v3.1 · Dibuat dari sistem yang berjalan, bukan dari rencana — bila layar Anda berbeda dari panduan ini, kemungkinan versi sistem sudah lebih baru.</p>
 </div>
 
 </body>

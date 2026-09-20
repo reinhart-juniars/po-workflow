@@ -61,6 +61,9 @@ Alternatif: menu Superadmin → Backup di aplikasi (DatabaseBackupService), lalu
 php artisan migrate --force
 php artisan access:sync             # izin modul ke peran (idempoten) -- termasuk peran inventory & inventory-supervisor
 # .env: APP_LOCALE=id (kerangka panel -- tombol, pencarian, lonceng notifikasi -- berbahasa Indonesia)
+php artisan storage:link           # Katalog Foto Menu (Bagian B.4): public/storage -> storage/app/public
+# cron tiap menit untuk jadwal Laravel (profit:check harian 06:30, Bagian B.2):
+#   * * * * * cd /path/po-workflow && php artisan schedule:run >> /dev/null 2>&1
 php artisan config:cache && php artisan route:cache && php artisan view:cache
 ```
 

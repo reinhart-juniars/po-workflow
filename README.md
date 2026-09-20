@@ -20,6 +20,7 @@ menggantikan HPP residual opname dengan pemakaian bahan riil dari resep × produ
 | 2 | Resep & sub-resep, Analisa HPP, aturan konversi satuan per bahan + pendeteksi pasangan yang belum diatur, Bahan Belum Cocok (pencocokan nama), Pencocokan Menu (master produk Admin App ↔ resep, berbasis porsi terjual 90 hari; satu resep boleh dipakai beberapa varian harga, tautan di `products.recipe_id`; export/import Excel sebagai lembar kerja staf: terima_usulan / resep_id / tanpa_resep per baris, baris kosong tidak diubah), import/export resep | Inventory |
 | 3 | SPK Produksi dari slot SPK/PO, Form Kebutuhan bertahap per meja (Dibuat oleh produksi → Diajukan → Disetujui/Ditolak oleh supervisor gudang, dengan notifikasi lonceng → Penerimaan barang: diterima/ditolak/harga beli → Diperiksa: kartu stok + Pembelian Bahan Baku + kas/hutang otomatis → Tutup SPK), kartu stok per bahan, lembar kerja, plating, PDF, Perbandingan HPP resep vs opname | Produksi |
 | 4 | Izin modul (spatie permission) per peran, Pengaturan modul, cangkang & menu 3S terpadu (satu sumber untuk Blade dan Filament), validasi & pembersihan pasca migrasi, runbook cutover & UAT | Sistem |
+| B | Notifikasi perubahan harga bahan & harga jual menu (lonceng di semua aplikasi), notifikasi profit menu keseluruhan keluar dari batas atas/bawah (Pengaturan Inventory; `profit:check` harian), laporan Menu Tidak Diproduksi (rentang bawaan di Pengaturan, export Excel), Katalog Foto Menu berbasis SKU (Admin mengelola, Sales melihat) | Inventory / Admin / Sales |
 
 Dokumen:
 
@@ -38,6 +39,7 @@ Dokumen:
 | `inventory:map-recipes-to-products {--dry-run}` | Tautkan produk → resep yang namanya cocok persis (sisanya lewat Pencocokan Menu) |
 | `inventory:validate-migration {--fix} {--fail-on=error}` | Laporan validasi pasca migrasi + pembersihan aman |
 | `access:sync {--reset}` | Sinkronkan izin modul ke peran |
+| `profit:check` | Periksa profit menu keseluruhan terhadap batas; lonceng bila berubah keadaan (dijadwalkan harian 06:30) |
 | `db:clone-to-staging` | Salin database kerja ke `po_workflow_staging` |
 | `po:audit-cash-in {--fix}` | Audit data kas PO lama |
 

@@ -42,6 +42,8 @@ class ModuleAccess
         'requisition.check' => 'Periksa form kebutuhan (barang dibeli)',
         'ledger.view' => 'Lihat kartu stok dan perbandingan HPP',
         'settings.manage' => 'Ubah pengaturan modul',
+        'notification.price' => 'Terima notifikasi perubahan harga bahan & harga jual menu',
+        'notification.profit' => 'Terima notifikasi profit menu keluar dari batas',
     ];
 
     /**
@@ -59,6 +61,7 @@ class ModuleAccess
             'requisition.approve', 'requisition.check',
             'ledger.view',
             'settings.manage',
+            'notification.price', 'notification.profit',
         ],
         'admin' => [
             'inventory.view', 'inventory.manage',
@@ -66,6 +69,7 @@ class ModuleAccess
             'production.view', 'production.manage', 'production.complete',
             'requisition.approve', 'requisition.check',
             'ledger.view',
+            'notification.price', 'notification.profit',
         ],
         'accounting' => [
             'inventory.view', 'inventory.manage',
@@ -73,6 +77,7 @@ class ModuleAccess
             'production.view',
             'requisition.check',
             'ledger.view',
+            'notification.price',
         ],
         // Staf inventory/gudang: kelola bahan, pembelian, opname, saldo awal,
         // cocokkan nama bahan resep, dan periksa form kebutuhan saat barang
@@ -92,6 +97,7 @@ class ModuleAccess
             'production.view',
             'requisition.approve', 'requisition.check',
             'ledger.view',
+            'notification.price',
         ],
         'production' => [
             'inventory.view',

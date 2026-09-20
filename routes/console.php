@@ -5,6 +5,10 @@ use App\Models\PurchaseOrder;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schedule;
+
+// Bagian B.2: pemeriksaan profit menu harian (butuh cron `schedule:run`, lihat docs/CUTOVER.md).
+Schedule::command('profit:check')->dailyAt('06:30');
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -50,8 +54,8 @@ Artisan::command('po:audit-cash-in {--fix : Clear legacy cash_received_at on cas
         ])->all()
     );
 
-    $this->line('Total suspicious rows: ' . $rows->count());
-    $this->line('Total nominal: Rp ' . number_format((float) $rows->sum('total_amount'), 0, ',', '.'));
+    $this->line('Total suspicious rows: '.$rows->count());
+    $this->line('Total nominal: Rp '.number_format((float) $rows->sum('total_amount'), 0, ',', '.'));
 
     if (! $this->option('fix')) {
         $this->comment('Run `php artisan po:audit-cash-in --fix` untuk membersihkan field legacy tersebut.');

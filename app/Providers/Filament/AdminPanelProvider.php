@@ -50,7 +50,6 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->font('Public Sans')
             ->darkMode(false)
-            ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth('full')
             ->globalSearch(false)
             // Lonceng: form diajukan -> supervisor gudang; disetujui -> gudang;
