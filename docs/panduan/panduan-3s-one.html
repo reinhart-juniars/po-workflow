@@ -563,18 +563,27 @@
   <h3>B. Kebiasaan setelah sistem berjalan</h3>
   <p>Kalau bagian A selesai, pekerjaan harian ringan: tiap orang hanya menyentuh bagiannya, dan lonceng memberi tahu kapan gilirannya.</p>
 
-  <table class="grid">
-    <tr><th style="width: 14%">Kapan</th><th style="width: 18%">Siapa</th><th>Apa yang dikerjakan</th></tr>
-    <tr><td rowspan="6"><b>Setiap hari</b></td><td>Admin</td><td>Masukkan pesanan (PO) dan susun <b>SPK</b> seperti biasa. SPK Produksi di Inventory terbentuk sendiri.</td></tr>
+  <h3 style="margin-top: 10pt;">Setiap hari</h3>
+  <table class="grid" style="table-layout: fixed; page-break-inside: avoid;">
+    <tr><th style="width: 20%">Siapa</th><th style="width: 80%">Apa yang dikerjakan</th></tr>
+    <tr><td>Admin</td><td>Masukkan pesanan (PO) dan susun <b>SPK</b> seperti biasa. SPK Produksi di Inventory terbentuk sendiri.</td></tr>
     <tr><td>Dapur (Production)</td><td>Buka <b>SPK Produksi</b> → <b>Form Kebutuhan</b>. Isi kolom <i>Stok</i> sesuai yang ada di gudang; kolom <i>Beli</i> terhitung sendiri. Tekan <b>Ajukan</b>. Bila ditolak, baca alasannya, perbaiki, Ajukan lagi.</td></tr>
     <tr><td>Supervisor Gudang</td><td>Ada lonceng "form menunggu persetujuan": buka, periksa jumlahnya wajar, tekan <b>Setujui</b> — atau <b>Tolak</b> dengan alasan yang jelas supaya dapur tahu apa yang harus diubah.</td></tr>
     <tr><td>Gudang / Belanja</td><td>Belanja sesuai kolom Beli. Saat barang datang, isi <i>Diterima</i>, <i>Ditolak</i> (dan perlakuannya: retur / dibayar), dan <i>harga beli</i> per bahan. Tekan <b>Periksa</b> sekali saja — setelah itu Kartu Stok, Pembelian Bahan Baku, dan kas terisi otomatis.</td></tr>
     <tr><td>Accounting</td><td>Lihat <b>Monitoring Pembelian Stok</b> dan kas: pembelian dari form sudah masuk sebagai pengeluaran. Koreksi bila ada salah harga (lihat Bab 15).</td></tr>
     <tr><td>Owner</td><td>Baca lonceng: perubahan harga bahan/harga jual, dan profit menu yang keluar dari batas. Tidak perlu membuka halaman apa pun kalau lonceng sepi.</td></tr>
-    <tr><td rowspan="3"><b>Setiap minggu</b></td><td>Gudang</td><td>Cek kartu <i>Bahan di bawah stok minimum</i> di Dashboard Inventory; sesuaikan stok minimum bila terlalu sering/jarang muncul.</td></tr>
+  </table>
+  <h3 style="margin-top: 10pt;">Setiap minggu</h3>
+  <table class="grid" style="table-layout: fixed; page-break-inside: avoid;">
+    <tr><th style="width: 20%">Siapa</th><th style="width: 80%">Apa yang dikerjakan</th></tr>
+    <tr><td>Gudang</td><td>Cek kartu <i>Bahan di bawah stok minimum</i> di Dashboard Inventory; sesuaikan stok minimum bila terlalu sering/jarang muncul.</td></tr>
     <tr><td>Dapur</td><td>Lihat <b>Bahan Belum Cocok</b> dan <b>Konversi Belum Diatur</b> — resep baru sering menambah satu-dua baris. Jaga tetap 0.</td></tr>
     <tr><td>Admin / Sales</td><td>Tambah foto di <b>Katalog Foto Menu</b>; Sales memakai katalog itu untuk materi promosi.</td></tr>
-    <tr><td rowspan="4"><b>Setiap bulan</b></td><td>Gudang</td><td>Hitung fisik dan masukkan <b>Stock Opname</b> pada tanggal akhir periode.</td></tr>
+  </table>
+  <h3 style="margin-top: 10pt;">Setiap bulan</h3>
+  <table class="grid" style="table-layout: fixed; page-break-inside: avoid;">
+    <tr><th style="width: 20%">Siapa</th><th style="width: 80%">Apa yang dikerjakan</th></tr>
+    <tr><td>Gudang</td><td>Hitung fisik dan masukkan <b>Stock Opname</b> pada tanggal akhir periode.</td></tr>
     <tr><td>Owner</td><td>Buka <b>Perbandingan HPP</b>: HPP menurut resep × produksi vs menurut opname. Selisih besar berarti ada pemakaian yang tidak lewat form, atau resep yang takarannya sudah berbeda dengan kenyataan di dapur.</td></tr>
     <tr><td>Owner</td><td>Buka <b>Menu Tidak Diproduksi</b>: putuskan menu yang tidak pernah dimasak 3 bulan — dihentikan, dipromosikan lagi, atau memang musiman.</td></tr>
     <tr><td>Accounting</td><td>Tutup buku periode seperti biasa. Setelah ditutup, angka HPP dan persediaan periode itu tidak berubah lagi.</td></tr>
