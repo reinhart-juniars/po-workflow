@@ -98,8 +98,9 @@
     <tr><td>10. Barang datang: diterima, ditolak, harganya</td></tr>
     <tr><td>11. Dari mana angka HPP dan stok berasal</td></tr>
     <tr><td>12. Aplikasi Owner</td></tr>
-    <tr><td>13. Kamus istilah</td></tr>
-    <tr><td>14. Pertanyaan yang sering muncul</td></tr>
+    <tr><td>13. Memulai dengan sistem baru: langkah demi langkah</td></tr>
+    <tr><td>14. Kamus istilah</td></tr>
+    <tr><td>15. Pertanyaan yang sering muncul</td></tr>
   </table>
 
   <h2 style="margin-top: 26pt;">1. Apa itu 3S ONE</h2>
@@ -373,6 +374,7 @@
   <table class="grid">
     <tr><th style="width: 26%">Menu</th><th>Untuk apa</th></tr>
     <tr><td>Resep & Menu</td><td>Resep tiap menu: bahan, takaran, hasil (porsi). Dari sini tombol <b>Analisa HPP</b> menghitung harga pokok, OHC, profit, dan harga jual.</td></tr>
+    <tr><td>Pencocokan Menu</td><td>Daftar kerja menautkan menu di Master Menu (Admin) ke resepnya, diurutkan dari yang paling laku 90 hari terakhir. Tiap baris punya tiga jalan keluar: <b>Tautkan</b> ke resep yang ada, <b>Buat Resep</b>, atau <b>Tanpa Resep</b> (mis. minuman kemasan). Bisa dikerjakan lewat Excel (export, isi, import).</td></tr>
     <tr><td>Konversi Satuan</td><td>Aturan mengubah satuan resep ke satuan harga (mis. 1 kg = 16 butir). Tanpa aturan ini, biaya baris resep dihitung nol — halaman <i>Konversi yang Belum Diatur</i> menunjukkan mana yang kurang.</td></tr>
     <tr><td>Bahan Belum Cocok</td><td>Nama bahan di resep yang belum terhubung ke daftar bahan. Tautkan, buat baru, atau abaikan.</td></tr>
     <tr><td>Perbandingan HPP</td><td>Membandingkan HPP menurut resep × produksi dengan HPP menurut opname, per periode. Dasar Owner memutuskan sumber HPP mana yang dipakai laporan.</td></tr>
@@ -533,9 +535,63 @@
   </ul>
 </div>
 
-<!-- ============ 12. KAMUS ============ -->
+<!-- ============ 13. MEMULAI ============ -->
 <div class="page">
-  <h2>13. Kamus istilah</h2>
+  <h2>13. Memulai dengan sistem baru: langkah demi langkah</h2>
+  <p>Sistem ini baru berguna kalau datanya beres. Bab ini adalah urutan kerja yang kami sarankan: <b>bagian A</b> dikerjakan sekali di awal (kira-kira satu sampai dua minggu, sambil operasional jalan seperti biasa), <b>bagian B</b> adalah kebiasaan harian setelahnya. Kerjakan berurutan — tiap langkah memakai hasil langkah sebelumnya.</p>
+
+  <h3>A. Persiapan sekali di awal</h3>
+  <table class="grid">
+    <tr><th style="width: 4%">#</th><th style="width: 12%">Siapa</th><th style="width: 56%">Apa yang dikerjakan</th><th>Tanda selesai</th></tr>
+    <tr><td><b>1</b></td><td>Owner</td><td>Buat akun di <b>Owner › Master User</b> untuk tiap orang, dengan peran yang benar: dapur = <i>Production</i>, staf gudang = <i>Inventory</i>, yang menyetujui form = <i>Supervisor Gudang</i>. Satu orang boleh lebih dari satu peran. Sampaikan password sementara langsung ke orangnya.</td><td>Semua orang bisa masuk dan melihat aplikasi yang sesuai bagiannya.</td></tr>
+    <tr><td><b>2</b></td><td>Owner</td><td>Buka <b>Inventory › Pengaturan Inventory</b>. Periksa angka bawaan: % OHC, % profit, perlakuan barang ditolak (retur / dibayar), batas profit menu. Kalau ragu, biarkan bawaannya — bisa diubah kapan saja.</td><td>Pengaturan tersimpan.</td></tr>
+    <tr><td><b>3</b></td><td>Admin</td><td>Rapikan <b>Admin › Master Menu</b>: nonaktifkan menu yang sudah tidak dijual, pastikan harga jual benar, dan tiap menu punya kode SKU. Menu yang tidak aktif tidak akan muncul di laporan mana pun.</td><td>Daftar menu aktif = menu yang benar-benar dijual sekarang.</td></tr>
+    <tr><td><b>4</b></td><td>Gudang</td><td>Rapikan <b>Inventory › Item Inventaris</b>: nama bahan, <b>satuan beli</b> (kg, liter, ikat, pak), harga beli terakhir, stok minimum. Hapus/nonaktifkan bahan yang tidak dipakai lagi. Satu bahan = satu baris; jangan ada "Telur" dan "Telur Ayam" berdampingan.</td><td>Setiap bahan punya satuan dan harga.</td></tr>
+    <tr><td><b>5</b></td><td>Gudang</td><td>Hitung fisik semua bahan pada satu tanggal (pilih hari yang tenang), lalu masukkan ke <b>Inventory › Saldo Awal Stok</b> dengan tanggal itu. Inilah titik nol Kartu Stok — semua keluar-masuk setelahnya otomatis.</td><td>Kartu Stok tiap bahan menampilkan saldo awal.</td></tr>
+    <tr><td><b>6</b></td><td>Owner / Dapur</td><td>Buka <b>Inventory › Pencocokan Menu</b>. Mulai dari baris paling atas (paling laku): tautkan ke resep yang sudah ada, buat resep baru, atau tandai "Tanpa Resep". 20 menu teratas biasanya sudah mencakup dua pertiga porsi yang terjual — kerjakan itu dulu, sisanya bertahap.</td><td>Menu terlaris semuanya bertaut ke resep.</td></tr>
+    <tr><td><b>7</b></td><td>Dapur</td><td>Buka <b>Inventory › Bahan Belum Cocok</b>. Tiap nama bahan di resep yang belum terhubung ke Item Inventaris: tautkan ke bahan yang ada, buat baru, atau abaikan. Ulangi sampai daftar kosong.</td><td>Bahan Belum Cocok: <b>0</b>.</td></tr>
+    <tr><td><b>8</b></td><td>Dapur / Gudang</td><td>Buka <b>Inventory › Konversi Satuan › Belum Diatur</b>. Isi aturan untuk tiap pasangan (mis. 1 kg telur = 16 butir, 1 botol kecap = 600 ml). Tanpa ini biaya baris resep dihitung nol.</td><td>Konversi Belum Diatur: <b>0</b>.</td></tr>
+    <tr><td><b>9</b></td><td>Owner</td><td>Buka beberapa menu di <b>Resep & Menu › Analisa HPP</b>. Angka HPP per porsi harus masuk akal (nasi box belasan ribu, bukan ratusan ribu). Kalau aneh, hampir pasti satuannya: kembali ke langkah 8.</td><td>Kartu <b>Profit menu keseluruhan</b> di Dashboard Inventory menampilkan angka, bukan "–".</td></tr>
+    <tr><td><b>10</b></td><td>Semua</td><td><b>Uji coba satu SPK dari awal sampai akhir</b> sebelum dipakai sungguhan: Admin buat SPK → dapur isi Form Kebutuhan & Ajukan → Supervisor Gudang Setujui → gudang belanja & isi Diterima/Ditolak/harga → Periksa. Lihat Kartu Stok dan Pembelian Bahan Baku ikut terisi.</td><td>Satu form berstatus Diperiksa tanpa ada yang bingung di tengah jalan.</td></tr>
+    <tr><td><b>11</b></td><td>Admin</td><td><b>Admin › Master Data › Katalog Foto Menu</b>: unggah foto menu, mulai dari yang paling laku. Boleh bertahap — foto langsung dari HP pun aman karena sistem mengecilkannya sendiri.</td><td>Filter "Belum ada foto" makin pendek tiap minggu.</td></tr>
+  </table>
+  <div class="tip"><b>Tiga angka penanda sistem siap:</b> Bahan Belum Cocok = 0, Konversi Belum Diatur = 0, dan kartu Profit menu keseluruhan menampilkan angka. Selama salah satu belum tercapai, laporan HPP dari resep belum bisa dipercaya — laporan lain (kas, penjualan, pengiriman) tetap berjalan normal.</div>
+  <div class="warn">Jangan menunggu semua 400-an menu selesai untuk mulai memakai Form Kebutuhan. Form Kebutuhan bekerja per SPK dan hanya membutuhkan resep menu yang ada di SPK itu. Mulailah dengan menu yang sering dimasak; menu langka menyusul.</div>
+</div>
+
+<div class="page">
+  <h3>B. Kebiasaan setelah sistem berjalan</h3>
+  <p>Kalau bagian A selesai, pekerjaan harian ringan: tiap orang hanya menyentuh bagiannya, dan lonceng memberi tahu kapan gilirannya.</p>
+
+  <table class="grid">
+    <tr><th style="width: 14%">Kapan</th><th style="width: 18%">Siapa</th><th>Apa yang dikerjakan</th></tr>
+    <tr><td rowspan="6"><b>Setiap hari</b></td><td>Admin</td><td>Masukkan pesanan (PO) dan susun <b>SPK</b> seperti biasa. SPK Produksi di Inventory terbentuk sendiri.</td></tr>
+    <tr><td>Dapur (Production)</td><td>Buka <b>SPK Produksi</b> → <b>Form Kebutuhan</b>. Isi kolom <i>Stok</i> sesuai yang ada di gudang; kolom <i>Beli</i> terhitung sendiri. Tekan <b>Ajukan</b>. Bila ditolak, baca alasannya, perbaiki, Ajukan lagi.</td></tr>
+    <tr><td>Supervisor Gudang</td><td>Ada lonceng "form menunggu persetujuan": buka, periksa jumlahnya wajar, tekan <b>Setujui</b> — atau <b>Tolak</b> dengan alasan yang jelas supaya dapur tahu apa yang harus diubah.</td></tr>
+    <tr><td>Gudang / Belanja</td><td>Belanja sesuai kolom Beli. Saat barang datang, isi <i>Diterima</i>, <i>Ditolak</i> (dan perlakuannya: retur / dibayar), dan <i>harga beli</i> per bahan. Tekan <b>Periksa</b> sekali saja — setelah itu Kartu Stok, Pembelian Bahan Baku, dan kas terisi otomatis.</td></tr>
+    <tr><td>Accounting</td><td>Lihat <b>Monitoring Pembelian Stok</b> dan kas: pembelian dari form sudah masuk sebagai pengeluaran. Koreksi bila ada salah harga (lihat Bab 15).</td></tr>
+    <tr><td>Owner</td><td>Baca lonceng: perubahan harga bahan/harga jual, dan profit menu yang keluar dari batas. Tidak perlu membuka halaman apa pun kalau lonceng sepi.</td></tr>
+    <tr><td rowspan="3"><b>Setiap minggu</b></td><td>Gudang</td><td>Cek kartu <i>Bahan di bawah stok minimum</i> di Dashboard Inventory; sesuaikan stok minimum bila terlalu sering/jarang muncul.</td></tr>
+    <tr><td>Dapur</td><td>Lihat <b>Bahan Belum Cocok</b> dan <b>Konversi Belum Diatur</b> — resep baru sering menambah satu-dua baris. Jaga tetap 0.</td></tr>
+    <tr><td>Admin / Sales</td><td>Tambah foto di <b>Katalog Foto Menu</b>; Sales memakai katalog itu untuk materi promosi.</td></tr>
+    <tr><td rowspan="4"><b>Setiap bulan</b></td><td>Gudang</td><td>Hitung fisik dan masukkan <b>Stock Opname</b> pada tanggal akhir periode.</td></tr>
+    <tr><td>Owner</td><td>Buka <b>Perbandingan HPP</b>: HPP menurut resep × produksi vs menurut opname. Selisih besar berarti ada pemakaian yang tidak lewat form, atau resep yang takarannya sudah berbeda dengan kenyataan di dapur.</td></tr>
+    <tr><td>Owner</td><td>Buka <b>Menu Tidak Diproduksi</b>: putuskan menu yang tidak pernah dimasak 3 bulan — dihentikan, dipromosikan lagi, atau memang musiman.</td></tr>
+    <tr><td>Accounting</td><td>Tutup buku periode seperti biasa. Setelah ditutup, angka HPP dan persediaan periode itu tidak berubah lagi.</td></tr>
+  </table>
+
+  <h3>Yang sebaiknya tidak dilakukan</h3>
+  <ul>
+    <li>Membeli bahan di luar Form Kebutuhan tanpa mencatatnya — Kartu Stok jadi lebih kecil dari kenyataan, dan opname bulan depan akan "aneh". Kalau terpaksa, catat lewat Accounting › Pengeluaran (Pembelian Stok).</li>
+    <li>Menekan <b>Periksa</b> sebelum harga beli diisi — harga itu yang jadi dasar nilai stok dan pembaruan harga master.</li>
+    <li>Membuat bahan baru dengan nama yang mirip bahan lama (mis. "Minyak" dan "Minyak Goreng"). Cari dulu, tautkan ke yang ada.</li>
+    <li>Mengubah satuan sebuah bahan setelah punya riwayat — buat aturan konversi, jangan ganti satuannya.</li>
+  </ul>
+</div>
+
+<!-- ============ 14. KAMUS ============ -->
+<div class="page">
+  <h2>14. Kamus istilah</h2>
   <table class="grid">
     <tr><th style="width: 24%">Istilah</th><th>Artinya</th></tr>
     <tr><td>PO (Purchase Order)</td><td>Pesanan pelanggan.</td></tr>
@@ -556,9 +612,9 @@
   </table>
 </div>
 
-<!-- ============ 13. FAQ ============ -->
+<!-- ============ 15. FAQ ============ -->
 <div>
-  <h2>14. Pertanyaan yang sering muncul</h2>
+  <h2>15. Pertanyaan yang sering muncul</h2>
 
   <h3>Saya tidak melihat tombol Setujui, padahal formnya sudah ada.</h3>
   <p>Tombol Setujui hanya tampil untuk <b>Supervisor Gudang</b> (atau Owner/Admin) dan hanya setelah produksi menekan <b>Ajukan</b>. Kalau status masih "Dibuat / Diisi", giliran dapur dulu.</p>
