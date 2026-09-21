@@ -4,11 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
 use App\Models\Product;
+use App\Support\MenuPhotoProcessor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use InvalidArgumentException;
 
 /**
  * Bagian B.4 -- Katalog Foto Menu berbasis SKU.
@@ -64,15 +68,24 @@ class MenuCatalogController extends Controller
         $request->validate([
             'photo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ], [
-            'photo.max' => 'Ukuran foto maksimal 5 MB.',
+            'photo.max' => 'Ukuran foto maksimal 5 MB (foto dikompres otomatis setelah diunggah).',
             'photo.mimes' => 'Foto harus JPG, PNG, atau WEBP.',
         ]);
 
+        // Kompres di server (maks. sisi 1600 px, JPEG) supaya disk server dan
+        // halaman katalog tetap ringan walau yang diunggah foto HP 5 MB.
+        try {
+            $photo = app(MenuPhotoProcessor::class)->process((string) file_get_contents($request->file('photo')->getRealPath()));
+        } catch (InvalidArgumentException $e) {
+            throw ValidationException::withMessages(['photo' => $e->getMessage()]);
+        }
+
         $old = $product->photo_path;
-        $ext = strtolower($request->file('photo')->getClientOriginalExtension() ?: 'jpg');
-        // Nama berkas = SKU + waktu, supaya foto lama tidak tertimpa cache browser.
-        $name = ($product->sku ?: 'menu-'.$product->id).'-'.now()->format('YmdHis').'.'.$ext;
-        $path = $request->file('photo')->storeAs(self::DIR, $name, self::DISK);
+        // Nama berkas = SKU + waktu + akhiran acak, supaya URL selalu baru (tidak
+        // tertimpa cache browser) walau diganti dua kali dalam detik yang sama.
+        $name = ($product->sku ?: 'menu-'.$product->id).'-'.now()->format('YmdHis').'-'.Str::lower(Str::random(6)).'.jpg';
+        $path = self::DIR.'/'.$name;
+        Storage::disk(self::DISK)->put($path, $photo['data']);
 
         $product->forceFill(['photo_path' => $path, 'photo_updated_at' => now()])->save();
 

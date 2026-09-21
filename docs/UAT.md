@@ -99,7 +99,7 @@ Legenda kolom "Wajib": W = wajib untuk serah terima, O = opsional/dicatat saja.
 | G2 | Ubah harga jual satu menu di Admin › Master Menu | Lonceng "Harga jual X naik/turun N%" ke pemegang izin notifikasi harga; tombol Buka membawa ke halaman edit menu | W | | |
 | G3 | Pengaturan Inventory › Profit Menu: set batas bawah/atas (mis. 20 / 60) → `php artisan profit:check` | Dashboard Inventory menampilkan "Profit menu keseluruhan" + rentang; lonceng ke owner/admin hanya saat keadaan berubah (normal ↔ di bawah ↔ di atas), tidak berulang bila tetap | W | | |
 | G4 | Inventory › Resep & HPP › Menu Tidak Diproduksi | Daftar menu aktif tanpa SPK Produksi dalam rentang (bawaan 3 bulan, dari Pengaturan), kolom terakhir diproduksi & terakhir terjual, export Excel; `sales` tidak bisa membuka | W | | |
-| G5 | Admin › Master Data › Katalog Foto Menu: unggah JPG/PNG/WEBP ≤ 5 MB untuk satu menu, ganti, hapus | Foto tampil dengan SKU & harga; berkas lama terhapus saat diganti; PDF ditolak; Sales › Marketing › Katalog Foto Menu hanya melihat (tanpa tombol unggah) | W | | |
+| G5 | Admin › Master Data › Katalog Foto Menu: unggah JPG/PNG/WEBP ≤ 5 MB untuk satu menu, ganti, hapus | Foto tampil dengan SKU & harga; foto tersimpan sebagai JPG maks. 1600 px (foto HP 5 MB jadi ±150-300 KB, foto potret tetap tegak); berkas lama terhapus saat diganti; PDF ditolak; Sales › Marketing › Katalog Foto Menu hanya melihat (tanpa tombol unggah) | W | | |
 
 ## F. Paralel HPP (definition of done Phase 3)
 

@@ -12,6 +12,7 @@ use App\Models\RecipeItem;
 use App\Models\User;
 use App\Services\IdleMenuReportService;
 use App\Services\ProfitGuardService;
+use App\Support\MenuPhotoProcessor;
 use App\Support\Settings\Settings;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Notifications\DatabaseNotification;
@@ -247,4 +248,92 @@ it('menyediakan katalog foto menu berbasis SKU: admin mengunggah/mengganti/mengh
     $this->actingAs($admin)->delete(route('adminapp.catalog.photo.destroy', $product))->assertRedirect();
     expect($product->fresh()->photo_path)->toBeNull();
     Storage::disk('public')->assertMissing($path2);
+});
+
+/** JPEG berisi derau acak supaya ukurannya besar seperti foto sungguhan (bukan warna rata). */
+function fotoBerderau(int $w, int $h): string
+{
+    mt_srand(7);
+    $img = imagecreatetruecolor($w, $h);
+    for ($y = 0; $y < $h; $y += 4) {
+        for ($x = 0; $x < $w; $x += 4) {
+            $c = imagecolorallocate($img, mt_rand(0, 255), mt_rand(0, 255), mt_rand(0, 255));
+            imagefilledrectangle($img, $x, $y, $x + 3, $y + 3, $c);
+        }
+    }
+    ob_start();
+    imagejpeg($img, null, 100);
+    imagedestroy($img);
+
+    return (string) ob_get_clean();
+}
+
+/** Sisipkan segmen APP1 EXIF dengan tag Orientation ke sebuah JPEG. */
+function jpegDenganOrientasi(string $jpeg, int $orientation): string
+{
+    $tiff = 'II'.pack('v', 42).pack('V', 8)          // header TIFF little-endian, IFD0 di offset 8
+        .pack('v', 1)                                 // 1 entri
+        .pack('v', 0x0112).pack('v', 3).pack('V', 1).pack('v', $orientation).pack('v', 0)
+        .pack('V', 0);                                // tidak ada IFD berikutnya
+    $payload = "Exif\0\0".$tiff;
+    $app1 = "\xFF\xE1".pack('n', strlen($payload) + 2).$payload;
+
+    return substr($jpeg, 0, 2).$app1.substr($jpeg, 2);
+}
+
+it('mengompres foto menu saat unggah: maks. 1600 px, selalu JPEG, orientasi EXIF diterapkan, resolusi raksasa ditolak', function () {
+    Storage::fake('public');
+    $admin = penggunaB('admin');
+    $product = Product::query()->create(['name' => 'Rawon', 'sku' => 'RAWON-20K', 'unit' => 'porsi', 'base_price' => 20000, 'active' => true]);
+    $processor = new MenuPhotoProcessor;
+
+    // Foto HP 3200x2000 berderau (~besar) -> 1600x1000 JPEG, jauh lebih kecil dari aslinya.
+    $asli = fotoBerderau(3200, 2000);
+    $hasil = $processor->process($asli);
+    expect([$hasil['width'], $hasil['height']])->toBe([1600, 1000])
+        ->and(strlen($hasil['data']))->toBeLessThan(strlen($asli) / 3)
+        ->and(getimagesizefromstring($hasil['data'])['mime'])->toBe('image/jpeg');
+
+    // Lewat route: tersimpan sebagai .jpg 1600 px walau file asli PNG; foto kecil tidak diperbesar.
+    $besar = UploadedFile::fake()->createWithContent('besar.png', (function () {
+        $img = imagecreatetruecolor(2400, 1800);
+        ob_start();
+        imagepng($img);
+
+        return (string) ob_get_clean();
+    })());
+    $this->actingAs($admin)->post(route('adminapp.catalog.upload', $product), ['photo' => $besar])->assertSessionHasNoErrors();
+    $path = $product->fresh()->photo_path;
+    expect($path)->toEndWith('.jpg');
+    [$w, $h, $type] = getimagesizefromstring(Storage::disk('public')->get($path));
+    expect([$w, $h, $type])->toBe([1600, 1200, IMAGETYPE_JPEG]);
+
+    $this->actingAs($admin)->post(route('adminapp.catalog.upload', $product), ['photo' => UploadedFile::fake()->image('kecil.jpg', 640, 480)])->assertSessionHasNoErrors();
+    [$w, $h] = getimagesizefromstring(Storage::disk('public')->get($product->fresh()->photo_path));
+    expect([$w, $h])->toBe([640, 480]);
+
+    // Orientasi EXIF 6 (foto potret dari HP): 400x200 kiri merah / kanan biru -> 200x400, merah di atas.
+    $img = imagecreatetruecolor(400, 200);
+    imagefilledrectangle($img, 0, 0, 199, 199, imagecolorallocate($img, 255, 0, 0));
+    imagefilledrectangle($img, 200, 0, 399, 199, imagecolorallocate($img, 0, 0, 255));
+    ob_start();
+    imagejpeg($img, null, 95);
+    $polos = (string) ob_get_clean();
+    $potret = $processor->process(jpegDenganOrientasi($polos, 6));
+    expect([$potret['width'], $potret['height']])->toBe([200, 400]);
+    $gd = imagecreatefromstring($potret['data']);
+    $atas = imagecolorsforindex($gd, imagecolorat($gd, 100, 50));
+    $bawah = imagecolorsforindex($gd, imagecolorat($gd, 100, 350));
+    expect($atas['red'])->toBeGreaterThan(200)->and($atas['blue'])->toBeLessThan(60)
+        ->and($bawah['blue'])->toBeGreaterThan(200)->and($bawah['red'])->toBeLessThan(60);
+    // Kontrol positif: tanpa tag EXIF, foto yang sama tetap lanskap.
+    expect($processor->process($polos)['width'])->toBe(400);
+
+    // Header JPEG yang mengaku 8000x8000 (64 MP) ditolak sebelum di-decode, dengan pesan jelas di form.
+    $raksasa = "\xFF\xD8\xFF\xC0".pack('n', 11)."\x08".pack('n', 8000).pack('n', 8000)."\x01\x01\x11\x00\xFF\xD9";
+    expect(fn () => $processor->process($raksasa))->toThrow(InvalidArgumentException::class, 'Resolusi foto terlalu besar');
+    $sebelum = $product->fresh()->photo_path;
+    $this->actingAs($admin)->post(route('adminapp.catalog.upload', $product), ['photo' => UploadedFile::fake()->createWithContent('raksasa.jpg', $raksasa)])
+        ->assertSessionHasErrors('photo');
+    expect($product->fresh()->photo_path)->toBe($sebelum);
 });
