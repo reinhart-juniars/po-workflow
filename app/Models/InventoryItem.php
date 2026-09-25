@@ -6,6 +6,7 @@ use App\Support\Units\Unit;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class InventoryItem extends Model
@@ -82,6 +83,12 @@ class InventoryItem extends Model
     public function opnames(): HasMany
     {
         return $this->hasMany(StockOpname::class);
+    }
+
+    /** Supplier yang memasok bahan ini. */
+    public function suppliers(): BelongsToMany
+    {
+        return $this->belongsToMany(Supplier::class)->withTimestamps();
     }
 
     /**

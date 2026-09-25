@@ -2,17 +2,21 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\LinksSupplier;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Payable extends Model
 {
+    use LinksSupplier;
+
     protected $fillable = [
         'transaction_date',
         'opening_balance_id',
         'due_date',
         'supplier_name',
+        'supplier_id',
         'description',
         'amount',
         'status',

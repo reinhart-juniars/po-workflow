@@ -89,8 +89,9 @@
         <label class="form-label">Supplier</label>
         <input type="text" name="supplier_name"
                value="{{ old('supplier_name', $cashOut->inventoryPurchase?->supplier_name) }}"
-               class="form-control"
+               class="form-control" list="supplier-options" autocomplete="off"
                placeholder="Opsional, dipakai untuk pembelian stok">
+        @include('partials.supplier-datalist')
       </div>
 
       <div class="md:col-span-2">

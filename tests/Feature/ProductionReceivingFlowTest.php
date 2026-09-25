@@ -188,6 +188,7 @@ it('membiarkan pemegang izin Periksa (inventory) mengisi penerimaan lewat halama
     expect($line->fresh()->received_qty)->toBeNull();
 
     // Staf inventory boleh: isian tersimpan, termasuk harga beli & cara pembayaran.
+    $pasar = App\Models\Supplier::query()->create(['name' => 'Pasar Induk', 'is_active' => true]);
     $this->actingAs($buat('inventory'));
     Livewire::test(RequisitionForm::class, ['record' => $d['order']->id])
         ->assertSee('Pembayaran belanja')
@@ -199,7 +200,7 @@ it('membiarkan pemegang izin Periksa (inventory) mengisi penerimaan lewat halama
             'payment_type' => 'cash',
             'expense_category_id' => $bayar['category']->id,
             'cash_account_id' => $bayar['cash_account']->id,
-            'supplier_name' => 'Pasar Induk',
+            'supplier_id' => $pasar->id,
             'lines' => [['id' => $line->id, 'received_qty' => 1.75, 'rejected_reason' => 'basah', 'rejected_treatment' => RequisitionLine::REJECT_RETURN, 'purchase_price' => 12800]],
         ])
         ->call('save');
@@ -209,6 +210,7 @@ it('membiarkan pemegang izin Periksa (inventory) mengisi penerimaan lewat halama
         ->and((float) $line->rejected_qty)->toBe(0.25)
         ->and($line->rejected_reason)->toBe('basah')
         ->and((float) $line->purchase_price)->toBe(12800.0)
+        ->and($d['requisition']->fresh()->supplier_id)->toBe($pasar->id)
         ->and($d['requisition']->fresh()->supplier_name)->toBe('Pasar Induk');
 
     // Tetapi tidak boleh menyetujui form (bukan haknya) -- kontrol negatif tombol tahap.

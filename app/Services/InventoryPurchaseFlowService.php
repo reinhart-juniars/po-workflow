@@ -8,6 +8,7 @@ use App\Models\CashOut;
 use App\Models\ExpenseCategory;
 use App\Models\InventoryPurchase;
 use App\Models\Payable;
+use App\Models\Supplier;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -48,7 +49,8 @@ class InventoryPurchaseFlowService
                 'condition_notes' => $data['condition_notes'] ?? $purchase->condition_notes,
                 'condition_checked_at' => $data['condition_checked_at'] ?? $purchase->condition_checked_at,
                 'condition_checked_by' => $data['condition_checked_by'] ?? $purchase->condition_checked_by,
-                'supplier_name' => $data['supplier_name'] ?? null,
+                'supplier_id' => $data['supplier_id'],
+                'supplier_name' => $data['supplier_name'],
                 'notes' => $data['notes'] ?? null,
                 // Tautan ke Form Kebutuhan: pembeliannya tetap lahir di sini,
                 // form hanya menjadi alasannya. Kosong bila tidak disebut.
@@ -71,7 +73,7 @@ class InventoryPurchaseFlowService
      *
      * @param  array<string, mixed>  $data  inventory_item_id, transaction_date, qty, unit_cost,
      *                                      payment_type, expense_category_id/cash_account_id (tunai),
-     *                                      supplier_name/due_date (kredit), condition, condition_notes,
+     *                                      supplier_id atau supplier_name, due_date (kredit), condition, condition_notes,
      *                                      requisition_id, notes
      */
     public function create(array $data, ?int $actorId = null): InventoryPurchase
@@ -97,7 +99,8 @@ class InventoryPurchaseFlowService
                 'condition_notes' => $data['condition_notes'] ?? null,
                 'condition_checked_at' => now(),
                 'condition_checked_by' => $actorId,
-                'supplier_name' => $data['supplier_name'] ?? null,
+                'supplier_id' => $data['supplier_id'],
+                'supplier_name' => $data['supplier_name'],
                 'notes' => $data['notes'] ?? null,
                 'created_by' => $actorId,
                 'updated_by' => $actorId,
@@ -171,12 +174,44 @@ class InventoryPurchaseFlowService
      */
     public function normalize(array $data): array
     {
-        // Jatuh tempo hanya bermakna untuk pembelian kredit.
+        $supplier = $this->resolveSupplier($data);
+        $data['supplier_id'] = $supplier?->id;
+        $data['supplier_name'] = $supplier?->name
+            ?? (filled($data['supplier_name'] ?? null) ? trim((string) $data['supplier_name']) : null);
+
+        // Jatuh tempo hanya bermakna untuk pembelian kredit. Bila kosong,
+        // termin bayar supplier dipakai sebagai bawaan.
         if (($data['payment_type'] ?? null) === 'cash') {
             $data['due_date'] = null;
+        } elseif (blank($data['due_date'] ?? null) && $supplier) {
+            $data['due_date'] = $supplier->dueDateFor($data['transaction_date'] ?? null);
         }
 
         return $data;
+    }
+
+    /**
+     * Supplier dari master: dipilih lewat id (form Filament), atau dicocokkan
+     * dari nama yang diketik (form Blade). Nama yang tidak ada di master tetap
+     * boleh -- disimpan apa adanya tanpa tautan.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    protected function resolveSupplier(array $data): ?Supplier
+    {
+        if (blank($data['supplier_id'] ?? null)) {
+            return Supplier::findByName($data['supplier_name'] ?? null);
+        }
+
+        $supplier = Supplier::query()->find($data['supplier_id']);
+
+        if (! $supplier) {
+            throw ValidationException::withMessages([
+                'supplier_id' => 'Supplier tidak ditemukan di master supplier.',
+            ]);
+        }
+
+        return $supplier;
     }
 
     /** @param array<string, mixed> $data */
@@ -231,6 +266,7 @@ class InventoryPurchaseFlowService
             [
                 'transaction_date' => $data['transaction_date'],
                 'due_date' => $data['due_date'] ?? null,
+                'supplier_id' => $data['supplier_id'] ?? null,
                 'supplier_name' => $data['supplier_name'],
                 'description' => 'Pembelian stok '.$itemName,
                 'amount' => (float) $data['total_cost'],

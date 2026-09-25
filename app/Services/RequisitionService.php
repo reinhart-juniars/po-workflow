@@ -9,6 +9,7 @@ use App\Models\InventoryPurchase;
 use App\Models\ProductionOrder;
 use App\Models\Requisition;
 use App\Models\RequisitionLine;
+use App\Models\Supplier;
 use App\Support\Notify;
 use App\Support\Settings\Settings;
 use Illuminate\Support\Facades\DB;
@@ -286,7 +287,10 @@ class RequisitionService
      * kredit: supplier + jatuh tempo). Dipakai saat Periksa untuk membuat
      * pembelian bahan baku beserta kas keluar / hutangnya.
      *
-     * @param  array{payment_type?: ?string, expense_category_id?: mixed, cash_account_id?: mixed, supplier_name?: ?string, due_date?: mixed}  $data
+     * Supplier dipilih dari master lewat supplier_id; supplier_name (teks)
+     * masih diterima untuk pemanggil lama dan dicocokkan ke master.
+     *
+     * @param  array{payment_type?: ?string, expense_category_id?: mixed, cash_account_id?: mixed, supplier_id?: mixed, supplier_name?: ?string, due_date?: mixed}  $data
      */
     public function recordPaymentHeader(Requisition $requisition, array $data): Requisition
     {
@@ -304,11 +308,37 @@ class RequisitionService
             'payment_type' => $type,
             'expense_category_id' => $type === 'cash' ? ($data['expense_category_id'] ?: $this->defaultPurchaseCategoryId()) : null,
             'cash_account_id' => $type === 'cash' ? ($data['cash_account_id'] ?: null) : null,
-            'supplier_name' => filled($data['supplier_name'] ?? null) ? trim((string) $data['supplier_name']) : null,
             'due_date' => $type === 'payable' ? ($data['due_date'] ?: null) : null,
-        ]);
+        ] + $this->supplierAttributes($requisition, $data));
 
         return $requisition;
+    }
+
+    /**
+     * Kolom supplier untuk recordPaymentHeader.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array{supplier_id?: ?int, supplier_name?: ?string}
+     */
+    protected function supplierAttributes(Requisition $requisition, array $data): array
+    {
+        if (! array_key_exists('supplier_id', $data)) {
+            // LinksSupplier menautkan nama ini ke master bila cocok.
+            return ['supplier_name' => filled($data['supplier_name'] ?? null) ? trim((string) $data['supplier_name']) : null];
+        }
+
+        if (filled($data['supplier_id'])) {
+            if (! Supplier::query()->whereKey($data['supplier_id'])->exists()) {
+                throw new RuntimeException('Supplier tidak ditemukan di master supplier.');
+            }
+
+            return ['supplier_id' => (int) $data['supplier_id']];
+        }
+
+        // Pilihan dikosongkan. Nama lama yang belum ada di master (tidak punya
+        // supplier_id) dibiarkan, karena form tidak bisa menampilkannya
+        // sebagai pilihan untuk dikosongkan dengan sengaja.
+        return $requisition->supplier_id ? ['supplier_id' => null, 'supplier_name' => null] : [];
     }
 
     /** Kategori Pembelian Stok bawaan bila hanya ada satu yang aktif. */
@@ -529,6 +559,7 @@ class RequisitionService
             'payment_type' => $requisition->payment_type,
             'expense_category_id' => $requisition->expense_category_id,
             'cash_account_id' => $requisition->cash_account_id,
+            'supplier_id' => $requisition->supplier_id,
             'supplier_name' => $requisition->supplier_name,
             'due_date' => $requisition->due_date?->toDateString(),
         ];

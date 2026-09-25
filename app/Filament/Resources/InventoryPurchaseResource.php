@@ -84,6 +84,12 @@ class InventoryPurchaseResource extends Resource
                             ->live()
                             ->native(false),
 
+                        SupplierResource::picker()
+                            ->required(fn (Get $get) => $get('payment_type') === 'payable')
+                            ->helperText(fn (?InventoryPurchase $record) => $record && ! $record->supplier_id && filled($record->supplier_name)
+                                ? 'Tercatat sebagai "'.$record->supplier_name.'" (belum ada di Master Supplier). Nama ini tetap disimpan bila pilihan dibiarkan kosong.'
+                                : 'Wajib untuk pembelian kredit.'),
+
                         Forms\Components\Select::make('requisition_id')
                             ->label('Untuk Form Kebutuhan')
                             ->options(fn () => \App\Models\Requisition::query()
@@ -125,14 +131,10 @@ class InventoryPurchaseResource extends Resource
 
                 Forms\Components\Section::make('Kredit')
                     ->schema([
-                        Forms\Components\TextInput::make('supplier_name')
-                            ->label('Supplier')
-                            ->required()
-                            ->maxLength(255),
-
                         Forms\Components\DatePicker::make('due_date')
                             ->label('Jatuh Tempo')
-                            ->native(false),
+                            ->native(false)
+                            ->helperText('Kosongkan untuk memakai termin bayar supplier.'),
                     ])
                     ->columns(2)
                     ->visible(fn (Get $get) => $get('payment_type') === 'payable'),
@@ -209,6 +211,12 @@ class InventoryPurchaseResource extends Resource
                     ->label('Item')
                     ->options(fn () => InventoryItem::query()->orderBy('name')->pluck('name', 'id'))
                     ->searchable(),
+
+                Tables\Filters\SelectFilter::make('supplier_id')
+                    ->label('Supplier')
+                    ->relationship('supplier', 'name')
+                    ->searchable()
+                    ->preload(),
 
                 Tables\Filters\SelectFilter::make('payment_type')
                     ->label('Pembayaran')

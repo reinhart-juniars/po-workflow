@@ -81,7 +81,8 @@
         <label class="form-label">Supplier</label>
         <input type="text" name="supplier_name"
                value="{{ old('supplier_name', $inventoryPurchase->supplier_name) }}"
-               class="form-control">
+               class="form-control" list="supplier-options" autocomplete="off">
+        @include('partials.supplier-datalist')
       </div>
 
       <div id="due_date_wrapper">

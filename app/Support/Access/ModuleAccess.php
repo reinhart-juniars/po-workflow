@@ -31,7 +31,7 @@ class ModuleAccess
      * @var array<string, string> izin => label (Bahasa Indonesia)
      */
     public const PERMISSIONS = [
-        'inventory.view' => 'Lihat inventory (bahan, pembelian, opname, saldo awal, konversi satuan)',
+        'inventory.view' => 'Lihat inventory (bahan, supplier, pembelian, opname, saldo awal, konversi satuan)',
         'inventory.manage' => 'Kelola inventory (tambah/ubah/hapus)',
         'recipe.view' => 'Lihat resep, HPP, dan bahan belum cocok',
         'recipe.manage' => 'Kelola resep (termasuk import/export dan pencocokan bahan)',

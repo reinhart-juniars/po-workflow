@@ -95,6 +95,7 @@ it('melepas cash out saat pembelian diubah menjadi kredit dari panel', function 
         ->assertHasNoFormErrors();
 
     $cashOutId = $this->purchase->refresh()->cash_out_id;
+    $supplier = App\Models\Supplier::query()->create(['name' => 'CV Sumber Pangan', 'is_active' => true]);
 
     Livewire::test(InventoryPurchaseResource\Pages\EditInventoryPurchase::class, [
         'record' => $this->purchase->getKey(),
@@ -104,7 +105,7 @@ it('melepas cash out saat pembelian diubah menjadi kredit dari panel', function 
             'transaction_date' => '2026-03-10',
             'total_cost' => 100000,
             'payment_type' => 'payable',
-            'supplier_name' => 'CV Sumber Pangan',
+            'supplier_id' => $supplier->id,
             'condition' => InventoryPurchase::CONDITION_GOOD,
         ])
         ->call('save')
@@ -114,7 +115,9 @@ it('melepas cash out saat pembelian diubah menjadi kredit dari panel', function 
 
     expect(CashOut::query()->whereKey($cashOutId)->exists())->toBeFalse()
         ->and($this->purchase->cash_out_id)->toBeNull()
-        ->and(Payable::query()->whereKey($this->purchase->payable_id)->exists())->toBeTrue();
+        ->and(Payable::query()->whereKey($this->purchase->payable_id)->exists())->toBeTrue()
+        ->and($this->purchase->payable->supplier_id)->toBe($supplier->id)
+        ->and($this->purchase->payable->supplier_name)->toBe('CV Sumber Pangan');
 });
 
 it('menandai barang tidak baik lewat aksi cek kondisi berikut pemeriksanya', function () {

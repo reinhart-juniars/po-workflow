@@ -48,6 +48,13 @@ class EditInventoryPurchase extends EditRecord
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
         /** @var InventoryPurchase $record */
+        // Pembelian lama bisa menyimpan nama supplier yang tidak ada di
+        // master. Form hanya punya pilihan master, jadi tanpa ini menyimpan
+        // form akan menghapus nama tersebut.
+        if (blank($data['supplier_id'] ?? null) && ! $record->supplier_id) {
+            $data['supplier_name'] = $record->supplier_name;
+        }
+
         return app(InventoryPurchaseFlowService::class)->update($record, $data, Auth::id());
     }
 

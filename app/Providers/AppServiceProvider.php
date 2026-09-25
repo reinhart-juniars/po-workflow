@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\Supplier;
 use App\Services\AutoNumberService;
 use App\Support\Settings\Settings;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -29,5 +31,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Schema::defaultStringLength(191);
+
+        // Saran nama supplier untuk input teks bebas di aplikasi Blade.
+        View::composer('partials.supplier-datalist', function ($view) {
+            $view->with('supplierNames', Supplier::query()->active()->orderBy('name')->pluck('name'));
+        });
     }
 }

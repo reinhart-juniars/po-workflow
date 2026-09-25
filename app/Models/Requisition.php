@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Helpers\AutoNumberHelper;
+use App\Models\Concerns\LinksSupplier;
 use App\Support\Settings\Settings;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -16,6 +17,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Requisition extends Model
 {
+    use LinksSupplier;
+
     public const STATUS_DRAFT = 'draft';
 
     /** Diajukan produksi; menunggu supervisor gudang menyetujui atau menolak. */
@@ -45,6 +48,7 @@ class Requisition extends Model
         'expense_category_id',
         'cash_account_id',
         'supplier_name',
+        'supplier_id',
         'due_date',
     ];
 

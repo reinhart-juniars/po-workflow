@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\ProductionOrderResource\Pages;
 
 use App\Filament\Resources\ProductionOrderResource;
+use App\Filament\Resources\SupplierResource;
 use App\Models\CashAccount;
 use App\Models\ExpenseCategory;
 use App\Models\ProductionOrder;
@@ -17,7 +18,6 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
@@ -92,7 +92,7 @@ class RequisitionForm extends Page implements HasForms
             'payment_type' => $requisition?->payment_type,
             'expense_category_id' => $requisition?->expense_category_id ?? app(RequisitionService::class)->defaultPurchaseCategoryId(),
             'cash_account_id' => $requisition?->cash_account_id,
-            'supplier_name' => $requisition?->supplier_name,
+            'supplier_id' => $requisition?->supplier_id,
             'due_date' => $requisition?->due_date?->toDateString(),
             'lines' => $requisition
                 ? $requisition->lines->map(fn (RequisitionLine $line) => [
@@ -234,9 +234,11 @@ class RequisitionForm extends Page implements HasForms
                             ->disabled(! $receivingOpen)
                             ->dehydrated($receivingOpen),
 
-                        TextInput::make('supplier_name')
-                            ->label('Supplier')
-                            ->maxLength(255)
+                        SupplierResource::picker()
+                            ->required(fn (Get $get) => $get('payment_type') === 'payable')
+                            ->helperText(fn () => ($requisition = $this->getRequisition()) && ! $requisition->supplier_id && filled($requisition->supplier_name)
+                                ? 'Tercatat sebagai "'.$requisition->supplier_name.'" (belum ada di Master Supplier).'
+                                : null)
                             ->visible(fn (Get $get) => $get('payment_type') !== null)
                             ->disabled(! $receivingOpen)
                             ->dehydrated($receivingOpen),
@@ -279,7 +281,7 @@ class RequisitionForm extends Page implements HasForms
                     'payment_type' => $state['payment_type'] ?? null,
                     'expense_category_id' => $state['expense_category_id'] ?? null,
                     'cash_account_id' => $state['cash_account_id'] ?? null,
-                    'supplier_name' => $state['supplier_name'] ?? null,
+                    'supplier_id' => $state['supplier_id'] ?? null,
                     'due_date' => $state['due_date'] ?? null,
                 ]);
             }

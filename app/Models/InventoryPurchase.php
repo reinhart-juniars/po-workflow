@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\LinksSupplier;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InventoryPurchase extends Model
 {
+    use LinksSupplier;
+
     /** Barang datang dalam kondisi baik dan menambah stok tersedia. */
     public const CONDITION_GOOD = 'good';
 
@@ -22,6 +25,18 @@ class InventoryPurchase extends Model
             // di unit_cost, jadi qty x unit_cost bisa kehilangan rupiah.
             if (! $inventoryPurchase->isDirty('total_value') || $inventoryPurchase->total_value === null) {
                 $inventoryPurchase->total_value = (float) $inventoryPurchase->qty * (float) $inventoryPurchase->unit_cost;
+            }
+        });
+
+        // Bahan yang dibeli dari supplier otomatis tercatat sebagai bahan
+        // yang dipasoknya, supaya daftar di Master Supplier ikut hidup.
+        static::saved(function (self $inventoryPurchase) {
+            if (! $inventoryPurchase->supplier_id || ! $inventoryPurchase->inventory_item_id) {
+                return;
+            }
+
+            if ($inventoryPurchase->wasRecentlyCreated || $inventoryPurchase->wasChanged(['supplier_id', 'inventory_item_id'])) {
+                $inventoryPurchase->supplier?->items()->syncWithoutDetaching([$inventoryPurchase->inventory_item_id]);
             }
         });
     }
@@ -41,6 +56,7 @@ class InventoryPurchase extends Model
         'condition_checked_at',
         'condition_checked_by',
         'supplier_name',
+        'supplier_id',
         'notes',
         'created_by',
         'updated_by',

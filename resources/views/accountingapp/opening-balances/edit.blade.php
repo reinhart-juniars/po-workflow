@@ -42,7 +42,8 @@
         <label class="form-label">Supplier</label>
         <input type="text" name="supplier_name" id="opening-balance-supplier"
                value="{{ old('supplier_name', $openingBalance->supplier_name ?? $openingBalance->payable?->supplier_name) }}"
-               class="form-control" placeholder="Wajib untuk tipe hutang">
+               class="form-control" list="supplier-options" autocomplete="off" placeholder="Wajib untuk tipe hutang">
+        @include('partials.supplier-datalist')
         <div id="opening-balance-supplier-help" class="field-help"></div>
       </div>
 

@@ -79,6 +79,16 @@ class InventoryItemResource extends Resource
                     ->rows(3)
                     ->columnSpanFull(),
 
+                Forms\Components\Select::make('suppliers')
+                    ->label('Supplier')
+                    ->relationship('suppliers', 'name', fn ($query) => $query->orderBy('name'))
+                    ->multiple()
+                    ->searchable()
+                    ->preload()
+                    ->native(false)
+                    ->helperText('Supplier yang memasok bahan ini. Terisi otomatis dari pembelian; kelola datanya di Master Supplier.')
+                    ->columnSpanFull(),
+
                 // Kolom bahan (dulu milik Master Menu): induk/bucket, kelompok,
                 // kemasan, dan harga satuan yang dipakai HPP resep. Harga satuan
                 // dihitung dari harga kemasan / isi bila keduanya diisi, tetapi
@@ -150,10 +160,13 @@ class InventoryItemResource extends Resource
     {
         return $table
             ->columns([
+                // Nama boleh turun baris supaya tabel muat satu layar laptop
+                // tanpa digeser ke samping.
                 TextColumn::make('name')
                     ->label('Nama Item')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->wrap(),
 
                 TextColumn::make('unit')
                     ->label('Satuan')
@@ -165,10 +178,20 @@ class InventoryItemResource extends Resource
                     ->formatStateUsing(fn (?string $state) => InventoryItem::categoryOptions()[$state] ?? $state)
                     ->sortable(),
 
+                // Induk hampir selalu sama dengan kategorinya; disembunyikan
+                // bawaan supaya tabel tidak melebar, tetap bisa dimunculkan.
                 TextColumn::make('parent.name')
                     ->label('Induk')
                     ->placeholder('bucket')
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('suppliers.name')
+                    ->label('Supplier')
+                    ->badge()
+                    ->color('gray')
+                    ->limitList(2)
+                    ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('unit_price')
                     ->label('Harga Satuan')
