@@ -68,6 +68,9 @@ class AdminPanelProvider extends PanelProvider
             // dengan layout Blade, disuntik ke topbar & head panel.
             ->renderHook(PanelsRenderHook::HEAD_END, fn () => Vite::withEntryPoints(['resources/css/shell.css'])->toHtml())
             ->renderHook(PanelsRenderHook::TOPBAR_START, fn () => view('partials.app-bar', ['currentApp' => 'inventory']))
+            // Pencarian global di atas sidebar, sama dengan layout Blade --
+            // bukan di topbar, yang sudah penuh oleh bilah aplikasi.
+            ->renderHook(PanelsRenderHook::SIDEBAR_NAV_START, fn () => view('partials.global-search'))
             ->renderHook(PanelsRenderHook::SIDEBAR_NAV_START, fn () => '<p class="sh-app-name">Inventory</p>')
             // Menu pengguna yang sama dengan header Blade (avatar inisial + nama);
             // menu bawaan Filament (avatar dari ui-avatars.com) disembunyikan di shell.css.

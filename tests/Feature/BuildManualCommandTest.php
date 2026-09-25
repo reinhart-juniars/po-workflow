@@ -18,5 +18,12 @@ it('membangun panduan pengguna pdf dari sumber html', function () {
     $html = file_get_contents(base_path('docs/panduan/panduan-3s-one.html'));
     expect($html)->toContain('Form Kebutuhan')->toContain('Supervisor Gudang')->toContain('Kartu Stok');
 
+    // Pencarian global ikut terdokumentasi -- termasuk peringatan bahwa
+    // hasilnya disaring per peran, yang kalau hilang akan memancing laporan
+    // "dokumen saya tidak ketemu" yang sebenarnya perilaku benar.
+    expect($html)->toContain('Cari dokumen')
+        ->toContain('Ctrl + K')
+        ->toContain('boleh Anda buka');
+
     @unlink($output);
 });

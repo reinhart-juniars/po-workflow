@@ -22,6 +22,29 @@ menggantikan HPP residual opname dengan pemakaian bahan riil dari resep × produ
 | 4 | Izin modul (spatie permission) per peran, Pengaturan modul, cangkang & menu 3S terpadu (satu sumber untuk Blade dan Filament), validasi & pembersihan pasca migrasi, runbook cutover & UAT | Sistem |
 | B | Notifikasi perubahan harga bahan & harga jual menu (lonceng di semua aplikasi), notifikasi profit menu keseluruhan keluar dari batas atas/bawah (Pengaturan Inventory; `profit:check` harian), laporan Menu Tidak Diproduksi (rentang bawaan di Pengaturan, export Excel), Katalog Foto Menu berbasis SKU (Admin mengelola, Sales melihat; foto dikompres otomatis ke JPG 1600 px) | Inventory / Admin / Sales |
 
+## Pencarian global
+
+Tombol **Cari dokumen…** di atas sidebar (pintasan <kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>K</kbd>)
+membuka panel pencarian sebagai overlay; tersedia di layout Blade maupun panel Filament.
+Menemukan Purchase Order, Delivery Order, SPK Produksi, pelanggan, menu, dan bahan — termasuk
+lewat kolom relasinya (nomor PO ketemu dari nama pelanggannya).
+
+Letaknya **bukan** di bilah atas dan itu disengaja: bilah itu memuat sampai 8 tab aplikasi untuk
+superadmin/owner, dan menambahkan apa pun di sana — bahkan tombol ikon 38px — membuat tab terakhir
+terpotong. Penempatan ini dijaga tes (`tests/Feature/GlobalSearchTest.php`), bukan sekadar
+kesepakatan.
+
+Aturannya: **sebuah hasil hanya muncul bila peran pengguna memang boleh membuka halaman
+tujuannya.** Jadi Sales tidak menemukan PO, Admin tidak menemukan DO, dan satu PO yang sama
+menautkan Admin ke detail Admin App tetapi Produksi ke halaman progres Production App. Sumber yang
+tidak punya tujuan yang boleh dibuka tidak ikut dicari sama sekali. Daftar sumber beserta pagarnya
+ada di `App\Services\GlobalSearchService::sources()`; menambah entitas baru berarti menuliskan
+pagarnya di sana, dan tes arsitektur di `tests/Feature/Security/GlobalSearchAccessTest.php`
+membuat build merah bila ada sumber tanpa pagar.
+
+Tanpa JavaScript tombolnya menjadi tautan biasa ke `/search`, dan halaman itu membawa form GET-nya
+sendiri — jadi pencarian tetap bisa dilakukan.
+
 Dokumen:
 
 - `version.txt` — riwayat rilis; **baris terakhirnya** jadi nomor versi yang tampil di halaman masuk (`App\Support\AppVersion`). Rilis baru = tambah satu baris `v.X.Y keterangan`.
@@ -64,4 +87,6 @@ bila tidak ada.
 - Halaman inventory (`/inventory/...`) hanya untuk peran `superadmin`, `owner`, `admin`, `accounting`, `inventory` (staf gudang, dipilih di Master User), `production`;
   setiap resource dijaga policy berbasis izin modul (`tests/Feature/Security/`). Halaman Blade dijaga `ensure.role`.
 - Tes arsitektur menolak resource/halaman panel baru yang tidak punya policy/`canAccess`.
+- Pencarian global menyaring per jenis dokumen dan gagal tertutup: sumber tanpa tujuan yang boleh
+  dibuka tidak dicari. Endpoint saran dibatasi 60 permintaan/menit.
 - Rahasia hanya di `.env` (gitignored; di server mode 600 milik user deploy).

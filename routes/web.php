@@ -19,6 +19,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeliveryAppController;
 use App\Http\Controllers\FinalReportController;
 use App\Http\Controllers\FinancialController;
+use App\Http\Controllers\GlobalSearchController;
 use App\Http\Controllers\IncomeCategoryController;
 use App\Http\Controllers\InventoryPurchaseController;
 use App\Http\Controllers\InventoryUsageReportController;
@@ -84,6 +85,15 @@ Route::middleware(['web', 'auth', 'force.password.change'])->group(function () {
         ->name('notifications.open');
     Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'readAll'])
         ->name('notifications.read-all');
+
+    // Pencarian global (kotak di bilah atas). Terbuka untuk semua peran:
+    // yang menyaring hasilnya adalah GlobalSearchService, per jenis dokumen.
+    // `suggest` dipanggil tiap ketikan, jadi diberi pagar laju sendiri.
+    Route::get('/search', [GlobalSearchController::class, 'index'])
+        ->name('search.index');
+    Route::get('/search/suggest', [GlobalSearchController::class, 'suggest'])
+        ->middleware('throttle:60,1')
+        ->name('search.suggest');
 });
 
 Route::middleware(['web', 'auth'])->group(function () {

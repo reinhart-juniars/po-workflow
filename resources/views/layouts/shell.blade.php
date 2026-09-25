@@ -44,7 +44,14 @@
     </div>
 
     {{-- Grup & item bergeser -mx-2 seperti fi-sidebar-nav-groups: ikon di x=24, item mulai x=16 --}}
-    <nav class="flex flex-1 flex-col gap-y-7 overflow-y-auto px-6 py-8" aria-label="Menu {{ \App\Support\Navigation::appLabel($shellApp) }}">
+    {{-- Pencarian global. Di sidebar, bukan di bilah atas: bilah itu sudah
+         penuh oleh tab aplikasi (lihat partials/global-search). Di luar <nav>
+         karena mencari bukan menavigasi. --}}
+    <div class="shrink-0 px-6 pt-5">
+      @include('partials.global-search')
+    </div>
+
+    <nav class="flex flex-1 flex-col gap-y-7 overflow-y-auto px-6 pb-8 pt-6" aria-label="Menu {{ \App\Support\Navigation::appLabel($shellApp) }}">
       <p class="shell-app-name">{{ \App\Support\Navigation::appLabel($shellApp) }}</p>
 
       @foreach ($shellSections as $section)

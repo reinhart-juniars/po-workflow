@@ -79,7 +79,7 @@
   <div class="sub">Business Control System</div>
   <p style="margin-top: 24pt; font-size: 14pt;">Panduan Pengguna</p>
   <p class="muted">Satu sistem untuk pesanan, produksi, stok, dan keuangan<br>W3S Catering</p>
-  <div class="meta">Versi 3.1</div>
+  <div class="meta">Versi 3.2</div>
 </div>
 
 <!-- ============ DAFTAR ISI ============ -->
@@ -271,10 +271,30 @@
     <tr><th style="width: 28%">Bagian</th><th>Fungsi</th></tr>
     <tr><td><b>Bilah atas</b></td><td>Tab aplikasi: Owner, Admin, Accounting, Inventory, Sales, Production, Delivery. Hanya yang sesuai peran Anda yang tampil.</td></tr>
     <tr><td><b>Menu kiri</b></td><td>Menu aplikasi yang sedang dibuka, dikelompokkan (Ringkasan, Master Data, Transaksi, Laporan, ...).</td></tr>
+    <tr><td><b>Cari dokumen</b> (di atas menu kiri)</td><td>Mencari PO, DO, SPK Produksi, pelanggan, menu, dan bahan dari seluruh aplikasi sekaligus — tanpa perlu tahu dokumennya ada di menu mana. Pintasan <b>Ctrl + K</b>. Hasilnya hanya berisi dokumen yang boleh dibuka oleh peran Anda.</td></tr>
     <tr><td><b>Lonceng</b></td><td>Pemberitahuan untuk Anda, di semua aplikasi: form yang menunggu persetujuan Anda, barang yang sudah bisa dibelanjakan, form yang ditolak, <b>harga bahan / harga jual menu berubah</b>, dan <b>profit menu keluar dari batas</b>. Tekan <i>Buka</i> untuk langsung ke halamannya; <i>Tandai semua dibaca</i> membersihkan angka merahnya.</td></tr>
     <tr><td><b>Inisial nama</b> (pojok kanan)</td><td>Profil, ganti password, keluar.</td></tr>
   </table>
   <div class="fig"><img src="img/owner-dashboard.jpg" alt="Tata letak: bilah aplikasi di atas, menu aplikasi di kiri, isi halaman di tengah (contoh: Dashboard Owner)."><div class="cap">Tata letak: bilah aplikasi di atas, menu aplikasi di kiri, isi halaman di tengah (contoh: Dashboard Owner).</div></div>
+
+  <h3>Mencari dokumen dengan cepat</h3>
+  <p>Sistem ini punya banyak menu, dan sebuah pesanan bisa muncul di beberapa tempat. Bila Anda sudah tahu <i>apa</i> yang dicari tetapi tidak ingat menunya, pakai <b>Cari dokumen</b> di atas menu kiri — tersedia di semua aplikasi.</p>
+  <ol>
+    <li>Tekan tombol <b>Cari dokumen…</b>, atau tekan <b>Ctrl + K</b> di papan ketik (<b>Cmd + K</b> di Mac).</li>
+    <li>Ketik minimal <b>2 huruf</b>. Daftar hasil muncul sambil Anda mengetik.</li>
+    <li>Pilih dengan <b>panah atas/bawah</b>, buka dengan <b>Enter</b>. <b>Esc</b> menutup tanpa membuka apa-apa.</li>
+  </ol>
+  <table class="grid">
+    <tr><th style="width: 28%">Yang bisa dicari</th><th>Contoh kata kunci</th></tr>
+    <tr><td><b>Purchase Order</b></td><td>Nomor PO, <b>nama pelanggan</b>, atau nama penerima — tidak harus hafal nomornya.</td></tr>
+    <tr><td><b>Delivery Order</b></td><td>Kode DO, atau nama area pengiriman.</td></tr>
+    <tr><td><b>SPK Produksi</b></td><td>Nomor SPK, judulnya, atau kode slot SPK lama.</td></tr>
+    <tr><td><b>Pelanggan</b></td><td>Nama atau nomor telepon.</td></tr>
+    <tr><td><b>Menu</b></td><td>Nama menu atau kode SKU.</td></tr>
+    <tr><td><b>Bahan</b></td><td>Nama bahan.</td></tr>
+  </table>
+  <p>Menekan <b>Enter</b> tanpa memilih baris membuka <b>halaman hasil lengkap</b>, yang menampilkan semua temuan dikelompokkan per jenis dokumen.</p>
+  <div class="tip">Pencarian hanya menampilkan dokumen yang <b>boleh Anda buka</b>. Dua orang dengan peran berbeda bisa mendapat hasil berbeda untuk kata kunci yang sama — itu memang begitu, bukan kerusakan. Lihat pertanyaan di bab 15.</div>
 
   <h3>Tombol dan tanda yang sering ditemui</h3>
   <ul>
@@ -640,13 +660,19 @@
   <h3>Kenapa biaya sebuah resep dihitung nol / ada peringatan merah?</h3>
   <p>Ada bahan yang belum tertaut (<i>Bahan Belum Cocok</i>) atau satuannya belum bisa dikonversi (<i>Konversi Satuan › Belum Diatur</i>). Lengkapi, dan HPP langsung terhitung.</p>
 
+  <h3>Saya tahu nomor PO-nya, tapi tidak tahu harus membuka menu yang mana.</h3>
+  <p>Pakai <b>Cari dokumen</b> di atas menu kiri, atau tekan <b>Ctrl + K</b>. Ketik nomornya lalu Enter. Kalau nomornya tidak hafal, ketik saja <b>nama pelanggan</b> atau nama penerimanya — PO-nya tetap ketemu.</p>
+
+  <h3>Rekan saya menemukan sebuah dokumen lewat pencarian, saya tidak.</h3>
+  <p>Itu memang perilaku yang benar. Pencarian hanya menampilkan dokumen yang boleh dibuka oleh peran Anda: Sales tidak menemukan Purchase Order, Admin tidak menemukan Delivery Order. Satu PO yang sama pun dibukakan ke halaman yang berbeda — Admin ke detail Admin App, Produksi ke halaman progres Production App. Bila Anda memang perlu aksesnya, minta Owner menyesuaikan peran Anda lewat <b>Master User</b>.</p>
+
   <h3>Lupa password.</h3>
   <p>Minta Owner mereset lewat Master User. Anda akan mendapat password sementara dan diminta menggantinya saat masuk.</p>
 
   <h3>Angka di laporan Owner dan laporan Accounting berbeda?</h3>
   <p>Seharusnya tidak, karena sumbernya sama. Cek dulu apakah periode/tanggal yang dipilih sama, dan apakah periode itu sudah ditutup buku. Kalau masih berbeda, laporkan dengan menyebut menu, periode, dan versi sistem (tertera di halaman masuk).</p>
 
-  <p class="muted small" style="margin-top: 20pt;">3S ONE · Panduan Pengguna v3.1 · Dibuat dari sistem yang berjalan, bukan dari rencana — bila layar Anda berbeda dari panduan ini, kemungkinan versi sistem sudah lebih baru.</p>
+  <p class="muted small" style="margin-top: 20pt;">3S ONE · Panduan Pengguna v3.2 · Dibuat dari sistem yang berjalan, bukan dari rencana — bila layar Anda berbeda dari panduan ini, kemungkinan versi sistem sudah lebih baru.</p>
 </div>
 
 </body>

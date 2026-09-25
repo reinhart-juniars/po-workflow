@@ -80,6 +80,10 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  /* min-width:0 supaya strip tab menyusut lalu menggulir sendiri, bukan
+     memaksa baris header ikut melebar -- di topbar Filament luapan itu
+     mendorong sidebar menimpa konten. */
+  min-width: 0;
   overflow-x: auto;
   scrollbar-width: none;
   padding: 2px;
@@ -155,6 +159,177 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
+
+/* ---------- Pencarian global ---------- */
+/*
+  Pemicunya sebuah tombol berlabel di ATAS SIDEBAR; panelnya terbuka sebagai
+  overlay di tengah layar. Tidak di bilah atas: bilah itu sudah memuat sampai
+  8 tab aplikasi, lonceng, dan menu pengguna, dan menaruh apa pun di sana --
+  bahkan ikon 38px -- memotong tab terakhir.
+*/
+.sh-search { display: block; }
+
+.sh-search-trigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--sh-line);
+  border-radius: 10px;
+  background: var(--sh-bg);
+  color: var(--sh-ink-3);
+  font-size: 13px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--sh-fast) var(--sh-ease), border-color var(--sh-fast) var(--sh-ease), color var(--sh-fast) var(--sh-ease);
+}
+
+.sh-search-trigger:hover { background: var(--sh-surface); border-color: var(--sh-brand-100); color: var(--sh-ink); }
+.sh-search-trigger:focus-visible { outline: 2px solid var(--sh-brand); outline-offset: 2px; }
+.sh-search-trigger-icon { flex: none; width: 17px; height: 17px; }
+.sh-search-trigger-label { flex: 1; min-width: 0; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Overlay. <dialog> berada di top layer, jadi bebas dari z-index header
+   maupun sidebar Filament. */
+.sh-search-dialog {
+  width: min(640px, calc(100vw - 32px));
+  max-height: min(70vh, 560px);
+  margin: 12vh auto auto;
+  padding: 0;
+  border: 1px solid var(--sh-line);
+  border-radius: 14px;
+  background: var(--sh-surface);
+  box-shadow: var(--sh-shadow-md);
+  overflow: hidden;
+}
+
+.sh-search-dialog[open] { animation: sh-search-in 180ms var(--sh-ease-out) both; }
+.sh-search-dialog::backdrop { background: rgba(15, 23, 42, 0.42); }
+
+@keyframes sh-search-in {
+  from { opacity: 0; transform: translateY(-8px) scale(0.985); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sh-search-dialog[open] { animation: none; }
+}
+
+.sh-search-dialog form { display: flex; flex-direction: column; min-height: 0; }
+
+.sh-search-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  height: 52px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--sh-line);
+}
+
+.sh-search-icon { flex: none; width: 19px; height: 19px; color: var(--sh-ink-3); }
+
+.sh-search-field input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  font-size: 15px;
+  color: var(--sh-ink);
+}
+
+.sh-search-field input::placeholder { color: #94a3b8; }
+.sh-search-field input:focus { outline: none; box-shadow: none; }
+/* Tombol "x" bawaan browser bentrok dengan daftar hasil; Escape sudah ada. */
+.sh-search-field input::-webkit-search-cancel-button { display: none; }
+
+.sh-search-kbd {
+  flex: none;
+  padding: 2px 6px;
+  border: 1px solid var(--sh-line);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+}
+
+.sh-search-panel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.sh-search-group {
+  margin: 6px 0 2px;
+  padding: 0 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.sh-search-item {
+  display: flex;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+  transition: background-color var(--sh-fast) var(--sh-ease);
+}
+
+/* Tetikus dan papan ketik menyorot dengan cara yang sama. */
+.sh-search-item:hover,
+.sh-search-item.is-active { background: var(--sh-brand-50); }
+
+.sh-search-text { display: block; min-width: 0; }
+.sh-search-title { display: block; font-size: 13.5px; font-weight: 600; line-height: 19px; color: var(--sh-ink); }
+.sh-search-meta { display: block; font-size: 12px; line-height: 16px; color: var(--sh-ink-3); margin-top: 1px; }
+.sh-search-empty,
+.sh-search-hint { margin: 0; padding: 18px 10px; font-size: 12.5px; color: var(--sh-ink-3); text-align: center; }
+
+/* Halaman hasil lengkap (Enter di kotak pencarian, atau tanpa JavaScript). */
+.sh-search-page-title { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; color: var(--sh-ink); }
+.sh-search-page-form { display: flex; gap: 8px; margin-top: 14px; max-width: 640px; }
+.sh-search-page-form .sh-search-field {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  border: 1px solid var(--sh-line);
+  border-radius: 10px;
+  background: var(--sh-surface);
+  transition: border-color var(--sh-fast) var(--sh-ease), box-shadow var(--sh-fast) var(--sh-ease);
+}
+.sh-search-page-form .sh-search-field:focus-within { border-color: var(--sh-brand); box-shadow: 0 0 0 3px var(--sh-brand-50); }
+.sh-search-page-form .sh-search-field input { font-size: 14px; }
+.sh-search-page-note { margin-top: 4px; font-size: 13px; color: var(--sh-ink-3); }
+.sh-search-page-empty { margin-top: 16px; font-size: 13px; color: var(--sh-ink-3); }
+.sh-search-page-group { margin-top: 22px; }
+.sh-search-page-group > h2 { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #94a3b8; }
+.sh-search-page-group > ul { margin-top: 6px; list-style: none; padding: 0; display: grid; gap: 4px; }
+.sh-search-page-group a {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border: 1px solid var(--sh-line);
+  border-radius: 10px;
+  background: var(--sh-surface);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color var(--sh-fast) var(--sh-ease), background-color var(--sh-fast) var(--sh-ease);
+}
+.sh-search-page-group a:hover { border-color: var(--sh-brand-100); background: var(--sh-brand-50); }
+.sh-search-page-icon { flex: none; width: 18px; height: 18px; margin-top: 1px; color: var(--sh-ink-3); }
+.sh-search-page-group a strong { display: block; font-size: 13.5px; font-weight: 600; color: var(--sh-ink); }
+.sh-search-page-group a strong + span { display: block; font-size: 12px; color: var(--sh-ink-3); margin-top: 1px; }
 
 /* ---------- Lonceng notifikasi (header Blade; Filament punya lonceng sendiri) ---------- */
 .sh-bell { position: relative; margin-right: 4px; }
