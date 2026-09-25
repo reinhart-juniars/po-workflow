@@ -12,28 +12,15 @@
                 </div>
             </div>
 
-            <form method="GET" action="{{ route('salesapp.dashboard') }}" class="sales-filter-grid">
-                <div>
-                    <label class="form-label">Dari Tanggal</label>
-                    <input type="date" name="date_from" value="{{ $dateFrom->toDateString() }}" class="form-control">
-                </div>
-                <div>
-                    <label class="form-label">Sampai Tanggal</label>
-                    <input type="date" name="date_to" value="{{ $dateTo->toDateString() }}" class="form-control">
-                </div>
-                <div>
-                    <label class="form-label">Status</label>
-                    <select name="status" class="form-control">
-                        <option value="all" @selected($status === 'all')>Semua</option>
-                        <option value="draft" @selected($status === 'draft')>Draft</option>
-                        <option value="submitted" @selected($status === 'submitted')>Submitted</option>
-                    </select>
-                </div>
-                <div class="sales-filter-actions">
-                    <button class="btn-primary w-full" type="submit">Terapkan</button>
-                    <a href="{{ route('salesapp.dashboard') }}" class="btn-ghost w-full">Reset</a>
-                </div>
-            </form>
+            {{-- Status bawaan controller = draft, jadi "Semua" dikirim eksplisit (all). --}}
+            <x-table-toolbar inline class="mt-4" :action="route('salesapp.dashboard')"
+              :filters="[
+                ['type' => 'date-range', 'label' => 'Periode', 'from' => 'date_from', 'to' => 'date_to',
+                 'value' => [$dateFrom, $dateTo]],
+                ['type' => 'select', 'name' => 'status', 'label' => 'Status', 'required' => true,
+                 'removable' => request()->filled('status'),
+                 'options' => ['all' => 'Semua', 'draft' => 'Draft', 'submitted' => 'Submitted'], 'value' => $status],
+              ]" />
         </section>
 
         <section class="sales-stats-grid">

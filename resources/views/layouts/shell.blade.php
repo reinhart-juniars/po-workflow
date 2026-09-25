@@ -7,7 +7,9 @@
   Filament (modul inventory) lewat partials.app-bar + resources/css/shell.css.
 
   Variabel: $appKey (kunci aplikasi), $title (judul halaman), $wide (main selebar
-  layar untuk laporan), $narrow (kolom sempit untuk layar harian).
+  layar untuk laporan), $narrow (kolom sempit untuk layar harian), $collapsed
+  (sidebar ditutup sementara di semua ukuran layar, dibuka lewat tombol menu
+  sebagai lapisan -- untuk laporan lebar yang butuh seluruh layar).
 --}}
 @php
     $shellUser = auth()->user();
@@ -16,6 +18,7 @@
     $shellSections = \App\Support\Navigation::sidebar($shellApp, $shellUser);
     $shellHome = $shellUser ? \App\Support\Navigation::dashboardUrl($shellUser) : url('/');
     $mainWidth = ($wide ?? false) ? 'max-w-none' : (($narrow ?? false) ? 'max-w-3xl' : 'max-w-7xl');
+    $collapsed = $collapsed ?? false;
     $pageTitle = trim(($title ?? '') !== '' ? $title.' · '.\App\Support\Navigation::appLabel($shellApp) : \App\Support\Navigation::appLabel($shellApp));
 @endphp
 <!DOCTYPE html>
@@ -26,12 +29,14 @@
   <title>{{ $pageTitle }} · 3S ONE</title>
   @vite(['resources/css/app.css', 'resources/css/shell.css'])
   @stack('styles')
+  @include('partials.nav-prefetch')
+  @include('partials.page-transition')
 </head>
 <body class="shell-body min-h-full">
   <input type="checkbox" id="shell-nav-toggle" class="peer sr-only">
 
   {{-- Sidebar: menu aplikasi yang sedang dibuka --}}
-  <aside class="shell-sidebar fixed inset-y-0 left-0 z-40 flex w-80 -translate-x-full flex-col border-r border-gray-200 bg-white transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] peer-checked:translate-x-0 lg:translate-x-0">
+  <aside class="shell-sidebar fixed inset-y-0 left-0 z-40 flex w-80 -translate-x-full flex-col border-r border-gray-200 bg-white transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] peer-checked:translate-x-0 {{ $collapsed ? 'shadow-xl' : 'lg:translate-x-0' }}">
     {{-- Ukuran & jarak persis sidebar Filament: header h-16 px-6, nav px-6 py-8, jarak grup 1.75rem --}}
     <div class="flex h-16 shrink-0 items-center border-b border-gray-950/5 px-6">
       <a href="{{ $shellHome }}" class="flex items-center gap-3">
@@ -87,15 +92,17 @@
           @endforeach
         </div>
       </div>
+
+      @include('partials.sidebar-scroll-memory', ['app' => $shellApp])
     </nav>
   </aside>
 
   {{-- Penutup sidebar di layar kecil --}}
-  <label for="shell-nav-toggle" class="fixed inset-0 z-30 hidden bg-gray-950/40 peer-checked:block lg:peer-checked:hidden"></label>
+  <label for="shell-nav-toggle" class="fixed inset-0 z-30 hidden bg-gray-950/40 peer-checked:block {{ $collapsed ? '' : 'lg:peer-checked:hidden' }}"></label>
 
-  <div class="flex min-h-screen flex-col lg:pl-80">
-    <header class="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-gray-200 bg-white/90 px-4 backdrop-blur sm:px-6 lg:px-8">
-      <label for="shell-nav-toggle" class="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 lg:hidden" aria-label="Menu">
+  <div class="flex min-h-screen flex-col {{ $collapsed ? '' : 'lg:pl-80' }}">
+    <header class="shell-topbar sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-gray-200 bg-white/90 px-4 backdrop-blur sm:px-6 lg:px-8">
+      <label for="shell-nav-toggle" class="cursor-pointer rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 {{ $collapsed ? '' : 'lg:hidden' }}" aria-label="Menu" title="Tampilkan menu">
         @svg('heroicon-o-bars-3', 'h-6 w-6')
       </label>
 
@@ -133,5 +140,7 @@
     </main>
   </div>
 
+  {{-- Penanda akhir halaman: transisi menunggu sampai sini (partials/page-transition) --}}
+  <span id="sh-page-end" hidden></span>
 </body>
 </html>

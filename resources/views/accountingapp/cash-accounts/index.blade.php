@@ -17,7 +17,7 @@
   <div class="section-card mb-6">
     <h2 class="panel-title mb-4">Tambah Cash Account</h2>
     <form method="POST" action="{{ route('accountingapp.cash-accounts.store') }}"
-          class="grid grid-cols-1 md:grid-cols-5 gap-3">
+          class="grid grid-cols-1 items-end gap-3 md:grid-cols-[1fr_1fr_2fr_auto_auto]">
       @csrf
 
       <div>
@@ -34,22 +34,23 @@
         </select>
       </div>
 
-      <div class="md:col-span-2">
+      <div>
         <label class="form-label">Deskripsi</label>
         <input type="text" name="description" value="{{ old('description') }}"
                class="form-control">
       </div>
 
-      <div class="flex items-end gap-3">
+      {{-- Tinggi = tinggi input, supaya centang sejajar dengan field di sebelahnya --}}
+      <div class="flex items-center md:h-[42px]">
         <label class="inline-flex items-center gap-2">
           <input type="checkbox" name="is_active" value="1" @checked(old('is_active', true))>
           <span class="text-sm text-gray-700">Aktif</span>
         </label>
       </div>
 
-      <div class="md:col-span-5 flex justify-end">
-        <button type="submit" class="btn-primary">
-          Simpan Cash Account
+      <div>
+        <button type="submit" class="btn-primary w-full whitespace-nowrap">
+          Simpan
         </button>
       </div>
     </form>
@@ -77,19 +78,10 @@
               <td class="px-4 py-2">{{ $cashAccount->description ?: '-' }}</td>
               <td class="px-4 py-2">{{ $cashAccount->is_active ? 'Aktif' : 'Nonaktif' }}</td>
               <td class="px-4 py-2">
-                <div class="flex items-center gap-3">
-                  <a href="{{ route('accountingapp.cash-accounts.edit', $cashAccount->id) }}"
-                     class="btn-link">
-                    Edit
-                  </a>
-                  <form method="POST" action="{{ route('accountingapp.cash-accounts.destroy', $cashAccount->id) }}"
-                        onsubmit="return confirm('Hapus cash account ini?')">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn-link-danger">
-                      Hapus
-                    </button>
-                  </form>
+                <div class="row-actions">
+                  <x-row-action kind="edit" :href="route('accountingapp.cash-accounts.edit', $cashAccount->id)" />
+                  <x-row-action kind="delete" :action="route('accountingapp.cash-accounts.destroy', $cashAccount->id)"
+                                confirm="Hapus cash account ini?" />
                 </div>
               </td>
             </tr>

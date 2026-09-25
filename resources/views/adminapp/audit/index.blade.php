@@ -13,65 +13,6 @@
   </p>
 </section>
 
-<section class="form-shell mt-4">
-  <form method="GET" action="{{ route('adminapp.audit.index') }}" class="grid grid-cols-1 gap-4 xl:grid-cols-5">
-    <div class="space-y-4 xl:col-span-2">
-      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div>
-          <label class="form-label">Dari Tanggal</label>
-          <input type="date" name="date_from" value="{{ $dateFrom ?? '' }}" class="form-control">
-        </div>
-
-        <div>
-          <label class="form-label">Sampai Tanggal</label>
-          <input type="date" name="date_to" value="{{ $dateTo ?? '' }}" class="form-control">
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <button type="submit" class="btn-primary w-full">Lihat</button>
-        <a href="{{ route('adminapp.audit.index') }}" class="btn-ghost w-full text-center">Reset</a>
-      </div>
-    </div>
-
-    <div>
-      <label class="form-label">User</label>
-      <select name="user_id" class="form-control">
-        <option value="">Semua</option>
-        @foreach($users as $u)
-          <option value="{{ $u->id }}" @selected(($userId ?? null) == $u->id)>
-            {{ $u->name }}
-          </option>
-        @endforeach
-      </select>
-    </div>
-
-    <div>
-      <label class="form-label">Entity</label>
-      <select name="entity" class="form-control">
-        <option value="">Semua</option>
-        @foreach($availableEntities as $e)
-          <option value="{{ $e }}" @selected(($entity ?? null) === $e)>
-            {{ UiLabel::auditEntity($e) }}
-          </option>
-        @endforeach
-      </select>
-    </div>
-
-    <div>
-      <label class="form-label">Action</label>
-      <select name="action" class="form-control">
-        <option value="">Semua</option>
-        @foreach($availableActions as $a)
-          <option value="{{ $a }}" @selected(($action ?? null) === $a)>
-            {{ UiLabel::auditAction($a) }}
-          </option>
-        @endforeach
-      </select>
-    </div>
-  </form>
-</section>
-
 <section class="stats-grid mt-4">
   <article class="stat-card">
     <p class="stat-label">Total Log</p>
@@ -96,7 +37,19 @@
 </section>
 
 <section class="table-shell mt-4">
-  <div class="table-head">Riwayat Aktivitas</div>
+  <x-table-toolbar title="Riwayat Aktivitas" :action="route('adminapp.audit.index')"
+    :filters="[
+      ['type' => 'date-range', 'label' => 'Periode', 'from' => 'date_from', 'to' => 'date_to',
+       'value' => [$dateFrom ?? null, $dateTo ?? null]],
+      ['type' => 'select', 'name' => 'user_id', 'label' => 'User', 'placeholder' => 'Semua user',
+       'options' => $users->pluck('name', 'id'), 'value' => $userId ?? null],
+      ['type' => 'select', 'name' => 'entity', 'label' => 'Entity', 'placeholder' => 'Semua entity',
+       'options' => collect($availableEntities)->mapWithKeys(fn ($e) => [$e => \App\Support\UiLabel::auditEntity($e)]),
+       'value' => $entity ?? null],
+      ['type' => 'select', 'name' => 'action', 'label' => 'Action', 'placeholder' => 'Semua action',
+       'options' => collect($availableActions)->mapWithKeys(fn ($a) => [$a => \App\Support\UiLabel::auditAction($a)]),
+       'value' => $action ?? null],
+    ]" />
   <div class="data-table-wrap">
     <table class="data-table">
       <thead>

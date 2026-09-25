@@ -18,46 +18,15 @@
       </p>
     </div>
   </div>
-</section>
-
-<section class="form-shell mt-4">
-  <form method="GET" action="{{ route('adminapp.reports.orders') }}" class="grid grid-cols-1 gap-4 xl:grid-cols-3">
-    <div class="space-y-4 xl:col-span-2">
-      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div>
-          <label class="form-label">Dari Tanggal</label>
-          <input type="date" name="date_from" value="{{ $dateFrom }}" class="form-control">
-        </div>
-
-        <div>
-          <label class="form-label">Sampai Tanggal</label>
-          <input type="date" name="date_to" value="{{ $dateTo }}" class="form-control">
-        </div>
-      </div>
-
-      <div>
-        <label class="form-label">Cari Menu</label>
-        <input type="text" name="menu" value="{{ $menuQuery ?? '' }}" class="form-control" placeholder="Nama menu...">
-        <p class="mt-1 text-xs text-slate-500">Tampilkan PO yang memuat menu dengan nama mengandung kata kunci ini.</p>
-      </div>
-
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <button class="btn-primary w-full" type="submit">Lihat</button>
-        <a href="{{ route('adminapp.reports.orders') }}" class="btn-ghost w-full text-center">Reset</a>
-      </div>
-    </div>
-
-    <div>
-      <label class="form-label">Status</label>
-      <select name="status" class="form-control">
-        <option value="">Semua</option>
-        @foreach($statusLabels as $statusValue => $statusText)
-          <option value="{{ $statusValue }}" @selected($status === $statusValue)>{{ $statusText }}</option>
-        @endforeach
-      </select>
-    </div>
-  </form>
-
+  <x-table-toolbar inline class="mt-4" :action="route('adminapp.reports.orders')"
+    :filters="[
+      ['type' => 'date-range', 'label' => 'Periode', 'from' => 'date_from', 'to' => 'date_to',
+     'value' => [$dateFrom, $dateTo]],
+      ['type' => 'text', 'name' => 'menu', 'label' => 'Cari Menu', 'placeholder' => 'Nama menu...',
+       'value' => $menuQuery ?? null],
+      ['type' => 'select', 'name' => 'status', 'label' => 'Status', 'placeholder' => 'Semua',
+     'options' => $statusLabels, 'value' => $status ?: null],
+    ]" />
 </section>
 
 @include('partials.report-export-actions', [
@@ -146,9 +115,7 @@
             <td>{{ $o->created_at?->format('d M Y H:i') }}</td>
             <td>
               @unless ($isEditLocked)
-                <a href="{{ route('adminapp.orders.edit', $o->id) }}" class="text-sm font-semibold text-brand-600 hover:text-brand-500">
-                  Edit PO
-                </a>
+                <x-row-action kind="edit" label="Edit PO" :href="route('adminapp.orders.edit', $o->id)" />
               @endunless
             </td>
           </tr>

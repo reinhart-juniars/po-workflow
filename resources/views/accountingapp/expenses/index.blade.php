@@ -3,7 +3,9 @@
 @section('content')
   @php
     $requestedTab = request('tab');
-    $activeTab = in_array($requestedTab, ['form', 'payable-settlement', 'filter'], true) ? $requestedTab : 'filter';
+    // Kartu form tertutup bawaan (tabel langsung terlihat, seperti panel
+    // Inventory); terbuka lewat tombolnya, ?tab=, atau saat validasi gagal.
+    $activeTab = in_array($requestedTab, ['form', 'payable-settlement'], true) ? $requestedTab : '';
     $formFields = ['expense_date', 'expense_category_id', 'payment_type', 'cash_account_id', 'payable_id', 'amount', 'description', 'adjustment_note', 'inventory_item_id', 'inventory_unit_cost', 'supplier_name', 'due_date'];
     $oldExpenseFlow = old('expense_flow', 'expense');
     $selectedSettlementPayableId = $oldExpenseFlow === 'payable_settlement'
@@ -48,17 +50,10 @@
         >
           Pembayaran Kredit
         </button>
-        <button
-          type="button"
-          data-tab-trigger="filter"
-          class="tab-trigger text-gray-600 hover:text-gray-800"
-        >
-          Filter Data
-        </button>
       </div>
     </div>
 
-    <div class="p-5" data-tab-panel="form">
+    <div class="p-5 @unless($activeTab === 'form') hidden @endunless" data-tab-panel="form">
       <div class="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700" id="expense-flow-hint">
         Gunakan form ini untuk pengeluaran biasa dan pembelian stok.
       </div>
@@ -139,8 +134,9 @@
         <div class="md:col-span-2" id="expense-supplier-wrapper">
           <label class="form-label">Supplier</label>
           <input type="text" name="supplier_name" id="expense-supplier" value="{{ old('supplier_name') }}"
-                 class="form-control"
+                 class="form-control" list="supplier-options" autocomplete="off"
                  placeholder="Wajib untuk pembelian stok kredit">
+          @include('partials.supplier-datalist')
         </div>
 
         <div class="md:col-span-5">
@@ -164,7 +160,7 @@
       </form>
     </div>
 
-    <div class="p-5 hidden" data-tab-panel="payable-settlement">
+    <div class="p-5 @unless($activeTab === 'payable-settlement') hidden @endunless" data-tab-panel="payable-settlement">
       <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
         Gunakan tab ini khusus untuk pembayaran kredit atau pelunasan hutang supplier. Kategori akan ditentukan otomatis oleh sistem.
       </div>
@@ -241,147 +237,98 @@
       </form>
     </div>
 
-    <div class="p-5 hidden" data-tab-panel="filter">
-      <form method="GET" action="{{ route('accountingapp.expenses.index') }}"
-            class="grid grid-cols-1 md:grid-cols-5 gap-3">
-        <div class="md:col-span-5 flex flex-wrap gap-2">
-          <button type="button" class="chip-filter js-date-preset" data-form-scope="expenses-filter" data-preset="this_month">Bulan Ini</button>
-          <button type="button" class="chip-filter js-date-preset" data-form-scope="expenses-filter" data-preset="last_month">Bulan Lalu</button>
-          <button type="button" class="chip-filter js-date-preset" data-form-scope="expenses-filter" data-preset="this_year">Tahun Berjalan</button>
-        </div>
+  </div>
 
-        <div>
-          <label class="form-label">Dari Tanggal</label>
-          <input type="date" name="date_from" value="{{ $dateFrom->toDateString() }}"
-                 data-form-scope="expenses-filter" data-role="date-from"
-                 class="form-control">
-        </div>
+  <div class="table-card mt-6">
+    <x-table-toolbar title="Daftar Pengeluaran" :action="route('accountingapp.expenses.index')"
+      :filters="[
+        ['type' => 'date-range', 'label' => 'Periode', 'from' => 'date_from', 'to' => 'date_to',
+         'value' => [$dateFrom, $dateTo]],
+        ['type' => 'select', 'name' => 'expense_category_id', 'label' => 'Kategori',
+         'options' => $categories->pluck('name', 'id'), 'value' => $categoryId ?? null, 'placeholder' => 'Semua kategori'],
+        ['type' => 'select', 'name' => 'cash_account_id', 'label' => 'Akun Kas',
+         'options' => $cashAccounts->pluck('name', 'id'), 'value' => $cashAccountId ?? null, 'placeholder' => 'Semua akun kas'],
+      ]" />
 
-        <div>
-          <label class="form-label">Sampai Tanggal</label>
-          <input type="date" name="date_to" value="{{ $dateTo->toDateString() }}"
-                 data-form-scope="expenses-filter" data-role="date-to"
-                 class="form-control">
-        </div>
-
-        <div>
-          <label class="form-label">Kategori</label>
-          <select name="expense_category_id" class="form-control">
-            <option value="">Semua Kategori</option>
-            @foreach($categories as $category)
-              <option value="{{ $category->id }}" @selected(($categoryId ?? null) == $category->id)>
-                {{ $category->name }}
-              </option>
-            @endforeach
-          </select>
-        </div>
-
-        <div>
-          <label class="form-label">Akun Kas</label>
-          <select name="cash_account_id" class="form-control">
-            <option value="">Semua Akun Kas</option>
-            @foreach($cashAccounts as $cashAccount)
-              <option value="{{ $cashAccount->id }}" @selected(($cashAccountId ?? null) == $cashAccount->id)>
-                {{ $cashAccount->name }}
-              </option>
-            @endforeach
-          </select>
-        </div>
-
-        <div class="flex items-end">
-          <button class="btn-secondary w-full">Filter</button>
-        </div>
-      </form>
-      <div class="table-card mt-6">
-        <div class="table-card-head">Daftar Pengeluaran</div>
-
-        <div>
-          <table class="w-full text-sm table-fixed">
-            <colgroup>
-              <col style="width: 9rem">
-              <col>
-              <col>
-              <col style="width: 8.5rem">
-              <col style="width: 8rem">
-            </colgroup>
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="text-left px-3 py-2">Tanggal</th>
-                <th class="text-left px-3 py-2">Kategori / Akun</th>
-                <th class="text-left px-3 py-2">Keterangan</th>
-                <th class="text-right px-3 py-2">Nominal</th>
-                <th class="text-left px-3 py-2">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              @forelse($expenses as $expense)
-                <tr class="border-t align-top">
-                  <td class="px-3 py-2">
-                    <div class="font-medium text-slate-900 whitespace-nowrap">{{ $expense->expense_date->format('d-m-Y') }}</div>
-                    <div class="mt-1 text-xs text-slate-500 truncate" title="{{ $expense->creator->name ?? '-' }}">
-                      Input: {{ $expense->creator->name ?? '-' }}
-                    </div>
-                    @if($expense->updater && $expense->updated_by !== $expense->created_by)
-                      <div class="text-xs text-slate-500 truncate" title="{{ $expense->updater->name }}">
-                        Update: {{ $expense->updater->name }}
-                      </div>
+    <div>
+      <table class="w-full text-sm table-fixed">
+        <colgroup>
+          <col style="width: 9rem">
+          <col>
+          <col>
+          <col style="width: 8.5rem">
+          <col style="width: 8rem">
+        </colgroup>
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="text-left px-3 py-2">Tanggal</th>
+            <th class="text-left px-3 py-2">Kategori / Akun</th>
+            <th class="text-left px-3 py-2">Keterangan</th>
+            <th class="text-right px-3 py-2">Nominal</th>
+            <th class="text-left px-3 py-2">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          @forelse($expenses as $expense)
+            <tr class="border-t align-top">
+              <td class="px-3 py-2">
+                <div class="font-medium text-slate-900 whitespace-nowrap">{{ $expense->expense_date->format('d-m-Y') }}</div>
+                <div class="mt-1 text-xs text-slate-500 truncate" title="{{ $expense->creator->name ?? '-' }}">
+                  Input: {{ $expense->creator->name ?? '-' }}
+                </div>
+                @if($expense->updater && $expense->updated_by !== $expense->created_by)
+                  <div class="text-xs text-slate-500 truncate" title="{{ $expense->updater->name }}">
+                    Update: {{ $expense->updater->name }}
+                  </div>
+                @endif
+              </td>
+              <td class="px-3 py-2">
+                <div class="font-medium text-slate-900 break-words">{{ $expense->category->name ?? '-' }}</div>
+                <div class="text-xs text-slate-500 break-words">{{ $expense->cashAccount->name ?? '-' }}</div>
+              </td>
+              <td class="px-3 py-2">
+                @if($expense->inventoryPurchase)
+                  <div class="font-medium text-slate-900 break-words">
+                    {{ $expense->inventoryPurchase->item->name ?? 'Item inventory' }}
+                    <span class="text-xs font-normal text-slate-500">({{ $expense->inventoryPurchase->item?->categoryLabel() ?? '-' }})</span>
+                  </div>
+                @endif
+                <div class="text-slate-700 break-words">{{ $expense->description ?: '-' }}</div>
+                @if($expense->is_adjustment || $expense->period_closed)
+                  <div class="mt-1 flex flex-wrap gap-1">
+                    @if($expense->is_adjustment)
+                      <span class="badge-soft-amber">Koreksi</span>
                     @endif
-                  </td>
-                  <td class="px-3 py-2">
-                    <div class="font-medium text-slate-900 break-words">{{ $expense->category->name ?? '-' }}</div>
-                    <div class="text-xs text-slate-500 break-words">{{ $expense->cashAccount->name ?? '-' }}</div>
-                  </td>
-                  <td class="px-3 py-2">
-                    @if($expense->inventoryPurchase)
-                      <div class="font-medium text-slate-900 break-words">
-                        {{ $expense->inventoryPurchase->item->name ?? 'Item inventory' }}
-                        <span class="text-xs font-normal text-slate-500">({{ $expense->inventoryPurchase->item?->categoryLabel() ?? '-' }})</span>
-                      </div>
+                    @if($expense->period_closed)
+                      <span class="badge-soft-slate">Periode Tertutup</span>
                     @endif
-                    <div class="text-slate-700 break-words">{{ $expense->description ?: '-' }}</div>
-                    @if($expense->is_adjustment || $expense->period_closed)
-                      <div class="mt-1 flex flex-wrap gap-1">
-                        @if($expense->is_adjustment)
-                          <span class="badge-soft-amber">Koreksi</span>
-                        @endif
-                        @if($expense->period_closed)
-                          <span class="badge-soft-slate">Periode Tertutup</span>
-                        @endif
-                      </div>
-                    @endif
-                  </td>
-                  <td class="px-3 py-2 text-right whitespace-nowrap font-medium text-slate-900">
-                    Rp {{ number_format($expense->amount, 0, ',', '.') }}
-                  </td>
-                  <td class="px-3 py-2 text-sm whitespace-nowrap">
-                    <a href="{{ route('accountingapp.expenses.edit', $expense->id) }}"
-                       class="font-semibold text-brand-600 hover:text-brand-700">Edit</a>
-                    <span class="mx-1 text-slate-300">·</span>
-                    <form method="POST" action="{{ route('accountingapp.expenses.destroy', $expense->id) }}"
-                          class="inline"
-                          onsubmit="return confirm('Hapus data pengeluaran ini?')">
-                      @csrf
-                      @method('DELETE')
-                      <button type="submit"
-                              class="font-semibold text-rose-600 hover:text-rose-700">Hapus</button>
-                    </form>
-                  </td>
-                </tr>
-              @empty
-                <tr>
-                  <td colspan="5" class="px-4 py-6 text-center text-gray-500">
-                    Belum ada data pengeluaran.
-                  </td>
-                </tr>
-              @endforelse
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                @endif
+              </td>
+              <td class="px-3 py-2 text-right whitespace-nowrap font-medium text-slate-900">
+                Rp {{ number_format($expense->amount, 0, ',', '.') }}
+              </td>
+              <td class="px-3 py-2 text-sm whitespace-nowrap">
+                <div class="row-actions">
+                  <x-row-action kind="edit" :href="route('accountingapp.expenses.edit', $expense->id)" />
+                  <x-row-action kind="delete" :action="route('accountingapp.expenses.destroy', $expense->id)"
+                                confirm="Hapus data pengeluaran ini?" />
+                </div>
+              </td>
+            </tr>
+          @empty
+            <tr>
+              <td colspan="5" class="px-4 py-6 text-center text-gray-500">
+                Belum ada data pengeluaran.
+              </td>
+            </tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
 
-        <div class="p-4">
-          {{ $expenses->links() }}
-        </div>
-      </div>
+    <div class="p-4">
+      {{ $expenses->links() }}
     </div>
   </div>
 
@@ -415,11 +362,14 @@
           });
         };
 
+        // Klik tab yang sedang terbuka menutupnya kembali.
         triggers.forEach((button) => {
-          button.addEventListener('click', () => setActive(button.dataset.tabTrigger));
+          button.addEventListener('click', () => {
+            setActive(button.getAttribute('aria-selected') === 'true' ? null : button.dataset.tabTrigger);
+          });
         });
 
-        setActive(card.dataset.activeTab || (triggers[0] && triggers[0].dataset.tabTrigger));
+        setActive(card.dataset.activeTab || null);
       });
 
       const categoryModes = @json($categoryModes);
@@ -483,34 +433,6 @@
       paymentTypeSelect?.addEventListener('change', syncExpenseFlow);
       syncExpenseFlow();
 
-      const applyPreset = (scope, preset) => {
-        const fromInput = document.querySelector(`[data-form-scope="${scope}"][data-role="date-from"]`);
-        const toInput = document.querySelector(`[data-form-scope="${scope}"][data-role="date-to"]`);
-
-        if (!fromInput || !toInput) return;
-
-        const now = new Date();
-        const pad = (value) => String(value).padStart(2, '0');
-        const format = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-
-        let fromDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        let toDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-        if (preset === 'last_month') {
-          fromDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-          toDate = new Date(now.getFullYear(), now.getMonth(), 0);
-        } else if (preset === 'this_year') {
-          fromDate = new Date(now.getFullYear(), 0, 1);
-          toDate = new Date(now.getFullYear(), 11, 31);
-        }
-
-        fromInput.value = format(fromDate);
-        toInput.value = format(toDate);
-      };
-
-      document.querySelectorAll('.js-date-preset').forEach((button) => {
-        button.addEventListener('click', () => applyPreset(button.dataset.formScope, button.dataset.preset));
-      });
 
       const settlementPayable = document.getElementById('settlement-payable');
       const settlementAmountPreview = document.getElementById('settlement-amount-preview');

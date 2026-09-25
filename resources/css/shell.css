@@ -33,40 +33,7 @@
   --sh-shadow-md: 0 8px 24px -12px rgba(15, 23, 42, 0.25), 0 2px 6px -2px rgba(15, 23, 42, 0.08);
 }
 
-/* ---------- Perpindahan halaman (MPA view transitions) ---------- */
-@view-transition {
-  navigation: auto;
-}
-
-::view-transition-old(root) {
-  animation: sh-fade-out 120ms var(--sh-ease) both;
-}
-
-::view-transition-new(root) {
-  animation: sh-fade-in 200ms var(--sh-ease-out) both;
-}
-
-::view-transition-group(sh-app-tab),
-::view-transition-group(sh-nav-active) {
-  animation-duration: 260ms;
-  animation-timing-function: var(--sh-ease-out);
-}
-
-@keyframes sh-fade-out {
-  to { opacity: 0; }
-}
-
-@keyframes sh-fade-in {
-  from { opacity: 0; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(*),
-  ::view-transition-old(*),
-  ::view-transition-new(*) {
-    animation: none !important;
-  }
-}
+/* Perpindahan halaman (view transitions): lihat views/partials/page-transition.blade.php */
 
 /* ---------- Bilah aplikasi (topbar) ---------- */
 .sh-appbar {
@@ -139,7 +106,6 @@
   color: var(--sh-brand-700);
   background: var(--sh-surface);
   box-shadow: var(--sh-shadow-sm);
-  view-transition-name: sh-app-tab;
 }
 
 .sh-tab.is-active svg {
@@ -532,10 +498,6 @@
 
 .fi-sidebar-item-button {
   transition: background-color var(--sh-fast) var(--sh-ease), color var(--sh-fast) var(--sh-ease);
-}
-
-.fi-sidebar-item-active .fi-sidebar-item-button {
-  view-transition-name: sh-nav-active;
 }
 
 /* Menu pengguna bawaan Filament diganti partial user-menu (hook USER_MENU_BEFORE). */

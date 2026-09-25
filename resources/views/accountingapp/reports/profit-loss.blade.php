@@ -367,44 +367,13 @@
       </a>
     </div>
 
-    <form method="GET" action="{{ route($reportRoute) }}" class="form-grid mt-6">
-
-      @if($periodType === 'yearly')
-        <div>
-          <label class="form-label">Tahun Laporan</label>
-          <select name="year" class="form-control">
-            @foreach($availableYears as $year)
-              <option value="{{ $year }}" @selected($selectedYear === (int) $year)>{{ $year }}</option>
-            @endforeach
-          </select>
-        </div>
-
-        <div></div>
-      @else
-        <div>
-          <label class="form-label">Dari Tanggal</label>
-          <input type="date" name="date_from" value="{{ $dateFrom->toDateString() }}" class="form-control">
-        </div>
-
-        <div>
-          <label class="form-label">Sampai Tanggal</label>
-          <input type="date" name="date_to" value="{{ $dateTo->toDateString() }}" class="form-control">
-        </div>
-      @endif
-
-      <div class="flex items-end">
-        <button type="submit" class="btn-primary w-full">Terapkan Filter</button>
-      </div>
-
-      <div class="flex items-end">
-        <a
-          href="{{ route($reportRoute, $periodType === 'yearly' ? ['year' => now()->year] : []) }}"
-          class="btn-ghost w-full text-center"
-        >
-          Reset
-        </a>
-      </div>
-    </form>
+    <x-table-toolbar inline class="mt-6" :action="route($reportRoute)"
+      :filters="$periodType === 'yearly'
+        ? [['type' => 'select', 'name' => 'year', 'label' => 'Tahun Laporan', 'required' => true,
+            'removable' => request()->filled('year'),
+            'options' => collect($availableYears)->mapWithKeys(fn ($y) => [$y => $y]), 'value' => $selectedYear]]
+        : [['type' => 'date-range', 'label' => 'Periode', 'from' => 'date_from', 'to' => 'date_to',
+       'value' => [$dateFrom, $dateTo]],]" />
   </section>
 
   @include('partials.report-export-actions', [

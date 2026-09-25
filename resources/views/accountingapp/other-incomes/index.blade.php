@@ -2,7 +2,9 @@
 
 @section('content')
   @php
-    $activeTab = 'filter';
+    // Kartu form tertutup bawaan (tabel langsung terlihat, seperti panel
+    // Inventory); terbuka lewat tombolnya atau saat validasi gagal.
+    $activeTab = '';
     $formFields = ['income_date', 'income_category_id', 'cash_account_id', 'amount', 'description', 'adjustment_note'];
     foreach ($formFields as $field) {
         if ($errors->has($field)) {
@@ -28,17 +30,10 @@
         >
           Tambah Pemasukan Lain
         </button>
-        <button
-          type="button"
-          data-tab-trigger="filter"
-          class="tab-trigger text-gray-600 hover:text-gray-800"
-        >
-          Filter Data
-        </button>
       </div>
     </div>
 
-    <div class="p-5" data-tab-panel="form">
+    <div class="p-5 @unless($activeTab === 'form') hidden @endunless" data-tab-panel="form">
       <form method="POST" action="{{ route('accountingapp.other-incomes.store') }}"
             class="grid grid-cols-1 md:grid-cols-4 gap-3">
         @csrf
@@ -99,145 +94,94 @@
       </form>
     </div>
 
-    <div class="p-5 hidden" data-tab-panel="filter">
-      <form method="GET" action="{{ route('accountingapp.other-incomes.index') }}"
-            class="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <div class="md:col-span-4 flex flex-wrap gap-2">
-          <button type="button" class="chip-filter js-date-preset" data-form-scope="other-incomes-filter" data-preset="this_month">Bulan Ini</button>
-          <button type="button" class="chip-filter js-date-preset" data-form-scope="other-incomes-filter" data-preset="last_month">Bulan Lalu</button>
-          <button type="button" class="chip-filter js-date-preset" data-form-scope="other-incomes-filter" data-preset="this_year">Tahun Berjalan</button>
-        </div>
+  </div>
 
-        <div>
-          <label class="form-label">Dari Tanggal</label>
-          <input type="date" name="date_from" value="{{ $dateFrom->toDateString() }}"
-                 data-form-scope="other-incomes-filter" data-role="date-from"
-                 class="form-control">
-        </div>
-
-        <div>
-          <label class="form-label">Sampai Tanggal</label>
-          <input type="date" name="date_to" value="{{ $dateTo->toDateString() }}"
-                 data-form-scope="other-incomes-filter" data-role="date-to"
-                 class="form-control">
-        </div>
-
-        <div>
-          <label class="form-label">Kategori Pemasukan</label>
-          <select name="income_category_id" class="form-control">
-            <option value="">Semua Kategori</option>
-            @foreach ($incomeCategories as $incomeCategory)
-              <option value="{{ $incomeCategory->id }}" @selected((string) $categoryId === (string) $incomeCategory->id)>
-                {{ $incomeCategory->name }}
-              </option>
-            @endforeach
-          </select>
-        </div>
-
-        <div>
-          <label class="form-label">Cash Account</label>
-          <select name="cash_account_id" class="form-control">
-            <option value="">Semua Cash Account</option>
-            @foreach ($cashAccounts as $cashAccount)
-              <option value="{{ $cashAccount->id }}" @selected((string) $cashAccountId === (string) $cashAccount->id)>
-                {{ $cashAccount->name }} ({{ $cashAccount->type === 'bank' ? 'Bank' : 'Tunai' }})
-              </option>
-            @endforeach
-          </select>
-        </div>
-
-        <div class="md:col-span-4 flex justify-end">
-          <button class="btn-secondary">Filter</button>
-        </div>
-      </form>
-      <div class="section-card mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div>
-          <div class="metric-label">Total Pemasukan Lain</div>
-          <div class="metric-value text-emerald-700">
-            Rp {{ number_format($totalOtherIncome, 0, ',', '.') }}
-          </div>
-        </div>
-        <div>
-          <div class="metric-label">Jumlah Transaksi</div>
-          <div class="metric-value">
-            {{ number_format($otherIncomeCount, 0, ',', '.') }}
-          </div>
-        </div>
+  <div class="section-card mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+    <div>
+      <div class="metric-label">Total Pemasukan Lain</div>
+      <div class="metric-value text-emerald-700">
+        Rp {{ number_format($totalOtherIncome, 0, ',', '.') }}
       </div>
-
-      <div class="table-card mt-6">
-        <div class="table-card-head">Daftar Pemasukan Lain</div>
-
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="text-left px-4 py-2">Tanggal</th>
-                <th class="text-left px-4 py-2">Kategori</th>
-                <th class="text-left px-4 py-2">Cash Account</th>
-                <th class="text-left px-4 py-2">Keterangan</th>
-                <th class="text-right px-4 py-2">Nominal</th>
-                <th class="text-left px-4 py-2">Input Oleh</th>
-                <th class="text-left px-4 py-2">Update Terakhir</th>
-                <th class="text-left px-4 py-2">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              @forelse($otherIncomes as $otherIncome)
-                <tr class="border-t">
-                  <td class="px-4 py-2">{{ $otherIncome->income_date->format('d-m-Y') }}</td>
-                  <td class="px-4 py-2">{{ $otherIncome->category->name ?? '-' }}</td>
-                  <td class="px-4 py-2">{{ $otherIncome->cashAccount->name ?? '-' }}</td>
-                  <td class="px-4 py-2">
-                    <div>{{ $otherIncome->description ?: '-' }}</div>
-                    <div class="mt-1 flex flex-wrap gap-2">
-                      @if($otherIncome->is_adjustment)
-                        <span class="badge-soft-amber">
-                          Koreksi
-                        </span>
-                      @endif
-                      @if($otherIncome->period_closed)
-                        <span class="badge-soft-slate">
-                          Periode Tertutup
-                        </span>
-                      @endif
-                    </div>
-                  </td>
-                  <td class="px-4 py-2 text-right">Rp {{ number_format($otherIncome->amount, 0, ',', '.') }}</td>
-                  <td class="px-4 py-2">{{ $otherIncome->creator->name ?? '-' }}</td>
-                  <td class="px-4 py-2">{{ $otherIncome->updater->name ?? '-' }}</td>
-                  <td class="px-4 py-2">
-                    <div class="flex items-center gap-3">
-                      <a href="{{ route('accountingapp.other-incomes.edit', $otherIncome->id) }}"
-                         class="btn-link">
-                        Edit
-                      </a>
-                      <form method="POST" action="{{ route('accountingapp.other-incomes.destroy', $otherIncome->id) }}"
-                            onsubmit="return confirm('Hapus data pemasukan lain ini?')">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn-link-danger">
-                          Hapus
-                        </button>
-                      </form>
-                    </div>
-                  </td>
-                </tr>
-              @empty
-                <tr>
-                  <td colspan="8" class="px-4 py-6 text-center text-gray-500">
-                    Belum ada data pemasukan lain.
-                  </td>
-                </tr>
-              @endforelse
-            </tbody>
-          </table>
-        </div>
-
-        <div class="p-4">
-          {{ $otherIncomes->links() }}
-        </div>
+    </div>
+    <div>
+      <div class="metric-label">Jumlah Transaksi</div>
+      <div class="metric-value">
+        {{ number_format($otherIncomeCount, 0, ',', '.') }}
       </div>
+    </div>
+  </div>
+
+  <div class="table-card mt-6">
+    <x-table-toolbar title="Daftar Pemasukan Lain" :action="route('accountingapp.other-incomes.index')"
+      :filters="[
+        ['type' => 'date-range', 'label' => 'Periode', 'from' => 'date_from', 'to' => 'date_to',
+         'value' => [$dateFrom, $dateTo]],
+        ['type' => 'select', 'name' => 'income_category_id', 'label' => 'Kategori',
+         'options' => $incomeCategories->pluck('name', 'id'), 'value' => $categoryId, 'placeholder' => 'Semua kategori'],
+        ['type' => 'select', 'name' => 'cash_account_id', 'label' => 'Akun Kas',
+         'options' => $cashAccounts->mapWithKeys(fn ($a) => [$a->id => $a->name.' ('.($a->type === 'bank' ? 'Bank' : 'Tunai').')']),
+         'value' => $cashAccountId, 'placeholder' => 'Semua akun kas'],
+      ]" />
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="text-left px-4 py-2">Tanggal</th>
+            <th class="text-left px-4 py-2">Kategori</th>
+            <th class="text-left px-4 py-2">Cash Account</th>
+            <th class="text-left px-4 py-2">Keterangan</th>
+            <th class="text-right px-4 py-2">Nominal</th>
+            <th class="text-left px-4 py-2">Input Oleh</th>
+            <th class="text-left px-4 py-2">Update Terakhir</th>
+            <th class="text-left px-4 py-2">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          @forelse($otherIncomes as $otherIncome)
+            <tr class="border-t">
+              <td class="px-4 py-2">{{ $otherIncome->income_date->format('d-m-Y') }}</td>
+              <td class="px-4 py-2">{{ $otherIncome->category->name ?? '-' }}</td>
+              <td class="px-4 py-2">{{ $otherIncome->cashAccount->name ?? '-' }}</td>
+              <td class="px-4 py-2">
+                <div>{{ $otherIncome->description ?: '-' }}</div>
+                <div class="mt-1 flex flex-wrap gap-2">
+                  @if($otherIncome->is_adjustment)
+                    <span class="badge-soft-amber">
+                      Koreksi
+                    </span>
+                  @endif
+                  @if($otherIncome->period_closed)
+                    <span class="badge-soft-slate">
+                      Periode Tertutup
+                    </span>
+                  @endif
+                </div>
+              </td>
+              <td class="px-4 py-2 text-right">Rp {{ number_format($otherIncome->amount, 0, ',', '.') }}</td>
+              <td class="px-4 py-2">{{ $otherIncome->creator->name ?? '-' }}</td>
+              <td class="px-4 py-2">{{ $otherIncome->updater->name ?? '-' }}</td>
+              <td class="px-4 py-2">
+                <div class="row-actions">
+                  <x-row-action kind="edit" :href="route('accountingapp.other-incomes.edit', $otherIncome->id)" />
+                  <x-row-action kind="delete" :action="route('accountingapp.other-incomes.destroy', $otherIncome->id)"
+                                confirm="Hapus data pemasukan lain ini?" />
+                </div>
+              </td>
+            </tr>
+          @empty
+            <tr>
+              <td colspan="8" class="px-4 py-6 text-center text-gray-500">
+                Belum ada data pemasukan lain.
+              </td>
+            </tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+
+    <div class="p-4">
+      {{ $otherIncomes->links() }}
     </div>
   </div>
 
@@ -271,41 +215,16 @@
           });
         };
 
+        // Klik tab yang sedang terbuka menutupnya kembali.
         triggers.forEach((button) => {
-          button.addEventListener('click', () => setActive(button.dataset.tabTrigger));
+          button.addEventListener('click', () => {
+            setActive(button.getAttribute('aria-selected') === 'true' ? null : button.dataset.tabTrigger);
+          });
         });
 
-        setActive(card.dataset.activeTab || (triggers[0] && triggers[0].dataset.tabTrigger));
+        setActive(card.dataset.activeTab || null);
       });
 
-      const applyPreset = (scope, preset) => {
-        const fromInput = document.querySelector(`[data-form-scope="${scope}"][data-role="date-from"]`);
-        const toInput = document.querySelector(`[data-form-scope="${scope}"][data-role="date-to"]`);
-
-        if (!fromInput || !toInput) return;
-
-        const now = new Date();
-        const pad = (value) => String(value).padStart(2, '0');
-        const format = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-
-        let fromDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        let toDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-        if (preset === 'last_month') {
-          fromDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-          toDate = new Date(now.getFullYear(), now.getMonth(), 0);
-        } else if (preset === 'this_year') {
-          fromDate = new Date(now.getFullYear(), 0, 1);
-          toDate = new Date(now.getFullYear(), 11, 31);
-        }
-
-        fromInput.value = format(fromDate);
-        toInput.value = format(toDate);
-      };
-
-      document.querySelectorAll('.js-date-preset').forEach((button) => {
-        button.addEventListener('click', () => applyPreset(button.dataset.formScope, button.dataset.preset));
-      });
     })();
   </script>
 @endsection

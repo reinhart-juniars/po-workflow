@@ -200,25 +200,9 @@
     @endif
 
     <section class="table-shell mt-4">
-        <div class="table-head">
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <span>Daftar Menu</span>
-                <form method="GET" action="{{ route('adminapp.products.index') }}"
-                      class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-                    <input type="search" name="q" id="js-products-search" class="form-control sm:w-64"
-                        value="{{ $q ?? '' }}"
-                        placeholder="Cari menu (nama / SKU)..." autocomplete="off">
-                    @if (!empty($q))
-                        <a href="{{ route('adminapp.products.index') }}"
-                           class="text-xs font-semibold text-slate-500 hover:text-slate-700">Reset</a>
-                    @endif
-                    <span class="text-xs font-medium normal-case tracking-normal text-slate-500">
-                        {{ $products->total() }} menu
-                        @if (!empty($q)) cocok untuk "<strong>{{ $q }}</strong>" @else total @endif.
-                    </span>
-                </form>
-            </div>
-        </div>
+        <x-table-toolbar title="Daftar Menu" :action="route('adminapp.products.index')"
+            :meta="number_format($products->total(), 0, ',', '.').' menu'.(filled($q ?? null) ? ' cocok' : '')"
+            search="q" :search-value="$q ?? ''" search-placeholder="Cari menu (nama / SKU)..." live />
         <div class="products-wrap">
             <table class="data-table products-table" id="js-products-table">
                 <thead>
@@ -336,10 +320,7 @@
                                 @endif
                             </td>
                             <td>
-                                <a href="{{ route('adminapp.products.edit', $product) }}"
-                                    class="text-sm font-semibold text-brand-600 hover:text-brand-500">
-                                    Edit
-                                </a>
+                                <x-row-action kind="edit" :href="route('adminapp.products.edit', $product)" />
                             </td>
                         </tr>
                     @empty
@@ -368,18 +349,4 @@
         <div class="mt-4">{{ $products->links() }}</div>
     @endif
 
-    <script>
-        (() => {
-            const input = document.getElementById('js-products-search');
-            if (!input) return;
-            const form = input.closest('form');
-            if (!form) return;
-
-            let timer = null;
-            input.addEventListener('input', () => {
-                clearTimeout(timer);
-                timer = setTimeout(() => form.submit(), 400);
-            });
-        })();
-    </script>
 @endsection

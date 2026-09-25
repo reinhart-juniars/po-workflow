@@ -11,21 +11,11 @@
                 </p>
             </div>
 
-            <form method="GET" action="{{ route('salesapp.reports.final-retur') }}"
-                class="sales-filter-grid xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_220px]">
-                <div>
-                    <label class="form-label">Dari Tanggal</label>
-                    <input type="date" name="date_from" value="{{ $dateFrom->toDateString() }}" class="form-control">
-                </div>
-                <div>
-                    <label class="form-label">Sampai Tanggal</label>
-                    <input type="date" name="date_to" value="{{ $dateTo->toDateString() }}" class="form-control">
-                </div>
-                <div class="sales-filter-actions md:col-span-2 xl:col-span-1">
-                    <button class="btn-primary w-full" type="submit">Terapkan</button>
-                    <a href="{{ route('salesapp.reports.final-retur') }}" class="btn-ghost w-full">Reset</a>
-                </div>
-            </form>
+            <x-table-toolbar inline class="mt-4" :action="route('salesapp.reports.final-retur')"
+              :filters="[
+                ['type' => 'date-range', 'label' => 'Periode', 'from' => 'date_from', 'to' => 'date_to',
+                 'value' => [$dateFrom, $dateTo]],
+              ]" />
         </section>
 
         <section class="sales-stats-grid-compact">

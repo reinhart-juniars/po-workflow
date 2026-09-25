@@ -11,35 +11,13 @@
       </div>
     </div>
 
-    <form method="GET" action="{{ route('accountingapp.reports.inventory-usage') }}" class="form-grid mt-6">
-      <div>
-        <label class="form-label">Item</label>
-        <select name="inventory_item_id" class="form-control" required>
-          <option value="">Pilih Item</option>
-          @foreach($items as $item)
-            <option value="{{ $item->id }}" @selected($selectedItemId === $item->id)>
-              {{ $item->name }} ({{ $item->unit }})
-            </option>
-          @endforeach
-        </select>
-      </div>
-
-      <div>
-        <label class="form-label">Dari Tanggal</label>
-        <input type="date" name="date_from" value="{{ $dateFrom->toDateString() }}" class="form-control">
-      </div>
-
-      <div>
-        <label class="form-label">Sampai Tanggal</label>
-        <input type="date" name="date_to" value="{{ $dateTo->toDateString() }}" class="form-control">
-      </div>
-
-      <div class="flex items-end">
-        <button type="submit" class="btn-primary w-full">
-          Tampilkan Laporan
-        </button>
-      </div>
-    </form>
+    <x-table-toolbar inline class="mt-6" :action="route('accountingapp.reports.inventory-usage')" :open="! $selectedItemId"
+      :filters="[
+        ['type' => 'select', 'name' => 'inventory_item_id', 'label' => 'Item', 'placeholder' => 'Pilih item',
+         'options' => $items->mapWithKeys(fn ($i) => [$i->id => $i->name.' ('.$i->unit.')']), 'value' => $selectedItemId ?: null],
+        ['type' => 'date-range', 'label' => 'Periode', 'from' => 'date_from', 'to' => 'date_to',
+       'value' => [$dateFrom, $dateTo]],
+      ]" />
   </section>
 
   @if($summary)

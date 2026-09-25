@@ -99,13 +99,12 @@
                             <td>{{ $user->email ?? '-' }}</td>
 
                             <td class="user-role-cell">
-                                <form method="POST" action="{{ route('ownerapp.users.update', $user) }}"
-                                    class="user-role-form">
+                                <form method="POST" action="{{ route('ownerapp.users.update', $user) }}">
                                     @csrf
                                     @method('PUT')
 
                                     <div class="user-role-editor">
-                                        <div class="role-builder max-w-[240px]" data-role-select-group
+                                        <div class="role-builder" data-role-select-group
                                             data-available-roles='@json(array_values($availableRoles))'>
                                             <div data-role-select-list class="role-builder-list">
                                                 @foreach ($roles as $selectedRole)
@@ -121,15 +120,14 @@
                                                     </div>
                                                 @endforeach
                                             </div>
-                                            <div class="mt-2">
+                                            {{-- Simpan di dalam kotak role: jelas yang disimpan adalah role,
+                                                 dan tidak menggeser kolom Status/Aksi. --}}
+                                            <div class="mt-2 flex items-center gap-2">
                                                 <button type="button" class="role-builder-add" data-role-add>+ Tambah
                                                     Role</button>
+                                                <button class="user-role-submit">Simpan</button>
                                             </div>
                                         </div>
-                                    </div>
-
-                                    <div class="shrink-0">
-                                        <button class="user-role-submit">Simpan</button>
                                     </div>
                                 </form>
                             </td>
@@ -142,35 +140,19 @@
                             </td>
 
                             <td>
-                                <div class="user-action-stack">
-                                    <form method="POST" action="{{ route('ownerapp.users.reset-password', $user) }}"
-                                        onsubmit="return confirm('Reset password user ini?')" class="w-full">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button
-                                            class="user-action-btn border-amber-200 bg-amber-50 text-amber-700 hover:border-amber-300 hover:bg-amber-100">
-                                            Reset PW
-                                        </button>
-                                    </form>
+                                <div class="row-actions">
+                                    <x-row-action icon="heroicon-m-key" label="Reset password" tone="warning" method="PATCH"
+                                        :action="route('ownerapp.users.reset-password', $user)"
+                                        confirm="Reset password user ini?" />
 
-                                    <form method="POST" action="{{ route('ownerapp.users.deactivate', $user) }}" class="w-full">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button class="user-action-btn">
-                                            {{ $user->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
-                                        </button>
-                                    </form>
+                                    <x-row-action method="PATCH" :action="route('ownerapp.users.deactivate', $user)"
+                                        :icon="$user->is_active ? 'heroicon-m-no-symbol' : 'heroicon-m-check-circle'"
+                                        :label="$user->is_active ? 'Nonaktifkan' : 'Aktifkan'"
+                                        :tone="$user->is_active ? 'gray' : 'success'" />
 
                                     @if (!$isOwner && !$isSelf)
-                                        <form method="POST" action="{{ route('ownerapp.users.destroy', $user) }}"
-                                            onsubmit="return confirm('Yakin hapus user ini?')" class="w-full">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button
-                                                class="user-action-btn border-rose-200 bg-rose-50 text-rose-700 hover:border-rose-300 hover:bg-rose-100">
-                                                Hapus
-                                            </button>
-                                        </form>
+                                        <x-row-action kind="delete" :action="route('ownerapp.users.destroy', $user)"
+                                            confirm="Yakin hapus user ini?" />
                                     @endif
                                 </div>
                             </td>

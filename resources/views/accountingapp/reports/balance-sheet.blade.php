@@ -20,22 +20,13 @@
             </div>
         </div>
 
-        <form method="GET" action="{{ route('accountingapp.reports.balance-sheet') }}" class="form-grid mt-6">
-            <div>
-                <label class="form-label">Tanggal Laporan</label>
-                <input type="date" name="report_date" value="{{ $reportDate->toDateString() }}" class="form-control">
-            </div>
-
-            <div class="flex flex-col justify-end gap-2">
-                <label class="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
-                    <input type="checkbox" name="show_breakdown" value="1"
-                        {{ request()->boolean('show_breakdown') ? 'checked' : '' }}
-                        class="rounded border-slate-300">
-                    Tampilkan breakdown detail
-                </label>
-                <button type="submit" class="btn-primary w-full">Tampilkan Neraca</button>
-            </div>
-        </form>
+        <x-table-toolbar inline class="mt-6" :action="route('accountingapp.reports.balance-sheet')"
+          :filters="[
+            ['type' => 'date', 'name' => 'report_date', 'label' => 'Tanggal Laporan',
+             'value' => $reportDate->toDateString(), 'removable' => request()->filled('report_date')],
+            ['type' => 'select', 'name' => 'show_breakdown', 'label' => 'Tampilan', 'placeholder' => 'Ringkas',
+             'options' => ['1' => 'Breakdown detail'], 'value' => request()->boolean('show_breakdown') ? '1' : null],
+          ]" />
     </section>
 
     @include('partials.report-export-actions', [

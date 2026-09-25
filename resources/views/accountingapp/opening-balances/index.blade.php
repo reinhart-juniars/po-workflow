@@ -67,7 +67,8 @@
         <div>
           <label class="form-label">Supplier</label>
           <input type="text" name="supplier_name" id="opening-balance-supplier" value="{{ old('supplier_name') }}"
-                 class="form-control" placeholder="Wajib untuk tipe hutang">
+                 class="form-control" list="supplier-options" autocomplete="off" placeholder="Wajib untuk tipe hutang">
+          @include('partials.supplier-datalist')
           <div id="opening-balance-supplier-help" class="field-help"></div>
         </div>
 
@@ -143,10 +144,7 @@
                   <td class="px-4 py-2">{{ $openingBalance->updater->name ?? '-' }}</td>
                   @if($canEditOpeningBalance)
                     <td class="px-4 py-2">
-                      <a href="{{ route('accountingapp.opening-balances.edit', $openingBalance) }}"
-                         class="font-medium text-indigo-600 hover:text-indigo-700">
-                        Edit
-                      </a>
+                      <x-row-action kind="edit" :href="route('accountingapp.opening-balances.edit', $openingBalance)" />
                     </td>
                   @endif
                 </tr>

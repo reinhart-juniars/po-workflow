@@ -13,9 +13,8 @@
     .catalog-name { font-size: 13px; font-weight: 600; color: #0f172a; line-height: 1.3; }
     .catalog-sku { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10.5px; color: #475569; background: #f1f5f9; border-radius: 4px; padding: 1px 6px; display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .catalog-meta { font-size: 11.5px; color: #64748b; }
-    .catalog-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; padding-top: 6px; }
-    .catalog-actions .file-input { font-size: 11px; max-width: 100%; }
-    .catalog-actions .btn-xs { font-size: 11px; padding: 4px 8px; }
+    .catalog-actions { display: flex; align-items: center; gap: 4px; margin-top: auto; padding-top: 8px; }
+    .catalog-actions form { flex: 1; min-width: 0; }
     .catalog-badge { position: absolute; top: 8px; left: 8px; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 999px; background: rgba(15, 23, 42, 0.75); color: #fff; }
 </style>
 @endpush
@@ -39,25 +38,16 @@
         <div class="flash-error mt-4">{{ $message }}</div>
     @enderror
 
-    <form method="GET" class="app-card mt-4 flex flex-wrap items-end gap-3 p-4">
-        <label class="flex-1 min-w-[200px]">
-            <span class="form-label">Cari nama atau SKU</span>
-            <input type="search" name="q" value="{{ $q }}" class="form-control" placeholder="mis. nasi kuning atau kode SKU">
-        </label>
-        <label>
-            <span class="form-label">Foto</span>
-            <select name="foto" class="form-control">
-                <option value="semua" @selected($filter === 'semua')>Semua</option>
-                <option value="ada" @selected($filter === 'ada')>Sudah ada foto</option>
-                <option value="belum" @selected($filter === 'belum')>Belum ada foto</option>
-            </select>
-        </label>
-        <label class="flex items-center gap-2 pb-2 text-sm text-slate-700">
-            <input type="hidden" name="aktif" value="0">
-            <input type="checkbox" name="aktif" value="1" @checked($activeOnly)> Hanya menu aktif
-        </label>
-        <button type="submit" class="btn-primary">Terapkan</button>
-    </form>
+    <x-table-toolbar standalone class="mt-4" title="Menu" :action="url()->current()"
+        :meta="number_format($products->total(), 0, ',', '.').' menu'"
+        search="q" :search-value="$q" search-placeholder="Cari nama atau SKU" live
+        :filters="[
+            ['type' => 'select', 'name' => 'foto', 'label' => 'Foto', 'placeholder' => 'Semua',
+             'options' => ['ada' => 'Sudah ada foto', 'belum' => 'Belum ada foto'],
+             'value' => $filter === 'semua' ? null : $filter],
+            ['type' => 'select', 'name' => 'aktif', 'label' => 'Status Menu', 'placeholder' => 'Hanya menu aktif',
+             'options' => ['0' => 'Termasuk menu nonaktif'], 'value' => $activeOnly ? null : '0'],
+        ]" />
 
     <div class="catalog-grid mt-4">
         @forelse ($products as $product)
@@ -85,17 +75,18 @@
                     </div>
                     @if ($canManage)
                         <div class="catalog-actions">
-                            <form method="POST" action="{{ route('adminapp.catalog.upload', $product) }}" enctype="multipart/form-data" class="flex flex-wrap items-center gap-1">
+                            {{-- Satu tombol: memilih berkas langsung mengunggah (skrip di bawah). --}}
+                            <form method="POST" action="{{ route('adminapp.catalog.upload', $product) }}" enctype="multipart/form-data">
                                 @csrf
-                                <input type="file" name="photo" accept="image/jpeg,image/png,image/webp" class="file-input" required>
-                                <button type="submit" class="btn-primary btn-xs">{{ $product->photo_path ? 'Ganti' : 'Unggah' }}</button>
+                                <label class="catalog-upload">
+                                    <input type="file" name="photo" accept="image/jpeg,image/png,image/webp" class="sr-only" required data-catalog-upload>
+                                    @svg('heroicon-m-arrow-up-tray', 'h-4 w-4 shrink-0')
+                                    <span data-catalog-upload-label>{{ $product->photo_path ? 'Ganti foto' : 'Unggah foto' }}</span>
+                                </label>
                             </form>
                             @if ($product->photo_path)
-                                <form method="POST" action="{{ route('adminapp.catalog.photo.destroy', $product) }}" onsubmit="return confirm('Hapus foto {{ addslashes($product->name) }}?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn-ghost btn-xs">Hapus</button>
-                                </form>
+                                <x-row-action kind="delete" label="Hapus foto" :action="route('adminapp.catalog.photo.destroy', $product)"
+                                              :confirm="'Hapus foto '.$product->name.'?'" />
                             @endif
                         </div>
                     @endif
@@ -107,4 +98,17 @@
     </div>
 
     <div class="mt-4">{{ $products->links() }}</div>
+
+    @if ($canManage)
+        <script>
+            document.addEventListener('change', (event) => {
+                const input = event.target.closest('[data-catalog-upload]');
+                if (!input || !input.files.length) return;
+                const label = input.closest('.catalog-upload');
+                label.classList.add('is-busy');
+                label.querySelector('[data-catalog-upload-label]').textContent = 'Mengunggah…';
+                input.form.requestSubmit();
+            });
+        </script>
+    @endif
 @endsection

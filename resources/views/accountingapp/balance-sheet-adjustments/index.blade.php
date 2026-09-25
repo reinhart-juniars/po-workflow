@@ -2,7 +2,9 @@
 
 @section('content')
     @php
-        $activeTab = $errors->any() ? 'form' : 'list';
+        // Kartu form tertutup bawaan (tabel langsung terlihat, seperti panel
+        // Inventory); terbuka lewat tombolnya atau saat validasi gagal.
+        $activeTab = $errors->any() ? 'form' : '';
         $formatCurrency = function (float $amount): string {
             $prefix = $amount < 0 ? '(Rp ' : 'Rp ';
             $suffix = $amount < 0 ? ')' : '';
@@ -33,13 +35,10 @@
                 <button type="button" data-tab-trigger="form" class="tab-trigger text-gray-600 hover:text-gray-800">
                     Tambah Adjustment
                 </button>
-                <button type="button" data-tab-trigger="list" class="tab-trigger text-gray-600 hover:text-gray-800">
-                    Daftar Data
-                </button>
             </div>
         </div>
 
-        <div class="p-5" data-tab-panel="form">
+        <div class="p-5 @unless($activeTab === 'form') hidden @endunless" data-tab-panel="form">
             <form method="POST" action="{{ route('accountingapp.balance-sheet-adjustments.store') }}"
                 class="grid grid-cols-1 gap-3 md:grid-cols-5">
                 @csrf
@@ -84,90 +83,63 @@
             </form>
         </div>
 
-        <div class="hidden p-5" data-tab-panel="list">
-            <form method="GET" action="{{ route('accountingapp.balance-sheet-adjustments.index') }}"
-                class="grid grid-cols-1 gap-3 md:grid-cols-4">
-                <div>
-                    <label class="form-label">Dari Tanggal</label>
-                    <input type="date" name="date_from" value="{{ $dateFrom }}" class="form-control">
-                </div>
+    </div>
 
-                <div>
-                    <label class="form-label">Sampai Tanggal</label>
-                    <input type="date" name="date_to" value="{{ $dateTo }}" class="form-control">
-                </div>
 
-                <div>
-                    <label class="form-label">Grup</label>
-                    <select name="group" class="form-control">
-                        <option value="">Semua Grup</option>
-                        @foreach ($groupOptions as $value => $label)
-                            <option value="{{ $value }}" @selected($selectedGroup === $value)>{{ $label }}</option>
-                        @endforeach
-                    </select>
-                </div>
+    <div class="table-card mt-6">
+        <x-table-toolbar title="Daftar Adjustment Neraca" :action="route('accountingapp.balance-sheet-adjustments.index')"
+            :filters="[
+                ['type' => 'date-range', 'label' => 'Periode', 'from' => 'date_from', 'to' => 'date_to',
+                 'value' => [$dateFrom, $dateTo]],
+                ['type' => 'select', 'name' => 'group', 'label' => 'Grup',
+                 'options' => $groupOptions, 'value' => $selectedGroup, 'placeholder' => 'Semua grup'],
+            ]" />
 
-                <div class="flex items-end">
-                    <button type="submit" class="btn-secondary w-full">Filter</button>
-                </div>
-            </form>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-2 text-left">Tanggal</th>
+                        <th class="px-4 py-2 text-left">Grup</th>
+                        <th class="px-4 py-2 text-left">Nama Pos</th>
+                        <th class="px-4 py-2 text-left">Catatan</th>
+                        <th class="px-4 py-2 text-right">Nominal</th>
+                        <th class="px-4 py-2 text-left">Input Oleh</th>
+                        <th class="px-4 py-2 text-left">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($adjustments as $adjustment)
+                        <tr class="border-t">
+                            <td class="px-4 py-2">{{ $adjustment->adjustment_date->format('d-m-Y') }}</td>
+                            <td class="px-4 py-2">
+                                {{ $groupOptions[$adjustment->account_group] ?? $adjustment->account_group }}</td>
+                            <td class="px-4 py-2">{{ $adjustment->label }}</td>
+                            <td class="px-4 py-2">{{ $adjustment->notes ?: '-' }}</td>
+                            <td class="px-4 py-2 text-right">{{ $formatCurrency((float) $adjustment->amount) }}
+                            </td>
+                            <td class="px-4 py-2">{{ $adjustment->creator->name ?? '-' }}</td>
+                            <td class="px-4 py-2">
+                                <div class="row-actions">
+                                    <x-row-action kind="edit" :href="route('accountingapp.balance-sheet-adjustments.edit', $adjustment)" />
+                                    <x-row-action kind="delete" :action="route('accountingapp.balance-sheet-adjustments.destroy', $adjustment)"
+                                        confirm="Hapus adjustment neraca ini?" />
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="px-4 py-6 text-center text-gray-500">
+                                Belum ada adjustment neraca.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
 
-            <div class="table-card mt-6">
-                <div class="table-card-head">Daftar Adjustment Neraca</div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-2 text-left">Tanggal</th>
-                                <th class="px-4 py-2 text-left">Grup</th>
-                                <th class="px-4 py-2 text-left">Nama Pos</th>
-                                <th class="px-4 py-2 text-left">Catatan</th>
-                                <th class="px-4 py-2 text-right">Nominal</th>
-                                <th class="px-4 py-2 text-left">Input Oleh</th>
-                                <th class="px-4 py-2 text-left">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($adjustments as $adjustment)
-                                <tr class="border-t">
-                                    <td class="px-4 py-2">{{ $adjustment->adjustment_date->format('d-m-Y') }}</td>
-                                    <td class="px-4 py-2">
-                                        {{ $groupOptions[$adjustment->account_group] ?? $adjustment->account_group }}</td>
-                                    <td class="px-4 py-2">{{ $adjustment->label }}</td>
-                                    <td class="px-4 py-2">{{ $adjustment->notes ?: '-' }}</td>
-                                    <td class="px-4 py-2 text-right">{{ $formatCurrency((float) $adjustment->amount) }}
-                                    </td>
-                                    <td class="px-4 py-2">{{ $adjustment->creator->name ?? '-' }}</td>
-                                    <td class="px-4 py-2">
-                                        <div class="flex items-center gap-3">
-                                            <a href="{{ route('accountingapp.balance-sheet-adjustments.edit', $adjustment) }}"
-                                                class="btn-link">Edit</a>
-                                        <form method="POST"
-                                            action="{{ route('accountingapp.balance-sheet-adjustments.destroy', $adjustment) }}"
-                                            onsubmit="return confirm('Hapus adjustment neraca ini?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn-link-danger">Hapus</button>
-                                        </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="7" class="px-4 py-6 text-center text-gray-500">
-                                        Belum ada adjustment neraca.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="p-4">
-                    {{ $adjustments->links() }}
-                </div>
-            </div>
+        <div class="p-4">
+            {{ $adjustments->links() }}
         </div>
     </div>
 
@@ -191,11 +163,14 @@
                     });
                 };
 
+                // Klik tab yang sedang terbuka menutupnya kembali.
                 triggers.forEach((trigger) => {
-                    trigger.addEventListener('click', () => activateTab(trigger.dataset.tabTrigger));
+                    trigger.addEventListener('click', () => {
+                        activateTab(trigger.classList.contains('bg-white') ? null : trigger.dataset.tabTrigger);
+                    });
                 });
 
-                activateTab(card.dataset.activeTab || 'list');
+                activateTab(card.dataset.activeTab || null);
             });
         })();
     </script>

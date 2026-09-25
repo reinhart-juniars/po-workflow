@@ -9,6 +9,10 @@ Filament di `/inventory` (inventory, resep, produksi, pengaturan). Satu login (`
 sesi, satu tampilan (`resources/css/shell.css` dipakai keduanya); path lama `/admin` diarahkan ke
 `/inventory`.
 
+Tampilan aplikasi Blade meniru tabel panel Filament: filter dalam popover ikon dengan chip
+"Filter aktif" (`<x-table-toolbar>`), aksi baris berupa ikon (`<x-row-action>`), dan animasi geser
+antar menu. Acuan, angka, dan penyimpangan yang disengaja ada di [`docs/DESIGN.md`](docs/DESIGN.md).
+
 ## Modul Inventory Terpadu
 
 Menyatukan Master Menu Revamp (resep & HPP, dulu SQLite lokal) ke dalam po-workflow dan

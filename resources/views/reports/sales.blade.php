@@ -596,8 +596,17 @@
             text-align: center;
         }
 
+        /* Kolom harga (satu per harga jual) berbagi sisa lebar. Nama tetap 22%
+           seperti semula selama masih ada ruang >= 72px per kolom harga; bila
+           kolom harga banyak, Nama yang menyempit dulu (min. 180px) supaya
+           tabel tetap muat satu layar. 71cqw = lebar wadah dikurangi kolom
+           Jumlah/Ongkir/Total (7% + 10% + 12%); --price-cols diisi di tabel. */
+        .sales-section-scroll {
+            container-type: inline-size;
+        }
+
         .sales-section-col-name {
-            width: 22%;
+            width: clamp(180px, calc(71cqw - 44px - var(--price-cols, 0) * 72px), 22cqw);
         }
 
         .sales-section-col-price {
@@ -760,9 +769,18 @@
         $totalColumnCount = 2 + count($itemColumns) + 1 + count($priceColumns) + 2;
         $useSectionLayout = $useSectionLayout ?? false;
         $sectionTotalColumnCount = 2 + count($priceColumns) + 3;
+        // Lebar minimum tabel mode lengkap: No. (44px) + Nama terkecil (180px) +
+        // 72px per kolom harga (cukup untuk "RP 146.000" tanpa pecah per huruf)
+        // harus muat di 71% lebar tabel (29% sisanya Jumlah/Ongkir/Total).
+        // Hanya bila layar lebih sempit dari ini tabel menggulir ke samping.
+        $sectionMinWidth = (int) ceil((44 + 180 + 72 * count($priceColumns)) / 0.71);
         $formatMoney = function ($value) {
             $value = (float) $value;
             return $value > 0 ? 'Rp ' . number_format($value, 0, ',', '.') : '-';
+        };
+        $qtyCell = function (array $map, $key) {
+            $qty = (int) ($map[$key] ?? 0);
+            return $qty > 0 ? number_format($qty) : '-';
         };
     @endphp
 
@@ -809,35 +827,11 @@
                 @endforeach
             </div>
 
-            <form method="GET" action="{{ route($reportRouteName) }}" class="form-grid mt-6">
-                <div>
-                    <label class="form-label">Dari Tanggal</label>
-                    <input type="date" name="date_from" value="{{ $dateFrom->toDateString() }}" class="form-control">
-                </div>
-
-                <div>
-                    <label class="form-label">Sampai Tanggal</label>
-                    <input type="date" name="date_to" value="{{ $dateTo->toDateString() }}" class="form-control">
-                </div>
-
-                <input type="hidden" name="view_mode" value="{{ $viewMode }}">
-                <input type="hidden" name="segment_scope" value="{{ $segmentScope }}">
-
-                <div class="flex items-end">
-                    <button type="submit" class="btn-primary w-full">Terapkan Filter</button>
-                </div>
-
-                <div class="flex items-end">
-                    <a href="{{ route(
-                        $reportRouteName,
-                        array_filter([
-                            'view_mode' => $viewMode === 'full' ? 'full' : null,
-                            'segment_scope' => $segmentScope !== 'all' ? $segmentScope : null,
-                        ]),
-                    ) }}"
-                        class="btn-ghost w-full text-center">Reset</a>
-                </div>
-            </form>
+            <x-table-toolbar inline class="mt-4" :action="route($reportRouteName)" :keep="['view_mode', 'segment_scope']"
+                :filters="[
+                    ['type' => 'date-range', 'label' => 'Periode', 'from' => 'date_from', 'to' => 'date_to',
+                     'value' => [$dateFrom, $dateTo]],
+                ]" />
         </section>
 
         @include('partials.report-export-actions', [
@@ -941,8 +935,8 @@
                             </div>
                         </header>
 
-                        <div class="overflow-x-auto">
-                            <table class="sales-section-table">
+                        <div class="sales-section-scroll overflow-x-auto">
+                            <table class="sales-section-table" style="--price-cols: {{ count($priceColumns) }}; min-width: {{ $sectionMinWidth }}px">
                                 <colgroup>
                                     <col class="sales-section-col-no">
                                     <col class="sales-section-col-name">
@@ -992,11 +986,9 @@
                                                             <div class="sales-section-meta-line">{{ $metaLine }}</div>
                                                         @endforeach
                                                     </td>
-                                                    @foreach ($priceColumns as $priceColumn)
-                                                        @php $qty = (int) ($row['price_qty_map'][$priceColumn['key']] ?? 0); @endphp
-                                                        <td class="text-center">
-                                                            {{ $qty > 0 ? number_format($qty) : '-' }}</td>
-                                                    @endforeach
+                                                    {{-- Loop sel ditulis satu baris: indentasi Blade ikut tercetak di
+                                                         setiap sel (~200 byte), dan laporan sebulan kehabisan memori. --}}
+                                                    @foreach ($priceColumns as $priceColumn)<td class="text-center">{{ $qtyCell($row['price_qty_map'] ?? [], $priceColumn['key']) }}</td>@endforeach
                                                     <td>{{ number_format((int) ($row['total_qty'] ?? 0)) }}</td>
                                                     <td>{{ $formatMoney($row['shipping_cost'] ?? 0) }}</td>
                                                     <td>Rp
@@ -1008,11 +1000,7 @@
                                             <tr class="sales-section-subtotal">
                                                 <td colspan="2" class="text-center">SUB TOTAL
                                                     {{ strtoupper($group['date_label']) }}</td>
-                                                @foreach ($priceColumns as $priceColumn)
-                                                    @php $qty = (int) ($group['price_qty_totals'][$priceColumn['key']] ?? 0); @endphp
-                                                    <td class="text-center">
-                                                        {{ $qty > 0 ? number_format($qty) : '-' }}</td>
-                                                @endforeach
+                                                @foreach ($priceColumns as $priceColumn)<td class="text-center">{{ $qtyCell($group['price_qty_totals'] ?? [], $priceColumn['key']) }}</td>@endforeach
                                                 <td>{{ number_format((int) ($group['total_qty'] ?? 0)) }}</td>
                                                 <td>{{ $formatMoney($group['shipping_total'] ?? 0) }}</td>
                                                 <td>
@@ -1030,11 +1018,7 @@
                                         <tr class="sales-section-section-total">
                                             <td colspan="2" class="text-center">SUB TOTAL
                                                 {{ strtoupper($section['label']) }}</td>
-                                            @foreach ($priceColumns as $priceColumn)
-                                                @php $qty = (int) ($section['price_qty_totals'][$priceColumn['key']] ?? 0); @endphp
-                                                <td class="text-center">
-                                                    {{ $qty > 0 ? number_format($qty) : '-' }}</td>
-                                            @endforeach
+                                            @foreach ($priceColumns as $priceColumn)<td class="text-center">{{ $qtyCell($section['price_qty_totals'] ?? [], $priceColumn['key']) }}</td>@endforeach
                                             <td>{{ number_format((int) ($section['total_qty'] ?? 0)) }}</td>
                                             <td>{{ $formatMoney($section['shipping_total'] ?? 0) }}</td>
                                             <td>

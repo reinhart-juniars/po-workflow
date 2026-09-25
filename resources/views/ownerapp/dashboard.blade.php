@@ -11,21 +11,11 @@
                 </p>
             </div>
 
-            <form method="GET" action="{{ route('ownerapp.dashboard') }}"
-                class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3 xl:max-w-3xl">
-                <div>
-                    <label class="mb-1.5 block">Dari Tanggal</label>
-                    <input type="date" name="date_from" value="{{ $dateFrom }}">
-                </div>
-                <div>
-                    <label class="mb-1.5 block">Sampai Tanggal</label>
-                    <input type="date" name="date_to" value="{{ $dateTo }}">
-                </div>
-                <div class="flex items-end gap-2 sm:col-span-3 xl:col-span-1">
-                    <button class="btn-primary w-full" type="submit">Terapkan</button>
-                    <a href="{{ route('ownerapp.dashboard') }}" class="btn-ghost w-full">Reset</a>
-                </div>
-            </form>
+            <x-table-toolbar inline class="mt-5" :action="route('ownerapp.dashboard')"
+              :filters="[
+                ['type' => 'date-range', 'label' => 'Periode', 'from' => 'date_from', 'to' => 'date_to',
+               'value' => [$dateFrom, $dateTo]],
+              ]" />
         </div>
     </section>
 

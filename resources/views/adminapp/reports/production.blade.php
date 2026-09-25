@@ -213,6 +213,13 @@
                 </div>
             @endif
         </div>
+      <x-table-toolbar inline class="mt-4" :action="route('adminapp.reports.production')" :keep="['view_mode']"
+        :filters="[
+          ['type' => 'date-range', 'label' => 'Periode', 'from' => 'date_from', 'to' => 'date_to',
+         'value' => [$dateFrom, $dateTo]],
+          ['type' => 'select', 'name' => 'status', 'label' => 'Status', 'placeholder' => 'Semua',
+         'options' => $statusLabels, 'value' => $status ?: null],
+        ]" />
     </section>
 
     <div class="mt-6 inline-flex items-center gap-1 rounded-xl bg-slate-100 p-1">
@@ -225,51 +232,6 @@
             Lihat Lengkap
         </a>
     </div>
-
-    <section class="form-shell mt-4">
-        <form method="GET" action="{{ route('adminapp.reports.production') }}"
-            class="grid grid-cols-1 gap-4 xl:grid-cols-4">
-            <div class="space-y-4 xl:col-span-3">
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <div>
-                        <label class="form-label">Dari Tanggal</label>
-                        <input type="date" name="date_from" value="{{ $dateFrom }}" class="form-control">
-                    </div>
-
-                    <div>
-                        <label class="form-label">Sampai Tanggal</label>
-                        <input type="date" name="date_to" value="{{ $dateTo }}" class="form-control">
-                    </div>
-
-                    <div>
-                        <label class="form-label">Status</label>
-                        <select name="status" class="form-control">
-                            <option value="">Semua</option>
-                            @foreach ($statusLabels as $statusValue => $statusText)
-                                <option value="{{ $statusValue }}" @selected($status === $statusValue)>{{ $statusText }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-
-                <input type="hidden" name="view_mode" value="{{ $viewMode }}">
-
-                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <button class="btn-primary w-full" type="submit">Lihat</button>
-                    <a href="{{ route(
-                        'adminapp.reports.production',
-                        array_filter([
-                            'view_mode' => $viewMode === 'full' ? 'full' : null,
-                        ]),
-                    ) }}"
-                        class="btn-ghost w-full text-center">
-                        Reset
-                    </a>
-                </div>
-            </div>
-        </form>
-    </section>
 
     @include('partials.report-export-actions', [
         'excelUrl' => route('adminapp.reports.production.export.excel', request()->query()),

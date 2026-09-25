@@ -55,56 +55,15 @@
     </div>
 
     <div class="table-card">
-      <div class="table-card-head">Daftar Piutang Sudah Dilunasi</div>
-
-      <div class="p-5 border-b bg-slate-50/70">
-        <form method="GET" action="{{ route('accountingapp.periods.index') }}" class="grid grid-cols-1 md:grid-cols-5 gap-3">
-          <input type="hidden" name="view" value="paid">
-
-          <div class="md:col-span-5 flex flex-wrap gap-2">
-            <button type="button" class="chip-filter js-date-preset" data-form-scope="paid-filter" data-preset="this_month">Bulan Ini</button>
-            <button type="button" class="chip-filter js-date-preset" data-form-scope="paid-filter" data-preset="last_month">Bulan Lalu</button>
-            <button type="button" class="chip-filter js-date-preset" data-form-scope="paid-filter" data-preset="this_year">Tahun Berjalan</button>
-          </div>
-
-          <div>
-            <label class="form-label">Tgl Bayar Dari</label>
-            <input type="date" name="date_from" value="{{ $dateFrom }}"
-                   data-form-scope="paid-filter" data-role="date-from"
-                   class="form-control">
-          </div>
-
-          <div>
-            <label class="form-label">Tgl Bayar Sampai</label>
-            <input type="date" name="date_to" value="{{ $dateTo }}"
-                   data-form-scope="paid-filter" data-role="date-to"
-                   class="form-control">
-          </div>
-
-          <div>
-            <label class="form-label">Akun Kas</label>
-            <select name="cash_account_id" class="form-control">
-              <option value="">Semua Akun</option>
-              @foreach($cashAccounts as $cashAccount)
-                <option value="{{ $cashAccount->id }}" @selected((string)($cashAccountId ?? '') === (string) $cashAccount->id)>
-                  {{ $cashAccount->name }} ({{ $cashAccount->type === 'bank' ? 'Bank' : 'Tunai' }})
-                </option>
-              @endforeach
-            </select>
-          </div>
-
-          <div>
-            <label class="form-label">Customer</label>
-            <input type="text" name="customer" value="{{ $customerSearch ?? '' }}"
-                   placeholder="Cari nama customer" class="form-control">
-          </div>
-
-          <div class="flex items-end justify-end gap-2">
-            <a href="{{ route('accountingapp.periods.index', ['view' => 'paid']) }}" class="btn-outline">Reset</a>
-            <button class="btn-secondary">Filter</button>
-          </div>
-        </form>
-      </div>
+      <x-table-toolbar title="Daftar Piutang Sudah Dilunasi" :action="route('accountingapp.periods.index')" :keep="['view']"
+        :filters="[
+          ['type' => 'date-range', 'label' => 'Tanggal Bayar', 'from' => 'date_from', 'to' => 'date_to',
+           'value' => [$dateFrom, $dateTo]],
+          ['type' => 'select', 'name' => 'cash_account_id', 'label' => 'Akun Kas', 'placeholder' => 'Semua akun',
+           'options' => $cashAccounts->mapWithKeys(fn ($a) => [$a->id => $a->name.' ('.($a->type === 'bank' ? 'Bank' : 'Tunai').')']), 'value' => $cashAccountId ?? null],
+          ['type' => 'text', 'name' => 'customer', 'label' => 'Customer', 'placeholder' => 'Cari nama customer',
+           'value' => $customerSearch ?? null],
+        ]" />
 
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
@@ -167,42 +126,6 @@
       </div>
     </div>
 
-    <script>
-      (() => {
-        const formatDate = (date) => {
-          const y = date.getFullYear();
-          const m = String(date.getMonth() + 1).padStart(2, '0');
-          const d = String(date.getDate()).padStart(2, '0');
-          return `${y}-${m}-${d}`;
-        };
-        const applyPreset = (preset, fromInput, toInput) => {
-          const now = new Date();
-          let start, end;
-          if (preset === 'this_month') {
-            start = new Date(now.getFullYear(), now.getMonth(), 1);
-            end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-          } else if (preset === 'last_month') {
-            start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-            end = new Date(now.getFullYear(), now.getMonth(), 0);
-          } else if (preset === 'this_year') {
-            start = new Date(now.getFullYear(), 0, 1);
-            end = new Date(now.getFullYear(), 11, 31);
-          } else return;
-          fromInput.value = formatDate(start);
-          toInput.value = formatDate(end);
-        };
-        document.querySelectorAll('.js-date-preset[data-form-scope="paid-filter"]').forEach((button) => {
-          button.addEventListener('click', () => {
-            const scope = button.dataset.formScope;
-            const preset = button.dataset.preset;
-            const fromInput = document.querySelector(`[data-form-scope="${scope}"][data-role="date-from"]`);
-            const toInput = document.querySelector(`[data-form-scope="${scope}"][data-role="date-to"]`);
-            if (!fromInput || !toInput) return;
-            applyPreset(preset, fromInput, toInput);
-          });
-        });
-      })();
-    </script>
 
   @else
     {{-- ====== OUTSTANDING VIEW ====== --}}
@@ -227,73 +150,24 @@
   </div>
 
   <div class="table-card">
-    <div class="table-card-head">
-      Daftar Monitoring Piutang
-    </div>
-
-    <div class="p-5 border-b bg-slate-50/70">
-      <form method="GET" action="{{ route('accountingapp.periods.index') }}" class="grid grid-cols-1 md:grid-cols-5 gap-3">
-        <div class="md:col-span-5 flex flex-wrap gap-2">
-          <a
-            href="{{ route('accountingapp.periods.index') }}"
-            class="chip {{ $isShowingAllOutstanding ? 'bg-brand-500 text-white' : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50' }}"
-          >
-            Semua Piutang Outstanding
-          </a>
-          <button type="button" class="chip-filter js-date-preset" data-form-scope="receivables-filter" data-preset="this_month">Bulan Ini</button>
-          <button type="button" class="chip-filter js-date-preset" data-form-scope="receivables-filter" data-preset="last_month">Bulan Lalu</button>
-          <button type="button" class="chip-filter js-date-preset" data-form-scope="receivables-filter" data-preset="this_year">Tahun Berjalan</button>
-          <a href="{{ route('accountingapp.periods.index', ['urgency' => 'overdue']) }}" class="chip-link">Overdue</a>
-          <a href="{{ route('accountingapp.periods.index', ['urgency' => 'today']) }}" class="chip-link">Hari Ini</a>
-          <a href="{{ route('accountingapp.periods.index', ['urgency' => 'next_7_days']) }}" class="chip-link">7 Hari Lagi</a>
-          <a href="{{ route('accountingapp.periods.index', ['urgency' => 'no_due_date']) }}" class="chip-link">Tanpa Jatuh Tempo</a>
-        </div>
-
-        <div>
-          <label class="form-label">Jatuh Tempo Dari</label>
-          <input type="date" name="date_from" value="{{ $dateFrom }}"
-                 data-form-scope="receivables-filter" data-role="date-from"
-                 class="form-control">
-        </div>
-
-        <div>
-          <label class="form-label">Jatuh Tempo Sampai</label>
-          <input type="date" name="date_to" value="{{ $dateTo }}"
-                 data-form-scope="receivables-filter" data-role="date-to"
-                 class="form-control">
-        </div>
-
-        <div>
-          <label class="form-label">Status Jatuh Tempo</label>
-          <select name="urgency" class="form-control">
-            <option value="">Semua</option>
-            <option value="overdue" @selected(($urgency ?? null) === 'overdue')>Lewat Jatuh Tempo</option>
-            <option value="today" @selected(($urgency ?? null) === 'today')>Hari Ini</option>
-            <option value="next_7_days" @selected(($urgency ?? null) === 'next_7_days')>7 Hari Lagi</option>
-            <option value="no_due_date" @selected(($urgency ?? null) === 'no_due_date')>Tanpa Jatuh Tempo</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="form-label">Customer</label>
-          <input type="text" name="customer" value="{{ $customerSearch ?? '' }}"
-                 placeholder="Cari nama customer" class="form-control" autocomplete="off">
-        </div>
-
-        <div>
-          <label class="form-label">No. PO</label>
-          <input type="text" name="po_number" value="{{ $poNumberSearch ?? '' }}"
-                 placeholder="Cari no PO" class="form-control" autocomplete="off">
-        </div>
-
-        <div class="md:col-span-3 flex items-end justify-end gap-2">
-          <a href="{{ route('accountingapp.periods.index') }}" class="btn-outline">
-            Reset
-          </a>
-          <button class="btn-secondary">Filter</button>
-        </div>
-      </form>
-    </div>
+    <x-table-toolbar title="Daftar Monitoring Piutang" :action="route('accountingapp.periods.index')"
+      :shortcuts="[
+        'Lewat jatuh tempo' => route('accountingapp.periods.index', ['urgency' => 'overdue']),
+        'Jatuh tempo hari ini' => route('accountingapp.periods.index', ['urgency' => 'today']),
+        '7 hari lagi' => route('accountingapp.periods.index', ['urgency' => 'next_7_days']),
+        'Tanpa jatuh tempo' => route('accountingapp.periods.index', ['urgency' => 'no_due_date']),
+      ]"
+      :filters="[
+        ['type' => 'date-range', 'label' => 'Jatuh Tempo', 'from' => 'date_from', 'to' => 'date_to',
+         'value' => [$dateFrom, $dateTo]],
+        ['type' => 'select', 'name' => 'urgency', 'label' => 'Status Jatuh Tempo', 'placeholder' => 'Semua',
+         'options' => ['overdue' => 'Lewat Jatuh Tempo', 'today' => 'Hari Ini', 'next_7_days' => '7 Hari Lagi', 'no_due_date' => 'Tanpa Jatuh Tempo'],
+         'value' => $urgency ?? null],
+        ['type' => 'text', 'name' => 'customer', 'label' => 'Customer', 'placeholder' => 'Cari nama customer',
+         'value' => $customerSearch ?? null],
+        ['type' => 'text', 'name' => 'po_number', 'label' => 'No. PO', 'placeholder' => 'Cari no PO',
+         'value' => $poNumberSearch ?? null],
+      ]" />
 
     @if (($legacyReceivablesCount ?? 0) > 0)
       <div class="mx-5 mt-5 notice-soft-amber">
@@ -393,54 +267,6 @@
     </div>
   </div>
 
-  <script>
-    (() => {
-      const formatDate = (date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-
-        return `${year}-${month}-${day}`;
-      };
-
-      const applyPreset = (preset, fromInput, toInput) => {
-        const now = new Date();
-        let start;
-        let end;
-
-        if (preset === 'this_month') {
-          start = new Date(now.getFullYear(), now.getMonth(), 1);
-          end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        } else if (preset === 'last_month') {
-          start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-          end = new Date(now.getFullYear(), now.getMonth(), 0);
-        } else if (preset === 'this_year') {
-          start = new Date(now.getFullYear(), 0, 1);
-          end = new Date(now.getFullYear(), 11, 31);
-        } else {
-          return;
-        }
-
-        fromInput.value = formatDate(start);
-        toInput.value = formatDate(end);
-      };
-
-      document.querySelectorAll('.js-date-preset').forEach((button) => {
-        button.addEventListener('click', () => {
-          const scope = button.dataset.formScope;
-          const preset = button.dataset.preset;
-          const fromInput = document.querySelector(`[data-form-scope="${scope}"][data-role="date-from"]`);
-          const toInput = document.querySelector(`[data-form-scope="${scope}"][data-role="date-to"]`);
-
-          if (!fromInput || !toInput) {
-            return;
-          }
-
-          applyPreset(preset, fromInput, toInput);
-        });
-      });
-    })();
-  </script>
   @endif
 @endsection
 

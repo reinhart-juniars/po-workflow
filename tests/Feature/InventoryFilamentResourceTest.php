@@ -160,3 +160,55 @@ it('menampilkan widget alert hanya ketika ada item di bawah ambang', function ()
 
     expect(LowStockAlertWidget::canView())->toBeFalse();
 });
+
+it('menampilkan daftar item inventaris muat satu layar: kolom induk disembunyikan dan aksi berupa ikon', function () {
+    $bucket = InventoryItem::query()->create(['name' => 'Bahan Baku', 'unit' => 'kg', 'category' => InventoryItem::CATEGORY_RAW_MATERIAL, 'is_active' => true]);
+    $item = InventoryItem::query()->create(['name' => 'Gula Pasir', 'unit' => 'kg', 'category' => InventoryItem::CATEGORY_RAW_MATERIAL, 'parent_id' => $bucket->id, 'is_active' => true]);
+
+    // Induk hanya muncul bila dipilih lewat tombol kolom; kolom lain tetap tampil.
+    $page = Livewire::test(InventoryItemResource\Pages\ListInventoryItems::class)
+        ->assertCanSeeTableRecords([$item])
+        ->assertCanRenderTableColumn('name')
+        ->assertCanRenderTableColumn('stock_value')
+        ->assertCanNotRenderTableColumn('parent.name')
+        ->assertTableActionVisible('edit', $item)
+        ->assertTableActionVisible('delete', $item);
+
+    // Tombol ikon, bukan berteks, supaya kolom aksi tidak melebarkan tabel.
+    $actions = $page->instance()->getTable()->getFlatActions();
+
+    expect($actions['edit']->isIconButton())->toBeTrue()
+        ->and($actions['delete']->isIconButton())->toBeTrue();
+});
+
+it('menjaga posisi sidebar dan prefetch menu di panel maupun layout Blade', function () {
+    // Positive control: skrip bawaan Filament yang menggulir menu aktif ke
+    // tengah memang ada, jadi penggantinya harus dirender sebelum ia berjalan
+    // (di akhir <nav>, sedangkan skrip Filament menunggu DOMContentLoaded).
+    $this->get(InventoryItemResource::getUrl('index'))
+        ->assertOk()
+        ->assertSee('<script type="speculationrules">', false)
+        // Animasi geser antar menu: opt-in inline (bukan dari Vite) dan
+        // penanda akhir halaman yang ditunggu transisinya.
+        ->assertSeeInOrder(['@view-transition', '</head>', 'id="sh-page-end"'], false)
+        ->assertSee('sh-sidebar-scroll:inventory', false)
+        ->assertSeeInOrder(['sh-sidebar-scroll:inventory', '</nav>', 'sidebarWrapper.scrollTo'], false);
+
+    // Layout Blade memakai partial yang sama, dengan kunci per aplikasi.
+    $this->get(route('adminapp.dashboard'))
+        ->assertOk()
+        ->assertSee('<script type="speculationrules">', false)
+        ->assertSeeInOrder(['@view-transition', '</head>', 'id="sh-page-end"'], false)
+        ->assertSeeInOrder(['sh-sidebar-scroll:admin', '</nav>'], false);
+});
+
+it('menggambar panel utuh sejak frame pertama, tanpa menunggu Alpine atau muatan susulan', function () {
+    // Tanpa aturan ini, sidebar & konten tersembunyi sampai Alpine berjalan
+    // sehingga setiap perpindahan menu terasa seperti halaman di-refresh.
+    $this->get(InventoryItemResource::getUrl('index'))
+        ->assertOk()
+        ->assertSee('.fi-main-ctn.opacity-0', false)
+        ->assertSee(".fi-main-sidebar[x-cloak='-lg']", false)
+        // Lonceng notifikasi ikut dirender, bukan placeholder lazy Livewire.
+        ->assertDontSee('__lazyLoad', false);
+});

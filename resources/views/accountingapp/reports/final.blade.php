@@ -249,22 +249,11 @@
                 </div>
             </div>
 
-            <form method="GET" action="{{ route('accountingapp.reports.final') }}" class="form-grid mt-6">
-                <div>
-                    <label class="form-label">Dari Tanggal</label>
-                    <input type="date" name="date_from" value="{{ $dateFrom->toDateString() }}" class="form-control">
-                </div>
-                <div>
-                    <label class="form-label">Sampai Tanggal</label>
-                    <input type="date" name="date_to" value="{{ $dateTo->toDateString() }}" class="form-control">
-                </div>
-                <div class="flex items-end">
-                    <button type="submit" class="btn-primary w-full">Tampilkan Laporan</button>
-                </div>
-                <div class="flex items-end">
-                    <a href="{{ route('accountingapp.reports.final') }}" class="btn-ghost w-full text-center">Reset</a>
-                </div>
-            </form>
+            <x-table-toolbar inline class="mt-6" :action="route('accountingapp.reports.final')"
+              :filters="[
+                ['type' => 'date-range', 'label' => 'Periode', 'from' => 'date_from', 'to' => 'date_to',
+               'value' => [$dateFrom, $dateTo]],
+              ]" />
         </section>
 
         @include('partials.report-export-actions', [

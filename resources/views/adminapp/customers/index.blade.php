@@ -16,25 +16,9 @@
     @endif
 
     <section class="table-shell mt-4">
-        <div class="table-head">
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <span>Daftar Customer</span>
-                <form method="GET" action="{{ route('adminapp.customers.index') }}"
-                      class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-                    <input type="search" name="q" id="js-customers-search" class="form-control sm:w-64"
-                        value="{{ $q ?? '' }}"
-                        placeholder="Cari nama / telepon / alamat..." autocomplete="off">
-                    @if (!empty($q))
-                        <a href="{{ route('adminapp.customers.index') }}"
-                           class="text-xs font-semibold text-slate-500 hover:text-slate-700">Reset</a>
-                    @endif
-                    <span class="text-xs font-medium normal-case tracking-normal text-slate-500">
-                        {{ $customers->total() }} customer
-                        @if (!empty($q)) cocok untuk "<strong>{{ $q }}</strong>" @else total @endif.
-                    </span>
-                </form>
-            </div>
-        </div>
+        <x-table-toolbar title="Daftar Customer" :action="route('adminapp.customers.index')"
+            :meta="number_format($customers->total(), 0, ',', '.').' customer'.(filled($q ?? null) ? ' cocok' : '')"
+            search="q" :search-value="$q ?? ''" search-placeholder="Cari nama / telepon / alamat..." live />
         <div class="data-table-wrap">
             <table class="data-table" id="js-customers-table">
                 <thead>
@@ -69,10 +53,7 @@
                                 @endif
                             </td>
                             <td>
-                                <a href="{{ route('adminapp.customers.edit', $customer) }}"
-                                    class="text-sm font-semibold text-brand-600 hover:text-brand-500">
-                                    Edit
-                                </a>
+                                <x-row-action kind="edit" :href="route('adminapp.customers.edit', $customer)" />
                             </td>
                         </tr>
                     @empty
@@ -95,18 +76,4 @@
         <div class="mt-4">{{ $customers->links() }}</div>
     @endif
 
-    <script>
-        (() => {
-            const input = document.getElementById('js-customers-search');
-            if (!input) return;
-            const form = input.closest('form');
-            if (!form) return;
-
-            let timer = null;
-            input.addEventListener('input', () => {
-                clearTimeout(timer);
-                timer = setTimeout(() => form.submit(), 400);
-            });
-        })();
-    </script>
 @endsection

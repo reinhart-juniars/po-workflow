@@ -11,6 +11,8 @@ use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Tables\Actions\DeleteAction;
+use Filament\Tables\Actions\EditAction;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Support\Facades\Vite;
 
@@ -25,6 +27,20 @@ use Illuminate\Support\Facades\Vite;
  */
 class AdminPanelProvider extends PanelProvider
 {
+    /**
+     * Aksi Edit/Hapus di setiap baris tabel tampil sebagai ikon (label jadi
+     * tooltip), sama dengan layout Blade (components/row-action). Tombol
+     * berteks membuat kolom aksi melebar sampai tabel harus digeser.
+     */
+    public function boot(): void
+    {
+        foreach ([EditAction::class, DeleteAction::class] as $action) {
+            $action::configureUsing(fn ($action) => $action
+                ->iconButton()
+                ->tooltip(fn ($action) => $action->getLabel()));
+        }
+    }
+
     public function panel(Panel $panel): Panel
     {
         return $panel
@@ -55,6 +71,10 @@ class AdminPanelProvider extends PanelProvider
             // Lonceng: form diajukan -> supervisor gudang; disetujui -> gudang;
             // ditolak/diperiksa -> produksi (RequisitionService::notify).
             ->databaseNotifications() // layout Blade tidak punya pencarian global; disamakan
+            // Lonceng dirender bersama halaman, bukan dimuat susulan lewat
+            // request Livewire -- kalau susulan, ia "muncul" belakangan di
+            // setiap perpindahan menu.
+            ->lazyLoadedDatabaseNotifications(false)
 
             // Sidebar = menu aplikasi Inventory: nama & urutan grupnya dari
             // Navigation::menus()['inventory']; resource/page mendaftar sendiri
@@ -75,6 +95,17 @@ class AdminPanelProvider extends PanelProvider
             // Menu pengguna yang sama dengan header Blade (avatar inisial + nama);
             // menu bawaan Filament (avatar dari ui-avatars.com) disembunyikan di shell.css.
             ->renderHook(PanelsRenderHook::USER_MENU_BEFORE, fn () => view('partials.user-menu'))
+            // Perpindahan menu semulus layout Blade: posisi gulir sidebar
+            // diingat (bukan digulir ke tengah oleh Filament), dan halaman
+            // menu di-prefetch saat kursor diarahkan ke sana.
+            ->renderHook(PanelsRenderHook::SIDEBAR_NAV_END, fn () => view('partials.sidebar-scroll-memory', ['app' => 'inventory']))
+            ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('partials.nav-prefetch'))
+            // Animasi geser antar menu, sama dengan layout Blade. Penanda
+            // akhir halaman menahan transisi sampai konten selesai terbaca.
+            ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('partials.page-transition'))
+            // Frame pertama tidak kosong menunggu Alpine (lihat view-nya).
+            ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('filament.first-paint'))
+            ->renderHook(PanelsRenderHook::BODY_END, fn () => '<span id="sh-page-end" hidden></span>')
 
             // Panel memakai grup middleware 'web' milik aplikasi ini, bukan
             // daftar sendiri, supaya cookie, sesi, dan CSRF-nya persis sama

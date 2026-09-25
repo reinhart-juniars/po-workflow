@@ -12,30 +12,11 @@
                 </p>
             </div>
         </div>
-    </section>
-
-    <section class="form-shell mt-4">
-        <form method="GET" action="{{ route('adminapp.reports.missing-costs') }}" class="space-y-4">
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <div>
-                    <label class="form-label">Dari Tanggal</label>
-                    <input type="date" name="date_from" value="{{ $dateFrom }}" class="form-control">
-                </div>
-                <div>
-                    <label class="form-label">Sampai Tanggal</label>
-                    <input type="date" name="date_to" value="{{ $dateTo }}" class="form-control">
-                </div>
-            </div>
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:max-w-md">
-                <button class="btn-primary w-full" type="submit">Lihat</button>
-                <a href="{{ route('adminapp.reports.missing-costs') }}" class="btn-ghost w-full text-center">Reset</a>
-            </div>
-            <p class="text-xs text-slate-500">
-                Periode terpilih: <span class="font-semibold">{{ \Carbon\Carbon::parse($dateFrom)->format('d M Y') }}</span>
-                s/d <span class="font-semibold">{{ \Carbon\Carbon::parse($dateTo)->format('d M Y') }}</span>
-                (berdasarkan tanggal pembuatan PO).
-            </p>
-        </form>
+      <x-table-toolbar inline class="mt-4" :action="route('adminapp.reports.missing-costs')"
+        :filters="[
+          ['type' => 'date-range', 'label' => 'Periode', 'from' => 'date_from', 'to' => 'date_to',
+         'value' => [$dateFrom, $dateTo]],
+        ]" />
     </section>
 
     @include('partials.report-export-actions', [

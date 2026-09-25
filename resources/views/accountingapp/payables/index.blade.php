@@ -29,68 +29,24 @@
   </div>
 
   <div class="table-card">
-    <div class="table-card-head">Daftar Hutang Outstanding</div>
+    <x-table-toolbar title="Daftar Hutang Outstanding" :action="route('accountingapp.payables.index')"
+      :shortcuts="[
+        'Lewat jatuh tempo' => route('accountingapp.payables.index', ['urgency' => 'overdue']),
+        'Jatuh tempo hari ini' => route('accountingapp.payables.index', ['urgency' => 'today']),
+        '7 hari lagi' => route('accountingapp.payables.index', ['urgency' => 'next_7_days']),
+      ]"
+      :filters="[
+        ['type' => 'text', 'name' => 'supplier_name', 'label' => 'Supplier', 'value' => $supplierName,
+         'placeholder' => 'Cari supplier', 'list' => 'supplier-options'],
+        ['type' => 'select', 'name' => 'source', 'label' => 'Sumber', 'value' => $source, 'placeholder' => 'Semua sumber',
+         'options' => ['inventory_purchase' => 'Pembelian Stok', 'opening_balance' => 'Saldo Awal', 'other' => 'Hutang Lain']],
+        ['type' => 'select', 'name' => 'urgency', 'label' => 'Status Jatuh Tempo', 'value' => $urgency, 'placeholder' => 'Semua',
+         'options' => ['overdue' => 'Lewat Jatuh Tempo', 'today' => 'Hari Ini', 'next_7_days' => '7 Hari Lagi', 'no_due_date' => 'Tanpa Jatuh Tempo']],
+        ['type' => 'date-range', 'label' => 'Jatuh Tempo', 'from' => 'date_from', 'to' => 'date_to',
+         'value' => [$dateFrom ?? null, $dateTo ?? null]],
+      ]" />
+    @include('partials.supplier-datalist')
 
-    <div class="p-5 border-b bg-slate-50/70">
-      <form method="GET" action="{{ route('accountingapp.payables.index') }}" class="grid grid-cols-1 gap-3 md:grid-cols-5">
-        <div class="md:col-span-5 flex flex-wrap gap-2">
-          <button type="button" class="chip-filter js-date-preset" data-form-scope="payables-filter" data-preset="this_month">Bulan Ini</button>
-          <button type="button" class="chip-filter js-date-preset" data-form-scope="payables-filter" data-preset="last_month">Bulan Lalu</button>
-          <button type="button" class="chip-filter js-date-preset" data-form-scope="payables-filter" data-preset="this_year">Tahun Berjalan</button>
-          <a href="{{ route('accountingapp.payables.index', ['urgency' => 'overdue']) }}" class="chip-link">Overdue</a>
-          <a href="{{ route('accountingapp.payables.index', ['urgency' => 'today']) }}" class="chip-link">Hari Ini</a>
-          <a href="{{ route('accountingapp.payables.index', ['urgency' => 'next_7_days']) }}" class="chip-link">7 Hari Lagi</a>
-        </div>
-
-        <div>
-          <label class="form-label">Supplier</label>
-          <input type="text" name="supplier_name" value="{{ $supplierName }}"
-                 class="form-control" placeholder="Cari supplier">
-        </div>
-
-        <div>
-          <label class="form-label">Sumber</label>
-          <select name="source" class="form-control">
-            <option value="">Semua Sumber</option>
-            <option value="inventory_purchase" @selected($source === 'inventory_purchase')>Pembelian Stok</option>
-            <option value="opening_balance" @selected($source === 'opening_balance')>Saldo Awal</option>
-            <option value="other" @selected($source === 'other')>Hutang Lain</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="form-label">Status Jatuh Tempo</label>
-          <select name="urgency" class="form-control">
-            <option value="">Semua</option>
-            <option value="overdue" @selected($urgency === 'overdue')>Lewat Jatuh Tempo</option>
-            <option value="today" @selected($urgency === 'today')>Hari Ini</option>
-            <option value="next_7_days" @selected($urgency === 'next_7_days')>7 Hari Lagi</option>
-            <option value="no_due_date" @selected($urgency === 'no_due_date')>Tanpa Jatuh Tempo</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="form-label">Jatuh Tempo Dari</label>
-          <input type="date" name="date_from" value="{{ $dateFrom ?? '' }}"
-                 data-form-scope="payables-filter" data-role="date-from"
-                 class="form-control">
-        </div>
-
-        <div>
-          <label class="form-label">Jatuh Tempo Sampai</label>
-          <input type="date" name="date_to" value="{{ $dateTo ?? '' }}"
-                 data-form-scope="payables-filter" data-role="date-to"
-                 class="form-control">
-        </div>
-
-        <div class="md:col-span-5 flex items-end justify-end gap-2">
-          <a href="{{ route('accountingapp.payables.index') }}" class="btn-outline">
-            Reset
-          </a>
-          <button class="btn-secondary">Filter</button>
-        </div>
-      </form>
-    </div>
 
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
@@ -162,52 +118,4 @@
     </div>
   </div>
 
-  <script>
-    (() => {
-      const formatDate = (date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-
-        return `${year}-${month}-${day}`;
-      };
-
-      const applyPreset = (preset, fromInput, toInput) => {
-        const now = new Date();
-        let start;
-        let end;
-
-        if (preset === 'this_month') {
-          start = new Date(now.getFullYear(), now.getMonth(), 1);
-          end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        } else if (preset === 'last_month') {
-          start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-          end = new Date(now.getFullYear(), now.getMonth(), 0);
-        } else if (preset === 'this_year') {
-          start = new Date(now.getFullYear(), 0, 1);
-          end = new Date(now.getFullYear(), 11, 31);
-        } else {
-          return;
-        }
-
-        fromInput.value = formatDate(start);
-        toInput.value = formatDate(end);
-      };
-
-      document.querySelectorAll('.js-date-preset').forEach((button) => {
-        button.addEventListener('click', () => {
-          const scope = button.dataset.formScope;
-          const preset = button.dataset.preset;
-          const fromInput = document.querySelector(`[data-form-scope="${scope}"][data-role="date-from"]`);
-          const toInput = document.querySelector(`[data-form-scope="${scope}"][data-role="date-to"]`);
-
-          if (!fromInput || !toInput) {
-            return;
-          }
-
-          applyPreset(preset, fromInput, toInput);
-        });
-      });
-    })();
-  </script>
 @endsection

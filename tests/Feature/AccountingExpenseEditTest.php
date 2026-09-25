@@ -69,8 +69,12 @@ it('lets accounting user edit an expense from accounting app', function () {
         'date_to' => '2026-04-30',
     ]))
         ->assertOk()
-        ->assertSeeText('Edit')
-        ->assertSeeText('Hapus');
+        // Aksi baris berupa ikon (components/row-action): labelnya ada di
+        // aria-label/tooltip, tautan & form-nya menunjuk data yang benar.
+        ->assertSee('href="'.route('accountingapp.expenses.edit', $expense->id).'"', false)
+        ->assertSee('action="'.route('accountingapp.expenses.destroy', $expense->id).'"', false)
+        ->assertSee('aria-label="Edit"', false)
+        ->assertSee('aria-label="Hapus"', false);
 
     get(route('accountingapp.expenses.edit', $expense))
         ->assertOk()

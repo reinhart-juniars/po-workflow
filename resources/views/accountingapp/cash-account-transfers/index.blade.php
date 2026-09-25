@@ -73,22 +73,11 @@
   </section>
 
   <section class="table-shell mt-4">
-    <div class="table-head flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-      <span>Riwayat Transfer</span>
-      <form method="GET" action="{{ route('accountingapp.cash-account-transfers.index') }}"
-            class="flex flex-wrap items-end gap-2">
-        <div>
-          <label class="form-label text-xs">Dari</label>
-          <input type="date" name="date_from" value="{{ $dateFrom }}" class="form-control">
-        </div>
-        <div>
-          <label class="form-label text-xs">Sampai</label>
-          <input type="date" name="date_to" value="{{ $dateTo }}" class="form-control">
-        </div>
-        <button class="btn-secondary">Filter</button>
-        <a href="{{ route('accountingapp.cash-account-transfers.index') }}" class="btn-ghost">Reset</a>
-      </form>
-    </div>
+    <x-table-toolbar title="Riwayat Transfer" :action="route('accountingapp.cash-account-transfers.index')"
+      :filters="[
+        ['type' => 'date-range', 'label' => 'Periode', 'from' => 'date_from', 'to' => 'date_to',
+         'value' => [$dateFrom, $dateTo]],
+      ]" />
 
     @if($transfers->isNotEmpty())
       <div class="px-4 py-3 text-sm text-slate-600 border-b border-slate-100">
@@ -120,13 +109,8 @@
               <td class="text-xs text-slate-600">{{ $transfer->notes ?: '-' }}</td>
               <td class="text-xs text-slate-500">{{ $transfer->creator->name ?? '-' }}</td>
               <td>
-                <form method="POST"
-                      action="{{ route('accountingapp.cash-account-transfers.destroy', $transfer) }}"
-                      onsubmit="return confirm('Hapus catatan transfer ini?')">
-                  @csrf
-                  @method('DELETE')
-                  <button type="submit" class="btn-link-danger">Hapus</button>
-                </form>
+                <x-row-action kind="delete" :action="route('accountingapp.cash-account-transfers.destroy', $transfer)"
+                              confirm="Hapus catatan transfer ini?" />
               </td>
             </tr>
           @empty

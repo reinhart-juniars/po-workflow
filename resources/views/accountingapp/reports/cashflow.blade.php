@@ -100,33 +100,12 @@
             </div>
         </div>
 
-        <form method="GET" action="{{ route('accountingapp.reports.cashflow') }}" class="form-grid mt-6">
-            <div>
-                <label class="form-label">Dari Tanggal</label>
-                <input type="date" name="date_from" value="{{ $dateFrom->toDateString() }}" class="form-control">
-            </div>
-
-            <div>
-                <label class="form-label">Sampai Tanggal</label>
-                <input type="date" name="date_to" value="{{ $dateTo->toDateString() }}" class="form-control">
-            </div>
-
-            <input type="hidden" name="chart_granularity" value="{{ $chartGranularity }}">
-            @if ($chartGranularity === 'week' && $activeWeekNumber)
-                <input type="hidden" name="week_number" value="{{ $activeWeekNumber }}">
-            @endif
-
-            <div class="flex items-end">
-                <button type="submit" class="btn-primary w-full">Terapkan Filter</button>
-            </div>
-
-            <div class="flex items-end">
-                <a href="{{ route('accountingapp.reports.cashflow', ['chart_granularity' => $chartGranularity]) }}"
-                    class="btn-ghost w-full text-center">
-                    Reset
-                </a>
-            </div>
-        </form>
+        <x-table-toolbar inline class="mt-6" :action="route('accountingapp.reports.cashflow')"
+          :keep="['chart_granularity', 'week_number']"
+          :filters="[
+            ['type' => 'date-range', 'label' => 'Periode', 'from' => 'date_from', 'to' => 'date_to',
+           'value' => [$dateFrom, $dateTo]],
+          ]" />
     </section>
 
     @include('partials.report-export-actions', [

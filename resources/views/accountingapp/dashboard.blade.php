@@ -19,32 +19,11 @@
             <strong>Status rentang laporan:</strong> {{ $rangePeriodStatus['message'] }}
         </div>
 
-        <form method="GET" action="{{ route('accountingapp.dashboard') }}" class="form-grid mt-6">
-            <div class="md:col-span-3 flex flex-wrap gap-2">
-                <button type="button" class="chip-filter js-date-preset" data-form-scope="dashboard"
-                    data-preset="this_month">Bulan Ini</button>
-                <button type="button" class="chip-filter js-date-preset" data-form-scope="dashboard"
-                    data-preset="last_month">Bulan Lalu</button>
-                <button type="button" class="chip-filter js-date-preset" data-form-scope="dashboard"
-                    data-preset="this_year">Tahun Berjalan</button>
-            </div>
-
-            <div>
-                <label class="form-label">Dari Tanggal</label>
-                <input type="date" name="date_from" value="{{ $dateFrom->toDateString() }}" data-form-scope="dashboard"
-                    data-role="date-from">
-            </div>
-
-            <div>
-                <label class="form-label">Sampai Tanggal</label>
-                <input type="date" name="date_to" value="{{ $dateTo->toDateString() }}" data-form-scope="dashboard"
-                    data-role="date-to">
-            </div>
-
-            <div class="flex items-end">
-                <button class="btn-primary w-full">Terapkan Filter</button>
-            </div>
-        </form>
+        <x-table-toolbar inline class="mt-6" :action="route('accountingapp.dashboard')"
+          :filters="[
+            ['type' => 'date-range', 'label' => 'Periode', 'from' => 'date_from', 'to' => 'date_to',
+           'value' => [$dateFrom, $dateTo]],
+          ]" />
     </section>
 
     <section class="space-y-2">
@@ -362,39 +341,4 @@
         @endif
     </section>
 
-    <script>
-        (() => {
-            const applyPreset = (scope, preset) => {
-                const fromInput = document.querySelector(`[data-form-scope="${scope}"][data-role="date-from"]`);
-                const toInput = document.querySelector(`[data-form-scope="${scope}"][data-role="date-to"]`);
-
-                if (!fromInput || !toInput) {
-                    return;
-                }
-
-                const now = new Date();
-                const pad = (value) => String(value).padStart(2, '0');
-                const format = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-
-                let fromDate = new Date(now.getFullYear(), now.getMonth(), 1);
-                let toDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-                if (preset === 'last_month') {
-                    fromDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-                    toDate = new Date(now.getFullYear(), now.getMonth(), 0);
-                } else if (preset === 'this_year') {
-                    fromDate = new Date(now.getFullYear(), 0, 1);
-                    toDate = new Date(now.getFullYear(), 11, 31);
-                }
-
-                fromInput.value = format(fromDate);
-                toInput.value = format(toDate);
-            };
-
-            document.querySelectorAll('.js-date-preset').forEach((button) => {
-                button.addEventListener('click', () => applyPreset(button.dataset.formScope, button.dataset
-                    .preset));
-            });
-        })();
-    </script>
 @endsection

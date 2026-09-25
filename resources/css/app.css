@@ -109,6 +109,59 @@
         @apply inline-flex min-h-[38px] items-center justify-center rounded-lg px-2 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 hover:text-rose-700;
     }
 
+    /* Aksi baris tabel berupa ikon (components/row-action), setara tombol
+       ikon Edit/Hapus di panel Filament. Label tampil sebagai tooltip putih
+       di atas ikon seperti tooltip Filament; tepi kanannya sejajar ikon
+       supaya tidak terpotong wadah tabel yang bisa digulir ke samping. */
+    .row-actions {
+        @apply inline-flex items-center gap-1 whitespace-nowrap;
+    }
+
+    .row-action {
+        @apply relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60;
+    }
+
+    .row-action:active {
+        transform: scale(0.94);
+    }
+
+    .row-action-primary { @apply text-brand-600 hover:bg-brand-50 hover:text-brand-700; }
+    .row-action-danger { @apply text-rose-600 hover:bg-rose-50 hover:text-rose-700; }
+    .row-action-warning { @apply text-amber-600 hover:bg-amber-50 hover:text-amber-700; }
+    .row-action-success { @apply text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700; }
+    .row-action-gray { @apply text-slate-500 hover:bg-slate-100 hover:text-slate-700; }
+
+    .row-action[data-tooltip]::after,
+    .tt-icon-btn[data-tooltip]::after,
+    .tt-clear[data-tooltip]::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        right: 0;
+        bottom: calc(100% + 6px);
+        z-index: 20;
+        padding: 4px 10px;
+        border-radius: 8px;
+        background: #fff;
+        color: rgb(3 7 18);
+        box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.14), 0 0 0 1px rgba(3, 7, 18, 0.06);
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 18px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(4px);
+        transition: opacity 120ms ease, transform 120ms ease;
+    }
+
+    .row-action[data-tooltip]:hover::after,
+    .row-action[data-tooltip]:focus-visible::after,
+    .tt-icon-btn[data-tooltip][aria-expanded="false"]:hover::after,
+    .tt-clear[data-tooltip]:hover::after {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
     .tab-trigger {
         @apply inline-flex min-h-[40px] items-center justify-center rounded-lg px-3 py-2 text-sm font-medium transition;
     }
@@ -247,6 +300,15 @@
 
     .file-input {
         @apply w-full rounded-xl border border-dashed border-slate-300 bg-white/90 px-3 py-2.5 text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-slate-700 hover:border-slate-400;
+    }
+
+    /* Tombol unggah foto di kartu Katalog: label untuk input file tersembunyi. */
+    .catalog-upload {
+        @apply inline-flex h-9 w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-slate-950/10 transition hover:bg-slate-50 focus-within:ring-2 focus-within:ring-brand-500/60;
+    }
+
+    .catalog-upload.is-busy {
+        @apply pointer-events-none opacity-60;
     }
 
     .form-shell {
@@ -564,27 +626,16 @@
     }
 
     .user-role-cell {
-        @apply min-w-[290px];
-    }
-
-    .user-role-form {
-        @apply flex items-start gap-2;
+        @apply min-w-[260px];
     }
 
     .user-role-editor {
-        @apply min-w-0 flex-1;
+        @apply max-w-[260px];
     }
 
+    /* Sebesar tombol "+ Tambah Role" di sebelahnya, didorong ke kanan kotak. */
     .user-role-submit {
-        @apply btn-ghost min-h-[34px] px-3 py-1.5 text-[11px];
-    }
-
-    .user-action-stack {
-        @apply flex min-w-[104px] flex-col gap-1;
-    }
-
-    .user-action-btn {
-        @apply btn-ghost w-full justify-center px-2.5 py-1.5 text-[11px];
+        @apply ml-auto inline-flex min-h-[28px] items-center justify-center rounded-full bg-brand-500 px-3 py-1 text-[11px] font-semibold text-white shadow-sm transition hover:bg-brand-600;
     }
 
     .user-add-form {
@@ -759,7 +810,6 @@
 
     .shell-item-active {
         @apply bg-gray-100 text-brand-600;
-        view-transition-name: sh-nav-active;
     }
 
     .shell-item-active .shell-bullet {
@@ -774,5 +824,166 @@
     .btn-primary,
     .btn-ghost {
         @apply transition-[background-color,color,transform,border-color] duration-150 ease-out active:scale-[0.97];
+    }
+}
+
+/* ------------------------------------------------------------------
+   Toolbar tabel ala panel Filament (components/table-toolbar).
+   Angka diambil dari computed style tabel Filament di /inventory:
+   bilah 12/24 px, kotak cari & tombol ikon 36 px radius 8, popover
+   320 px radius 8 padding 24, chip filter 12 px brand-50/brand-700.
+   Selector sengaja lebih spesifik dari aturan global input/select di atas.
+   ------------------------------------------------------------------ */
+@layer components {
+    .tt-bar {
+        @apply flex min-h-[60px] flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 sm:px-6;
+    }
+
+    .tt-standalone {
+        @apply app-card mb-5 overflow-visible;
+    }
+
+    .tt-standalone .tt-bar {
+        @apply border-b-0;
+    }
+
+    .tt-standalone .tt-indicators {
+        @apply rounded-b-xl border-b-0;
+    }
+
+    .tt-start {
+        @apply min-w-0 flex-1;
+    }
+
+    .tt-inline .tt-bar {
+        @apply min-h-0 border-b-0 p-0 sm:p-0;
+    }
+
+    .tt-inline .tt-icon-btn {
+        @apply bg-white shadow-sm ring-1 ring-slate-950/10;
+    }
+
+    .tt-title {
+        @apply text-sm font-semibold text-slate-800;
+    }
+
+    .tt-meta {
+        @apply ml-2 text-xs font-medium text-slate-500;
+    }
+
+    .tt-end {
+        @apply flex flex-wrap items-center justify-end gap-3;
+    }
+
+    .tt-search {
+        @apply flex h-9 w-full items-center gap-2 rounded-lg bg-white pl-3 shadow-sm ring-1 ring-slate-950/10 transition focus-within:ring-2 focus-within:ring-brand-600 sm:w-56;
+    }
+
+    .tt-search-icon {
+        @apply h-5 w-5 shrink-0 text-slate-400;
+    }
+
+    .tt .tt-search input[type="search"] {
+        @apply h-9 min-w-0 flex-1 rounded-none border-0 bg-transparent py-1.5 pl-0 pr-3 text-sm text-slate-950 shadow-none placeholder:text-slate-400 focus:border-0 focus:ring-0;
+    }
+
+    .tt-icon-btn {
+        @apply relative inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-50 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600;
+    }
+
+    .tt-icon-btn[aria-expanded="true"] {
+        @apply bg-slate-50 text-slate-700;
+    }
+
+    .tt-badge {
+        @apply absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-md bg-white px-1 text-[10px] font-semibold text-brand-600 ring-1 ring-brand-600/20;
+    }
+
+    .tt-popover {
+        @apply fixed z-50 overflow-y-auto rounded-lg bg-white p-6 shadow-lg ring-1 ring-slate-950/5;
+    }
+
+    .tt-popover[hidden] {
+        display: none;
+    }
+
+    .tt-popover-head {
+        @apply mb-4 flex items-center justify-between gap-3;
+    }
+
+    .tt-popover-title {
+        @apply text-base font-semibold text-slate-950;
+    }
+
+    .tt-reset {
+        @apply text-sm font-semibold text-rose-600 hover:text-rose-500 hover:underline;
+    }
+
+    .tt-fields {
+        @apply flex flex-col gap-4;
+    }
+
+    .tt-field {
+        @apply flex flex-col gap-1.5;
+    }
+
+    .tt-label {
+        @apply text-sm font-medium text-slate-950;
+    }
+
+    .tt input.tt-input:not([type="checkbox"]):not([type="radio"]),
+    .tt select.tt-input {
+        @apply h-9 w-full rounded-lg border-0 bg-white px-3 py-1.5 text-sm font-normal text-slate-950 shadow-sm ring-1 ring-slate-950/10 focus:border-0 focus:ring-2 focus:ring-brand-600;
+    }
+
+    /* Dua baris "Dari / Sampai": kotak tanggal bawaan browser terlalu
+       lebar untuk dua kolom dalam popover 320 px. */
+    .tt-range {
+        @apply grid grid-cols-[3.5rem_1fr] items-center gap-x-2 gap-y-2;
+    }
+
+    .tt-range-label {
+        @apply text-xs font-medium text-slate-500;
+    }
+
+    .tt-presets,
+    .tt-shortcuts {
+        @apply flex flex-wrap gap-1.5;
+    }
+
+    .tt-shortcuts {
+        @apply mb-4;
+    }
+
+    .tt-preset {
+        @apply inline-flex items-center rounded-md bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-200 transition hover:bg-brand-50 hover:text-brand-700 hover:ring-brand-600/20;
+    }
+
+    .tt-apply {
+        @apply mt-6 inline-flex h-9 w-full items-center justify-center rounded-lg bg-brand-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2;
+    }
+
+    .tt-indicators {
+        @apply flex items-center gap-x-3 border-b border-slate-200 bg-slate-50 px-4 py-1.5 sm:px-6;
+    }
+
+    .tt-indicators-label {
+        @apply shrink-0 text-sm font-medium text-slate-700;
+    }
+
+    .tt-chips {
+        @apply flex flex-1 flex-wrap gap-1.5;
+    }
+
+    .tt-chip {
+        @apply inline-flex items-center gap-1 rounded-md bg-brand-50 px-2 py-1 text-xs font-medium text-brand-600 ring-1 ring-inset ring-brand-600/10;
+    }
+
+    .tt-chip-remove {
+        @apply -my-1 -mr-1 inline-flex rounded p-0.5 text-brand-600/60 transition hover:text-brand-600;
+    }
+
+    .tt-clear {
+        @apply relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600;
     }
 }

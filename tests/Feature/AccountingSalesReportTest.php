@@ -115,5 +115,29 @@ it('shows the sales report inside accounting app with the same sales report view
         ->assertSeeText('Laporan Penjualan')
         ->assertSeeText('Customer Sales Report')
         ->assertSeeText('PO-ACC-SALES-001')
-        ->assertSee(route('accountingapp.reports.sales.export.excel', [], false));
+        ->assertSee(route('accountingapp.reports.sales.export.excel', [], false))
+        // Mode ringkas: filter tidak membawa view_mode.
+        ->assertDontSee('name="view_mode"', false)
+        // Mode ringkas: sidebar tetap terbuka di layar lebar (konten bergeser 20rem).
+        ->assertSee('lg:pl-80', false);
+
+    // Mode "Lihat Lengkap": filter tetap di mode lengkap, dan sel qty per harga
+    // tercetak ringkas (indentasi Blade di tiap sel dulu membuat laporan
+    // sebulan kehabisan memori).
+    $full = get(route('accountingapp.reports.sales', [
+        'view_mode' => 'full',
+        'date_from' => '2026-04-01',
+        'date_to' => '2026-04-30',
+    ]))
+        ->assertOk()
+        ->assertSeeText('PO-ACC-SALES-001')
+        ->assertSee('Periode: 1 Apr 2026 – 30 Apr 2026')
+        ->assertSee('<input type="hidden" name="view_mode" value="full">', false)
+        // Sidebar ditutup sementara supaya tabel dapat seluruh layar; tombol
+        // menu tetap ada untuk membukanya.
+        ->assertDontSee('lg:pl-80', false)
+        ->assertSee('title="Tampilkan menu"', false);
+
+    // Baris order, subtotal tanggal, dan subtotal segmen: masing-masing qty 2.
+    expect(substr_count($full->getContent(), '<td class="text-center">2</td>'))->toBe(3);
 });

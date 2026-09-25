@@ -13,61 +13,6 @@
   </p>
 </section>
 
-<section class="form-shell mt-4">
-  <form method="GET" action="{{ route('ownerapp.audit.index') }}" class="grid grid-cols-1 gap-3 md:grid-cols-6">
-    <div>
-      <label class="mb-1.5 block">Dari Tanggal</label>
-      <input type="date" name="date_from" value="{{ $dateFrom ?? '' }}">
-    </div>
-
-    <div>
-      <label class="mb-1.5 block">Sampai Tanggal</label>
-      <input type="date" name="date_to" value="{{ $dateTo ?? '' }}">
-    </div>
-
-    <div>
-      <label class="mb-1.5 block">User</label>
-      <select name="user_id">
-        <option value="">Semua</option>
-        @foreach($users as $u)
-          <option value="{{ $u->id }}" @selected(($userId ?? null) == $u->id)>
-            {{ $u->name }}
-          </option>
-        @endforeach
-      </select>
-    </div>
-
-    <div>
-      <label class="mb-1.5 block">Entity</label>
-      <select name="entity">
-        <option value="">Semua</option>
-        @foreach($availableEntities as $e)
-          <option value="{{ $e }}" @selected(($entity ?? null) === $e)>
-            {{ UiLabel::auditEntity($e) }}
-          </option>
-        @endforeach
-      </select>
-    </div>
-
-    <div>
-      <label class="mb-1.5 block">Action</label>
-      <select name="action">
-        <option value="">Semua</option>
-        @foreach($availableActions as $a)
-          <option value="{{ $a }}" @selected(($action ?? null) === $a)>
-            {{ UiLabel::auditAction($a) }}
-          </option>
-        @endforeach
-      </select>
-    </div>
-
-    <div class="flex items-end gap-2">
-      <button type="submit" class="btn-primary w-full">Lihat</button>
-      <a href="{{ route('ownerapp.audit.index') }}" class="btn-ghost w-full text-center">Reset</a>
-    </div>
-  </form>
-</section>
-
 <section class="stats-grid mt-4">
   <article class="stat-card">
     <p class="stat-label">Total Log</p>
@@ -92,7 +37,19 @@
 </section>
 
 <section class="table-shell mt-4">
-  <div class="table-head">Riwayat Aktivitas</div>
+  <x-table-toolbar title="Riwayat Aktivitas" :action="route('ownerapp.audit.index')"
+    :filters="[
+      ['type' => 'date-range', 'label' => 'Periode', 'from' => 'date_from', 'to' => 'date_to',
+       'value' => [$dateFrom ?? null, $dateTo ?? null]],
+      ['type' => 'select', 'name' => 'user_id', 'label' => 'User', 'placeholder' => 'Semua user',
+       'options' => $users->pluck('name', 'id'), 'value' => $userId ?? null],
+      ['type' => 'select', 'name' => 'entity', 'label' => 'Entity', 'placeholder' => 'Semua entity',
+       'options' => collect($availableEntities)->mapWithKeys(fn ($e) => [$e => \App\Support\UiLabel::auditEntity($e)]),
+       'value' => $entity ?? null],
+      ['type' => 'select', 'name' => 'action', 'label' => 'Action', 'placeholder' => 'Semua action',
+       'options' => collect($availableActions)->mapWithKeys(fn ($a) => [$a => \App\Support\UiLabel::auditAction($a)]),
+       'value' => $action ?? null],
+    ]" />
   <div class="data-table-wrap">
     <table class="data-table">
       <thead>

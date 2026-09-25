@@ -17,7 +17,7 @@
   <div class="section-card mb-6">
     <h2 class="panel-title mb-4">Tambah Kategori Pemasukan</h2>
     <form method="POST" action="{{ route('accountingapp.income-categories.store') }}"
-          class="grid grid-cols-1 md:grid-cols-4 gap-3">
+          class="grid grid-cols-1 items-end gap-3 md:grid-cols-[1fr_2fr_auto_auto]">
       @csrf
 
       <div>
@@ -26,22 +26,23 @@
                class="form-control" required>
       </div>
 
-      <div class="md:col-span-2">
+      <div>
         <label class="form-label">Deskripsi</label>
         <input type="text" name="description" value="{{ old('description') }}"
                class="form-control">
       </div>
 
-      <div class="flex items-end gap-3">
+      {{-- Tinggi = tinggi input, supaya centang sejajar dengan field di sebelahnya --}}
+      <div class="flex items-center md:h-[42px]">
         <label class="inline-flex items-center gap-2">
           <input type="checkbox" name="is_active" value="1" @checked(old('is_active', true))>
           <span class="text-sm text-gray-700">Aktif</span>
         </label>
       </div>
 
-      <div class="md:col-span-4 flex justify-end">
-        <button type="submit" class="btn-primary">
-          Simpan Kategori Pemasukan
+      <div>
+        <button type="submit" class="btn-primary w-full whitespace-nowrap">
+          Simpan
         </button>
       </div>
     </form>
@@ -67,19 +68,10 @@
               <td class="px-4 py-2">{{ $incomeCategory->description ?: '-' }}</td>
               <td class="px-4 py-2">{{ $incomeCategory->is_active ? 'Aktif' : 'Nonaktif' }}</td>
               <td class="px-4 py-2">
-                <div class="flex items-center gap-3">
-                  <a href="{{ route('accountingapp.income-categories.edit', $incomeCategory->id) }}"
-                     class="btn-link">
-                    Edit
-                  </a>
-                  <form method="POST" action="{{ route('accountingapp.income-categories.destroy', $incomeCategory->id) }}"
-                        onsubmit="return confirm('Hapus kategori pemasukan ini?')">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn-link-danger">
-                      Hapus
-                    </button>
-                  </form>
+                <div class="row-actions">
+                  <x-row-action kind="edit" :href="route('accountingapp.income-categories.edit', $incomeCategory->id)" />
+                  <x-row-action kind="delete" :action="route('accountingapp.income-categories.destroy', $incomeCategory->id)"
+                                confirm="Hapus kategori pemasukan ini?" />
                 </div>
               </td>
             </tr>

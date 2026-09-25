@@ -8,23 +8,11 @@
             sales actual PO).
             <br>
         </p>
-    </section>
-
-    <section class="app-card mt-4 p-5">
-        <form method="GET" action="{{ route('ownerapp.hpp-analysis') }}" class="grid grid-cols-1 gap-3 md:grid-cols-4">
-            <div>
-                <label class="mb-1.5 block">Dari Tanggal</label>
-                <input type="date" name="date_from" value="{{ $dateFrom }}">
-            </div>
-            <div>
-                <label class="mb-1.5 block">Sampai Tanggal</label>
-                <input type="date" name="date_to" value="{{ $dateTo }}">
-            </div>
-            <div class="md:col-span-2 flex items-end gap-2">
-                <button class="btn-primary w-full" type="submit">Terapkan Filter</button>
-                <a href="{{ route('ownerapp.hpp-analysis') }}" class="btn-ghost w-full">Reset</a>
-            </div>
-        </form>
+        <x-table-toolbar inline class="mt-4" :action="route('ownerapp.hpp-analysis')"
+          :filters="[
+            ['type' => 'date-range', 'label' => 'Periode', 'from' => 'date_from', 'to' => 'date_to',
+             'value' => [$dateFrom, $dateTo]],
+          ]" />
     </section>
 
     <section class="stats-grid mt-4">
