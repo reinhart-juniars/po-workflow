@@ -19,6 +19,4 @@ v.2.3.8 patch untuk menu 3s dan snapshot dan edit Harga
 v.2.3.9 patch ubah laporan final penjualan dan laporan final
 v.2.3.10 patch sesuaikan laporan laba rugi, dan patch kecil di admin app dan owner app
 v.3.0 modul inventory terpadu (item, pembelian, opname, resep & HPP, SPK produksi, form kebutuhan, ledger stok), cangkang 3S ONE satu login untuk semua app, peran inventory, penerimaan barang di form kebutuhan (ditolak, harga beli, pembelian & kas otomatis), peran supervisor gudang & alur ajukan/setujui/tolak dengan notifikasi
-v.3.1 bagian B: notifikasi perubahan harga bahan & harga jual menu, notifikasi batas profit menu, laporan menu tidak diproduksi, katalog foto menu berbasis SKU
-v.3.2 pencarian global (Ctrl+K) untuk PO, DO, SPK produksi, pelanggan, menu, dan bahan -- hasil disaring per peran
-v.3.3 master supplier bahan baku, filter & aksi berupa ikon di semua aplikasi, animasi geser antar menu, laporan penjualan lengkap selebar layar
+v.3.1 bagian B: notifikasi perubahan harga bahan & harga jual menu, notifikasi batas profit menu, laporan menu tidak diproduksi, katalog foto menu berbasis SKU, pencarian global (Ctrl+K) yang disaring per peran, master supplier bahan baku, filter & aksi berupa ikon di semua aplikasi, animasi geser antar menu, laporan penjualan lengkap selebar layar
