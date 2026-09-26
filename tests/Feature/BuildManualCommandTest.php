@@ -25,5 +25,12 @@ it('membangun panduan pengguna pdf dari sumber html', function () {
         ->toContain('Ctrl + K')
         ->toContain('boleh Anda buka');
 
+    // v3.3: Master Supplier dan cara menyaring (ikon corong + chip) ikut
+    // terdokumentasi, begitu juga gambar-gambarnya.
+    expect($html)->toContain('Master Supplier')
+        ->toContain('Menyaring daftar dan laporan')
+        ->toContain('img/filter-popover.jpg')
+        ->toContain('img/master-supplier.jpg');
+
     @unlink($output);
 });
