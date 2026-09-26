@@ -30,7 +30,11 @@ it('membangun panduan pengguna pdf dari sumber html', function () {
     expect($html)->toContain('Master Supplier')
         ->toContain('Menyaring daftar dan laporan')
         ->toContain('img/filter-popover.jpg')
-        ->toContain('img/master-supplier.jpg');
+        ->toContain('img/master-supplier.jpg')
+        // Hak akses per peran tertulis untuk pengguna, termasuk beda
+        // staf gudang vs supervisor gudang yang sering ditanyakan.
+        ->toContain('Hak akses rinci per peran')
+        ->toContain('Staf Gudang dan Supervisor Gudang: apa bedanya?');
 
     @unlink($output);
 });

@@ -68,6 +68,13 @@
   .fig { margin: 8pt 0 12pt; page-break-inside: avoid; }
   .fig img { width: 100%; border: 1px solid #cbd5e1; border-radius: 4pt; }
   .fig .cap { font-size: 8.5pt; color: #64748b; margin-top: 3pt; }
+  /* Tabel matriks tidak dipotong antar halaman: satu tabel harus terbaca utuh. */
+  table.matrix { page-break-inside: avoid; }
+  table.matrix th, table.matrix td { font-size: 8.5pt; padding: 4pt 4pt; }
+  table.matrix td.c, table.matrix th.c { text-align: center; }
+  .yes { color: #047857; font-weight: bold; }
+  .view { color: #1d4ed8; }
+  .no { color: #94a3b8; }
 </style>
 </head>
 <body>
@@ -87,7 +94,7 @@
   <h2>Isi Panduan</h2>
   <table class="toc">
     <tr><td>1. Apa itu 3S ONE</td></tr>
-    <tr><td>2. Siapa memakai apa</td></tr>
+    <tr><td>2. Siapa memakai apa (termasuk hak akses rinci per peran)</td></tr>
     <tr><td>3. Peta besar: dari pesanan sampai laporan</td></tr>
     <tr><td>4. Sebelum dan sesudah Modul Inventory: apa yang berubah</td></tr>
     <tr><td>5. Cara masuk dan berkeliling</td></tr>
@@ -132,7 +139,82 @@
   <p class="small muted" style="margin-top: 6pt;">Satu orang boleh punya lebih dari satu peran (misalnya Admin + Accounting). Peran Owner berdiri sendiri.</p>
 
   <h3>Aplikasi Inventory dipakai bersama</h3>
-  <p>Aplikasi Inventory bukan milik satu bagian. Admin, Accounting, Gudang, dan Produksi sama-sama membukanya — tetapi tiap peran hanya bisa menyentuh bagiannya (lihat Bab 8 dan 9).</p>
+  <p>Aplikasi Inventory bukan milik satu bagian. Admin, Accounting, Gudang, dan Produksi sama-sama membukanya — tetapi tiap peran hanya bisa menyentuh bagiannya (rinciannya di halaman berikut, alurnya di Bab 9).</p>
+</div>
+
+<!-- ============ 2b. HAK AKSES RINCI ============ -->
+<div class="page">
+  <h3 style="margin-top: 0;">Hak akses rinci per peran</h3>
+  <p>Tabel di halaman ini menjelaskan <b>persis</b> apa yang bisa dibuka dan dikerjakan tiap peran. Orang yang punya lebih dari satu peran mendapat <b>gabungan</b> hak semua perannya. Keterangan: <span class="yes">Kelola</span> = lihat + tambah/ubah/hapus, <span class="view">Lihat</span> = hanya membaca, <span class="yes">✓</span> = boleh, <span class="no">–</span> = tidak tampil / tidak boleh.</p>
+
+  <h3>1. Aplikasi (tab di bilah atas)</h3>
+  <table class="grid matrix">
+    <tr><th style="width: 22%">Peran</th><th class="c">Owner</th><th class="c">Admin</th><th class="c">Accounting</th><th class="c">Inventory</th><th class="c">Sales</th><th class="c">Production</th><th class="c">Delivery</th></tr>
+    <tr><td><b>Owner</b></td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+    <tr><td><b>Admin</b></td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td></tr>
+    <tr><td><b>Accounting</b></td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td></tr>
+    <tr><td><b>Inventory</b> (staf gudang)</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td></tr>
+    <tr><td><b>Supervisor Gudang</b></td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td></tr>
+    <tr><td><b>Production</b></td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td></tr>
+    <tr><td><b>Sales</b></td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td><td class="c no">–</td></tr>
+    <tr><td><b>Delivery</b></td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td></tr>
+  </table>
+  <p class="small muted">Superadmin melihat semua aplikasi, ditambah aplikasi Superadmin (backup database).</p>
+
+  <h3>2. Menu di aplikasi Inventory</h3>
+  <table class="grid matrix">
+    <tr><th style="width: 30%">Menu</th><th class="c">Owner</th><th class="c">Admin</th><th class="c">Accounting</th><th class="c">Staf Gudang</th><th class="c">Supervisor Gudang</th><th class="c">Production</th></tr>
+    <tr><td>Dashboard Inventory</td><td class="c view">Lihat</td><td class="c view">Lihat</td><td class="c view">Lihat</td><td class="c view">Lihat</td><td class="c view">Lihat</td><td class="c view">Lihat</td></tr>
+    <tr><td>Item Inventaris, <b>Master Supplier</b>, Pembelian Bahan Baku, Stock Opname, Saldo Awal Stok, Konversi Satuan</td><td class="c yes">Kelola</td><td class="c yes">Kelola</td><td class="c yes">Kelola</td><td class="c yes">Kelola</td><td class="c yes">Kelola</td><td class="c view">Lihat</td></tr>
+    <tr><td>Resep &amp; Menu (termasuk Analisa HPP), Pencocokan Menu, Bahan Belum Cocok</td><td class="c yes">Kelola</td><td class="c yes">Kelola</td><td class="c view">Lihat</td><td class="c yes">Kelola</td><td class="c yes">Kelola</td><td class="c view">Lihat</td></tr>
+    <tr><td>Menu Tidak Diproduksi, Perbandingan HPP, Kartu Stok</td><td class="c view">Lihat</td><td class="c view">Lihat</td><td class="c view">Lihat</td><td class="c view">Lihat</td><td class="c view">Lihat</td><td class="c view">Lihat</td></tr>
+    <tr><td>SPK Produksi, Pelaksana</td><td class="c yes">Kelola</td><td class="c yes">Kelola</td><td class="c view">Lihat</td><td class="c view">Lihat</td><td class="c view">Lihat</td><td class="c yes">Kelola</td></tr>
+    <tr><td>Pengaturan Inventory</td><td class="c yes">Kelola</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td></tr>
+  </table>
+  <p class="small muted">Sales dan Delivery tidak membuka aplikasi Inventory sama sekali.</p>
+  <h3>3. Tahap Form Kebutuhan</h3>
+  <p>Setiap tahap hanya bisa dikerjakan peran tertentu; peran lain tetap bisa melihat formnya, tetapi isiannya terkunci dan tombolnya tidak tampil.</p>
+  <table class="grid matrix">
+    <tr><th style="width: 30%">Tahap Form Kebutuhan</th><th class="c">Owner</th><th class="c">Admin</th><th class="c">Accounting</th><th class="c">Staf Gudang</th><th class="c">Supervisor Gudang</th><th class="c">Production</th></tr>
+    <tr><td>Susun form, isi Stok Awal, Simpan, <b>Ajukan</b></td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td></tr>
+    <tr><td><b>Setujui / Tolak</b></td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td></tr>
+    <tr><td>Penerimaan barang (Diterima, Ditolak, Harga Beli, cara bayar) + <b>Periksa</b></td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">–</td></tr>
+    <tr><td>Isi pemakaian aktual + <b>Tutup SPK</b></td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td></tr>
+    <tr><td>Melihat form di tahap mana pun</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+  </table>
+  <p class="small muted">Owner dan Admin memegang semua tahap sebagai <b>cadangan</b> — misalnya saat supervisor gudang sedang libur.</p>
+
+  <h3>4. Lonceng yang diterima</h3>
+  <table class="grid matrix">
+    <tr><th style="width: 30%">Lonceng</th><th class="c">Owner</th><th class="c">Admin</th><th class="c">Accounting</th><th class="c">Staf Gudang</th><th class="c">Supervisor Gudang</th><th class="c">Production</th></tr>
+    <tr><td>Form diajukan — menunggu persetujuan</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td></tr>
+    <tr><td>Form disetujui — siap dibelanjakan</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">–</td></tr>
+    <tr><td>Form ditolak — perbaiki lalu ajukan lagi</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td></tr>
+    <tr><td>Barang sudah diperiksa — siap masak / Tutup SPK</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td></tr>
+    <tr><td>Harga bahan / harga jual menu berubah</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td></tr>
+    <tr><td>Profit menu keseluruhan keluar dari batas</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td></tr>
+  </table>
+
+  <h3>5. Yang hanya boleh dilakukan Owner</h3>
+  <p>Beberapa pekerjaan sengaja dikunci untuk Owner (dan Superadmin), meskipun menunya ada di aplikasi yang juga dibuka peran lain:</p>
+  <ul>
+    <li><b>Master User</b> — membuat akun, mengubah peran, reset password, menonaktifkan, dan menghapus pengguna.</li>
+    <li><b>Adjustment Neraca</b> dan <b>Adjustment Laba Rugi</b> — menunya hanya tampil untuk Owner.</li>
+    <li><b>Mengubah Saldo Awal</b> yang sudah tersimpan (Accounting hanya bisa menambah).</li>
+    <li><b>Membuka kembali periode</b> yang sudah ditutup di Status Periode.</li>
+    <li><b>Mencatat atau mengoreksi transaksi</b> (pengeluaran, pemasukan lain) bertanggal di periode yang sudah ditutup.</li>
+    <li><b>Menghapus</b> data di Monitoring Pembelian Stok.</li>
+    <li><b>Pengaturan Inventory</b> — % OHC &amp; profit, sumber HPP, batas profit menu, penomoran dokumen.</li>
+  </ul>
+
+  <h3>6. Staf Gudang dan Supervisor Gudang: apa bedanya?</h3>
+  <p>Keduanya membuka menu yang <b>sama persis</b> di aplikasi Inventory (tabel 2). Supervisor Gudang hanya punya <b>dua tambahan</b>:</p>
+  <ol>
+    <li>Tombol <b>Setujui / Tolak</b> pada Form Kebutuhan yang diajukan dapur, beserta lonceng "form menunggu persetujuan".</li>
+    <li>Lonceng <b>perubahan harga</b> bahan dan harga jual menu.</li>
+  </ol>
+  <div class="warn"><b>Pemisahan tugas:</b> Supervisor Gudang juga boleh menerima barang dan menekan <b>Periksa</b>. Kalau orang yang menyetujui form sekaligus belanja dan memeriksa barangnya sendiri, tidak ada lagi orang kedua yang mengecek. Sebaiknya yang menyetujui (Supervisor Gudang) dan yang menerima barang (Staf Gudang) adalah orang yang berbeda.</div>
+  <div class="tip">Pembagian hak ini adalah bawaan sistem dan tidak diatur dari layar. Bila sebuah peran perlu hak tambahan atau dikurangi, sampaikan ke tim IT — Owner cukup memilih <b>peran</b> yang tepat untuk tiap orang di Master User.</div>
 </div>
 
 <!-- ============ 3. PETA BESAR ============ -->
@@ -561,7 +643,7 @@
   <div class="fig"><img src="img/master-user.jpg" alt="Owner › Master User: peran diubah di kotak Role lalu Simpan; ikon reset password, nonaktifkan, dan hapus di ujung baris."><div class="cap">Owner › Master User: peran diubah di kotak Role lalu Simpan; ikon reset password, nonaktifkan, dan hapus di ujung baris.</div></div>
 
   <h3>Peran yang tersedia di Master User</h3>
-  <p>Owner, Admin, Accounting, Inventory (staf gudang), Supervisor Gudang, Sales, Production, Delivery. Untuk menunjuk siapa yang <b>menyetujui</b> Form Kebutuhan, beri peran <b>Supervisor Gudang</b>.</p>
+  <p>Owner, Admin, Accounting, Inventory (staf gudang), Supervisor Gudang, Sales, Production, Delivery. Untuk menunjuk siapa yang <b>menyetujui</b> Form Kebutuhan, beri peran <b>Supervisor Gudang</b>. Apa saja yang bisa dibuka dan dikerjakan tiap peran ada di tabel <i>Hak akses rinci per peran</i> (Bab 2).</p>
 
   <h3>Pengaturan Inventory (khusus Owner)</h3>
   <ul>
@@ -660,7 +742,7 @@
     <tr><td>Chip filter</td><td>Label biru di atas tabel/laporan yang menunjukkan filter yang sedang berlaku; tanda × melepasnya.</td></tr>
     <tr><td>Residual opname</td><td>Pemakaian bahan dihitung dari selisih: Saldo Awal + Beli − Sisa.</td></tr>
     <tr><td>Closing / Tutup buku</td><td>Mengunci transaksi satu periode agar laporannya tidak berubah lagi.</td></tr>
-    <tr><td>Peran</td><td>Jenis pengguna yang menentukan aplikasi & tombol yang tampil.</td></tr>
+    <tr><td>Peran</td><td>Jenis pengguna yang menentukan aplikasi & tombol yang tampil. Rinciannya di Bab 2, <i>Hak akses rinci per peran</i>.</td></tr>
   </table>
 </div>
 
