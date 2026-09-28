@@ -529,6 +529,50 @@ class MasterMenuMigrationService
             }
         }
 
+        // Dokumen produksi yang dibuat tanpa Pra SPK: pembagian tugas pelaksana
+        // tetap histori yang berharga, jadi dipindah sebagai SPK Produksi
+        // tersendiri (tanpa baris menu), dikenali lewat source_produksi_id.
+        if ($schema->hasTable('produksi')) {
+            foreach ($this->source->table('produksi')->whereNull('spk_id')->orderBy('id')->cursor() as $row) {
+                $attributes = [
+                    'title' => $row->title ?: 'Produksi Master Menu #'.$row->id,
+                    'production_date' => (($row->created_at ?? null) ? substr($row->created_at, 0, 10) : now()->toDateString()),
+                    'status' => ProductionOrder::STATUS_COMPLETED,
+                    'notes' => trim('Dokumen produksi Master Menu #'.$row->id.' (tanpa SPK)'."\n".($row->notes ?? '')),
+                ];
+
+                $production = ProductionOrder::query()->where('source_produksi_id', $row->id)->first();
+
+                if ($production) {
+                    $production->update($attributes);
+                    $updated++;
+                } else {
+                    $production = ProductionOrder::query()->create($attributes + [
+                        'source_produksi_id' => $row->id,
+                        'completed_at' => ($row->created_at ?? null) ?: now(),
+                    ]);
+                    $created++;
+                }
+
+                $production->tasks()->delete();
+
+                foreach ($this->source->table('produksi_rows')->where('produksi_id', $row->id)->orderBy('sort_order')->orderBy('id')->cursor() as $task) {
+                    $production->tasks()->create([
+                        'sort_order' => (int) ($task->sort_order ?? 0),
+                        'recipe_id' => $task->recipe_id ? ($recipeBySource[$task->recipe_id] ?? null) : null,
+                        'menu_label' => $task->menu_label ?: null,
+                        'worker_name' => $task->nama ?: null,
+                        'task' => $task->tugas ?: null,
+                        'object' => $task->objek ?: null,
+                        'quantity_text' => $task->jumlah ?: null,
+                        'is_done' => true,
+                    ]);
+
+                    $tasks++;
+                }
+            }
+        }
+
         return ['baru' => $created, 'diperbarui' => $updated, 'baris' => $lines, 'tugas' => $tasks];
     }
 }

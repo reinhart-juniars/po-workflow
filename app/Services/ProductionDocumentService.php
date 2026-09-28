@@ -38,11 +38,13 @@ class ProductionDocumentService
         return $this->stream('pdf.requisition', ['requisition' => $requisition], $requisition->number.'.pdf');
     }
 
-    public function platingPdf(ProductionOrder $order): StreamedResponse
+    /** @param  string  $tampilan  global (satu tabel) | kartu (komponen per menu) */
+    public function platingPdf(ProductionOrder $order, string $tampilan = 'global'): StreamedResponse
     {
         return $this->stream('pdf.plating', [
             'order' => $order,
             'sheet' => $this->plating->sheet($order),
+            'tampilan' => $tampilan === 'kartu' ? 'kartu' : 'global',
         ], 'plating-'.$order->number.'.pdf');
     }
 

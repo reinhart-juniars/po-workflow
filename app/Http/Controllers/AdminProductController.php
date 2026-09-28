@@ -48,7 +48,6 @@ class AdminProductController extends Controller
     public function store(Request $request)
     {
         $data = $this->validatedPayload($request);
-        $data['sku'] = Product::generateUniqueSku($data['name']);
         $data['active'] = $request->boolean('active');
         $data['is_3s'] = $request->boolean('is_3s');
 
@@ -71,8 +70,7 @@ class AdminProductController extends Controller
 
     public function update(Request $request, Product $product)
     {
-        $data = $this->validatedPayload($request);
-        $data['sku'] = $product->sku ?: Product::generateUniqueSku($data['name'], $product->id);
+        $data = $this->validatedPayload($request, $product);
         $data['active'] = $request->boolean('active');
         $data['is_3s'] = $request->boolean('is_3s');
 
@@ -168,9 +166,16 @@ class AdminProductController extends Controller
             ->with('success', 'Preview import master menu dibatalkan.');
     }
 
-    protected function validatedPayload(Request $request): array
+    protected function validatedPayload(Request $request, ?Product $product = null): array
     {
+        // SKU diketik admin (bukan dibuat dari nama) karena tampil sebagai nama
+        // menu di website. Dirapikan dulu supaya cek unik membandingkan bentuk
+        // yang benar-benar disimpan.
+        $request->merge(['sku' => Product::normalizeSku($request->input('sku'))]);
+        $sku = Product::skuValidation($product?->id);
+
         return $request->validate([
+            ...$sku['rules'],
             'name' => ['required', 'string', 'max:255'],
             'unit' => ['required', 'string', 'max:50'],
             'base_price' => ['required', 'numeric', 'min:0'],
@@ -178,6 +183,6 @@ class AdminProductController extends Controller
             'overhead_cost' => ['nullable', 'numeric', 'min:0'],
             'active' => ['nullable', 'boolean'],
             'is_3s' => ['nullable', 'boolean'],
-        ]);
+        ], $sku['messages']);
     }
 }

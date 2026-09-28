@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 
 class Product extends Model
 {
@@ -29,12 +28,19 @@ class Product extends Model
         'needs_recipe',
         'photo_path',
         'photo_updated_at',
+        'show_on_website',
+    ];
+
+    /** Sama dengan default kolom: menu baru tidak tampil di website sampai dicentang marketing. */
+    protected $attributes = [
+        'show_on_website' => false,
     ];
 
     protected $casts = [
         'active' => 'boolean',
         'is_3s' => 'boolean',
         'photo_updated_at' => 'datetime',
+        'show_on_website' => 'boolean',
         'needs_recipe' => 'boolean',
         'base_price' => 'decimal:2',
         'raw_material_cost' => 'decimal:2',
@@ -79,7 +85,32 @@ class Product extends Model
                     $product->base_price === null ? null : (float) $product->base_price,
                 );
             }
+
+            // SKU = nama menu di website: admin dan marketing sama-sama boleh
+            // menggantinya, jadi setiap penggantian dicatat dan diberitahukan.
+            if ($product->wasChanged('sku')) {
+                app(\App\Services\SkuChangeNotifier::class)->skuChanged($product, $product->getOriginal('sku'), $product->sku);
+            }
         });
+    }
+
+    /**
+     * Aturan validasi SKU, dipakai Master Menu (admin) dan Katalog (marketing).
+     *
+     * @return array{rules: array<string, array<int, mixed>>, messages: array<string, string>}
+     */
+    public static function skuValidation(?int $ignoreId = null): array
+    {
+        return [
+            'rules' => [
+                'sku' => ['required', 'string', 'max:100', \Illuminate\Validation\Rule::unique('products', 'sku')->ignore($ignoreId)],
+            ],
+            'messages' => [
+                'sku.required' => 'SKU wajib diisi. SKU dipakai sebagai nama menu di website.',
+                'sku.max' => 'SKU maksimal 100 karakter.',
+                'sku.unique' => 'SKU ini sudah dipakai menu lain.',
+            ],
+        ];
     }
 
     public function recordPriceHistory(?string $reason = null): void
@@ -171,41 +202,30 @@ class Product extends Model
     }
 
     /**
-     * Mutator: selalu simpan sku dalam huruf besar
+     * SKU ditulis manual oleh admin dan dipakai sebagai nama menu di website,
+     * jadi disimpan persis seperti diketik (bukan dipaksa kapital) -- hanya
+     * spasi ganda dirapikan. Kosong disimpan sebagai null agar kolom unik
+     * tidak bentrok antar-menu yang belum punya SKU.
      */
     protected function sku(): Attribute
     {
         return Attribute::make(
-            set: fn ($value) => mb_strtoupper((string) $value),
+            set: fn ($value) => static::normalizeSku($value),
         );
     }
 
-    public static function generateUniqueSku(string $name, ?int $ignoreId = null): string
+    public static function normalizeSku(mixed $value): ?string
     {
-        $baseSku = Str::of($name)
-            ->ascii()
-            ->upper()
-            ->replaceMatches('/[^A-Z0-9]+/', '-')
-            ->trim('-')
-            ->value();
+        $sku = trim((string) preg_replace('/\s+/u', ' ', (string) $value));
 
-        if ($baseSku === '') {
-            $baseSku = 'MENU';
-        }
+        return $sku === '' ? null : $sku;
+    }
 
-        $baseSku = Str::limit($baseSku, 50, '');
-        $candidate = $baseSku;
-        $counter = 2;
-
-        while (static::query()
-            ->when($ignoreId, fn ($query) => $query->whereKeyNot($ignoreId))
-            ->where('sku', $candidate)
-            ->exists()) {
-            $suffix = '-'.$counter;
-            $candidate = Str::limit($baseSku, 50 - strlen($suffix), '').$suffix;
-            $counter++;
-        }
-
-        return $candidate;
+    /** Menu yang terbit di website: aktif, dicentang marketing, dan punya SKU (= namanya di website). */
+    public function scopeOnWebsite(Builder $query): Builder
+    {
+        return $query->where('active', true)
+            ->where('show_on_website', true)
+            ->whereNotNull('sku');
     }
 }

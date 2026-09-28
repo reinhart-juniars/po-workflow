@@ -79,6 +79,7 @@ class ProductionTasks extends Page implements HasForms
                         TextInput::make('task')
                             ->label('Pekerjaan')
                             ->placeholder('potong / goreng / rebus')
+                            ->datalist(fn () => \App\Models\ProductionTask::taskOptions())
                             ->maxLength(255)
                             ->required(),
 
@@ -148,6 +149,15 @@ class ProductionTasks extends Page implements HasForms
 
                     $this->form->fill();
                 }),
+
+            Actions\Action::make('excel')
+                ->label('Export Excel')
+                ->icon('heroicon-m-arrow-down-tray')
+                ->color('gray')
+                ->action(fn () => \Maatwebsite\Excel\Facades\Excel::download(
+                    new \App\Exports\ProductionTasksExport($order),
+                    'lembar-kerja-'.$order->number.'.xlsx'
+                )),
 
             Actions\Action::make('simpan')
                 ->authorize('production.manage')

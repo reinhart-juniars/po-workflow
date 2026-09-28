@@ -23,6 +23,7 @@ use App\Http\Controllers\GlobalSearchController;
 use App\Http\Controllers\IncomeCategoryController;
 use App\Http\Controllers\InventoryPurchaseController;
 use App\Http\Controllers\InventoryUsageReportController;
+use App\Http\Controllers\MenuCatalogController;
 use App\Http\Controllers\OwnerAppController;
 use App\Http\Controllers\OwnerUserController;
 use App\Http\Controllers\ProductionAppController;
@@ -118,10 +119,8 @@ Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:admin|ow
     ->prefix('admin-app')
     ->name('adminapp.')
     ->group(function () {
-        // Bagian B.4: Katalog Foto Menu (kelola foto)
-        Route::get('/catalog', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\MenuCatalogController::class)->index($r, 'admin'))->name('catalog.index');
-        Route::post('/catalog/{product}/photo', [\App\Http\Controllers\MenuCatalogController::class, 'upload'])->name('catalog.upload');
-        Route::delete('/catalog/{product}/photo', [\App\Http\Controllers\MenuCatalogController::class, 'destroyPhoto'])->name('catalog.photo.destroy');
+        // Katalog Foto Menu pindah ke aplikasi Marketing; bookmark lama diarahkan.
+        Route::get('/catalog', fn () => redirect()->route('marketingapp.catalog.index'));
 
         // Route Dashboard
         Route::get('/', [AdminAppController::class, 'dashboard'])->name('dashboard');
@@ -136,6 +135,7 @@ Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:admin|ow
 
         // Edit & Update PO
         Route::get('/orders/{po}/edit', [AdminAppController::class, 'ordersEdit'])->name('orders.edit');
+        Route::get('/orders/{po}/kebutuhan-bahan/excel', [AdminAppController::class, 'ordersBreakdownExcel'])->name('orders.breakdown.excel');
         Route::put('/orders/{po}', [AdminAppController::class, 'ordersUpdate'])->name('orders.update');
 
         // Delete PO
@@ -260,8 +260,8 @@ Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:sales|ow
     ->prefix('sales-app')
     ->name('salesapp.')
     ->group(function () {
-        // Bagian B.4: Katalog Foto Menu (hanya lihat)
-        Route::get('/catalog', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\MenuCatalogController::class)->index($r, 'sales'))->name('catalog.index');
+        // Katalog Foto Menu pindah ke aplikasi Marketing; bookmark lama diarahkan.
+        Route::get('/catalog', fn () => redirect()->route('marketingapp.catalog.index'));
         Route::get('/', [SalesAppController::class, 'dashboard'])->name('dashboard');
         Route::get('/dashboard', function () {
             return redirect()->route('salesapp.dashboard');
@@ -279,6 +279,20 @@ Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:sales|ow
         Route::get('/reports/sales', [SalesAppController::class, 'salesReport'])->name('reports.sales');
         Route::get('/reports/sales/export/excel', [SalesAppController::class, 'exportSalesExcel'])->name('reports.sales.export.excel');
         Route::get('/reports/sales/export/pdf', [SalesAppController::class, 'exportSalesPdf'])->name('reports.sales.export.pdf');
+    });
+
+// Aplikasi Marketing: Katalog Foto Menu (Bagian B.4) dan centang menu yang
+// tampil di website. Owner/superadmin ikut membuka seperti aplikasi lain.
+Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:marketing|owner|superadmin'])
+    ->prefix('marketing-app')
+    ->name('marketingapp.')
+    ->group(function () {
+        Route::get('/', [MenuCatalogController::class, 'dashboard'])->name('dashboard');
+        Route::get('/catalog', [MenuCatalogController::class, 'index'])->name('catalog.index');
+        Route::post('/catalog/{product}/photo', [MenuCatalogController::class, 'upload'])->name('catalog.upload');
+        Route::delete('/catalog/{product}/photo', [MenuCatalogController::class, 'destroyPhoto'])->name('catalog.photo.destroy');
+        Route::patch('/catalog/{product}/website', [MenuCatalogController::class, 'updateWebsite'])->name('catalog.website');
+        Route::patch('/catalog/{product}/sku', [MenuCatalogController::class, 'updateSku'])->name('catalog.sku');
     });
 
 // Panel Filament pindah dari /admin ke /inventory; tautan

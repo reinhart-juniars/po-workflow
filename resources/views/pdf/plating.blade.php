@@ -19,6 +19,32 @@
     · Total <b>{{ $qty($sheet['total_qty']) }}</b> porsi
 </div>
 
+@if (($tampilan ?? 'global') === 'kartu')
+    {{-- Komponen per menu: dua kartu per baris (dompdf tidak mendukung grid/flex). --}}
+    <table class="plate-cards">
+        @foreach (array_chunk($sheet['rows'], 2) as $pair)
+            <tr>
+                @foreach ($pair as $row)
+                    <td style="width: 50%; vertical-align: top; padding: 0 6px 10px 0; border: 0">
+                        <table>
+                            <tr>
+                                <td style="width: 44px; font-size: 20px; font-weight: bold; text-align: center">{{ $qty($row['qty']) }}</td>
+                                <td><b>{{ $row['name'] }}</b><br><span class="muted">{{ $row['unit'] ?: 'porsi' }}{{ $row['remark'] ? ' · '.$row['remark'] : '' }}</span></td>
+                            </tr>
+                            @for ($slot = 0; $slot < max(count($row['components']), \App\Services\PlatingService::MIN_SLOTS); $slot++)
+                                <tr>
+                                    <td class="center muted">{{ $slot + 1 }}</td>
+                                    <td style="height: 16px">{{ $row['components'][$slot] ?? '' }}</td>
+                                </tr>
+                            @endfor
+                        </table>
+                    </td>
+                @endforeach
+                @if (count($pair) === 1)<td style="border: 0"></td>@endif
+            </tr>
+        @endforeach
+    </table>
+@else
 <table>
     <thead>
         <tr>
@@ -49,5 +75,6 @@
         @endforeach
     </tbody>
 </table>
+@endif
 </body>
 </html>

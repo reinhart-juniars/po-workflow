@@ -15,13 +15,14 @@ class ProductsImport implements SkipsEmptyRows, ToCollection, WithHeadingRow
     private const MAX_MONEY_VALUE = 9999999999.99;
 
     protected int $created = 0;
+
     protected int $updated = 0;
+
     protected array $previewRows = [];
 
     public function __construct(
         protected bool $commit = true
-    ) {
-    }
+    ) {}
 
     public function collection(Collection $rows): void
     {
@@ -87,6 +88,12 @@ class ProductsImport implements SkipsEmptyRows, ToCollection, WithHeadingRow
 
             $product = $this->resolveProduct($data['id'] ?? null, $data['sku'] ?? null);
 
+            // SKU = nama menu di website, jadi tidak dikarang sistem: menu baru
+            // wajib membawa SKU-nya sendiri.
+            if (! $product && blank($data['sku'] ?? null)) {
+                throw new \RuntimeException("Baris {$excelRow}: kolom SKU wajib diisi untuk menu baru (SKU dipakai sebagai nama menu di website).");
+            }
+
             $parsedRows[] = [
                 'excel_row' => $excelRow,
                 'action' => $product ? 'update' : 'create',
@@ -108,7 +115,11 @@ class ProductsImport implements SkipsEmptyRows, ToCollection, WithHeadingRow
         }
 
         if (! $product && filled($sku)) {
-            return Product::where('sku', Str::upper(trim((string) $sku)))->first();
+            // SKU disimpan apa adanya; pencocokan tidak peka huruf besar/kecil
+            // supaya file lama berisi SKU kapital tetap menemukan menunya.
+            return Product::query()
+                ->whereRaw('LOWER(sku) = ?', [mb_strtolower((string) Product::normalizeSku($sku))])
+                ->first();
         }
 
         return $product;
@@ -127,8 +138,9 @@ class ProductsImport implements SkipsEmptyRows, ToCollection, WithHeadingRow
             unset($payload['is_3s']);
         }
 
+        // Sel SKU kosong pada menu yang sudah ada = biarkan SKU lamanya.
         if (blank($payload['sku'] ?? null)) {
-            $payload['sku'] = $product?->sku ?: Product::generateUniqueSku($payload['name'], $product?->id);
+            unset($payload['sku']);
         }
 
         return $payload;
@@ -218,7 +230,7 @@ class ProductsImport implements SkipsEmptyRows, ToCollection, WithHeadingRow
 
         return [
             'id' => filled($id) ? (int) $id : null,
-            'sku' => filled($sku) ? Str::upper(trim($sku)) : null,
+            'sku' => Product::normalizeSku($sku),
             'name' => $name,
             'unit' => $unit,
             'base_price' => $basePrice,
@@ -332,7 +344,7 @@ class ProductsImport implements SkipsEmptyRows, ToCollection, WithHeadingRow
 
         if ($number > self::MAX_MONEY_VALUE) {
             throw new \RuntimeException(
-                "Baris {$excelRow}: kolom {$columnLabel} melebihi batas maksimal " . number_format(self::MAX_MONEY_VALUE, 2, ',', '.') . "."
+                "Baris {$excelRow}: kolom {$columnLabel} melebihi batas maksimal ".number_format(self::MAX_MONEY_VALUE, 2, ',', '.').'.'
             );
         }
 

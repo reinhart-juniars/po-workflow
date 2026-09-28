@@ -11,6 +11,29 @@
             Komponen diambil dari sub-menu dan kelompok pada resep; bahan mentah tanpa kelompok tidak ditampilkan.
         </x-slot>
 
+        @if ($this->tampilan === 'kartu')
+            {{-- Komponen per menu: kartu dua kolom, slot bernomor (minimal 8) untuk catatan tangan. --}}
+            <div class="sh-plate-grid">
+                @forelse ($sheet['rows'] as $row)
+                    <div class="sh-plate-card">
+                        <div class="sh-plate-head">
+                            <span class="sh-plate-qty">{{ $qty($row['qty']) }}</span>
+                            <span>
+                                <span class="sh-plate-name">{{ $row['name'] }}</span>
+                                <span class="sh-plate-meta">{{ $row['unit'] ?: 'porsi' }}{{ $row['remark'] ? ' · '.$row['remark'] : '' }}</span>
+                            </span>
+                        </div>
+                        <ol class="sh-plate-slots">
+                            @for ($slot = 0; $slot < max(count($row['components']), \App\Services\PlatingService::MIN_SLOTS); $slot++)
+                                <li><span>{{ $slot + 1 }}</span>{{ $row['components'][$slot] ?? '' }}</li>
+                            @endfor
+                        </ol>
+                    </div>
+                @empty
+                    <p class="sh-bd-note">SPK ini belum punya baris menu.</p>
+                @endforelse
+            </div>
+        @else
         <div class="overflow-x-auto">
             <table class="sh-table">
                 <thead>
@@ -41,5 +64,6 @@
                 </tbody>
             </table>
         </div>
+        @endif
     </x-filament::section>
 </x-filament-panels::page>

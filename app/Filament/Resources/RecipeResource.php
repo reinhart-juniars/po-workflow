@@ -70,6 +70,8 @@ class RecipeResource extends Resource
 
                         Forms\Components\TextInput::make('kategori')
                             ->label('Kategori')
+                            ->placeholder('protein / sambal / sup')
+                            ->datalist(fn () => array_values(static::kategoriOptions()))
                             ->maxLength(255),
 
                         // Tautan disimpan di products.recipe_id (satu resep boleh
@@ -226,6 +228,19 @@ class RecipeResource extends Resource
                                     ])
                                     ->helperText('Isi salah satu saja: bahan atau sub-menu.'),
 
+                                // Padanan "Snapshot" di Master Menu: harga per satuan baris
+                                // untuk bahan yang belum ditautkan, supaya HPP-nya tetap
+                                // terhitung sementara bahan masternya belum ada.
+                                Forms\Components\TextInput::make('unit_price_snapshot')
+                                    ->label('Harga Manual / Satuan')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->step('any')
+                                    ->prefix('Rp')
+                                    ->visible(fn (Get $get) => blank($get('inventory_item_id')) && blank($get('ref_recipe_id')))
+                                    ->helperText('Hanya untuk baris yang belum ditautkan ke bahan atau sub-menu.')
+                                    ->columnSpan(2),
+
                                 Forms\Components\TextInput::make('section')
                                     ->label('Kelompok')
                                     ->maxLength(255)
@@ -311,11 +326,37 @@ class RecipeResource extends Resource
                 // mengikuti harga bahan terbaru, bukan angka yang membeku.
                 TextColumn::make('hpp')
                     ->label('HPP / Hasil')
-                    ->state(fn (Recipe $record) => app(RecipeCostService::class)->cost($record)['hpp_per_yield'])
+                    ->state(fn (Recipe $record) => static::costOf($record)['hpp_per_yield'])
                     ->money('IDR', locale: 'id')
                     ->alignRight()
                     ->description(fn (Recipe $record) => rtrim(rtrim(number_format((float) $record->yield_qty, 2, ',', '.'), '0'), ',')
                         .' '.$record->yield_unit),
+
+                // Evaluasi terhadap harga jual nyata, seperti daftar Menu Utama /
+                // Sub-Menu di Master Menu: harga target bila ada, else hitungan.
+                TextColumn::make('total_biaya')
+                    ->label('HPP + OHC')
+                    ->state(fn (Recipe $record) => static::costOf($record)['total_biaya'])
+                    ->money('IDR', locale: 'id')
+                    ->alignRight()
+                    ->toggleable(),
+
+                TextColumn::make('harga_jual')
+                    ->label('Harga Jual')
+                    ->state(fn (Recipe $record) => static::costOf($record)['harga_jual_dipakai'])
+                    ->money('IDR', locale: 'id')
+                    ->alignRight()
+                    ->description(fn (Recipe $record) => static::costOf($record)['pakai_target'] ? 'target' : 'hitungan')
+                    ->toggleable(),
+
+                TextColumn::make('profit_pct')
+                    ->label('Profit %')
+                    ->state(fn (Recipe $record) => static::costOf($record)['profit_pct_aktual'])
+                    ->formatStateUsing(fn ($state) => number_format((float) $state * 100, 2, ',', '.').'%')
+                    ->description(fn (Recipe $record) => 'margin '.number_format(static::costOf($record)['margin_pct_aktual'] * 100, 2, ',', '.').'%')
+                    ->color(fn (Recipe $record) => static::costOf($record)['profit_ok'] ? 'success' : 'danger')
+                    ->alignRight()
+                    ->toggleable(),
 
                 TextColumn::make('status_hitung')
                     ->label('Status Hitungan')
@@ -346,6 +387,18 @@ class RecipeResource extends Resource
                     ->label('Jenis')
                     ->options(Recipe::jenisOptions()),
 
+                Tables\Filters\SelectFilter::make('kategori')
+                    ->label('Kategori')
+                    ->options(fn () => static::kategoriOptions()),
+
+                // "Hanya yang perlu dicek" di Master Menu: profit nyata di bawah
+                // target profit resepnya. Dihitung di PHP karena HPP tidak
+                // tersimpan sebagai kolom.
+                Tables\Filters\Filter::make('profit_di_bawah_target')
+                    ->label('Profit di bawah target')
+                    ->toggle()
+                    ->query(fn ($query) => $query->whereIn('recipes.id', static::recipeIdsBelowTarget())),
+
                 Tables\Filters\Filter::make('belum_dipetakan')
                     ->label('Belum dipetakan ke produk')
                     ->toggle()
@@ -370,15 +423,69 @@ class RecipeResource extends Resource
                     ->url(fn (Recipe $record) => static::getUrl('hpp', ['record' => $record])),
 
                 Tables\Actions\EditAction::make()->label('Edit'),
-                Tables\Actions\DeleteAction::make()->label('Hapus'),
+
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\Action::make('pindah_jenis')
+                        ->label(fn (Recipe $record) => $record->jenis === Recipe::JENIS_SUB ? 'Jadikan Menu Utama' : 'Jadikan Sub-Menu')
+                        ->icon('heroicon-m-arrows-right-left')
+                        ->authorize('update')
+                        ->requiresConfirmation()
+                        ->action(fn (Recipe $record) => $record->update([
+                            'jenis' => $record->jenis === Recipe::JENIS_SUB ? Recipe::JENIS_UTAMA : Recipe::JENIS_SUB,
+                        ])),
+
+                    Tables\Actions\DeleteAction::make()->label('Hapus'),
+                ]),
             ])
             ->defaultSort('name');
+    }
+
+    /** @var array<int, array<string, mixed>> Hitungan HPP per resep dalam satu request. */
+    protected static array $costCache = [];
+
+    /**
+     * Hitungan HPP sebuah resep, sekali per request: beberapa kolom tabel
+     * membaca hasil yang sama dan resep berlapis mahal dihitung ulang.
+     *
+     * @return array<string, mixed>
+     */
+    public static function costOf(Recipe $recipe): array
+    {
+        return static::$costCache[$recipe->id] ??= app(RecipeCostService::class)->cost($recipe);
+    }
+
+    /** @return list<int> Resep aktif yang profit nyatanya di bawah target profit resep itu. */
+    public static function recipeIdsBelowTarget(): array
+    {
+        return Recipe::query()
+            ->where('is_active', true)
+            ->get()
+            ->reject(fn (Recipe $recipe) => static::costOf($recipe)['profit_ok'])
+            ->pluck('id')
+            ->all();
+    }
+
+    /**
+     * Kategori menu yang sudah dipakai, sebagai pilihan (Master Kategori di
+     * Master Menu). Tetap boleh mengetik kategori baru di form.
+     *
+     * @return array<string, string>
+     */
+    public static function kategoriOptions(): array
+    {
+        return Recipe::query()
+            ->whereNotNull('kategori')
+            ->where('kategori', '!=', '')
+            ->distinct()
+            ->orderBy('kategori')
+            ->pluck('kategori', 'kategori')
+            ->all();
     }
 
     /** Ringkas keadaan perhitungan sebuah resep menjadi satu kata. */
     public static function costStatus(Recipe $recipe): string
     {
-        $cost = app(RecipeCostService::class)->cost($recipe);
+        $cost = static::costOf($recipe);
 
         return match (true) {
             $cost['has_cycle'] => 'Resep Berputar',

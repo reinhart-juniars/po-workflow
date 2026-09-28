@@ -59,7 +59,11 @@ pembelian, opname, saldo awal, mencocokkan nama bahan resep, dan memeriksa Form
 Kebutuhan saat barang dibeli; menyusun/menyetujui/menutup SPK produksi tetap di
 produksi/admin/owner.
 
-`sales` dan `delivery` tidak membuka panel sama sekali (bukan `PANEL_ROLES`). Peran
+Peran **`marketing`** hanya membuka aplikasi Blade Marketing (`/marketing-app`): Katalog Foto
+Menu dan centang menu yang tampil di website. Tanpa izin modul apa pun. Admin/sales yang juga
+mengurus katalog diberi peran tambahan `marketing` di Master User.
+
+`sales`, `marketing`, dan `delivery` tidak membuka panel sama sekali (bukan `PANEL_ROLES`). Peran
 `production` **ditambahkan** ke `PANEL_ROLES` di Phase 4 karena Form Kebutuhan
 menggantikan form kertas yang diisi tim produksi.
 

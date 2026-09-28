@@ -134,6 +134,7 @@
     <tr><td><b>Supervisor Gudang</b></td><td>Inventory</td><td>Seperti staf gudang, <b>ditambah</b> menyetujui / menolak Form Kebutuhan dari dapur.</td></tr>
     <tr><td><b>Production</b></td><td>Production, Inventory</td><td>Menyusun Form Kebutuhan, memasak sesuai SPK, mencatat pemakaian bahan, menutup SPK.</td></tr>
     <tr><td><b>Sales</b></td><td>Sales</td><td>Laporan penjualan, sales final & retur, waste.</td></tr>
+    <tr><td><b>Marketing</b></td><td>Marketing</td><td>Katalog foto menu dan memilih menu yang tampil di website.</td></tr>
     <tr><td><b>Delivery</b></td><td>Delivery</td><td>Pengiriman pesanan dan bukti kirim.</td></tr>
   </table>
   <p class="small muted" style="margin-top: 6pt;">Satu orang boleh punya lebih dari satu peran (misalnya Admin + Accounting). Peran Owner berdiri sendiri.</p>
@@ -149,15 +150,16 @@
 
   <h3>1. Aplikasi (tab di bilah atas)</h3>
   <table class="grid matrix">
-    <tr><th style="width: 22%">Peran</th><th class="c">Owner</th><th class="c">Admin</th><th class="c">Accounting</th><th class="c">Inventory</th><th class="c">Sales</th><th class="c">Production</th><th class="c">Delivery</th></tr>
-    <tr><td><b>Owner</b></td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
-    <tr><td><b>Admin</b></td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td></tr>
-    <tr><td><b>Accounting</b></td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td></tr>
-    <tr><td><b>Inventory</b> (staf gudang)</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td></tr>
-    <tr><td><b>Supervisor Gudang</b></td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td></tr>
-    <tr><td><b>Production</b></td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td></tr>
-    <tr><td><b>Sales</b></td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td><td class="c no">–</td></tr>
-    <tr><td><b>Delivery</b></td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td></tr>
+    <tr><th style="width: 22%">Peran</th><th class="c">Owner</th><th class="c">Admin</th><th class="c">Accounting</th><th class="c">Inventory</th><th class="c">Sales</th><th class="c">Marketing</th><th class="c">Production</th><th class="c">Delivery</th></tr>
+    <tr><td><b>Owner</b></td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
+    <tr><td><b>Admin</b></td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td></tr>
+    <tr><td><b>Accounting</b></td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td></tr>
+    <tr><td><b>Inventory</b> (staf gudang)</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td></tr>
+    <tr><td><b>Supervisor Gudang</b></td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td></tr>
+    <tr><td><b>Production</b></td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td></tr>
+    <tr><td><b>Sales</b></td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td></tr>
+    <tr><td><b>Delivery</b></td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td></tr>
+    <tr><td><b>Marketing</b></td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td><td class="c no">–</td></tr>
   </table>
   <p class="small muted">Superadmin melihat semua aplikasi, ditambah aplikasi Superadmin (backup database).</p>
 
@@ -351,7 +353,7 @@
   <h3>Tata letak layar</h3>
   <table class="grid">
     <tr><th style="width: 28%">Bagian</th><th>Fungsi</th></tr>
-    <tr><td><b>Bilah atas</b></td><td>Tab aplikasi: Owner, Admin, Accounting, Inventory, Sales, Production, Delivery. Hanya yang sesuai peran Anda yang tampil.</td></tr>
+    <tr><td><b>Bilah atas</b></td><td>Tab aplikasi: Owner, Admin, Accounting, Inventory, Sales, Marketing, Production, Delivery. Hanya yang sesuai peran Anda yang tampil.</td></tr>
     <tr><td><b>Menu kiri</b></td><td>Menu aplikasi yang sedang dibuka, dikelompokkan (Ringkasan, Master Data, Transaksi, Laporan, ...).</td></tr>
     <tr><td><b>Cari dokumen</b> (di atas menu kiri)</td><td>Mencari PO, DO, SPK Produksi, pelanggan, menu, dan bahan dari seluruh aplikasi sekaligus — tanpa perlu tahu dokumennya ada di menu mana. Pintasan <b>Ctrl + K</b>. Hasilnya hanya berisi dokumen yang boleh dibuka oleh peran Anda.</td></tr>
     <tr><td><b>Lonceng</b></td><td>Pemberitahuan untuk Anda, di semua aplikasi: form yang menunggu persetujuan Anda, barang yang sudah bisa dibelanjakan, form yang ditolak, <b>harga bahan / harga jual menu berubah</b>, dan <b>profit menu keluar dari batas</b>. Tekan <i>Buka</i> untuk langsung ke halamannya; <i>Tandai semua dibaca</i> membersihkan angka merahnya.</td></tr>
@@ -403,13 +405,12 @@
 
 <!-- ============ 5. ADMIN, SALES, PRODUCTION, DELIVERY ============ -->
 <div class="page">
-  <h2>6. Aplikasi Admin, Sales, Production, Delivery</h2>
+  <h2>6. Aplikasi Admin, Sales, Marketing, Production, Delivery</h2>
 
   <h3>Admin</h3>
   <table class="grid">
     <tr><th style="width: 28%">Menu</th><th>Untuk apa</th></tr>
-    <tr><td>Master Menu, Master Customer</td><td>Daftar menu yang dijual (dengan harga) dan daftar pelanggan. Mengubah harga jual menu mengirim lonceng ke Owner.</td></tr>
-    <tr><td>Katalog Foto Menu</td><td>Satu foto resmi per menu, ditandai kode SKU, untuk materi promosi. Admin menekan <b>Unggah foto</b> (atau <b>Ganti foto</b>) di kartu menu, memilih berkas, dan foto langsung terunggah &mdash; tidak ada tombol kedua. JPG, PNG, WEBP maks. 5 MB; sistem otomatis mengecilkannya, jadi foto langsung dari HP pun aman. Ikon tempat sampah menghapus foto. Tim Sales melihatnya di Sales › Marketing.</td></tr>
+    <tr><td>Master Menu, Master Customer</td><td>Daftar menu yang dijual (dengan harga) dan daftar pelanggan. Mengubah harga jual menu mengirim lonceng ke Owner. <b>SKU diketik sendiri</b> (tidak dibuat otomatis) karena SKU tampil sebagai nama menu di website &mdash; tulis persis seperti yang ingin dibaca pelanggan, mis. <i>Nasi Goreng Kampung</i>. SKU wajib diisi dan tidak boleh sama dengan menu lain. Marketing juga bisa mengganti SKU dari Katalog Foto Menu; bila menunya tampil di website, Admin menerima lonceng.</td></tr>
     <tr><td>Purchase Orders</td><td>Mencatat pesanan pelanggan: menu, jumlah, tanggal & jam kirim, cara bayar.</td></tr>
     <tr><td>SPK</td><td>Mengelompokkan pesanan ke slot jadwal masak. <b>Begitu SPK disimpan, SPK Produksi di Inventory terbentuk otomatis</b> dan dapur bisa menyusun kebutuhan bahannya.</td></tr>
     <tr><td>Delivery</td><td>Memantau pengiriman per pesanan.</td></tr>
@@ -418,7 +419,14 @@
   </table>
   <div class="fig"><img src="img/admin-orders.jpg" alt="Admin › Purchase Orders: form PO baru di atas; daftar PO hari ini di bawahnya."><div class="cap">Admin › Purchase Orders: form PO baru di atas; daftar PO hari ini di bawahnya.</div></div>
   <div class="fig"><img src="img/admin-spk.jpg" alt="Admin › SPK: pesanan dikelompokkan ke slot jadwal masak. Menyimpan SPK otomatis membuat SPK Produksi di Inventory."><div class="cap">Admin › SPK: pesanan dikelompokkan ke slot jadwal masak. Menyimpan SPK otomatis membuat SPK Produksi di Inventory.</div></div>
-  <div class="fig"><img src="img/katalog.jpg" alt="Admin › Katalog Foto Menu: satu tombol Unggah foto per menu; cari nama atau SKU, dan ikon corong untuk menyaring menu yang belum punya foto."><div class="cap">Admin › Katalog Foto Menu: satu tombol Unggah foto per menu; cari nama atau SKU, dan ikon corong untuk menyaring menu yang belum punya foto.</div></div>
+  <div class="fig"><img src="img/katalog.jpg" alt="Marketing › Katalog Foto Menu: satu tombol Unggah foto dan centang Tampil di website per menu; cari nama atau SKU, dan ikon corong untuk menyaring foto/website."><div class="cap">Marketing › Katalog Foto Menu: satu tombol Unggah foto dan centang Tampil di website per menu; cari nama atau SKU, dan ikon corong untuk menyaring foto/website.</div></div>
+
+  <h3>Marketing</h3>
+  <table class="grid">
+    <tr><th style="width: 28%">Menu</th><th>Untuk apa</th></tr>
+    <tr><td>Dashboard</td><td>Berapa menu aktif yang sudah punya foto, berapa yang tampil di website, dan daftar menu yang sudah tampil di website tapi <b>belum punya foto</b>.</td></tr>
+    <tr><td>Katalog Foto Menu</td><td>Satu foto resmi per menu untuk materi promosi. Tekan <b>Unggah foto</b> (atau <b>Ganti foto</b>) di kartu menu, pilih berkas, dan foto langsung terunggah. JPG, PNG, WEBP maks. 5 MB; sistem otomatis mengecilkannya. Centang <b>Tampil di website</b> untuk menu yang terbit di website &mdash; langsung tersimpan tanpa tombol Simpan. SKU menjadi nama menu di website, jadi menu tanpa SKU tidak bisa dicentang. Menu nonaktif tidak terbit walau tercentang. <b>Ganti SKU</b>: klik SKU di kartu (ikon pensil), ketik, lalu Enter. Admin juga bisa menggantinya dari Master Menu; bila menunya sedang tampil di website, pihak lain (admin atau marketing) menerima lonceng, dan semua penggantian tercatat di Audit Logs. Saring dengan ikon corong: foto ada/belum, tampil/tidak tampil di website.</td></tr>
+  </table>
 
   <h3>Sales</h3>
   <table class="grid">
@@ -667,7 +675,7 @@
     <tr><th style="width: 4%">#</th><th style="width: 12%">Siapa</th><th style="width: 56%">Apa yang dikerjakan</th><th>Tanda selesai</th></tr>
     <tr><td><b>1</b></td><td>Owner</td><td>Buat akun di <b>Owner › Master User</b> untuk tiap orang, dengan peran yang benar: dapur = <i>Production</i>, staf gudang = <i>Inventory</i>, yang menyetujui form = <i>Supervisor Gudang</i>. Satu orang boleh lebih dari satu peran. Sampaikan password sementara langsung ke orangnya.</td><td>Semua orang bisa masuk dan melihat aplikasi yang sesuai bagiannya.</td></tr>
     <tr><td><b>2</b></td><td>Owner</td><td>Buka <b>Inventory › Pengaturan Inventory</b>. Periksa angka bawaan: % OHC, % profit, perlakuan barang ditolak (retur / dibayar), batas profit menu. Kalau ragu, biarkan bawaannya — bisa diubah kapan saja.</td><td>Pengaturan tersimpan.</td></tr>
-    <tr><td><b>3</b></td><td>Admin</td><td>Rapikan <b>Admin › Master Menu</b>: nonaktifkan menu yang sudah tidak dijual, pastikan harga jual benar, dan tiap menu punya kode SKU. Menu yang tidak aktif tidak akan muncul di laporan mana pun.</td><td>Daftar menu aktif = menu yang benar-benar dijual sekarang.</td></tr>
+    <tr><td><b>3</b></td><td>Admin</td><td>Rapikan <b>Admin › Master Menu</b>: nonaktifkan menu yang sudah tidak dijual, pastikan harga jual benar, dan tulis ulang SKU tiap menu yang akan tampil di website (SKU lama masih berbentuk kode seperti <i>ALACARTE-AYAM-BISTIK</i>). Menu yang tidak aktif tidak akan muncul di laporan mana pun.</td><td>Daftar menu aktif = menu yang benar-benar dijual sekarang.</td></tr>
     <tr><td><b>4</b></td><td>Gudang</td><td>Rapikan <b>Inventory › Item Inventaris</b>: nama bahan, <b>satuan beli</b> (kg, liter, ikat, pak), harga beli terakhir, stok minimum. Hapus/nonaktifkan bahan yang tidak dipakai lagi. Satu bahan = satu baris; jangan ada "Telur" dan "Telur Ayam" berdampingan.</td><td>Setiap bahan punya satuan dan harga.</td></tr>
     <tr><td><b>5</b></td><td>Gudang / Accounting</td><td>Isi <b>Inventory › Master Supplier</b>: nama, kontak, rekening, dan <b>termin bayar</b> tiap pemasok, lalu pilih bahan yang dipasoknya. Supplier yang namanya sudah tercatat di pembelian lama sudah dibuatkan otomatis &mdash; lengkapi saja datanya.</td><td>Setiap pemasok aktif ada di daftar, tanpa nama kembar.</td></tr>
     <tr><td><b>6</b></td><td>Gudang</td><td>Hitung fisik semua bahan pada satu tanggal (pilih hari yang tenang), lalu masukkan ke <b>Inventory › Saldo Awal Stok</b> dengan tanggal itu. Inilah titik nol Kartu Stok — semua keluar-masuk setelahnya otomatis.</td><td>Kartu Stok tiap bahan menampilkan saldo awal.</td></tr>
@@ -676,7 +684,7 @@
     <tr><td><b>9</b></td><td>Dapur / Gudang</td><td>Buka <b>Inventory › Konversi Satuan › Belum Diatur</b>. Isi aturan untuk tiap pasangan (mis. 1 kg telur = 16 butir, 1 botol kecap = 600 ml). Tanpa ini biaya baris resep dihitung nol.</td><td>Konversi Belum Diatur: <b>0</b>.</td></tr>
     <tr><td><b>10</b></td><td>Owner</td><td>Buka beberapa menu di <b>Resep & Menu › Analisa HPP</b>. Angka HPP per porsi harus masuk akal (nasi box belasan ribu, bukan ratusan ribu). Kalau aneh, hampir pasti satuannya: kembali ke langkah 9.</td><td>Kartu <b>Profit menu keseluruhan</b> di Dashboard Inventory menampilkan angka, bukan "–".</td></tr>
     <tr><td><b>11</b></td><td>Semua</td><td><b>Uji coba satu SPK dari awal sampai akhir</b> sebelum dipakai sungguhan: Admin buat SPK → dapur isi Form Kebutuhan & Ajukan → Supervisor Gudang Setujui → gudang belanja & isi Diterima/Ditolak/harga → Periksa. Lihat Kartu Stok dan Pembelian Bahan Baku ikut terisi.</td><td>Satu form berstatus Diperiksa tanpa ada yang bingung di tengah jalan.</td></tr>
-    <tr><td><b>12</b></td><td>Admin</td><td><b>Admin › Master Data › Katalog Foto Menu</b>: unggah foto menu, mulai dari yang paling laku. Boleh bertahap — foto langsung dari HP pun aman karena sistem mengecilkannya sendiri.</td><td>Filter "Belum ada foto" makin pendek tiap minggu.</td></tr>
+    <tr><td><b>12</b></td><td>Admin</td><td><b>Marketing › Katalog Foto Menu</b>: unggah foto menu, mulai dari yang paling laku, lalu centang menu yang tampil di website. Boleh bertahap — foto langsung dari HP pun aman karena sistem mengecilkannya sendiri.</td><td>Filter "Belum ada foto" makin pendek tiap minggu.</td></tr>
   </table>
   <div class="tip"><b>Tiga angka penanda sistem siap:</b> Bahan Belum Cocok = 0, Konversi Belum Diatur = 0, dan kartu Profit menu keseluruhan menampilkan angka. Selama salah satu belum tercapai, laporan HPP dari resep belum bisa dipercaya — laporan lain (kas, penjualan, pengiriman) tetap berjalan normal.</div>
   <div class="warn">Jangan menunggu semua 400-an menu selesai untuk mulai memakai Form Kebutuhan. Form Kebutuhan bekerja per SPK dan hanya membutuhkan resep menu yang ada di SPK itu. Mulailah dengan menu yang sering dimasak; menu langka menyusul.</div>
@@ -701,7 +709,7 @@
     <tr><th style="width: 20%">Siapa</th><th style="width: 80%">Apa yang dikerjakan</th></tr>
     <tr><td>Gudang</td><td>Cek kartu <i>Bahan di bawah stok minimum</i> di Dashboard Inventory; sesuaikan stok minimum bila terlalu sering/jarang muncul.</td></tr>
     <tr><td>Dapur</td><td>Lihat <b>Bahan Belum Cocok</b> dan <b>Konversi Belum Diatur</b> — resep baru sering menambah satu-dua baris. Jaga tetap 0.</td></tr>
-    <tr><td>Admin / Sales</td><td>Tambah foto di <b>Katalog Foto Menu</b>; Sales memakai katalog itu untuk materi promosi.</td></tr>
+    <tr><td>Marketing</td><td>Tambah foto di <b>Katalog Foto Menu</b> dan centang menu yang tampil di website.</td></tr>
   </table>
   <h3 style="margin-top: 10pt;">Setiap bulan</h3>
   <table class="grid" style="table-layout: fixed; page-break-inside: avoid;">

@@ -37,6 +37,7 @@ class ProductionOrder extends Model
         'completed_at',
         'completed_by',
         'source_spk_id',
+        'source_produksi_id',
         'created_by',
         'updated_by',
     ];

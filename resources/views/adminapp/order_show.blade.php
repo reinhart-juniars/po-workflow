@@ -114,4 +114,15 @@
     </table>
   </div>
 </section>
+
+<section class="form-shell mt-4">
+  <div class="page-toolbar mb-4">
+    <div>
+      <h2 class="section-title text-base">Kebutuhan Bahan</h2>
+      <p class="section-subtitle">Menu di pesanan ini dipecah sampai bahan mentah sesuai resepnya, lalu dicocokkan dengan stok di Kartu Stok.</p>
+    </div>
+    <a href="{{ route('adminapp.orders.breakdown.excel', $po) }}" class="btn-ghost">Export Excel</a>
+  </div>
+  @include('partials.material-breakdown', ['breakdown' => $breakdown, 'matchUrl' => $matchUrl])
+</section>
 @endsection

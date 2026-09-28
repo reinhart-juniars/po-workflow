@@ -110,9 +110,22 @@ class AdminAppController extends Controller
 
     public function ordersShow(PurchaseOrder $po)
     {
-        $po->load(['customer', 'area', 'items.product', 'cashAccount', 'deliveryOrders']);
+        $po->load(['customer', 'area', 'items.product.recipe', 'cashAccount', 'deliveryOrders']);
 
-        return view('adminapp.order_show', compact('po'));
+        // Breakdown menu -> bahan mentah, dicocokkan dengan stok kartu stok.
+        $breakdown = app(\App\Services\MaterialBreakdownService::class)->forPurchaseOrder($po);
+        $matchUrl = auth()->user()?->can('recipe.view') ? route('filament.admin.pages.pencocokan-menu') : null;
+
+        return view('adminapp.order_show', compact('po', 'breakdown', 'matchUrl'));
+    }
+
+    /** Breakdown bahan satu PO sebagai Excel (rekap bahan & stok + rincian per menu). */
+    public function ordersBreakdownExcel(PurchaseOrder $po)
+    {
+        return Excel::download(
+            new \App\Exports\MaterialBreakdownExport(app(\App\Services\MaterialBreakdownService::class)->forPurchaseOrder($po)),
+            'kebutuhan-bahan-'.$po->po_number.'.xlsx'
+        );
     }
 
     public function ordersEdit(PurchaseOrder $po)

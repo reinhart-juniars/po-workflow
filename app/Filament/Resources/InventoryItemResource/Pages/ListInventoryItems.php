@@ -29,6 +29,15 @@ class ListInventoryItems extends ListRecords
                     'item-inventaris-'.now()->format('Ymd_His').'.xlsx'
                 )),
 
+            Actions\Action::make('export_riwayat_harga')
+                ->label('Export Riwayat Harga')
+                ->icon('heroicon-m-clock')
+                ->color('gray')
+                ->action(fn () => Excel::download(
+                    new \App\Exports\PriceHistoryExport,
+                    'riwayat-harga-bahan-'.now()->format('Ymd_His').'.xlsx'
+                )),
+
             Actions\Action::make('import')
                 ->authorize('inventory.manage')
                 ->label('Import Excel')

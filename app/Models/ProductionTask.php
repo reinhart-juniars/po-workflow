@@ -41,4 +41,23 @@ class ProductionTask extends Model
     {
         return trim(implode(' ', array_filter([$this->task, $this->object, $this->quantity_text])));
     }
+
+    /**
+     * Pilihan "Apa yang Dikerjakan": tugas yang sudah dipakai di template
+     * menu dan lembar kerja -- seperti Master Menu, tanpa master tugas
+     * terpisah yang harus diurus dan bisa kembar.
+     *
+     * @return list<string>
+     */
+    public static function taskOptions(): array
+    {
+        return RecipeTask::query()->whereNotNull('task')->distinct()->pluck('task')
+            ->merge(static::query()->whereNotNull('task')->distinct()->pluck('task'))
+            ->map(fn ($task) => trim((string) $task))
+            ->filter()
+            ->unique(fn ($task) => mb_strtolower($task))
+            ->sort(SORT_NATURAL | SORT_FLAG_CASE)
+            ->values()
+            ->all();
+    }
 }

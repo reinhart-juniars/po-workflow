@@ -206,46 +206,40 @@ it('mendaftar menu aktif yang tidak diproduksi dalam rentang, dengan tanggal pro
 });
 
 // ---------------------------------------------------------------- B.4
-it('menyediakan katalog foto menu berbasis SKU: admin mengunggah/mengganti/menghapus, sales hanya melihat', function () {
+it('menyediakan katalog foto menu berbasis SKU di aplikasi Marketing: marketing mengunggah/mengganti/menghapus', function () {
     Storage::fake('public');
-    $admin = penggunaB('admin');
-    $sales = penggunaB('sales');
+    $marketing = penggunaB('marketing');
     $product = Product::query()->create(['name' => 'Nasi Kuning', 'sku' => 'NASI-KUNING-15K', 'unit' => 'porsi', 'base_price' => 15000, 'active' => true]);
 
-    // Admin: halaman kelola dengan form unggah.
-    $this->actingAs($admin)->get(route('adminapp.catalog.index'))
+    // Marketing: halaman kelola dengan form unggah.
+    $this->actingAs($marketing)->get(route('marketingapp.catalog.index'))
         ->assertOk()->assertSee('NASI-KUNING-15K')->assertSee('Belum ada foto')->assertSee('Unggah');
 
-    // Bukan gambar -> ditolak; gambar -> tersimpan dengan nama berawalan SKU.
-    $this->actingAs($admin)->post(route('adminapp.catalog.upload', $product), ['photo' => UploadedFile::fake()->create('menu.pdf', 100, 'application/pdf')])
+    // Bukan gambar -> ditolak; gambar -> tersimpan dengan nama berawalan SKU (slug).
+    $this->actingAs($marketing)->post(route('marketingapp.catalog.upload', $product), ['photo' => UploadedFile::fake()->create('menu.pdf', 100, 'application/pdf')])
         ->assertSessionHasErrors('photo');
     expect($product->fresh()->photo_path)->toBeNull();
 
-    $this->actingAs($admin)->post(route('adminapp.catalog.upload', $product), ['photo' => UploadedFile::fake()->image('menu.jpg', 800, 600)])
+    $this->actingAs($marketing)->post(route('marketingapp.catalog.upload', $product), ['photo' => UploadedFile::fake()->image('menu.jpg', 800, 600)])
         ->assertSessionHasNoErrors();
     $path = $product->fresh()->photo_path;
-    expect($path)->toStartWith('menu-photos/NASI-KUNING-15K-');
+    expect($path)->toStartWith('menu-photos/nasi-kuning-15k-');
     Storage::disk('public')->assertExists($path);
 
     // Ganti foto: berkas lama dibuang.
-    $this->actingAs($admin)->post(route('adminapp.catalog.upload', $product), ['photo' => UploadedFile::fake()->image('baru.png', 800, 600)]);
+    $this->actingAs($marketing)->post(route('marketingapp.catalog.upload', $product), ['photo' => UploadedFile::fake()->image('baru.png', 800, 600)]);
     $path2 = $product->fresh()->photo_path;
     expect($path2)->not->toBe($path);
     Storage::disk('public')->assertMissing($path);
     Storage::disk('public')->assertExists($path2);
 
-    // Sales: melihat foto & SKU, tanpa form unggah; tidak bisa mengunggah (route admin-app ditolak).
-    $this->actingAs($sales)->get(route('salesapp.catalog.index'))
-        ->assertOk()->assertSee('NASI-KUNING-15K')->assertSee($product->fresh()->photoUrl())->assertDontSee('catalog.upload');
-    $this->actingAs($sales)->post(route('adminapp.catalog.upload', $product), ['photo' => UploadedFile::fake()->image('x.jpg')])->assertForbidden();
-
     // Filter "belum ada foto" & pencarian.
     Product::query()->create(['name' => 'Es Teh', 'sku' => 'ES-TEH', 'unit' => 'cup', 'base_price' => 5000, 'active' => true]);
-    $this->actingAs($admin)->get(route('adminapp.catalog.index', ['foto' => 'belum']))->assertSee('ES-TEH')->assertDontSee('NASI-KUNING-15K');
-    $this->actingAs($admin)->get(route('adminapp.catalog.index', ['q' => 'kuning']))->assertSee('NASI-KUNING-15K')->assertDontSee('ES-TEH');
+    $this->actingAs($marketing)->get(route('marketingapp.catalog.index', ['foto' => 'belum']))->assertSee('ES-TEH')->assertDontSee('NASI-KUNING-15K');
+    $this->actingAs($marketing)->get(route('marketingapp.catalog.index', ['q' => 'kuning']))->assertSee('NASI-KUNING-15K')->assertDontSee('ES-TEH');
 
     // Hapus foto.
-    $this->actingAs($admin)->delete(route('adminapp.catalog.photo.destroy', $product))->assertRedirect();
+    $this->actingAs($marketing)->delete(route('marketingapp.catalog.photo.destroy', $product))->assertRedirect();
     expect($product->fresh()->photo_path)->toBeNull();
     Storage::disk('public')->assertMissing($path2);
 });
@@ -283,7 +277,7 @@ function jpegDenganOrientasi(string $jpeg, int $orientation): string
 
 it('mengompres foto menu saat unggah: maks. 1600 px, selalu JPEG, orientasi EXIF diterapkan, resolusi raksasa ditolak', function () {
     Storage::fake('public');
-    $admin = penggunaB('admin');
+    $marketing = penggunaB('marketing');
     $product = Product::query()->create(['name' => 'Rawon', 'sku' => 'RAWON-20K', 'unit' => 'porsi', 'base_price' => 20000, 'active' => true]);
     $processor = new MenuPhotoProcessor;
 
@@ -302,13 +296,13 @@ it('mengompres foto menu saat unggah: maks. 1600 px, selalu JPEG, orientasi EXIF
 
         return (string) ob_get_clean();
     })());
-    $this->actingAs($admin)->post(route('adminapp.catalog.upload', $product), ['photo' => $besar])->assertSessionHasNoErrors();
+    $this->actingAs($marketing)->post(route('marketingapp.catalog.upload', $product), ['photo' => $besar])->assertSessionHasNoErrors();
     $path = $product->fresh()->photo_path;
     expect($path)->toEndWith('.jpg');
     [$w, $h, $type] = getimagesizefromstring(Storage::disk('public')->get($path));
     expect([$w, $h, $type])->toBe([1600, 1200, IMAGETYPE_JPEG]);
 
-    $this->actingAs($admin)->post(route('adminapp.catalog.upload', $product), ['photo' => UploadedFile::fake()->image('kecil.jpg', 640, 480)])->assertSessionHasNoErrors();
+    $this->actingAs($marketing)->post(route('marketingapp.catalog.upload', $product), ['photo' => UploadedFile::fake()->image('kecil.jpg', 640, 480)])->assertSessionHasNoErrors();
     [$w, $h] = getimagesizefromstring(Storage::disk('public')->get($product->fresh()->photo_path));
     expect([$w, $h])->toBe([640, 480]);
 
@@ -333,7 +327,7 @@ it('mengompres foto menu saat unggah: maks. 1600 px, selalu JPEG, orientasi EXIF
     $raksasa = "\xFF\xD8\xFF\xC0".pack('n', 11)."\x08".pack('n', 8000).pack('n', 8000)."\x01\x01\x11\x00\xFF\xD9";
     expect(fn () => $processor->process($raksasa))->toThrow(InvalidArgumentException::class, 'Resolusi foto terlalu besar');
     $sebelum = $product->fresh()->photo_path;
-    $this->actingAs($admin)->post(route('adminapp.catalog.upload', $product), ['photo' => UploadedFile::fake()->createWithContent('raksasa.jpg', $raksasa)])
+    $this->actingAs($marketing)->post(route('marketingapp.catalog.upload', $product), ['photo' => UploadedFile::fake()->createWithContent('raksasa.jpg', $raksasa)])
         ->assertSessionHasErrors('photo');
     expect($product->fresh()->photo_path)->toBe($sebelum);
 });

@@ -9,8 +9,8 @@ use Illuminate\Support\Facades\Route;
  * Satu-satunya definisi navigasi 3S ONE (Business Control System).
  *
  * Dua tingkat, seperti yang sudah dikenal pengguna: **aplikasi** di bilah
- * atas (Owner, Admin, Accounting, Inventory, Sales, Production, Delivery,
- * Superadmin) dan **menu aplikasi** di sidebar, dikelompokkan per seksi.
+ * atas (Owner, Admin, Accounting, Inventory, Sales, Marketing, Production,
+ * Delivery, Superadmin) dan **menu aplikasi** di sidebar, dikelompokkan per seksi.
  *
  * Dibaca oleh dua penyaji: layout Blade (`layouts.shell`) dan panel
  * Filament (modul inventory). Bilah aplikasinya sama persis di keduanya;
@@ -38,6 +38,7 @@ class Navigation
             'accounting' => ['label' => 'Accounting', 'icon' => 'heroicon-o-banknotes', 'dashboard' => 'accountingapp.dashboard', 'pattern' => 'accounting-app*', 'roles' => ['accounting', 'owner', 'superadmin']],
             'inventory' => ['label' => 'Inventory', 'icon' => 'heroicon-o-cube', 'dashboard' => 'filament.admin.pages.dashboard', 'pattern' => 'inventory*', 'roles' => User::PANEL_ROLES],
             'sales' => ['label' => 'Sales', 'icon' => 'heroicon-o-shopping-bag', 'dashboard' => 'salesapp.dashboard', 'pattern' => 'sales-app*', 'roles' => ['sales', 'owner', 'superadmin']],
+            'marketing' => ['label' => 'Marketing', 'icon' => 'heroicon-o-megaphone', 'dashboard' => 'marketingapp.dashboard', 'pattern' => 'marketing-app*', 'roles' => ['marketing', 'owner', 'superadmin']],
             'production' => ['label' => 'Production', 'icon' => 'heroicon-o-fire', 'dashboard' => 'productionapp.dashboard', 'pattern' => 'production-app*', 'roles' => ['production', 'owner', 'superadmin']],
             'delivery' => ['label' => 'Delivery', 'icon' => 'heroicon-o-truck', 'dashboard' => 'deliveryapp.dashboard', 'pattern' => 'delivery-app*', 'roles' => ['delivery', 'owner', 'superadmin']],
         ];
@@ -80,7 +81,6 @@ class Navigation
                 'Master Data' => [
                     ['label' => 'Master Menu', 'route' => 'adminapp.products.index', 'match' => 'adminapp.products.*', 'icon' => 'heroicon-o-squares-2x2'],
                     ['label' => 'Master Customer', 'route' => 'adminapp.customers.index', 'match' => 'adminapp.customers.*', 'icon' => 'heroicon-o-user-group'],
-                    ['label' => 'Katalog Foto Menu', 'route' => 'adminapp.catalog.index', 'match' => 'adminapp.catalog.*', 'icon' => 'heroicon-o-photo'],
                 ],
                 'Operasional' => [
                     ['label' => 'Purchase Orders', 'route' => 'adminapp.orders.index', 'match' => 'adminapp.orders.*', 'icon' => 'heroicon-o-clipboard-document-list'],
@@ -149,6 +149,7 @@ class Navigation
                 'Resep & HPP' => [
                     ['label' => 'Resep & Menu', 'route' => 'filament.admin.resources.recipes.index', 'can' => 'recipe.view'],
                     ['label' => 'Pencocokan Menu', 'route' => 'filament.admin.pages.pencocokan-menu', 'can' => 'recipe.view'],
+                    ['label' => 'Pekerjaan Menu', 'route' => 'filament.admin.pages.pekerjaan-menu', 'can' => 'recipe.view'],
                     ['label' => 'Konversi Satuan', 'route' => 'filament.admin.resources.inventory-unit-conversions.index', 'can' => 'inventory.view'],
                     ['label' => 'Bahan Belum Cocok', 'route' => 'filament.admin.resources.recipe-mismatches.index', 'can' => 'recipe.view'],
                     ['label' => 'Perbandingan HPP', 'route' => 'filament.admin.pages.hpp-comparison-report', 'can' => 'ledger.view'],
@@ -170,8 +171,13 @@ class Navigation
                     ['label' => 'Laporan Waste', 'route' => 'salesapp.reports.waste', 'match' => 'salesapp.reports.waste*', 'icon' => 'heroicon-o-trash'],
                     ['label' => 'Laporan Penjualan', 'route' => 'salesapp.reports.sales', 'match' => 'salesapp.reports.sales*', 'icon' => 'heroicon-o-chart-bar'],
                 ],
-                'Marketing' => [
-                    ['label' => 'Katalog Foto Menu', 'route' => 'salesapp.catalog.index', 'match' => 'salesapp.catalog.*', 'icon' => 'heroicon-o-photo'],
+            ],
+            'marketing' => [
+                'Ringkasan' => [
+                    ['label' => 'Dashboard', 'route' => 'marketingapp.dashboard', 'icon' => 'heroicon-o-home'],
+                ],
+                'Katalog' => [
+                    ['label' => 'Katalog Foto Menu', 'route' => 'marketingapp.catalog.index', 'match' => 'marketingapp.catalog.*', 'icon' => 'heroicon-o-photo'],
                 ],
             ],
             'production' => [

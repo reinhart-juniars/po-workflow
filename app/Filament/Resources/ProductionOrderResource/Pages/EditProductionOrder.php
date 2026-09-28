@@ -38,6 +38,12 @@ class EditProductionOrder extends EditRecord
                 ->icon('heroicon-m-clipboard-document-list')
                 ->url(ProductionOrderResource::getUrl('kebutuhan', ['record' => $order])),
 
+            Actions\Action::make('bahan')
+                ->label('Breakdown Bahan')
+                ->icon('heroicon-m-queue-list')
+                ->color('gray')
+                ->url(ProductionOrderResource::getUrl('bahan', ['record' => $order])),
+
             // Aksi sekunder dikelompokkan supaya bilah tombol muat di layar laptop.
             Actions\ActionGroup::make([
                 Actions\Action::make('segarkan')

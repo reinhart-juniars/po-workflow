@@ -21,6 +21,9 @@ class PlatingSheet extends Page
 
     protected static ?string $title = 'Plating';
 
+    /** global = satu tabel; kartu = komponen per menu (seperti Menu Plating Master Menu). */
+    public string $tampilan = 'global';
+
     public function mount(int|string $record): void
     {
         $this->record = $this->resolveRecord($record);
@@ -48,10 +51,33 @@ class PlatingSheet extends Page
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('tampilan_kartu')
+                ->label('Komponen per Menu')
+                ->icon('heroicon-m-squares-2x2')
+                ->color('gray')
+                ->visible(fn () => $this->tampilan === 'global')
+                ->action(fn () => $this->tampilan = 'kartu'),
+
+            Actions\Action::make('tampilan_global')
+                ->label('Komponen Global')
+                ->icon('heroicon-m-table-cells')
+                ->color('gray')
+                ->visible(fn () => $this->tampilan === 'kartu')
+                ->action(fn () => $this->tampilan = 'global'),
+
             Actions\Action::make('cetak')
                 ->label('Cetak Plating')
                 ->icon('heroicon-m-printer')
-                ->action(fn () => app(ProductionDocumentService::class)->platingPdf($this->getOrder())),
+                ->action(fn () => app(ProductionDocumentService::class)->platingPdf($this->getOrder(), $this->tampilan)),
+
+            Actions\Action::make('excel')
+                ->label('Export Excel')
+                ->icon('heroicon-m-arrow-down-tray')
+                ->color('gray')
+                ->action(fn () => \Maatwebsite\Excel\Facades\Excel::download(
+                    new \App\Exports\PlatingExport($this->getOrder()),
+                    'plating-'.$this->getOrder()->number.'.xlsx'
+                )),
 
             Actions\Action::make('kembali')
                 ->label('SPK')

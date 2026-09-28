@@ -294,6 +294,7 @@ class ProductionOrderResource extends Resource
             'kebutuhan' => Pages\RequisitionForm::route('/{record}/kebutuhan'),
             'pekerjaan' => Pages\ProductionTasks::route('/{record}/pekerjaan'),
             'plating' => Pages\PlatingSheet::route('/{record}/plating'),
+            'bahan' => Pages\MaterialBreakdown::route('/{record}/bahan'),
             'edit' => Pages\EditProductionOrder::route('/{record}/edit'),
         ];
     }

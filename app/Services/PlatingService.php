@@ -19,6 +19,9 @@ use App\Models\RecipeItem;
  */
 class PlatingService
 {
+    /** Slot bernomor minimal per kartu menu; sisanya untuk catatan tangan. */
+    public const MIN_SLOTS = 8;
+
     /**
      * @return array{rows: array<int, array<string, mixed>>, total_qty: float}
      */

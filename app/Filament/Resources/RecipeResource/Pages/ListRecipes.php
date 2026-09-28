@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\RecipeResource\Pages;
 
+use App\Exports\MenuListExport;
 use App\Exports\RecipesExport;
 use App\Filament\Resources\RecipeResource;
 use App\Imports\RecipesImport;
@@ -29,6 +30,15 @@ class ListRecipes extends ListRecords
                 ->action(fn () => Excel::download(
                     new RecipesExport,
                     'resep-'.now()->format('Ymd_His').'.xlsx'
+                )),
+
+            Actions\Action::make('export_daftar_menu')
+                ->label('Export Daftar Menu')
+                ->icon('heroicon-m-table-cells')
+                ->color('gray')
+                ->action(fn () => Excel::download(
+                    new MenuListExport,
+                    'daftar-menu-'.now()->format('Ymd_His').'.xlsx'
                 )),
 
             Actions\Action::make('import')

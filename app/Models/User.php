@@ -48,6 +48,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'inventory' => 'Inventory (staf gudang)',
         'inventory-supervisor' => 'Supervisor Gudang',
         'sales' => 'Sales',
+        'marketing' => 'Marketing',
         'production' => 'Production',
         'delivery' => 'Delivery',
     ];
@@ -64,6 +65,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'inventory',
         'inventory-supervisor',
         'sales',
+        'marketing',
         'production',
         'delivery',
     ];
@@ -76,6 +78,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'inventory' => 'filament.admin.pages.dashboard',
         'inventory-supervisor' => 'filament.admin.pages.dashboard',
         'sales' => 'salesapp.dashboard',
+        'marketing' => 'marketingapp.dashboard',
         'production' => 'productionapp.dashboard',
         'delivery' => 'deliveryapp.dashboard',
     ];
@@ -115,7 +118,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     public function accessibleAppKeys(): array
     {
         $keys = [];
-        $staffApps = ['owner', 'admin', 'accounting', 'sales', 'production', 'delivery'];
+        $staffApps = ['owner', 'admin', 'accounting', 'sales', 'marketing', 'production', 'delivery'];
 
         if ($this->hasRole('superadmin')) {
             $keys[] = 'superadmin';

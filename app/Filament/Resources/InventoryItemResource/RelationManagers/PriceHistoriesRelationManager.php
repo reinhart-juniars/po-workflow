@@ -37,7 +37,16 @@ class PriceHistoriesRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('source')->label('Sumber')->placeholder('-'),
                 Tables\Columns\TextColumn::make('note')->label('Catatan')->placeholder('-')->wrap(),
             ])
-            ->headerActions([])
+            ->headerActions([
+                Tables\Actions\Action::make('export')
+                    ->label('Export Riwayat')
+                    ->icon('heroicon-m-arrow-down-tray')
+                    ->color('gray')
+                    ->action(fn () => \Maatwebsite\Excel\Facades\Excel::download(
+                        new \App\Exports\PriceHistoryExport($this->getOwnerRecord()->getKey()),
+                        'riwayat-harga-'.\Illuminate\Support\Str::slug($this->getOwnerRecord()->name).'.xlsx'
+                    )),
+            ])
             ->actions([])
             ->bulkActions([]);
     }

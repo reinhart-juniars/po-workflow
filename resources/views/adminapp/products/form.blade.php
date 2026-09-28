@@ -31,15 +31,14 @@
         <div class="form-grid">
             <div>
                 <label for="sku" class="mb-1.5 block">SKU</label>
-                <input id="sku" type="text" value="{{ old('sku', $product->sku) }}" readonly
-                    class="bg-slate-100 text-slate-500 cursor-not-allowed">
-                <p class="mt-1 text-xs text-slate-500">SKU dibuat otomatis dari nama menu saat simpan.</p>
+                <input id="sku" type="text" name="sku" value="{{ old('sku', $product->sku) }}" required maxlength="100" autofocus
+                    placeholder="mis. Nasi Goreng Kampung">
+                <p class="mt-1 text-xs text-slate-500">SKU tampil sebagai nama menu di website. Tulis persis seperti yang ingin dilihat pelanggan.</p>
             </div>
 
             <div>
                 <label for="name" class="mb-1.5 block">Nama Menu</label>
-                <input id="name" type="text" name="name" value="{{ old('name', $product->name) }}" required
-                    autofocus>
+                <input id="name" type="text" name="name" value="{{ old('name', $product->name) }}" required>
             </div>
 
             <div class="md:col-span-2">
@@ -191,9 +190,6 @@
 
     <script>
         (() => {
-            const mode = @json($mode);
-            const nameInput = document.getElementById('name');
-            const skuInput = document.getElementById('sku');
             const basePriceInput = document.getElementById('base_price');
             const rawMaterialInput = document.getElementById('raw_material_cost');
             const overheadInput = document.getElementById('overhead_cost');
@@ -201,26 +197,10 @@
             const profitPercentText = document.getElementById('profit_percent');
             const marginPercentText = document.getElementById('margin_percent');
 
-            const buildSku = (value) => {
-                const normalized = value
-                    .normalize('NFD')
-                    .replace(/[\u0300-\u036f]/g, '')
-                    .toUpperCase()
-                    .replace(/[^A-Z0-9]+/g, '-')
-                    .replace(/^-+|-+$/g, '')
-                    .slice(0, 50);
-
-                return normalized || 'MENU';
-            };
-
             const toNumber = (value) => {
                 const parsed = Number.parseFloat(value || '0');
 
                 return Number.isFinite(parsed) ? parsed : 0;
-            };
-
-            const syncSku = () => {
-                skuInput.value = buildSku(nameInput.value);
             };
 
             const formatPercent = (value) => {
@@ -269,11 +249,6 @@
                 syncPercentText(profitPercentText, profitPercent);
                 syncPercentText(marginPercentText, marginPercent);
             };
-
-            if (nameInput && skuInput && mode === 'create') {
-                nameInput.addEventListener('input', syncSku);
-                syncSku();
-            }
 
             [basePriceInput, rawMaterialInput, overheadInput].forEach((input) => {
                 input?.addEventListener('input', syncProfit);

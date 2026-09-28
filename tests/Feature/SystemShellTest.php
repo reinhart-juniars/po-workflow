@@ -141,7 +141,7 @@ it('menyaring tab dan menu menurut peran', function () {
     // Positive control: owner melihat semua tab dan Pengaturan Inventory
     // (dari definisi menu, karena navigasi Filament dipasang sekali per proses).
     $owner = penggunaShell('owner');
-    expect(collect(Navigation::tabs($owner))->pluck('key')->all())->toBe(['owner', 'admin', 'accounting', 'inventory', 'sales', 'production', 'delivery']);
+    expect(collect(Navigation::tabs($owner))->pluck('key')->all())->toBe(['owner', 'admin', 'accounting', 'inventory', 'sales', 'marketing', 'production', 'delivery']);
     expect(collect(Navigation::sidebar('inventory', $owner))->pluck('label')->all())->toBe(['Ringkasan', 'Inventory', 'Resep & HPP', 'Produksi']);
     expect(collect(collect(Navigation::sidebar('inventory', $owner))->firstWhere('label', 'Inventory')['items'])->pluck('label')->all())->toContain('Pengaturan Inventory');
 

@@ -316,3 +316,34 @@ it('memetakan resep ke produk hanya untuk nama yang cocok persis', function () {
     expect($produk->fresh()->recipe_id)->toBe($sambal->id)
         ->and($tanpa->fresh()->recipe_id)->toBeNull();
 });
+
+it('memindahkan dokumen produksi tanpa Pra SPK sebagai SPK Produksi histori tersendiri', function () {
+    $pdo = new PDO('sqlite:'.$this->source->path());
+    $pdo->exec("
+        INSERT INTO produksi (id, title, spk_id, notes) VALUES (2, 'Produksi dadakan', NULL, 'tanpa spk');
+        INSERT INTO produksi_rows (id, produksi_id, sort_order, recipe_id, menu_label, nama, tugas, jumlah, objek)
+        VALUES (2, 2, 0, 2, 'Nasi Sambal Matah', 'Indra', 'potong', '2 kg', 'ayam'),
+               (3, 2, 1, NULL, NULL, 'Mia', 'packing', NULL, 'mika');
+    ");
+
+    $this->migrator->run();
+
+    $dadakan = ProductionOrder::query()->firstWhere('source_produksi_id', 2);
+
+    expect($dadakan)->not->toBeNull()
+        ->and($dadakan->title)->toBe('Produksi dadakan')
+        ->and($dadakan->status)->toBe(ProductionOrder::STATUS_COMPLETED)
+        ->and($dadakan->notes)->toContain('tanpa SPK')->toContain('tanpa spk')
+        ->and($dadakan->lines)->toHaveCount(0)
+        ->and($dadakan->tasks->pluck('worker_name')->all())->toBe(['Indra', 'Mia'])
+        ->and($dadakan->tasks[0]->recipe_id)->toBe(Recipe::query()->where('source_recipe_id', 2)->value('id'));
+
+    // Dokumen yang terkait SPK tetap menempel ke SPK-nya (kontrol), dan
+    // menjalankan ulang tidak menggandakan dokumen tanpa SPK.
+    expect(ProductionOrder::query()->firstWhere('source_spk_id', 1)->tasks)->toHaveCount(1);
+
+    $this->migrator->run();
+
+    expect(ProductionOrder::query()->count())->toBe(2)
+        ->and(ProductionTask::query()->count())->toBe(3);
+});

@@ -106,6 +106,9 @@ class ModuleAccess
             'ledger.view',
         ],
         'sales' => [],
+        // Marketing hanya membuka aplikasi Marketing (katalog foto & menu website),
+        // tidak menyentuh modul inventory.
+        'marketing' => [],
         'delivery' => [],
     ];
 
