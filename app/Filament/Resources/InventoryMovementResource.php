@@ -15,9 +15,10 @@ use Filament\Tables\Table;
  * Kartu Stok: ledger kuantitas per bahan -- hanya dibaca. Di UI disebut
  * "Kartu Stok" (istilah gudang yang dikenal user), bukan "ledger".
  *
- * Barisnya lahir dari Form Kebutuhan (saldo awal, pembelian) dan penutupan
- * SPK (pemakaian, penyesuaian). Tidak ada tombol tambah/ubah/hapus: ledger
- * yang bisa disunting tangan tidak bisa dipakai membuktikan HPP.
+ * Barisnya lahir dari Form Kebutuhan (saldo awal, pembelian), penutupan SPK
+ * (pemakaian, penyesuaian) dan Opname Bahan (penyesuaian). Tidak ada tombol
+ * tambah/ubah/hapus: ledger yang bisa disunting tangan tidak bisa dipakai
+ * membuktikan HPP. Penyesuaian tampil sebagai Barang Hilang / Barang Temuan.
  */
 class InventoryMovementResource extends Resource
 {
@@ -57,10 +58,10 @@ class InventoryMovementResource extends Resource
                 TextColumn::make('type')
                     ->label('Jenis')
                     ->badge()
-                    ->formatStateUsing(fn (?string $state) => InventoryMovement::typeLabels()[$state] ?? $state)
-                    ->color(fn (?string $state) => match ($state) {
+                    ->formatStateUsing(fn (?string $state, InventoryMovement $record) => $record->typeLabel())
+                    ->color(fn (?string $state, InventoryMovement $record) => match ($state) {
                         InventoryMovement::TYPE_USAGE => 'danger',
-                        InventoryMovement::TYPE_ADJUSTMENT => 'warning',
+                        InventoryMovement::TYPE_ADJUSTMENT => (float) $record->qty < 0 ? 'warning' : 'info',
                         InventoryMovement::TYPE_OPENING => 'gray',
                         default => 'success',
                     }),

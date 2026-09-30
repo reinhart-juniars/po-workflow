@@ -72,7 +72,7 @@
                                     {{ $actual->customer->name ?? '-' }}
                                 </td>
                                 <td class="code-cell" data-label="DO">
-                                    {{ $actual->deliveryOrder->do_code ?? 'Carry Forward' }}
+                                    {{ $actual->deliveryOrder->do_code ?? 'Tanpa DO' }}
                                 </td>
                                 <td data-label="Detail Menu">
                                     @if ($actual->items->isNotEmpty())
@@ -86,7 +86,7 @@
                                                         <div class="font-semibold text-slate-800">
                                                             {{ $item->item_name }}
                                                             @if ($item->is_carry_forward)
-                                                                <span class="font-medium text-amber-700">(carry forward)</span>
+                                                                <span class="font-medium text-amber-700">(Barang Sisa)</span>
                                                             @endif
                                                         </div>
                                                         <div class="mt-0.5">

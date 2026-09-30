@@ -109,6 +109,7 @@ class Settings
             SettingRegistry::TYPE_BOOL => filter_var($value, FILTER_VALIDATE_BOOLEAN),
             SettingRegistry::TYPE_PERCENT => (float) $value,
             SettingRegistry::TYPE_INT => (int) $value,
+            SettingRegistry::TYPE_DATE => $this->castDate($value),
             default => is_string($value) ? trim($value) : $value,
         };
     }
@@ -131,6 +132,30 @@ class Settings
 
         if ($definition['type'] === SettingRegistry::TYPE_TEXT && $value === '') {
             throw new InvalidArgumentException("Pengaturan {$key} tidak boleh kosong.");
+        }
+
+        if ($definition['type'] === SettingRegistry::TYPE_DATE && $value === '') {
+            throw new InvalidArgumentException("Pengaturan {$key} harus berupa tanggal yang valid.");
+        }
+    }
+
+    /** Tanggal apa pun formatnya disimpan Y-m-d; yang tidak terbaca jadi '' (ditolak validate). */
+    protected function castDate(mixed $value): string
+    {
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format('Y-m-d');
+        }
+
+        $value = trim((string) $value);
+
+        if ($value === '') {
+            return '';
+        }
+
+        try {
+            return \Illuminate\Support\Carbon::parse($value)->toDateString();
+        } catch (\Throwable) {
+            return '';
         }
     }
 }

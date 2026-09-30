@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exports\ViewExcelExport;
 use App\Http\Controllers\Concerns\BuildsOperatingExpenseAdjustments;
 use App\Http\Controllers\Concerns\ReportsDamagedInventoryLoss;
+use App\Http\Controllers\Concerns\ReportsHppDetails;
 use App\Models\CashOut;
 use App\Models\ExpenseCategory;
 use App\Models\InventoryItem;
@@ -24,6 +25,7 @@ class FinalReportController extends Controller
 {
     use BuildsOperatingExpenseAdjustments;
     use ReportsDamagedInventoryLoss;
+    use ReportsHppDetails;
 
     /**
      * Mapping label PDF Laporan Laba Rugi → kemungkinan nama
@@ -158,8 +160,14 @@ class FinalReportController extends Controller
 
         $totalPenjualan = round($totalPenjualan + $revenueAdjustmentTotal + $otherIncomeAdjustmentTotal, 2);
 
+        $hpp = $this->hppDetails($dateFrom, $dateTo);
         $bahanBakuBaru = round((float) ($inventory['baru'] ?? 0) + $cogsAdjustmentTotal, 2);
-        $bahanBakuTerpakai = round((float) ($inventory['terpakai'] ?? 0) + $cogsAdjustmentTotal, 2);
+        // Persediaan Barang Sisa: awal menambah, akhir mengurangi HPP (sama
+        // dengan Laporan Laba Rugi).
+        $bahanBakuTerpakai = round(
+            (float) ($inventory['terpakai'] ?? 0) + $cogsAdjustmentTotal + $hpp['barangSisaAwal'] - $hpp['barangSisaAkhir'],
+            2
+        );
 
         $totalPengeluaran = round((float) collect($pengeluaranRows)->sum('amount'), 2);
 
@@ -172,6 +180,7 @@ class FinalReportController extends Controller
             'bahanBakuBaru' => $bahanBakuBaru,
             'sisaStok' => round((float) ($inventory['sisa'] ?? 0), 2),
             'bahanBakuTerpakai' => $bahanBakuTerpakai,
+            ...$hpp,
             'pengeluaranRows' => $pengeluaranRows,
             'totalPengeluaran' => $totalPengeluaran,
             'labaRugi' => $labaRugi,

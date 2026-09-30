@@ -23,6 +23,7 @@ use App\Http\Controllers\GlobalSearchController;
 use App\Http\Controllers\IncomeCategoryController;
 use App\Http\Controllers\InventoryPurchaseController;
 use App\Http\Controllers\InventoryUsageReportController;
+use App\Http\Controllers\LeftoverStockController;
 use App\Http\Controllers\MenuCatalogController;
 use App\Http\Controllers\OwnerAppController;
 use App\Http\Controllers\OwnerUserController;
@@ -269,6 +270,12 @@ Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:sales|ow
         Route::get('/actuals/{salesActual}', [SalesAppController::class, 'edit'])->name('actuals.edit');
         Route::put('/actuals/{salesActual}', [SalesAppController::class, 'update'])->name('actuals.update');
         Route::post('/actuals/{salesActual}/submit', [SalesAppController::class, 'submit'])->name('actuals.submit');
+        // Barang Sisa: retur yang bisa dijual ke customer mana pun atau dibuang.
+        Route::post('/actuals/{salesActual}/leftovers', [LeftoverStockController::class, 'storeOnActual'])->name('actuals.leftovers.store');
+        Route::delete('/actuals/{salesActual}/leftovers/{item}', [LeftoverStockController::class, 'destroyOnActual'])->name('actuals.leftovers.destroy');
+        Route::get('/barang-sisa', [LeftoverStockController::class, 'index'])->name('leftovers.index');
+        Route::post('/barang-sisa/{entry}/jual', [LeftoverStockController::class, 'sell'])->name('leftovers.sell');
+        Route::post('/barang-sisa/{entry}/buang', [LeftoverStockController::class, 'dispose'])->name('leftovers.dispose');
         Route::get('/reports', function () {
             return redirect()->route('salesapp.reports.final-retur');
         })->name('reports');

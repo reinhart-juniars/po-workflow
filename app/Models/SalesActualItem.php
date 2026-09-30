@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SalesActualItem extends Model
 {
@@ -14,6 +14,7 @@ class SalesActualItem extends Model
     protected $fillable = [
         'sales_actual_id',
         'purchase_order_item_id',
+        'purchase_order_id',
         'product_id',
         'item_name',
         'unit',
@@ -82,15 +83,15 @@ class SalesActualItem extends Model
                 $item->{$field} = max(0, round((float) ($item->{$field} ?? 0), 2));
             }
 
-            // Waste hanya relevan untuk item carry forward (barang retur kemarin
-            // yang baru ketahuan tidak layak jual). Item lain selalu 0.
+            // Waste hanya relevan untuk Penjualan Barang Sisa (retur yang baru
+            // ketahuan tidak layak jual saat akan dijual). Item lain selalu 0.
             if (! $item->is_carry_forward) {
                 $item->qty_waste = 0;
             }
 
             $item->qty_cancel = 0;
-            // Sisa yang dibawa ke draft berikutnya = qty delivery dikurangi yang terjual
-            // dan yang dibuang (waste). Waste tidak ikut carry forward.
+            // Retur (masuk Barang Sisa setelah submit) = qty delivery dikurangi yang
+            // terjual dan yang dibuang (waste).
             $item->qty_return = max(0, round((float) $item->qty_delivery - (float) $item->qty_actual - (float) $item->qty_waste, 2));
             $item->subtotal_actual = round((float) $item->qty_actual * (float) $item->unit_price, 2);
         });
@@ -116,8 +117,36 @@ class SalesActualItem extends Model
         return $this->belongsTo(self::class, 'source_sales_actual_item_id');
     }
 
-    public function carryForwardItem(): HasOne
+    /** PO pembeli untuk Penjualan Barang Sisa: menentukan cara bayar & akun kasnya. */
+    public function purchaseOrder(): BelongsTo
     {
-        return $this->hasOne(self::class, 'source_sales_actual_item_id');
+        return $this->belongsTo(PurchaseOrder::class);
+    }
+
+    /**
+     * Penjualan Barang Sisa yang mengambil dari retur item ini. Satu retur
+     * boleh dijual ke beberapa customer, jadi hasMany.
+     */
+    public function leftoverSales(): HasMany
+    {
+        return $this->hasMany(self::class, 'source_sales_actual_item_id');
+    }
+
+    public function leftoverDisposals(): HasMany
+    {
+        return $this->hasMany(LeftoverDisposal::class, 'source_sales_actual_item_id');
+    }
+
+    /**
+     * HPP per satuan untuk menilai Barang Sisa: snapshot bahan baku di item,
+     * jatuh ke HPP master menu bila snapshotnya kosong (data lama).
+     */
+    public function leftoverUnitCost(): float
+    {
+        if ($this->raw_material_cost !== null) {
+            return (float) $this->raw_material_cost;
+        }
+
+        return (float) ($this->product?->raw_material_cost ?? 0);
     }
 }

@@ -192,11 +192,13 @@
             <td class="num"></td>
             <td class="num">{{ $formatCurrency((float) ($profitLoss['sisaStok'] ?? 0)) }}</td>
           </tr>
+          @include('partials.pl-leftover-rows', ['profitLoss' => $profitLoss, 'fmt' => $formatCurrency, 'labelClass' => 'indent-cell', 'valueClass' => 'num'])
           <tr class="subtotal">
             <td class="label-cell">Bahan Baku Terpakai</td>
             <td class="num"></td>
             <td class="num">{{ $formatCurrency((float) ($profitLoss['bahanBakuTerpakai'] ?? 0)) }}</td>
           </tr>
+          @include('partials.pl-hpp-detail-rows', ['profitLoss' => $profitLoss, 'fmt' => $formatCurrency, 'labelClass' => 'indent-cell', 'valueClass' => 'num'])
 
           <tr class="spacer"><td colspan="3">&nbsp;</td></tr>
 

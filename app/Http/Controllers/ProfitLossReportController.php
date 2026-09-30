@@ -6,6 +6,7 @@ use App\Exports\ViewExcelExport;
 use App\Http\Controllers\Concerns\BuildsOperatingExpenseAdjustments;
 use App\Http\Controllers\Concerns\ChecksPeriodClosing;
 use App\Http\Controllers\Concerns\ReportsDamagedInventoryLoss;
+use App\Http\Controllers\Concerns\ReportsHppDetails;
 use App\Models\CashOut;
 use App\Models\ExpenseCategory;
 use App\Models\InventoryItem;
@@ -28,6 +29,7 @@ class ProfitLossReportController extends Controller
     use BuildsOperatingExpenseAdjustments;
     use ChecksPeriodClosing;
     use ReportsDamagedInventoryLoss;
+    use ReportsHppDetails;
 
     private const PAYABLE_SETTLEMENT_CATEGORY_NAME = 'Pembayaran Hutang';
 
@@ -180,10 +182,16 @@ class ProfitLossReportController extends Controller
         $totalPenjualan = round($salesActualRevenue - $salesDiscount + $revenueAdjustmentTotal + $otherIncomeAdjustmentTotal, 2);
 
         $inventory = $this->aggregateInventory($dateFrom, $dateTo, $inventoryUsageService);
+        $hpp = $this->hppDetails($dateFrom, $dateTo);
         $bahanBakuLama = round((float) $inventory['lama'], 2);
         $bahanBakuBaru = round((float) $inventory['baru'] + $cogsAdjustmentTotal, 2);
         $sisaStok = round((float) $inventory['sisa'], 2);
-        $bahanBakuTerpakai = round((float) $inventory['terpakai'] + $cogsAdjustmentTotal, 2);
+        // Persediaan Barang Sisa diperlakukan seperti stok: awal menambah,
+        // akhir mengurangi HPP.
+        $bahanBakuTerpakai = round(
+            (float) $inventory['terpakai'] + $cogsAdjustmentTotal + $hpp['barangSisaAwal'] - $hpp['barangSisaAkhir'],
+            2
+        );
 
         $pengeluaranRows = $this->buildPengeluaranRows($dateFrom, $dateTo);
         $totalPengeluaran = round((float) collect($pengeluaranRows)->sum('amount'), 2);
@@ -197,6 +205,7 @@ class ProfitLossReportController extends Controller
             'bahanBakuBaru' => $bahanBakuBaru,
             'sisaStok' => $sisaStok,
             'bahanBakuTerpakai' => $bahanBakuTerpakai,
+            ...$hpp,
             'pengeluaranRows' => $pengeluaranRows,
             'totalPengeluaran' => $totalPengeluaran,
             'labaRugi' => $labaRugi,
@@ -395,7 +404,7 @@ class ProfitLossReportController extends Controller
             $dateFrom,
             $dateTo,
             ProfitLossAdjustment::GROUP_COGS
-        );
+        )->toBase()->merge($this->leftoverCogsRows($dateFrom, $dateTo))->values();
         [$operatingExpenseCategoryAdjustments, $operatingExpenseAdjustmentRows] = $this->buildOperatingExpenseAdjustments(
             $dateFrom,
             $dateTo
@@ -563,6 +572,34 @@ class ProfitLossReportController extends Controller
             ->toBase();
 
         return [$categoryAdjustments, $standaloneRows];
+    }
+
+    /**
+     * Persediaan Barang Sisa sebagai baris HPP tambahan (awal +, akhir -),
+     * supaya Laba di statement & matriks tahunan sama dengan Laba Rugi bulanan.
+     */
+    protected function leftoverCogsRows(Carbon $dateFrom, Carbon $dateTo): Collection
+    {
+        $hpp = $this->hppDetails($dateFrom, $dateTo);
+        $rows = collect();
+
+        if (abs($hpp['barangSisaAwal']) >= 0.005) {
+            $rows->push([
+                'label' => 'Barang Sisa Awal',
+                'amount' => $hpp['barangSisaAwal'],
+                'meta' => 'Persediaan Barang Sisa (retur) per '.$dateFrom->copy()->subDay()->format('d-m-Y').', dinilai HPP menu.',
+            ]);
+        }
+
+        if (abs($hpp['barangSisaAkhir']) >= 0.005) {
+            $rows->push([
+                'label' => 'Barang Sisa Akhir',
+                'amount' => -1 * $hpp['barangSisaAkhir'],
+                'meta' => 'Persediaan Barang Sisa (retur) per '.$dateTo->format('d-m-Y').', dinilai HPP menu.',
+            ]);
+        }
+
+        return $rows;
     }
 
     protected function buildProfitLossAdjustmentRows(Carbon $dateFrom, Carbon $dateTo, string $group): Collection

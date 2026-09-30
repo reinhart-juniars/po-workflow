@@ -2,17 +2,17 @@
 
 namespace App\Services;
 
+use App\Models\AuditLog;
 use App\Models\CashAccount;
 use App\Models\DeliveryOrder;
 use App\Models\IncomeCategory;
-use App\Models\AuditLog;
 use App\Models\OtherIncome;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\SalesActual;
-use App\Models\SalesDailyClosing;
 use App\Models\SalesActualItem;
+use App\Models\SalesDailyClosing;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -22,6 +22,7 @@ use Illuminate\Validation\ValidationException;
 class SalesActualService
 {
     private const INCOME_CATEGORY_NAME = OtherIncome::CATEGORY_SALES_ACTUAL;
+
     private const SHIPPING_INCOME_CATEGORY_NAME = OtherIncome::CATEGORY_OTHER_SALES;
 
     public function createDraftFromDeliveryOrder(DeliveryOrder $deliveryOrder, ?string $ipAddress = null): Collection
@@ -202,21 +203,26 @@ class SalesActualService
                 $ipAddress
             );
 
-            $carryForwardCount = $this->createCarryForwardDraft($salesActual->fresh(['items']));
+            // Retur tidak lagi dibawa otomatis ke draft customer yang sama:
+            // ia menjadi Barang Sisa yang bisa dijual ke customer mana pun
+            // (LeftoverStockService). Di sini cukup dicatat jejaknya.
+            $returnItems = $salesActual->items->filter(fn (SalesActualItem $item) => (float) $item->qty_return > 0);
 
-            if ($carryForwardCount > 0) {
+            if ($returnItems->isNotEmpty()) {
                 $this->writeAuditLog(
                     $salesActual,
-                    'sales_actual_carry_forward_created',
+                    'sales_actual_leftover_created',
                     sprintf(
-                        'Retur Sales Actual #%s dibuat carry forward ke draft berikutnya. Total item: %s.',
+                        'Retur Sales Actual #%s masuk Barang Sisa. Total item: %s, qty %s.',
                         $salesActual->id,
-                        number_format($carryForwardCount, 0, ',', '.')
+                        number_format($returnItems->count(), 0, ',', '.'),
+                        number_format((float) $returnItems->sum('qty_return'), 2, ',', '.')
                     ),
                     null,
                     [
                         'sales_actual_id' => $salesActual->id,
-                        'carry_forward_item_count' => $carryForwardCount,
+                        'leftover_item_ids' => $returnItems->pluck('id')->values()->all(),
+                        'leftover_qty' => round((float) $returnItems->sum('qty_return'), 2),
                     ],
                     $ipAddress
                 );
@@ -335,7 +341,7 @@ class SalesActualService
 
             if ($usedQty - $availableQty > 0.00001) {
                 throw ValidationException::withMessages([
-                    'items.' . $item->id . '.qty_actual' => "Qty actual + waste untuk {$item->item_name} tidak boleh melebihi qty delivery.",
+                    'items.'.$item->id.'.qty_actual' => "Qty actual + waste untuk {$item->item_name} tidak boleh melebihi qty delivery.",
                 ]);
             }
         }
@@ -426,71 +432,13 @@ class SalesActualService
         return $updateData;
     }
 
-    private function createCarryForwardDraft(SalesActual $salesActual): int
-    {
-        $returnItems = $salesActual->items
-            ->filter(fn (SalesActualItem $item) => (float) $item->qty_return > 0)
-            ->values();
-
-        if ($returnItems->isEmpty()) {
-            return 0;
-        }
-
-        $nextSalesDate = $salesActual->sales_date
-            ? $salesActual->sales_date->copy()->addDay()->toDateString()
-            : now()->addDay()->toDateString();
-
-        /** @var SalesActual $nextDraft */
-        $nextDraft = SalesActual::query()
-            ->where('customer_id', $salesActual->customer_id)
-            ->whereDate('sales_date', $nextSalesDate)
-            ->where('status', 'draft')
-            ->orderByRaw('CASE WHEN delivery_order_id IS NULL THEN 0 ELSE 1 END')
-            ->first();
-
-        if (! $nextDraft) {
-            $nextDraft = SalesActual::query()->create([
-                'delivery_order_id' => null,
-                'customer_id' => $salesActual->customer_id,
-                'sales_date' => $nextSalesDate,
-                'status' => 'draft',
-                'notes' => null,
-            ]);
-        }
-
-        foreach ($returnItems as $item) {
-            SalesActualItem::query()->updateOrCreate(
-                [
-                    'source_sales_actual_item_id' => $item->id,
-                ],
-                [
-                    'sales_actual_id' => $nextDraft->id,
-                    'purchase_order_item_id' => null,
-                    'product_id' => $item->product_id,
-                    'item_name' => $item->item_name,
-                    'unit' => $item->unit,
-                    'qty_delivery' => (float) $item->qty_return,
-                    'qty_actual' => (float) $item->qty_return,
-                    'qty_return' => 0,
-                    'qty_cancel' => 0,
-                    'unit_price' => (float) $item->unit_price,
-                    'raw_material_cost' => $item->raw_material_cost,
-                    'overhead_cost' => $item->overhead_cost,
-                    'is_carry_forward' => true,
-                    'notes' => null,
-                ]
-            );
-        }
-
-        return $returnItems->count();
-    }
-
     public function cashSalesActualItemsForClosing(Carbon $closingDate)
     {
         return SalesActualItem::query()
             ->with([
                 'salesActual.customer',
                 'purchaseOrderItem.purchaseOrder',
+                'purchaseOrder',
                 'sourceSalesActualItem.purchaseOrderItem.purchaseOrder',
                 'sourceSalesActualItem.sourceSalesActualItem.purchaseOrderItem.purchaseOrder',
             ])
@@ -523,7 +471,7 @@ class SalesActualService
 
                 return [
                     'cash_account_id' => (int) $cashAccountId,
-                    'cash_account_name' => $cashAccount?->name ?? 'Akun Kas #' . $cashAccountId,
+                    'cash_account_name' => $cashAccount?->name ?? 'Akun Kas #'.$cashAccountId,
                     'sales_actual_count' => $rows->pluck('sales_actual_id')->unique()->count(),
                     'item_count' => $rows->count(),
                     'amount' => round((float) $rows->sum('subtotal_actual'), 2),
@@ -551,8 +499,7 @@ class SalesActualService
             ->groupBy(fn (SalesActualItem $item) => (string) $item->salesActual?->id)
             ->map(function (Collection $rows) {
                 $salesActual = $rows->first()?->salesActual;
-                $purchaseOrder = $rows->first()?->purchaseOrderItem?->purchaseOrder
-                    ?? $rows->first()?->sourceSalesActualItem?->purchaseOrderItem?->purchaseOrder;
+                $purchaseOrder = $rows->first() ? $this->purchaseOrderForSalesActualItem($rows->first()) : null;
 
                 return [
                     'sales_actual_id' => $salesActual?->id,
@@ -604,6 +551,7 @@ class SalesActualService
         $actuals = SalesActual::query()
             ->with([
                 'items.purchaseOrderItem.purchaseOrder:id,shipping_cost',
+                'items.purchaseOrder:id,shipping_cost',
                 'items.sourceSalesActualItem.purchaseOrderItem.purchaseOrder:id,shipping_cost',
                 'items.sourceSalesActualItem.sourceSalesActualItem.purchaseOrderItem.purchaseOrder:id,shipping_cost',
             ])
@@ -623,6 +571,7 @@ class SalesActualService
     private function purchaseOrderForSalesActualItem(SalesActualItem $item): ?PurchaseOrder
     {
         return $item->purchaseOrderItem?->purchaseOrder
+            ?? $item->purchaseOrder
             ?? $item->sourceSalesActualItem?->purchaseOrderItem?->purchaseOrder
             ?? $item->sourceSalesActualItem?->sourceSalesActualItem?->purchaseOrderItem?->purchaseOrder;
     }
@@ -635,9 +584,10 @@ class SalesActualService
 
         $visitedItemIds[] = $item->id;
 
-        $item->loadMissing('purchaseOrderItem.purchaseOrder', 'sourceSalesActualItem');
+        $item->loadMissing('purchaseOrderItem.purchaseOrder', 'purchaseOrder', 'sourceSalesActualItem');
 
-        $purchaseOrder = $item->purchaseOrderItem?->purchaseOrder;
+        // Penjualan Barang Sisa membawa PO pembelinya sendiri.
+        $purchaseOrder = $item->purchaseOrderItem?->purchaseOrder ?? $item->purchaseOrder;
 
         if ($purchaseOrder) {
             return $purchaseOrder->payment_type;
@@ -715,7 +665,7 @@ class SalesActualService
                     'description' => sprintf(
                         'Closing Sales Actual %s%s',
                         $closing->closing_date?->format('d-m-Y') ?? now()->format('d-m-Y'),
-                        $discountShare > 0 ? ' - diskon Rp ' . number_format($discountShare, 0, ',', '.') : ''
+                        $discountShare > 0 ? ' - diskon Rp '.number_format($discountShare, 0, ',', '.') : ''
                     ),
                     'created_by' => Auth::id(),
                     'updated_by' => Auth::id(),
@@ -799,9 +749,10 @@ class SalesActualService
 
         $visitedItemIds[] = $item->id;
 
-        $item->loadMissing('purchaseOrderItem.purchaseOrder', 'sourceSalesActualItem');
+        $item->loadMissing('purchaseOrderItem.purchaseOrder', 'purchaseOrder', 'sourceSalesActualItem');
 
-        $purchaseOrder = $item->purchaseOrderItem?->purchaseOrder;
+        // Penjualan Barang Sisa membawa PO pembelinya sendiri.
+        $purchaseOrder = $item->purchaseOrderItem?->purchaseOrder ?? $item->purchaseOrder;
 
         if ($purchaseOrder) {
             if ($purchaseOrder->payment_type !== 'cash') {
@@ -903,6 +854,7 @@ class SalesActualService
                     'subtotal_actual' => (float) $item->subtotal_actual,
                     'is_carry_forward' => (bool) $item->is_carry_forward,
                     'source_sales_actual_item_id' => $item->source_sales_actual_item_id,
+                    'purchase_order_id' => $item->purchase_order_id,
                 ])
                 ->values()
                 ->all(),
@@ -913,13 +865,13 @@ class SalesActualService
     {
         $name = trim((string) ($item->product->name ?? $item->custom_name ?? ''));
 
-        return $name !== '' ? $name : 'Item #' . $item->id;
+        return $name !== '' ? $name : 'Item #'.$item->id;
     }
 
     private function itemGroupKey(SalesActualItem $item): string
     {
         return implode('|', [
-            $item->product_id ?: 'name:' . mb_strtolower($item->item_name),
+            $item->product_id ?: 'name:'.mb_strtolower($item->item_name),
             mb_strtolower((string) $item->unit),
             number_format((float) $item->unit_price, 2, '.', ''),
         ]);

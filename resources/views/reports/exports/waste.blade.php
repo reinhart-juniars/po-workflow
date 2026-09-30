@@ -27,7 +27,7 @@
   <h1>Laporan Waste</h1>
   <div class="meta">
     <p>Periode: {{ $dateFrom->format('d M Y') }} - {{ $dateTo->format('d M Y') }}</p>
-    <p>Barang carry forward (retur hari sebelumnya) yang tidak layak jual dan dibuang. Berdasarkan tanggal penjualan (Sales Actual submitted).</p>
+    <p>Barang Sisa (retur) yang tidak layak jual dan dibuang: saat dijual ulang (tanggal penjualan) atau langsung dari stok Barang Sisa (tanggal dibuang).</p>
   </div>
 
   <table class="cards">
@@ -61,22 +61,21 @@
       </tr>
     </thead>
     <tbody>
-      @forelse ($wasteItems as $item)
+      @forelse ($wasteRows as $row)
         @php
-          $costPerUnit = (float) $item->raw_material_cost + (float) $item->overhead_cost;
-          $wasteCost = (float) $item->qty_waste * $costPerUnit;
-          $wasteSelling = (float) $item->qty_waste * (float) $item->unit_price;
+          $wasteCost = $row['qty'] * $row['cost_per_unit'];
+          $wasteSelling = $row['qty'] * $row['unit_price'];
         @endphp
         <tr>
           <td class="text-center">{{ $loop->iteration }}</td>
-          <td>{{ $item->salesActual?->sales_date?->format('d M Y') }}</td>
-          <td>{{ $item->salesActual?->customer?->name ?? '-' }}</td>
+          <td>{{ $row['date']?->format('d M Y') }}</td>
+          <td>{{ $row['customer_name'] ?? '-' }}</td>
           <td>
-            {{ $item->item_name }}
-            <div class="muted">{{ $item->unit ?: '-' }}</div>
+            {{ $row['item_name'] }}
+            <div class="muted">{{ $row['unit'] ?: '-' }} | {{ $row['source'] }}</div>
           </td>
-          <td class="text-right">{{ number_format((float) $item->qty_waste, 2, ',', '.') }}</td>
-          <td class="text-right money">Rp {{ number_format($costPerUnit, 0, ',', '.') }}</td>
+          <td class="text-right">{{ number_format($row['qty'], 2, ',', '.') }}</td>
+          <td class="text-right money">Rp {{ number_format($row['cost_per_unit'], 0, ',', '.') }}</td>
           <td class="text-right money">Rp {{ number_format($wasteCost, 0, ',', '.') }}</td>
           <td class="text-right money">Rp {{ number_format($wasteSelling, 0, ',', '.') }}</td>
         </tr>
@@ -86,7 +85,7 @@
         </tr>
       @endforelse
 
-      @if (! $wasteItems->isEmpty())
+      @if (! $wasteRows->isEmpty())
         <tr class="grand-total">
           <td colspan="4" class="text-center">TOTAL WASTE</td>
           <td class="text-right">{{ number_format((float) $totalWasteQty, 2, ',', '.') }}</td>

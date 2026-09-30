@@ -27,6 +27,26 @@ menggantikan HPP residual opname dengan pemakaian bahan riil dari resep × produ
 | B | Notifikasi perubahan harga bahan & harga jual menu (lonceng di semua aplikasi), notifikasi profit menu keseluruhan keluar dari batas atas/bawah (Pengaturan Inventory; `profit:check` harian), laporan Menu Tidak Diproduksi (rentang bawaan di Pengaturan, export Excel), Katalog Foto Menu berbasis SKU di aplikasi **Marketing** (peran `marketing`; centang menu yang tampil di website, SKU diketik manual karena menjadi nama menu di website; foto dikompres otomatis ke JPG 1600 px) | Inventory / Admin / Marketing |
 | MM | Paritas Master Menu Revamp: **Breakdown Bahan** per PO (Admin › Detail PO) dan per SPK Produksi (menu → bahan mentah, rekap per bahan dicocokkan dengan Kartu Stok → Perlu Beli; `MaterialBreakdownService`), daftar Resep & Menu dengan Harga Jual/Profit %/Margin % + filter *Profit di bawah target* + export Daftar Menu, harga manual per baris resep, export riwayat harga bahan, Plating *Komponen per Menu* + Excel 2 sheet, Excel Breakdown & Lembar Kerja, halaman **Pekerjaan Menu** (template per menu + import/export Excel, membaca berkas Master Menu), migrasi dokumen produksi tanpa Pra SPK | Inventory / Admin |
 
+## Barang Sisa, Barang Hilang & Susut Bahan (revisi Owner, v3.1)
+
+- **Barang Sisa** (aplikasi Sales › Barang Sisa): retur Sales Actual yang disubmit tidak lagi otomatis
+  dibawa ke draft customer yang sama. Retur masuk stok Barang Sisa (dihitung dari data, tanpa tabel
+  saldo: `qty_return` − Penjualan Barang Sisa − `leftover_disposals`; `LeftoverStockService`) dan boleh
+  dijual ke customer mana pun ("Penjualan Barang Sisa", dari halaman Barang Sisa atau panel di edit
+  Sales Actual) atau dibuang dengan alasan. Cara bayar Penjualan Barang Sisa mengikuti PO customer
+  pembeli di DO-nya (`sales_actual_items.purchase_order_id`); Sales Actual tanpa DO hanya untuk customer
+  asal retur.
+- Nilainya **HPP menu** (snapshot bahan baku di item). Retur yang belum terjual per akhir periode adalah
+  persediaan: baris *Barang Sisa - Persediaan Akhir* di Neraca, *Barang Sisa Awal/Akhir* di blok HPP Laba
+  Rugi (awal menambah, akhir mengurangi Bahan Baku Terpakai). Hanya retur sejak pengaturan
+  `leftover.accounting_start` (bawaan 1 Okt 2026) supaya laporan bulan yang sudah dilaporkan tidak bergeser.
+- **Barang Hilang / Barang Temuan**: penyesuaian kartu stok (hitung sisa saat Tutup SPK atau halaman
+  **Opname Bahan** di Inventory) bertanda negatif/positif. Tampil sebagai rincian di bawah Bahan Baku
+  Terpakai ("termasuk …") — terpisah dari Kerugian Barang Rusak di Pengeluaran, dan tidak mengubah Laba.
+- **Susut Bahan** (Inventory › Resep & HPP): per bahan, susut = lebih pakai dari resep + hilang − temuan,
+  dibagi kebutuhan resep; indikator hijau/kuning/merah (bawaan < 1% / 1–10% / > 10%, Pengaturan
+  Inventory), klik bahan untuk melihat SPK dan menu yang memakainya (`InventoryShrinkageService`).
+
 ## Pencarian global
 
 Tombol **Cari dokumen…** di atas sidebar (pintasan <kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>K</kbd>)

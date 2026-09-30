@@ -6,14 +6,15 @@ use App\Models\DeliveryOrder;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
-use App\Models\SalesActualItem;
+use App\Models\SalesActual;
 use App\Models\User;
+use App\Services\LeftoverStockService;
 use App\Services\SalesActualService;
 use Spatie\Permission\Models\Role;
 
 use function Pest\Laravel\actingAs;
 
-it('marks part of a carry forward item as waste and excludes it from carry forward', function () {
+it('marks part of a Barang Sisa sale as waste and keeps it out of Barang Sisa', function () {
     Role::findOrCreate('sales', 'web');
 
     $user = User::factory()->create([
@@ -78,17 +79,21 @@ it('marks part of a carry forward item as waste and excludes it from carry forwa
     $salesActual = $service->createDraftFromDeliveryOrder($deliveryOrder)->first();
     $item = $salesActual->items->first();
 
-    // Hari H-1: 5 dikirim, 3 terjual, 2 retur -> carry forward.
+    // Hari H-1: 5 dikirim, 3 terjual, 2 retur -> Barang Sisa.
     $service->updateActualItems($salesActual, [
         $item->id => ['qty_actual' => 3],
     ], 'Retur 2 untuk besok');
     $service->submit($salesActual->fresh());
 
-    $carryForwardItem = SalesActualItem::query()->where('is_carry_forward', true)->firstOrFail();
+    $carryForwardActual = SalesActual::query()->create([
+        'customer_id' => $customer->id,
+        'sales_date' => now()->toDateString(),
+        'status' => 'draft',
+    ]);
+    $carryForwardItem = app(LeftoverStockService::class)->addToSalesActual($carryForwardActual, $item->fresh(), 2);
     expect((float) $carryForwardItem->qty_delivery)->toBe(2.0);
 
-    // Hari H: dari 2 carry forward, 1 terjual, 1 ternyata tidak layak jual -> waste.
-    $carryForwardActual = $carryForwardItem->salesActual;
+    // Hari H: dari 2 Barang Sisa, 1 terjual, 1 ternyata tidak layak jual -> waste.
     $service->updateActualItems($carryForwardActual, [
         $carryForwardItem->id => [
             'qty_actual' => 1,
@@ -105,8 +110,8 @@ it('marks part of a carry forward item as waste and excludes it from carry forwa
 
     $service->submit($carryForwardActual->fresh());
 
-    // Waste tidak dibawa ke draft berikutnya (qty_return = 0 -> tidak ada carry forward baru).
-    expect(SalesActualItem::query()->where('source_sales_actual_item_id', $carryForwardItem->id)->count())->toBe(0);
+    // Waste tidak kembali ke Barang Sisa (qty_return = 0), dan retur asal sudah habis.
+    expect(app(LeftoverStockService::class)->available())->toBeEmpty();
 
     // Laporan Waste menampilkan item beserta nilai cost & harga jual.
     $response = $this->get(route('salesapp.reports.waste', [
@@ -192,8 +197,12 @@ it('rejects qty actual plus waste exceeding qty delivery', function () {
     ], 'Retur 2');
     $service->submit($salesActual->fresh());
 
-    $carryForwardItem = SalesActualItem::query()->where('is_carry_forward', true)->firstOrFail();
-    $carryForwardActual = $carryForwardItem->salesActual;
+    $carryForwardActual = SalesActual::query()->create([
+        'customer_id' => $customer->id,
+        'sales_date' => now()->toDateString(),
+        'status' => 'draft',
+    ]);
+    $carryForwardItem = app(LeftoverStockService::class)->addToSalesActual($carryForwardActual, $item->fresh(), 2);
 
     // qty_delivery carry forward = 2, actual 2 + waste 1 = 3 > 2 -> ditolak.
     expect(fn () => $service->updateActualItems($carryForwardActual, [

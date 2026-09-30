@@ -15,7 +15,7 @@
                 <h1 class="dashboard-hero-title">Sales Actual {{ $salesActual->sales_date?->format('d M Y') }}</h1>
                 <p class="dashboard-hero-subtitle">
                     Isi qty actual sesuai barang yang terjual. Sisa dari qty delivery otomatis menjadi retur.
-                    {{ $salesActual->customer->name ?? '-' }} | {{ $salesActual->deliveryOrder->do_code ?? 'Carry Forward' }}
+                    {{ $salesActual->customer->name ?? '-' }} | {{ $salesActual->deliveryOrder->do_code ?? 'Tanpa DO' }}
                 </p>
             </div>
             <a href="{{ route('salesapp.dashboard') }}" class="btn-ghost">Kembali</a>
@@ -39,12 +39,12 @@
         <article class="sales-stat-card">
             <p class="stat-label">Total Retur</p>
             <p class="sales-stat-value text-rose-600">{{ number_format((float) $totalReturn, 2, ',', '.') }}</p>
-            <p class="stat-meta">Akan dibawa ke draft berikutnya setelah submit</p>
+            <p class="stat-meta">Masuk Barang Sisa setelah submit</p>
         </article>
         <article class="sales-stat-card">
             <p class="stat-label">Total Waste</p>
             <p class="sales-stat-value text-rose-600">{{ number_format((float) $totalWaste, 2, ',', '.') }}</p>
-            <p class="stat-meta">Barang carry forward yang dibuang (tidak layak jual)</p>
+            <p class="stat-meta">Barang Sisa yang dibuang (tidak layak jual)</p>
         </article>
     </section>
 
@@ -106,14 +106,17 @@
                                     </select>
                                     <div class="mt-1 text-xs text-slate-500">
                                         Unit: <span id="item-unit-{{ $item->id }}">{{ $item->unit ?: '-' }}</span>
-                                        | Carry forward dari item #{{ $item->source_sales_actual_item_id }}
+                                        | @include('salesapp.partials.leftover-origin', ['item' => $item])
                                     </div>
+                                    <button type="submit" form="remove-leftover-{{ $item->id }}" class="mt-1 text-xs font-semibold text-rose-600 hover:underline">
+                                        Lepas dari Sales Actual ini
+                                    </button>
                                 @else
                                     <div class="font-semibold text-slate-900">{{ $item->item_name }}</div>
                                     <div class="mt-1 text-xs text-slate-500">
                                         {{ $item->unit ?: '-' }}
                                         @if ($item->is_carry_forward)
-                                            | Carry forward dari item #{{ $item->source_sales_actual_item_id }}
+                                            | @include('salesapp.partials.leftover-origin', ['item' => $item])
                                         @elseif ($item->purchaseOrderItem?->purchaseOrder)
                                             | {{ $item->purchaseOrderItem->purchaseOrder->po_number }}
                                         @endif
@@ -199,12 +202,64 @@
     </form>
 
     @if ($isDraft)
+        {{-- Form lepas Penjualan Barang Sisa ada di luar form utama (form tidak boleh bersarang);
+             tombolnya di baris tabel menunjuk ke sini lewat atribut form. --}}
+        @foreach ($salesActual->items->where('is_carry_forward', true) as $item)
+            <form id="remove-leftover-{{ $item->id }}" method="POST" class="hidden"
+                action="{{ route('salesapp.actuals.leftovers.destroy', [$salesActual, $item]) }}"
+                onsubmit="return confirm('Lepas {{ $item->item_name }} dari Sales Actual ini? Qty-nya kembali ke stok Barang Sisa.')">
+                @csrf
+                @method('DELETE')
+            </form>
+        @endforeach
+
+        <form method="POST" action="{{ route('salesapp.actuals.leftovers.store', $salesActual) }}" class="section-card">
+            @csrf
+            <h2 class="panel-title">Penjualan Barang Sisa</h2>
+            <p class="section-subtitle mt-1">
+                Jual retur yang masih tersedia ke customer ini. Cara bayarnya mengikuti PO customer ini di DO.
+            </p>
+
+            @if ($leftoverStock->isEmpty())
+                <p class="mt-3 text-sm text-slate-500">Tidak ada Barang Sisa yang tersedia.</p>
+            @else
+                <div class="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_8rem_10rem_auto] sm:items-end">
+                    <div>
+                        <label class="form-label" for="leftover-entry">Barang Sisa</label>
+                        <select id="leftover-entry" name="leftover_entry_id" class="form-control js-leftover-entry" required>
+                            <option value="">Pilih Barang Sisa</option>
+                            @foreach ($leftoverStock as $row)
+                                <option value="{{ $row['entry_id'] }}"
+                                    data-available="{{ $row['available_qty'] }}"
+                                    data-price="{{ $row['unit_price'] }}"
+                                    @selected((string) old('leftover_entry_id') === (string) $row['entry_id'])>
+                                    {{ $row['item_name'] }} - sisa {{ number_format($row['available_qty'], 2, ',', '.') }}
+                                    (retur {{ $row['customer_name'] ?? '-' }}, {{ \Illuminate\Support\Carbon::parse($row['returned_at'])->format('d M') }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label" for="leftover-qty">Qty</label>
+                        <input id="leftover-qty" type="number" name="leftover_qty" step="0.01" min="0.01"
+                            value="{{ old('leftover_qty') }}" class="form-control text-right tabular-nums" required>
+                    </div>
+                    <div>
+                        <label class="form-label" for="leftover-price">Harga</label>
+                        <input id="leftover-price" type="number" name="leftover_price" step="0.01" min="0"
+                            value="{{ old('leftover_price') }}" class="form-control text-right tabular-nums">
+                    </div>
+                    <button type="submit" class="btn-primary">Tambahkan</button>
+                </div>
+            @endif
+        </form>
+
         <form method="POST" action="{{ route('salesapp.actuals.submit', $salesActual) }}" class="section-card">
             @csrf
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 class="panel-title">Submit Final</h2>
-                    <p class="section-subtitle mt-1">Kunci hasil penjualan ini. Nilai actual masuk ke Accounting dan retur dibuat sebagai draft berikutnya.</p>
+                    <p class="section-subtitle mt-1">Kunci hasil penjualan ini. Nilai actual masuk ke Accounting dan retur masuk Barang Sisa.</p>
                 </div>
                 <button type="submit" class="btn-success"
                     onclick="return confirm('Submit sales actual ini sebagai penjualan final? Setelah submit, data tidak bisa diedit lagi.')">
@@ -276,6 +331,29 @@
             priceInput?.addEventListener('input', updateCalculatedValues);
             wasteInput?.addEventListener('input', updateCalculatedValues);
             updateCalculatedValues();
+        });
+
+        // Pilih Barang Sisa: isi qty (maksimal sisa) dan harga jual asalnya.
+        document.querySelectorAll('.js-leftover-entry').forEach((select) => {
+            const qtyInput = document.getElementById('leftover-qty');
+            const priceInput = document.getElementById('leftover-price');
+
+            select.addEventListener('change', () => {
+                const selected = select.selectedOptions[0];
+
+                if (!selected || !selected.value) {
+                    return;
+                }
+
+                if (qtyInput) {
+                    qtyInput.max = selected.dataset.available || '';
+                    qtyInput.value = selected.dataset.available || '';
+                }
+
+                if (priceInput) {
+                    priceInput.value = selected.dataset.price || '';
+                }
+            });
         });
 
         document.querySelectorAll('.js-carry-product').forEach((select) => {

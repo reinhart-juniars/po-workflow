@@ -6,8 +6,8 @@
             <div class="min-w-0">
                 <h1 class="dashboard-hero-title">Laporan Waste</h1>
                 <p class="dashboard-hero-subtitle">
-                    Barang carry forward (retur hari sebelumnya) yang pada hari penjualan ternyata tidak layak
-                    jual dan dibuang. Nilai ditampilkan dari cost (BB + OHC) dan harga jual.
+                    Barang Sisa (retur) yang ternyata tidak layak jual dan dibuang -- saat dijual ulang atau
+                    langsung dari halaman Barang Sisa. Nilai ditampilkan dari cost (BB + OHC) dan harga jual.
                 </p>
             </div>
 
@@ -61,28 +61,27 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($wasteItems as $item)
+                        @forelse ($wasteRows as $row)
                             @php
-                                $costPerUnit = (float) $item->raw_material_cost + (float) $item->overhead_cost;
-                                $wasteCost = (float) $item->qty_waste * $costPerUnit;
-                                $wasteSelling = (float) $item->qty_waste * (float) $item->unit_price;
+                                $wasteCost = $row['qty'] * $row['cost_per_unit'];
+                                $wasteSelling = $row['qty'] * $row['unit_price'];
                             @endphp
                             <tr>
                                 <td class="date-cell" data-label="Tanggal">
-                                    {{ $item->salesActual?->sales_date?->format('d M Y') }}</td>
-                                <td data-label="Customer">{{ $item->salesActual?->customer?->name ?? '-' }}</td>
-                                <td class="font-semibold text-slate-900" data-label="Item">{{ $item->item_name }}
-                                    <span class="block text-xs font-normal text-slate-500">{{ $item->unit ?: '-' }}</span>
+                                    {{ $row['date']?->format('d M Y') }}</td>
+                                <td data-label="Customer">{{ $row['customer_name'] ?? '-' }}</td>
+                                <td class="font-semibold text-slate-900" data-label="Item">{{ $row['item_name'] }}
+                                    <span class="block text-xs font-normal text-slate-500">{{ $row['unit'] ?: '-' }} | {{ $row['source'] }}</span>
                                 </td>
                                 <td class="number-cell text-rose-600" data-label="Qty Waste">
-                                    {{ number_format((float) $item->qty_waste, 2, ',', '.') }}</td>
+                                    {{ number_format($row['qty'], 2, ',', '.') }}</td>
                                 <td class="number-cell" data-label="Cost / Unit">Rp
-                                    {{ number_format($costPerUnit, 0, ',', '.') }}</td>
+                                    {{ number_format($row['cost_per_unit'], 0, ',', '.') }}</td>
                                 <td class="number-cell font-semibold text-rose-600" data-label="Nilai Cost">Rp
                                     {{ number_format($wasteCost, 0, ',', '.') }}</td>
                                 <td class="number-cell" data-label="Nilai Harga Jual">Rp
                                     {{ number_format($wasteSelling, 0, ',', '.') }}</td>
-                                <td data-label="Catatan">{{ $item->salesActual?->notes ?: '-' }}</td>
+                                <td data-label="Catatan">{{ $row['notes'] ?: '-' }}</td>
                             </tr>
                         @empty
                             <tr class="empty-row">

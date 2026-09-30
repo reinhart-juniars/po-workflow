@@ -3,22 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Exports\ViewExcelExport;
+use App\Models\LeftoverDisposal;
+use App\Models\Product;
 use App\Models\SalesActual;
 use App\Models\SalesActualItem;
-use App\Models\Product;
-use App\Services\SalesReportService;
+use App\Services\LeftoverStockService;
 use App\Services\SalesActualService;
+use App\Services\SalesReportService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
 class SalesAppController extends Controller
 {
-    public function __construct(private readonly SalesActualService $salesActualService)
-    {
-    }
+    public function __construct(private readonly SalesActualService $salesActualService) {}
 
     public function dashboard(Request $request)
     {
@@ -76,14 +75,14 @@ class SalesAppController extends Controller
         ));
     }
 
-    public function edit(SalesActual $salesActual)
+    public function edit(SalesActual $salesActual, LeftoverStockService $leftovers)
     {
         $salesActual->load([
             'customer',
             'deliveryOrder',
             'items.product',
             'items.purchaseOrderItem.purchaseOrder',
-            'items.sourceSalesActualItem.salesActual',
+            'items.sourceSalesActualItem.salesActual.customer',
         ]);
 
         $selectedProductIds = $salesActual->items
@@ -103,7 +102,12 @@ class SalesAppController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'unit', 'base_price']);
 
-        return view('salesapp.edit', compact('salesActual', 'products'));
+        // Barang Sisa yang bisa dijual lewat Sales Actual ini (bukan retur dirinya sendiri).
+        $leftoverStock = $salesActual->isDraft()
+            ? $leftovers->available()->reject(fn (array $row) => (int) $row['sales_actual_id'] === (int) $salesActual->id)->values()
+            : collect();
+
+        return view('salesapp.edit', compact('salesActual', 'products', 'leftoverStock'));
     }
 
     public function update(Request $request, SalesActual $salesActual)
@@ -135,7 +139,7 @@ class SalesAppController extends Controller
 
         return redirect()
             ->route('salesapp.dashboard')
-            ->with('success', 'Penjualan final berhasil disubmit dan retur dibuat sebagai carry forward. Cash in diposting lewat Closing Penjualan di Accounting.');
+            ->with('success', 'Penjualan final berhasil disubmit. Retur masuk Barang Sisa dan bisa dijual ke customer mana pun. Cash in diposting lewat Closing Penjualan di Accounting.');
     }
 
     public function reports(Request $request)
@@ -168,7 +172,7 @@ class SalesAppController extends Controller
         $totalReturns = (clone $itemsQuery)->sum('qty_return');
 
         $returnItems = (clone $itemsQuery)
-            ->with(['salesActual.customer', 'product', 'carryForwardItem.salesActual'])
+            ->with(['salesActual.customer', 'product', 'leftoverSales.salesActual.customer', 'leftoverDisposals'])
             ->where('qty_return', '>', 0)
             ->orderByDesc('qty_return')
             ->get();
@@ -191,7 +195,7 @@ class SalesAppController extends Controller
     public function exportWasteExcel(Request $request)
     {
         $data = $this->buildWasteReportData($request);
-        $fileName = 'laporan_waste_' . $data['dateFrom']->format('Ymd') . '_' . $data['dateTo']->format('Ymd') . '.xlsx';
+        $fileName = 'laporan_waste_'.$data['dateFrom']->format('Ymd').'_'.$data['dateTo']->format('Ymd').'.xlsx';
 
         return Excel::download(
             new ViewExcelExport('reports.exports.waste', $data),
@@ -202,7 +206,7 @@ class SalesAppController extends Controller
     public function exportWastePdf(Request $request)
     {
         $data = $this->buildWasteReportData($request);
-        $fileName = 'laporan_waste_' . $data['dateFrom']->format('Ymd') . '_' . $data['dateTo']->format('Ymd') . '.pdf';
+        $fileName = 'laporan_waste_'.$data['dateFrom']->format('Ymd').'_'.$data['dateTo']->format('Ymd').'.pdf';
 
         return Pdf::loadView('reports.exports.waste', $data)
             ->setPaper('a4', 'landscape')
@@ -213,7 +217,10 @@ class SalesAppController extends Controller
     {
         [$dateFrom, $dateTo] = $this->parseDateRange($request);
 
-        $wasteItems = SalesActualItem::query()
+        // Waste = Barang Sisa yang dibuang, dari dua jalan: ketahuan tidak layak
+        // jual saat dijual ulang (qty_waste di Penjualan Barang Sisa), atau
+        // dibuang langsung dari halaman Barang Sisa (leftover_disposals).
+        $salesWaste = SalesActualItem::query()
             ->with(['salesActual.customer', 'product'])
             ->where('qty_waste', '>', 0)
             ->whereHas('salesActual', function ($query) use ($dateFrom, $dateTo) {
@@ -222,25 +229,50 @@ class SalesAppController extends Controller
                     ->whereDate('sales_date', '<=', $dateTo->toDateString());
             })
             ->get()
+            ->map(fn (SalesActualItem $item) => [
+                'date' => $item->salesActual?->sales_date,
+                'customer_name' => $item->salesActual?->customer?->name,
+                'item_name' => $item->item_name,
+                'unit' => $item->unit,
+                'qty' => (float) $item->qty_waste,
+                'cost_per_unit' => (float) $item->raw_material_cost + (float) $item->overhead_cost,
+                'unit_price' => (float) $item->unit_price,
+                'source' => 'Saat dijual ulang',
+                'notes' => $item->salesActual?->notes,
+            ]);
+
+        $disposals = LeftoverDisposal::query()
+            ->with(['sourceItem.salesActual.customer'])
+            ->whereDate('disposed_at', '>=', $dateFrom->toDateString())
+            ->whereDate('disposed_at', '<=', $dateTo->toDateString())
+            ->get()
+            ->map(fn (LeftoverDisposal $disposal) => [
+                'date' => $disposal->disposed_at,
+                'customer_name' => $disposal->sourceItem?->salesActual?->customer?->name,
+                'item_name' => $disposal->sourceItem?->item_name,
+                'unit' => $disposal->sourceItem?->unit,
+                'qty' => (float) $disposal->qty,
+                'cost_per_unit' => (float) $disposal->sourceItem?->raw_material_cost + (float) $disposal->sourceItem?->overhead_cost,
+                'unit_price' => (float) $disposal->sourceItem?->unit_price,
+                'source' => 'Dibuang dari stok',
+                'notes' => $disposal->reason,
+            ]);
+
+        $wasteRows = $salesWaste
+            ->concat($disposals)
             ->sortBy([
-                fn (SalesActualItem $item) => $item->salesActual?->sales_date?->toDateString(),
-                fn (SalesActualItem $item) => $item->item_name,
+                fn (array $a, array $b) => [$a['date']?->toDateString(), $a['item_name']] <=> [$b['date']?->toDateString(), $b['item_name']],
             ])
             ->values();
 
-        $totalWasteQty = round((float) $wasteItems->sum('qty_waste'), 2);
-        $totalWasteCost = round((float) $wasteItems->sum(
-            fn (SalesActualItem $item) => (float) $item->qty_waste
-                * ((float) $item->raw_material_cost + (float) $item->overhead_cost)
-        ), 2);
-        $totalWasteSelling = round((float) $wasteItems->sum(
-            fn (SalesActualItem $item) => (float) $item->qty_waste * (float) $item->unit_price
-        ), 2);
+        $totalWasteQty = round((float) $wasteRows->sum('qty'), 2);
+        $totalWasteCost = round((float) $wasteRows->sum(fn (array $row) => $row['qty'] * $row['cost_per_unit']), 2);
+        $totalWasteSelling = round((float) $wasteRows->sum(fn (array $row) => $row['qty'] * $row['unit_price']), 2);
 
         return compact(
             'dateFrom',
             'dateTo',
-            'wasteItems',
+            'wasteRows',
             'totalWasteQty',
             'totalWasteCost',
             'totalWasteSelling'
@@ -266,7 +298,7 @@ class SalesAppController extends Controller
     {
         $reportData = $salesReportService->buildReportData($request);
         $reportData['useSectionLayout'] = true;
-        $fileName = 'laporan_penjualan_' . $reportData['dateFrom']->format('Ymd') . '_' . $reportData['dateTo']->format('Ymd') . '.xlsx';
+        $fileName = 'laporan_penjualan_'.$reportData['dateFrom']->format('Ymd').'_'.$reportData['dateTo']->format('Ymd').'.xlsx';
 
         return Excel::download(
             new ViewExcelExport('reports.exports.sales', $reportData),
@@ -278,7 +310,7 @@ class SalesAppController extends Controller
     {
         $reportData = $salesReportService->buildReportData($request);
         $reportData['useSectionLayout'] = true;
-        $fileName = 'laporan_penjualan_' . $reportData['dateFrom']->format('Ymd') . '_' . $reportData['dateTo']->format('Ymd') . '.pdf';
+        $fileName = 'laporan_penjualan_'.$reportData['dateFrom']->format('Ymd').'_'.$reportData['dateTo']->format('Ymd').'.pdf';
 
         $paper = $salesReportService->pdfPaperSize($reportData, true);
         $orientation = is_array($paper) ? 'portrait' : 'landscape';

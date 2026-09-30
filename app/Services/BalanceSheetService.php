@@ -26,7 +26,8 @@ class BalanceSheetService
     private const PAYABLE_SETTLEMENT_CATEGORY_NAME = 'Pembayaran Hutang';
 
     public function __construct(
-        private InventoryUsageService $inventoryUsageService
+        private InventoryUsageService $inventoryUsageService,
+        private LeftoverStockService $leftoverStockService,
     ) {}
 
     public function buildReport(Carbon $reportDate): array
@@ -395,6 +396,19 @@ class BalanceSheetService
             }
         }
 
+        // Barang Sisa: retur yang belum terjual, dinilai HPP menu. Pasangannya
+        // di laba (calculateProfitForRange) mengurangi HPP sebesar nilai yang
+        // sama, jadi neraca tetap seimbang tanpa Penyesuaian Neraca.
+        $leftoverValue = $this->leftoverStockService->valueAt($reportDate);
+
+        if (abs($leftoverValue) >= 0.005) {
+            $rows->push([
+                'label' => 'Barang Sisa - Persediaan Akhir',
+                'meta' => 'Retur yang belum terjual/dibuang s/d '.$reportDate->format('d-m-Y').', dinilai HPP menu.',
+                'amount' => $leftoverValue,
+            ]);
+        }
+
         return [$rows->values(), $warnings];
     }
 
@@ -689,6 +703,13 @@ class BalanceSheetService
             ->sum(), 2);
 
         $cogsTotal = round($cogsTotal + (float) ($profitLossAdjustments[ProfitLossAdjustment::GROUP_COGS] ?? collect())->sum('amount'), 2);
+        // Persediaan Barang Sisa: awal menambah, akhir mengurangi HPP.
+        $cogsTotal = round(
+            $cogsTotal
+            + $this->leftoverStockService->valueAt($dateFrom->copy()->subDay())
+            - $this->leftoverStockService->valueAt($dateTo),
+            2
+        );
         $netProfit = round($salesRevenue + $otherIncomeTotal - $operatingExpenseTotal - $cogsTotal, 2);
 
         return [$netProfit, $inventoryWarnings->unique()->values()];

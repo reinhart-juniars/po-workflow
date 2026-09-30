@@ -76,6 +76,10 @@ final class UiLabel
             'sales_actual_submitted' => 'Sales Actual Disubmit',
             'sales_actual_cash_in_created' => 'Cash In Sales Actual Dibuat',
             'sales_actual_carry_forward_created' => 'Retur Carry Forward Dibuat',
+            'sales_actual_leftover_created' => 'Retur Masuk Barang Sisa',
+            'sales_actual_leftover_added' => 'Penjualan Barang Sisa Ditambahkan',
+            'sales_actual_leftover_removed' => 'Penjualan Barang Sisa Dilepas',
+            'leftover_disposed' => 'Barang Sisa Dibuang',
             'cancelled_by_customer' => 'Dibatalkan oleh Customer',
         ],
     ];

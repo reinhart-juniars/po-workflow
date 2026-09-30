@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Support\Settings\SettingRegistry;
 use App\Support\Settings\Settings;
 use Filament\Actions;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -94,7 +95,7 @@ class ModuleSettings extends Page implements HasForms
         $this->form->fill(self::toState(app(Settings::class)->all()));
     }
 
-    protected static function field(string $key): TextInput|Toggle|Select
+    protected static function field(string $key): TextInput|Toggle|Select|DatePicker
     {
         $definition = SettingRegistry::definition($key);
         $name = self::stateKey($key);
@@ -106,6 +107,7 @@ class ModuleSettings extends Page implements HasForms
                 ->minValue($definition['min'] ?? 0)->maxValue($definition['max'] ?? 1000),
             SettingRegistry::TYPE_INT => TextInput::make($name)->numeric()->integer()->required()
                 ->minValue($definition['min'] ?? 0)->maxValue($definition['max'] ?? PHP_INT_MAX),
+            SettingRegistry::TYPE_DATE => DatePicker::make($name)->required()->native(false)->displayFormat('d/m/Y'),
             default => TextInput::make($name)->required()->maxLength(20),
         };
 

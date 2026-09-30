@@ -6,8 +6,8 @@
             <div class="min-w-0">
                 <h1 class="dashboard-hero-title">Laporan Sales Final & Retur</h1>
                 <p class="dashboard-hero-subtitle">
-                    Pantau penjualan final yang sudah disubmit, termasuk retur yang perlu dibawa ke pengiriman
-                    berikutnya.
+                    Pantau penjualan final yang sudah disubmit, termasuk retur yang masuk Barang Sisa dan ke mana
+                    Barang Sisa itu dijual atau dibuang.
                 </p>
             </div>
 
@@ -57,7 +57,7 @@
                                 <td class="font-semibold text-slate-900" data-label="Customer">
                                     {{ $actual->customer->name ?? '-' }}</td>
                                 <td class="code-cell" data-label="DO">
-                                    {{ $actual->deliveryOrder->do_code ?? 'Carry Forward' }}</td>
+                                    {{ $actual->deliveryOrder->do_code ?? 'Tanpa DO' }}</td>
                                 <td class="number-cell font-semibold" data-label="Total Actual">Rp
                                     {{ number_format((float) ($actual->total_actual_amount ?? 0), 0, ',', '.') }}</td>
                                 <td class="number-cell" data-label="Qty Retur">
@@ -81,7 +81,7 @@
         </section>
 
         <section class="table-shell sales-table sales-responsive-table">
-            <div class="table-head">Retur untuk Carry Forward</div>
+            <div class="table-head">Retur &rarr; Barang Sisa</div>
             <div class="data-table-wrap">
                 <table class="data-table">
                     <thead>
@@ -90,7 +90,7 @@
                             <th>Customer</th>
                             <th>Item</th>
                             <th>Qty Retur</th>
-                            <th>Carry Forward</th>
+                            <th>Dijual / Dibuang</th>
                             <th>Catatan</th>
                         </tr>
                     </thead>
@@ -103,11 +103,24 @@
                                 <td class="font-semibold text-slate-900" data-label="Item">{{ $item->item_name }}</td>
                                 <td class="number-cell" data-label="Qty Retur">
                                     {{ number_format((float) $item->qty_return, 2, ',', '.') }}</td>
-                                <td data-label="Carry Forward">
-                                    @if ($item->carryForwardItem?->salesActual)
-                                        Draft {{ $item->carryForwardItem->salesActual->sales_date?->format('d M Y') }}
-                                    @else
-                                        -
+                                <td data-label="Dijual / Dibuang">
+                                    @forelse ($item->leftoverSales as $sale)
+                                        <div>
+                                            {{ number_format((float) $sale->qty_delivery, 2, ',', '.') }} ke
+                                            {{ $sale->salesActual?->customer?->name ?? '-' }}
+                                            {{ $sale->salesActual?->sales_date?->format('d M Y') }}
+                                            <span class="text-xs text-slate-500">({{ $sale->salesActual?->isSubmitted() ? 'final' : 'draft' }})</span>
+                                        </div>
+                                    @empty
+                                    @endforelse
+                                    @foreach ($item->leftoverDisposals as $disposal)
+                                        <div class="text-rose-600">
+                                            {{ number_format((float) $disposal->qty, 2, ',', '.') }} dibuang
+                                            {{ $disposal->disposed_at?->format('d M Y') }}
+                                        </div>
+                                    @endforeach
+                                    @if ($item->leftoverSales->isEmpty() && $item->leftoverDisposals->isEmpty())
+                                        <span class="text-amber-700">Masih di Barang Sisa</span>
                                     @endif
                                 </td>
                                 <td data-label="Catatan">{{ $item->salesActual->notes ?: '-' }}</td>

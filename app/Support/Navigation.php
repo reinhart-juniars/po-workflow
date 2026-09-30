@@ -143,6 +143,7 @@ class Navigation
                     ['label' => 'Master Supplier', 'route' => 'filament.admin.resources.suppliers.index', 'can' => 'inventory.view'],
                     ['label' => 'Pembelian Bahan Baku', 'route' => 'filament.admin.resources.inventory-purchases.index', 'can' => 'inventory.view'],
                     ['label' => 'Stock Opname', 'route' => 'filament.admin.resources.stock-opnames.index', 'can' => 'inventory.view'],
+                    ['label' => 'Opname Bahan', 'route' => 'filament.admin.pages.opname-bahan', 'can' => 'inventory.manage'],
                     ['label' => 'Saldo Awal Stok', 'route' => 'filament.admin.resources.inventory-openings.index', 'can' => 'inventory.view'],
                     ['label' => 'Pengaturan Inventory', 'route' => 'filament.admin.pages.pengaturan-inventory', 'can' => 'settings.manage'],
                 ],
@@ -153,6 +154,7 @@ class Navigation
                     ['label' => 'Konversi Satuan', 'route' => 'filament.admin.resources.inventory-unit-conversions.index', 'can' => 'inventory.view'],
                     ['label' => 'Bahan Belum Cocok', 'route' => 'filament.admin.resources.recipe-mismatches.index', 'can' => 'recipe.view'],
                     ['label' => 'Perbandingan HPP', 'route' => 'filament.admin.pages.hpp-comparison-report', 'can' => 'ledger.view'],
+                    ['label' => 'Susut Bahan', 'route' => 'filament.admin.pages.susut-bahan', 'can' => 'ledger.view'],
                     ['label' => 'Menu Tidak Diproduksi', 'route' => 'filament.admin.pages.menu-tidak-diproduksi', 'can' => 'recipe.view'],
                 ],
                 'Produksi' => [
@@ -165,6 +167,9 @@ class Navigation
             'sales' => [
                 'Ringkasan' => [
                     ['label' => 'Dashboard', 'route' => 'salesapp.dashboard', 'icon' => 'heroicon-o-home'],
+                ],
+                'Penjualan' => [
+                    ['label' => 'Barang Sisa', 'route' => 'salesapp.leftovers.index', 'match' => 'salesapp.leftovers.*', 'icon' => 'heroicon-o-archive-box'],
                 ],
                 'Laporan' => [
                     ['label' => 'Laporan Sales Final & Retur', 'route' => 'salesapp.reports.final-retur', 'match' => ['salesapp.reports.final-retur', 'salesapp.reports'], 'icon' => 'heroicon-o-document-chart-bar'],

@@ -119,6 +119,11 @@ php artisan config:cache && php artisan route:cache && php artisan view:cache
 
 Cek: `php artisan access:sync` menampilkan tabel peran → izin sesuai `docs/ACCESS.md`.
 
+**Barang Sisa** (migrasi `2026_09_30_100001`): setelah migrate, buka Pengaturan Inventory → *Barang Sisa
+dihitung sebagai persediaan mulai* dan isi dengan **tanggal go-live** (bawaan 1 Okt 2026). Retur sebelum
+tanggal itu tidak dinilai sebagai persediaan, jadi Laba Rugi/Neraca bulan yang sudah dilaporkan tidak
+bergeser. Draft carry forward lama yang masih terbuka tetap sah dan tercatat sebagai Penjualan Barang Sisa.
+
 ## 5. Gladi bersih di staging (wajib sebelum produksi)
 
 ```bash

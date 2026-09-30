@@ -12,12 +12,13 @@ use App\Models\PurchaseOrderItem;
 use App\Models\SalesActual;
 use App\Models\SalesActualItem;
 use App\Models\User;
+use App\Services\LeftoverStockService;
 use App\Services\SalesActualService;
 use Illuminate\Validation\ValidationException;
 
 use function Pest\Laravel\actingAs;
 
-it('creates draft from completed delivery and submits actual with carry forward returns', function () {
+it('creates draft from completed delivery and submits actual with returns into Barang Sisa', function () {
     $user = User::factory()->create([
         'force_password_change' => false,
         'is_active' => true,
@@ -149,15 +150,27 @@ it('creates draft from completed delivery and submits actual with carry forward 
         ->and($item->notes)->toBeNull()
         ->and($salesActual->notes)->toBe('Retur sebagian');
 
-    $carryForwardItem = SalesActualItem::query()
-        ->where('is_carry_forward', true)
-        ->firstOrFail();
+    // Retur tidak lagi otomatis jadi draft customer yang sama: ia masuk Barang Sisa.
+    expect(SalesActualItem::query()->where('is_carry_forward', true)->count())->toBe(0);
+
+    $leftovers = app(LeftoverStockService::class);
+    expect($leftovers->available()->pluck('available_qty', 'entry_id')->all())->toBe([$item->id => 2.0]);
+
+    // Dijual lagi ke customer yang sama keesokan harinya (Sales Actual tanpa DO).
+    $carryForwardSalesActual = SalesActual::query()->create([
+        'customer_id' => $customer->id,
+        'sales_date' => now()->addDay()->toDateString(),
+        'status' => 'draft',
+    ]);
+    $carryForwardItem = $leftovers->addToSalesActual($carryForwardSalesActual, $item->fresh(), 2);
 
     expect((float) $carryForwardItem->qty_delivery)->toBe(2.0)
         ->and((float) $carryForwardItem->qty_actual)->toBe(2.0)
-        ->and($carryForwardItem->source_sales_actual_item_id)->toBe($item->id);
-
-    $carryForwardSalesActual = $carryForwardItem->salesActual;
+        ->and($carryForwardItem->is_carry_forward)->toBeTrue()
+        ->and($carryForwardItem->source_sales_actual_item_id)->toBe($item->id)
+        // Customer asal, tanpa DO: cara bayar diwarisi lewat rantai retur.
+        ->and($carryForwardItem->purchase_order_id)->toBeNull();
+    expect($leftovers->available())->toBeEmpty();
 
     $service->updateActualItems($carryForwardSalesActual, [
         $carryForwardItem->id => [
@@ -181,7 +194,8 @@ it('creates draft from completed delivery and submits actual with carry forward 
         'sales_actual_draft_created',
         'sales_actual_updated',
         'sales_actual_submitted',
-        'sales_actual_carry_forward_created',
+        'sales_actual_leftover_created',
+        'sales_actual_leftover_added',
     );
     expect(AuditLog::query()->where('entity', 'sales_daily_closing')->pluck('action')->all())->toContain(
         'sales_daily_closing_posted',

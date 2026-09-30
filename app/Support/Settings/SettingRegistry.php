@@ -25,6 +25,9 @@ class SettingRegistry
 
     public const TYPE_INT = 'int';
 
+    /** Tanggal, disimpan sebagai teks Y-m-d. */
+    public const TYPE_DATE = 'date';
+
     /**
      * @return array<string, array{group: string, label: string, type: string, default: mixed, help?: string, options?: array<string, string>, min?: int|float, max?: int|float}>
      */
@@ -119,6 +122,31 @@ class SettingRegistry
                 'type' => self::TYPE_BOOL,
                 'default' => false,
                 'help' => 'Bila aktif, SPK tidak bisa ditutup sebelum setiap bahan diisi sisa stok fisiknya.',
+            ],
+            'shrinkage.green_max_pct' => [
+                'group' => 'Susut Bahan',
+                'label' => 'Batas susut hijau',
+                'type' => self::TYPE_PERCENT,
+                'default' => 1,
+                'min' => 0,
+                'max' => 100,
+                'help' => 'Susut bahan di bawah angka ini berwarna hijau (wajar). Susut = (pemakaian lebih dari resep + barang hilang - barang temuan) / kebutuhan resep.',
+            ],
+            'shrinkage.yellow_max_pct' => [
+                'group' => 'Susut Bahan',
+                'label' => 'Batas susut kuning',
+                'type' => self::TYPE_PERCENT,
+                'default' => 10,
+                'min' => 0,
+                'max' => 1000,
+                'help' => 'Susut dari batas hijau sampai angka ini berwarna kuning (perlu diperhatikan); di atasnya merah (perlu ditelusuri).',
+            ],
+            'leftover.accounting_start' => [
+                'group' => 'Barang Sisa',
+                'label' => 'Barang Sisa dihitung sebagai persediaan mulai',
+                'type' => self::TYPE_DATE,
+                'default' => '2026-10-01',
+                'help' => 'Retur yang masuk Barang Sisa sejak tanggal ini dinilai sebesar HPP menunya dan tercatat sebagai persediaan di Neraca & Laba Rugi. Retur sebelumnya tidak diubah supaya laporan bulan yang sudah dilaporkan tidak bergeser.',
             ],
             'document.production_prefix' => [
                 'group' => 'Penomoran Dokumen',

@@ -50,12 +50,21 @@ class InventoryMovement extends Model
             self::TYPE_OPENING => 'Saldo Awal',
             self::TYPE_PURCHASE => 'Pembelian',
             self::TYPE_USAGE => 'Pemakaian Produksi',
-            self::TYPE_ADJUSTMENT => 'Penyesuaian',
+            self::TYPE_ADJUSTMENT => 'Penyesuaian (Hilang/Temuan)',
         ];
     }
 
+    /**
+     * Label jenis untuk satu baris. Penyesuaian dibedakan dari tandanya:
+     * hitung fisik lebih sedikit dari saldo = Barang Hilang, lebih banyak =
+     * Barang Temuan -- istilah yang dipakai Laba Rugi.
+     */
     public function typeLabel(): string
     {
+        if ($this->type === self::TYPE_ADJUSTMENT) {
+            return (float) $this->qty < 0 ? 'Barang Hilang' : 'Barang Temuan';
+        }
+
         return self::typeLabels()[$this->type] ?? (string) $this->type;
     }
 
