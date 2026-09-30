@@ -733,7 +733,7 @@ class OwnerAppController extends Controller
         $totalSales = round((float) (clone $salesQuery)->sum('total_amount'), 2);
 
         $salesPerPeriod = (clone $salesQuery)
-            ->selectRaw('DATE_FORMAT(completed_at, "%Y-%m") as period, COALESCE(SUM(total_amount), 0) as total_sales')
+            ->selectRaw($this->monthPeriodSql('completed_at').' as period, COALESCE(SUM(total_amount), 0) as total_sales')
             ->groupBy('period')
             ->get()
             ->mapWithKeys(fn ($row) => [$row->period => (float) $row->total_sales]);
@@ -793,7 +793,7 @@ class OwnerAppController extends Controller
                 $dateFrom->toDateString(),
                 $dateTo->toDateString(),
             ])
-            ->selectRaw('DATE_FORMAT(cash_outs.expense_date, "%Y-%m") as period')
+            ->selectRaw($this->monthPeriodSql('cash_outs.expense_date').' as period')
             ->selectRaw(
                 'COALESCE(SUM(CASE WHEN LOWER(expense_categories.name) IN (?, ?) THEN cash_outs.amount ELSE 0 END), 0) as hpp_real',
                 $hppNames
@@ -814,7 +814,7 @@ class OwnerAppController extends Controller
                 $dateFrom->copy()->startOfDay(),
                 $dateTo->copy()->endOfDay(),
             ])
-            ->selectRaw('DATE_FORMAT(sales_actuals.submitted_at, "%Y-%m") as period')
+            ->selectRaw($this->monthPeriodSql('sales_actuals.submitted_at').' as period')
             ->selectRaw('COALESCE(SUM(sales_actual_items.subtotal_actual), 0) as revenue_actual')
             ->selectRaw('COALESCE(SUM(COALESCE(sales_actual_items.raw_material_cost, products.raw_material_cost, 0) * sales_actual_items.qty_actual), 0) as hpp_jual')
             ->selectRaw('COALESCE(SUM(COALESCE(sales_actual_items.overhead_cost, products.overhead_cost, 0) * sales_actual_items.qty_actual), 0) as ohc_jual')
@@ -1010,6 +1010,17 @@ class OwnerAppController extends Controller
         }
 
         return [$periods, $granularity];
+    }
+
+    /**
+     * Ekspresi SQL "YYYY-MM" dari kolom tanggal. MySQL (produksi) memakai
+     * DATE_FORMAT; SQLite (tes) tidak mengenalnya, jadi memakai strftime.
+     */
+    protected function monthPeriodSql(string $column): string
+    {
+        return DB::connection()->getDriverName() === 'sqlite'
+            ? "strftime('%Y-%m', {$column})"
+            : "DATE_FORMAT({$column}, '%Y-%m')";
     }
 
     protected function groupTotalsByPeriod($query, string $dateColumn, string $sumColumn, string $granularity)

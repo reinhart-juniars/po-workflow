@@ -87,8 +87,33 @@ class InventoryLedgerService
         return round((float) InventoryMovement::query()
             ->whereHas('item', fn ($query) => $query->where('parent_id', $bucketId))
             ->where('type', $type)
-            ->whereBetween('moved_at', [$from, $to])
+            ->whereDate('moved_at', '>=', $from)->whereDate('moved_at', '<=', $to)
             ->sum('total_value'), 2);
+    }
+
+    /**
+     * valueForBucket() untuk banyak bucket sekaligus: satu query, dijumlah per
+     * bucket (parent_id bahan). Bucket tanpa gerakan bernilai 0.
+     *
+     * @param  array<int, int>  $bucketIds
+     * @return array<int, float>
+     */
+    public function valuesForBuckets(array $bucketIds, string $type, string $from, string $to): array
+    {
+        if ($bucketIds === []) {
+            return [];
+        }
+
+        return InventoryMovement::query()
+            ->join('inventory_items', 'inventory_items.id', '=', 'inventory_movements.inventory_item_id')
+            ->whereIn('inventory_items.parent_id', $bucketIds)
+            ->where('inventory_movements.type', $type)
+            ->whereDate('inventory_movements.moved_at', '>=', $from)->whereDate('inventory_movements.moved_at', '<=', $to)
+            ->groupBy('inventory_items.parent_id')
+            ->selectRaw('inventory_items.parent_id as bucket_id, SUM(inventory_movements.total_value) as total')
+            ->pluck('total', 'bucket_id')
+            ->map(fn ($total) => round((float) $total, 2))
+            ->all();
     }
 
     /** Bahan ini sudah pernah tercatat di ledger, apa pun jenisnya. */

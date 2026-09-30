@@ -22,6 +22,131 @@ class InventoryUsageService
     }
 
     /**
+     * Ringkasan pemakaian banyak bahan sekaligus, dengan angka yang sama persis
+     * dengan calculateForItem() per bahan.
+     *
+     * Laporan Laba Rugi, Final, Neraca, dan Analisa HPP menghitung ~300 bahan
+     * per periode; lewat calculateForItem() itu 7 query per bahan (±2.100 per
+     * periode, Analisa HPP setahun >20.000 query dan melewati batas 30 detik).
+     * Di sini tiap sumber diambil sekali untuk semua bahan dengan kondisi
+     * where yang identik, lalu dikelompokkan per bahan di PHP dengan urutan
+     * yang sama -- termasuk urutan penjumlahan pembelian, supaya hasil float
+     * tidak bergeser.
+     *
+     * @param  iterable<int>  $itemIds
+     * @return array<int, array<string, mixed>> ringkasan per id bahan
+     */
+    public function summariesForItems(iterable $itemIds, CarbonInterface $dateFrom, CarbonInterface $dateTo): array
+    {
+        $ids = collect($itemIds)->map(fn ($id) => (int) $id)->unique()->values();
+
+        if ($ids->isEmpty()) {
+            return [];
+        }
+
+        $priorWindowEnd = $dateFrom->copy()->subDay();
+        $priorWindowStart = $dateFrom->copy()->subMonthNoOverflow();
+
+        $priorOpnames = $this->latestOpnameValues($ids, $priorWindowStart, $priorWindowEnd);
+        $endingOpnames = $this->latestOpnameValues($ids, $dateFrom, $dateTo);
+
+        // Saldo awal di window bulan sebelumnya s/d dateFrom (sama dengan
+        // fallback 'baseline' di buildItemReport).
+        $baselines = InventoryOpening::query()
+            ->whereIn('inventory_item_id', $ids)
+            ->whereDate('balance_date', '>=', $priorWindowStart->toDateString())
+            ->whereDate('balance_date', '<=', $dateFrom->toDateString())
+            ->selectRaw('inventory_item_id, SUM(total_value) as total')
+            ->groupBy('inventory_item_id')
+            ->pluck('total', 'inventory_item_id');
+
+        // Dijumlah di PHP dalam urutan transaction_date, id -- sama dengan
+        // $purchaseEntries->sum() di buildItemReport.
+        $purchases = [];
+        InventoryPurchase::query()
+            ->addsToStock()
+            ->whereIn('inventory_item_id', $ids)
+            ->whereBetween('transaction_date', [$dateFrom->toDateString(), $dateTo->toDateString()])
+            ->orderBy('transaction_date')
+            ->orderBy('id')
+            ->get(['inventory_item_id', 'total_value'])
+            ->each(function (InventoryPurchase $purchase) use (&$purchases) {
+                $purchases[$purchase->inventory_item_id] = ($purchases[$purchase->inventory_item_id] ?? 0) + $purchase->total_value;
+            });
+
+        $recipeUsage = $this->ledger->valuesForBuckets($ids->all(), InventoryMovement::TYPE_USAGE, $dateFrom->toDateString(), $dateTo->toDateString());
+        $recipeAdjustment = $this->ledger->valuesForBuckets($ids->all(), InventoryMovement::TYPE_ADJUSTMENT, $dateFrom->toDateString(), $dateTo->toDateString());
+        $usageSource = app(Settings::class)->get('hpp.usage_source');
+
+        $summaries = [];
+
+        foreach ($ids as $itemId) {
+            [$opening, $openingSource] = isset($priorOpnames[$itemId])
+                ? [$priorOpnames[$itemId], 'opname']
+                : [0.0, 'zero'];
+
+            if ($openingSource === 'zero') {
+                $baseline = (float) ($baselines[$itemId] ?? 0);
+
+                if (abs($baseline) >= 0.005) {
+                    $opening = $baseline;
+                    $openingSource = 'baseline';
+                }
+            }
+
+            [$ending, $endingSource] = isset($endingOpnames[$itemId])
+                ? [$endingOpnames[$itemId], 'opname']
+                : [0.0, 'zero'];
+
+            $itemPurchases = (float) ($purchases[$itemId] ?? 0);
+            $itemRecipeUsage = round(-($recipeUsage[$itemId] ?? 0.0), 2);
+            $itemRecipeAdjustment = round(-($recipeAdjustment[$itemId] ?? 0.0), 2);
+            $residualUsage = round($opening + $itemPurchases - $ending, 2);
+
+            $summaries[$itemId] = [
+                'opening' => $opening,
+                'purchases' => $itemPurchases,
+                'ending' => $ending,
+                'usage' => $usageSource === 'resep' ? round($itemRecipeUsage + $itemRecipeAdjustment, 2) : $residualUsage,
+                'usage_source' => $usageSource,
+                'usage_residual' => $residualUsage,
+                'usage_recipe' => $itemRecipeUsage,
+                'adjustment_recipe' => $itemRecipeAdjustment,
+                'opening_source' => $openingSource,
+                'ending_source' => $endingSource,
+            ];
+        }
+
+        return $summaries;
+    }
+
+    /**
+     * Nilai opname terakhir (opname_date, lalu id terbesar) per bahan di dalam
+     * window -- versi banyak bahan dari stockValueForWindow().
+     *
+     * @param  Collection<int, int>  $ids
+     * @return array<int, float>
+     */
+    protected function latestOpnameValues(Collection $ids, CarbonInterface $windowStart, CarbonInterface $windowEnd): array
+    {
+        $values = [];
+
+        StockOpname::query()
+            ->whereIn('inventory_item_id', $ids)
+            ->whereDate('opname_date', '>=', $windowStart->toDateString())
+            ->whereDate('opname_date', '<=', $windowEnd->toDateString())
+            ->orderByDesc('opname_date')
+            ->orderByDesc('id')
+            ->get(['inventory_item_id', 'total_value'])
+            ->each(function (StockOpname $opname) use (&$values) {
+                // Baris pertama per bahan = yang terbaru (urutan query).
+                $values[$opname->inventory_item_id] ??= (float) $opname->total_value;
+            });
+
+        return $values;
+    }
+
+    /**
      * Resolve stock value at the end of a given window — STRICT.
      *
      * Only counts opnames whose opname_date falls inside [windowStart, windowEnd].

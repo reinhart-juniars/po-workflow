@@ -240,8 +240,11 @@ class FinalReportController extends Controller
 
         $totals = ['lama' => 0.0, 'baru' => 0.0, 'sisa' => 0.0, 'terpakai' => 0.0];
 
+        // Satu kali hitung untuk semua bahan (bukan 7 query per bahan).
+        $summaries = $inventoryUsageService->summariesForItems($items->pluck('id'), $dateFrom, $dateTo);
+
         foreach ($items as $item) {
-            $summary = $inventoryUsageService->calculateForItem($item->id, $dateFrom, $dateTo);
+            $summary = $summaries[$item->id];
             $totals['lama'] += (float) ($summary['opening'] ?? 0);
             $totals['baru'] += (float) ($summary['purchases'] ?? 0);
             $totals['sisa'] += (float) ($summary['ending'] ?? 0);

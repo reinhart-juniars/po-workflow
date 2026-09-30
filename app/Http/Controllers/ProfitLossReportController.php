@@ -224,8 +224,11 @@ class ProfitLossReportController extends Controller
 
         $totals = ['lama' => 0.0, 'baru' => 0.0, 'sisa' => 0.0, 'terpakai' => 0.0];
 
+        // Satu kali hitung untuk semua bahan (bukan 7 query per bahan).
+        $summaries = $inventoryUsageService->summariesForItems($items->pluck('id'), $dateFrom, $dateTo);
+
         foreach ($items as $item) {
-            $summary = $inventoryUsageService->calculateForItem($item->id, $dateFrom, $dateTo);
+            $summary = $summaries[$item->id];
             $totals['lama'] += (float) ($summary['opening'] ?? 0);
             $totals['baru'] += (float) ($summary['purchases'] ?? 0);
             $totals['sisa'] += (float) ($summary['ending'] ?? 0);
@@ -761,19 +764,22 @@ class ProfitLossReportController extends Controller
 
         $warnings = collect();
 
-        $rows = InventoryItem::query()
+        $items = InventoryItem::query()
             ->whereIn('category', InventoryItem::stockCategories())
             ->orderBy('name')
-            ->get(['id', 'name', 'unit'])
+            ->get(['id', 'name', 'unit']);
+        // Satu kali hitung untuk semua bahan (bukan 7 query per bahan).
+        $summaries = $inventoryUsageService->summariesForItems($items->pluck('id'), $dateFrom, $dateTo);
+
+        $rows = $items
             ->map(function (InventoryItem $item) use (
-                $dateFrom,
                 $dateTo,
-                $inventoryUsageService,
+                $summaries,
                 $latestOpnameByItem,
                 $warnings,
                 $includeWarnings
             ) {
-                $summary = $inventoryUsageService->calculateForItem($item->id, $dateFrom, $dateTo);
+                $summary = $summaries[$item->id];
                 $opening = round((float) ($summary['opening'] ?? 0), 2);
                 $purchases = round((float) ($summary['purchases'] ?? 0), 2);
                 $ending = round((float) ($summary['ending'] ?? 0), 2);

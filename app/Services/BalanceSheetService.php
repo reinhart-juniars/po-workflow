@@ -651,12 +651,22 @@ class BalanceSheetService
         $operatingExpenseTotal = round($operatingExpenseTotal + (float) ($profitLossAdjustments[ProfitLossAdjustment::GROUP_OPERATING_EXPENSE] ?? collect())->sum('amount'), 2);
 
         $inventoryWarnings = collect();
-        $cogsTotal = round((float) InventoryItem::query()
+        $stockItems = InventoryItem::query()
             ->whereIn('category', InventoryItem::stockCategories())
             ->orderBy('name')
-            ->get(['id', 'name'])
-            ->map(function (InventoryItem $item) use ($dateFrom, $dateTo, $inventoryWarnings) {
-                $summary = $this->inventoryUsageService->calculateForItem($item->id, $dateFrom, $dateTo);
+            ->get(['id', 'name']);
+        // Satu kali hitung untuk semua bahan (bukan 7 query per bahan), dan
+        // bahan yang sudah pernah diopname s/d dateTo diambil sekaligus.
+        $summaries = $this->inventoryUsageService->summariesForItems($stockItems->pluck('id'), $dateFrom, $dateTo);
+        $itemsWithOpname = StockOpname::query()
+            ->whereIn('inventory_item_id', $stockItems->pluck('id'))
+            ->whereDate('opname_date', '<=', $dateTo->toDateString())
+            ->distinct()
+            ->pluck('inventory_item_id')
+            ->flip();
+        $cogsTotal = round((float) $stockItems
+            ->map(function (InventoryItem $item) use ($dateTo, $summaries, $itemsWithOpname, $inventoryWarnings) {
+                $summary = $summaries[$item->id];
                 $opening = round((float) ($summary['opening'] ?? 0), 2);
                 $purchases = round((float) ($summary['purchases'] ?? 0), 2);
                 $ending = round((float) ($summary['ending'] ?? 0), 2);
@@ -666,10 +676,7 @@ class BalanceSheetService
                     return 0.0;
                 }
 
-                if (($opening > 0 || $purchases > 0) && ! StockOpname::query()
-                    ->where('inventory_item_id', $item->id)
-                    ->whereDate('opname_date', '<=', $dateTo->toDateString())
-                    ->exists()) {
+                if (($opening > 0 || $purchases > 0) && ! $itemsWithOpname->has($item->id)) {
                     $inventoryWarnings->push(sprintf(
                         'Perhitungan laba rugi untuk %s sampai %s belum punya stock opname penutup, jadi HPP bisa belum akurat.',
                         $item->name,

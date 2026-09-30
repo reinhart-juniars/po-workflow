@@ -81,6 +81,6 @@ class InventoryMovement extends Model
 
     public function scopeBetween(Builder $query, string $from, string $to): Builder
     {
-        return $query->whereBetween('moved_at', [$from, $to]);
+        return $query->whereDate('moved_at', '>=', $from)->whereDate('moved_at', '<=', $to);
     }
 }
