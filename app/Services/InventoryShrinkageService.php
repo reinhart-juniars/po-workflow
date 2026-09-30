@@ -59,7 +59,7 @@ class InventoryShrinkageService
             ->join('inventory_items as bucket', 'bucket.id', '=', 'bahan.parent_id')
             ->whereIn('bucket.category', InventoryItem::stockCategories())
             ->where('inventory_movements.type', InventoryMovement::TYPE_ADJUSTMENT)
-            ->whereDate('inventory_movements.moved_at', '>=', $from->toDateString())->whereDate('inventory_movements.moved_at', '<=', $to->toDateString())
+            ->where('inventory_movements.moved_at', '>=', $from->toDateString())->where('inventory_movements.moved_at', '<', InventoryLedgerService::dayAfter($to->toDateString()))
             ->pluck('inventory_movements.total_value');
 
         return [
@@ -93,7 +93,7 @@ class InventoryShrinkageService
 
         $movements = InventoryMovement::query()
             ->whereIn('type', [InventoryMovement::TYPE_USAGE, InventoryMovement::TYPE_ADJUSTMENT])
-            ->whereDate('moved_at', '>=', $fromDate)->whereDate('moved_at', '<=', $toDate)
+            ->where('moved_at', '>=', $fromDate)->where('moved_at', '<', InventoryLedgerService::dayAfter($toDate))
             ->get(['inventory_item_id', 'type', 'qty', 'total_value'])
             ->groupBy('inventory_item_id');
 
@@ -223,7 +223,7 @@ class InventoryShrinkageService
             ->where('inventory_item_id', $item->id)
             ->where('type', InventoryMovement::TYPE_ADJUSTMENT)
             ->whereNull('requisition_line_id')
-            ->whereDate('moved_at', '>=', $fromDate)->whereDate('moved_at', '<=', $toDate)
+            ->where('moved_at', '>=', $fromDate)->where('moved_at', '<', InventoryLedgerService::dayAfter($toDate))
             ->orderBy('moved_at')
             ->get(['moved_at', 'qty', 'total_value', 'notes'])
             ->map(fn (InventoryMovement $movement) => [

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class Product extends Model
 {
@@ -182,13 +183,22 @@ class Product extends Model
     {
         $since = now()->subDays($days)->toDateString();
 
-        return $query->addSelect([
-            'porsi_terjual' => SalesActualItem::query()
-                ->join('sales_actuals', 'sales_actuals.id', '=', 'sales_actual_items.sales_actual_id')
-                ->whereColumn('sales_actual_items.product_id', 'products.id')
-                ->where('sales_actuals.sales_date', '>=', $since)
-                ->selectRaw('COALESCE(SUM(sales_actual_items.qty_delivery), 0)'),
-        ]);
+        // Satu agregat untuk jendela $days hari lalu di-join, bukan subquery
+        // per produk: subquery berkorelasi menyapu seluruh riwayat item tiap
+        // produk sebelum menyaring tanggal, jadi makin lambat tiap bulan.
+        $sold = SalesActualItem::query()
+            ->join('sales_actuals', 'sales_actuals.id', '=', 'sales_actual_items.sales_actual_id')
+            ->where('sales_actuals.sales_date', '>=', $since)
+            ->groupBy('sales_actual_items.product_id')
+            ->selectRaw('sales_actual_items.product_id, SUM(sales_actual_items.qty_delivery) as qty');
+
+        if ($query->getQuery()->columns === null) {
+            $query->select('products.*');
+        }
+
+        return $query
+            ->leftJoinSub($sold, 'porsi_terjual_window', 'porsi_terjual_window.product_id', '=', 'products.id')
+            ->addSelect(DB::raw('COALESCE(porsi_terjual_window.qty, 0) as porsi_terjual'));
     }
 
     /**

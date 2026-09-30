@@ -37,7 +37,7 @@ class ProductionUsageService
 
         $movements = InventoryMovement::query()
             ->whereHas('item', fn ($query) => $query->where('parent_id', $bucketId))
-            ->whereDate('moved_at', '>=', $fromDate)->whereDate('moved_at', '<=', $toDate)
+            ->where('moved_at', '>=', $fromDate)->where('moved_at', '<', InventoryLedgerService::dayAfter($toDate))
             ->count();
 
         return [

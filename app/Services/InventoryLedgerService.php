@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\InventoryMovement;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 /**
@@ -48,7 +49,7 @@ class InventoryLedgerService
     {
         return round((float) InventoryMovement::query()
             ->where('inventory_item_id', $inventoryItemId)
-            ->when($asOf, fn ($query) => $query->whereDate('moved_at', '<=', $asOf))
+            ->when($asOf, fn ($query) => $query->where('moved_at', '<', self::dayAfter($asOf)))
             ->sum('qty'), 4);
     }
 
@@ -66,7 +67,7 @@ class InventoryLedgerService
 
         $sums = InventoryMovement::query()
             ->whereIn('inventory_item_id', $inventoryItemIds)
-            ->when($asOf, fn ($query) => $query->whereDate('moved_at', '<=', $asOf))
+            ->when($asOf, fn ($query) => $query->where('moved_at', '<', self::dayAfter($asOf)))
             ->selectRaw('inventory_item_id, SUM(qty) as total')
             ->groupBy('inventory_item_id')
             ->pluck('total', 'inventory_item_id');
@@ -87,7 +88,7 @@ class InventoryLedgerService
         return round((float) InventoryMovement::query()
             ->whereHas('item', fn ($query) => $query->where('parent_id', $bucketId))
             ->where('type', $type)
-            ->whereDate('moved_at', '>=', $from)->whereDate('moved_at', '<=', $to)
+            ->where('moved_at', '>=', self::day($from))->where('moved_at', '<', self::dayAfter($to))
             ->sum('total_value'), 2);
     }
 
@@ -108,12 +109,28 @@ class InventoryLedgerService
             ->join('inventory_items', 'inventory_items.id', '=', 'inventory_movements.inventory_item_id')
             ->whereIn('inventory_items.parent_id', $bucketIds)
             ->where('inventory_movements.type', $type)
-            ->whereDate('inventory_movements.moved_at', '>=', $from)->whereDate('inventory_movements.moved_at', '<=', $to)
+            ->where('inventory_movements.moved_at', '>=', self::day($from))->where('inventory_movements.moved_at', '<', self::dayAfter($to))
             ->groupBy('inventory_items.parent_id')
             ->selectRaw('inventory_items.parent_id as bucket_id, SUM(inventory_movements.total_value) as total')
             ->pluck('total', 'bucket_id')
             ->map(fn ($total) => round((float) $total, 2))
             ->all();
+    }
+
+    /**
+     * Filter tanggal moved_at ditulis `>= hari` dan `< hari berikutnya` supaya
+     * index (type, moved_at) terpakai -- whereDate() membungkus kolom dengan
+     * DATE() dan memaksa pemindaian seluruh riwayat kartu stok. Batas atas
+     * eksklusif juga benar bila tanggal tersimpan beserta jam (SQLite).
+     */
+    public static function day(string $date): string
+    {
+        return Carbon::parse($date)->toDateString();
+    }
+
+    public static function dayAfter(string $date): string
+    {
+        return Carbon::parse($date)->addDay()->toDateString();
     }
 
     /** Bahan ini sudah pernah tercatat di ledger, apa pun jenisnya. */

@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
-use App\Models\PurchaseOrder;
 use App\Models\SalesActual;
-use App\Models\SalesActualItem;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class SalesReportService
 {
@@ -25,13 +25,7 @@ class SalesReportService
         }
 
         $allActuals = SalesActual::query()
-            ->with([
-                'customer:id,name,is_lapak',
-                'items.product:id,name,is_3s',
-                'items.purchaseOrderItem.purchaseOrder:id,po_number,recipient_name,shipping_cost,customer_id',
-                'items.sourceSalesActualItem.purchaseOrderItem.purchaseOrder:id,po_number,recipient_name,shipping_cost,customer_id',
-                'items.sourceSalesActualItem.sourceSalesActualItem.purchaseOrderItem.purchaseOrder:id,po_number,recipient_name,shipping_cost,customer_id',
-            ])
+            ->with('customer:id,name,is_lapak')
             ->where('status', 'submitted')
             ->whereBetween('sales_date', [
                 $dateFrom->copy()->startOfDay(),
@@ -47,8 +41,20 @@ class SalesReportService
             ->when($segmentScope === 'non_lapak', fn ($collection) => $collection->filter(fn (SalesActual $sa) => ! (bool) ($sa->customer?->is_lapak ?? false)))
             ->values();
 
-        $salesActualTotal = fn (SalesActual $sa) => round((float) $sa->items->sum('subtotal_actual'), 2);
-        $salesActualQty = fn (SalesActual $sa) => round((float) $sa->items->sum('qty_actual'), 2);
+        $lines = $this->loadReportLines($allActuals);
+
+        $sumLines = function (SalesActual $sa, string $field) use ($lines): float {
+            $sum = 0;
+
+            foreach ($lines[$sa->id] as $line) {
+                $sum += $line[$field];
+            }
+
+            return (float) $sum;
+        };
+        $salesActualTotal = fn (SalesActual $sa) => round($sumLines($sa, 'subtotal'), 2);
+        $salesActualQty = fn (SalesActual $sa) => round($sumLines($sa, 'qty'), 2);
+        $allAmount = round((float) $allActuals->sum($salesActualTotal), 2);
 
         $segmentCards = collect([
             [
@@ -66,11 +72,10 @@ class SalesReportService
                 'label' => 'Retail',
                 'actuals' => $allActuals->filter(fn (SalesActual $sa) => ! (bool) ($sa->customer?->is_lapak ?? false))->values(),
             ],
-        ])->map(function (array $segment) use ($allActuals, $salesActualTotal, $salesActualQty) {
+        ])->map(function (array $segment) use ($allAmount, $salesActualTotal, $salesActualQty) {
             $totalAmount = round((float) $segment['actuals']->sum($salesActualTotal), 2);
             $totalQty = (int) $segment['actuals']->sum($salesActualQty);
             $totalOrders = (int) $segment['actuals']->count();
-            $allAmount = round((float) $allActuals->sum($salesActualTotal), 2);
 
             return [
                 'key' => $segment['key'],
@@ -83,9 +88,7 @@ class SalesReportService
         })->values()->all();
 
         $itemColumns = $actuals
-            ->flatMap(function (SalesActual $sa) {
-                return $sa->items->map(fn (SalesActualItem $item) => $this->salesReportItemLabel($item));
-            })
+            ->flatMap(fn (SalesActual $sa) => array_column($lines[$sa->id], 'label'))
             ->filter()
             ->countBy()
             ->sortDesc()
@@ -94,9 +97,7 @@ class SalesReportService
             ->all();
 
         $priceColumns = $actuals
-            ->flatMap(function (SalesActual $sa) {
-                return $sa->items->map(fn (SalesActualItem $item) => round((float) $item->unit_price, 2));
-            })
+            ->flatMap(fn (SalesActual $sa) => array_column($lines[$sa->id], 'price'))
             ->unique()
             ->sort()
             ->values()
@@ -107,29 +108,37 @@ class SalesReportService
             ])
             ->all();
 
-        $rowData = $actuals->map(function (SalesActual $sa) use ($itemColumns, $priceColumns) {
-            $itemQtyMap = collect($itemColumns)->mapWithKeys(fn ($itemLabel) => [$itemLabel => 0])->all();
-            $priceAmountMap = collect($priceColumns)->mapWithKeys(fn ($price) => [$price['key'] => 0.0])->all();
-            $priceQtyMap = collect($priceColumns)->mapWithKeys(fn ($price) => [$price['key'] => 0])->all();
+        // Peta per baris dibuat JARANG (hanya menu/harga yang ada di baris itu).
+        // Versi padat (semua kolom x semua baris) membuat laporan setahun
+        // berjalan puluhan detik: tiap penjumlahan menyapu baris x ratusan kolom.
+        // Semua pembaca memakai `?? 0`, dan urutan menu per baris dijaga sama
+        // dengan urutan kolom supaya tampilan tumpukan item tidak berubah.
+        $itemRank = array_flip($itemColumns);
+
+        $rowData = $actuals->map(function (SalesActual $sa) use ($itemRank, $lines, $sumLines) {
+            $itemQtyMap = [];
+            $priceAmountMap = [];
+            $priceQtyMap = [];
             $hasThreeS = false;
 
-            foreach ($sa->items as $item) {
-                $itemLabel = $this->salesReportItemLabel($item);
-                $priceKey = $this->salesReportPriceKey((float) $item->unit_price);
-                $qtyActual = (float) $item->qty_actual;
-                $subtotalActual = (float) $item->subtotal_actual;
+            foreach ($lines[$sa->id] as $line) {
+                $itemLabel = $line['label'];
+                $priceKey = $this->salesReportPriceKey($line['price']);
+                $qtyActual = $line['qty'];
+                $subtotalActual = $line['subtotal'];
 
                 $itemQtyMap[$itemLabel] = ($itemQtyMap[$itemLabel] ?? 0) + $qtyActual;
                 $priceAmountMap[$priceKey] = ($priceAmountMap[$priceKey] ?? 0) + $subtotalActual;
                 $priceQtyMap[$priceKey] = ($priceQtyMap[$priceKey] ?? 0) + $qtyActual;
 
-                if ((bool) ($item->product?->is_3s ?? false)) {
+                if ($line['is_3s']) {
                     $hasThreeS = true;
                 }
             }
 
-            $purchaseOrders = $sa->items
-                ->map(fn (SalesActualItem $item) => $this->resolvePurchaseOrderForItem($item))
+            uksort($itemQtyMap, fn ($a, $b) => ($itemRank[$a] ?? PHP_INT_MAX) <=> ($itemRank[$b] ?? PHP_INT_MAX));
+
+            $purchaseOrders = collect(array_column($lines[$sa->id], 'purchase_order'))
                 ->filter()
                 ->unique('id')
                 ->values();
@@ -143,10 +152,10 @@ class SalesReportService
 
             $customerLabel = $sa->customer?->name
                 ?? $recipientNames->first()
-                ?? ('SA ' . $sa->id);
+                ?? ('SA '.$sa->id);
 
             $poLine = $poNumbers->isNotEmpty() ? $poNumbers->implode(', ') : null;
-            $recipientLine = $recipientNames->isNotEmpty() ? 'Penerima: ' . $recipientNames->implode(', ') : null;
+            $recipientLine = $recipientNames->isNotEmpty() ? 'Penerima: '.$recipientNames->implode(', ') : null;
 
             return [
                 'date_key' => $sa->sales_date?->toDateString(),
@@ -160,9 +169,9 @@ class SalesReportService
                 'item_qty_map' => $itemQtyMap,
                 'price_amount_map' => $priceAmountMap,
                 'price_qty_map' => $priceQtyMap,
-                'total_qty' => (int) $sa->items->sum('qty_actual'),
+                'total_qty' => (int) $sumLines($sa, 'qty'),
                 'shipping_cost' => $shippingCost,
-                'total_amount' => round((float) $sa->items->sum('subtotal_actual'), 2),
+                'total_amount' => round($sumLines($sa, 'subtotal'), 2),
             ];
         });
 
@@ -175,20 +184,7 @@ class SalesReportService
         $salesGroups = $rowData
             ->groupBy('date_key')
             ->map(function ($rows, $dateKey) use ($itemColumns, $priceColumns, $grandTotalSales, $segmentKeys) {
-                $itemTotals = collect($itemColumns)->mapWithKeys(fn ($itemLabel) => [$itemLabel => 0])->all();
-                $priceTotals = collect($priceColumns)->mapWithKeys(fn ($price) => [$price['key'] => 0.0])->all();
-                $priceQtyTotals = collect($priceColumns)->mapWithKeys(fn ($price) => [$price['key'] => 0])->all();
-
-                foreach ($rows as $row) {
-                    foreach ($itemColumns as $itemLabel) {
-                        $itemTotals[$itemLabel] += (int) ($row['item_qty_map'][$itemLabel] ?? 0);
-                    }
-
-                    foreach ($priceColumns as $price) {
-                        $priceTotals[$price['key']] += (float) ($row['price_amount_map'][$price['key']] ?? 0);
-                        $priceQtyTotals[$price['key']] += (int) ($row['price_qty_map'][$price['key']] ?? 0);
-                    }
-                }
+                [$itemTotals, $priceTotals, $priceQtyTotals] = $this->sumRowMaps($rows, $itemColumns, $priceColumns);
 
                 $subtotalAmount = round((float) $rows->sum('total_amount'), 2);
                 $segmentBreakdown = collect($segmentKeys)->map(function (string $label, string $key) use (
@@ -202,18 +198,7 @@ class SalesReportService
                         ->filter(fn ($row) => $key === 'lapak' ? (bool) ($row['is_lapak'] ?? false) : ! (bool) ($row['is_lapak'] ?? false))
                         ->values();
 
-                    $segmentItemTotals = collect($itemColumns)->mapWithKeys(fn ($itemLabel) => [$itemLabel => 0])->all();
-                    $segmentPriceTotals = collect($priceColumns)->mapWithKeys(fn ($price) => [$price['key'] => 0.0])->all();
-
-                    foreach ($segmentRows as $segmentRow) {
-                        foreach ($itemColumns as $itemLabel) {
-                            $segmentItemTotals[$itemLabel] += (int) ($segmentRow['item_qty_map'][$itemLabel] ?? 0);
-                        }
-
-                        foreach ($priceColumns as $price) {
-                            $segmentPriceTotals[$price['key']] += (float) ($segmentRow['price_amount_map'][$price['key']] ?? 0);
-                        }
-                    }
+                    [$segmentItemTotals, $segmentPriceTotals] = $this->sumRowMaps($segmentRows, $itemColumns, $priceColumns);
 
                     $segmentSubtotal = round((float) $segmentRows->sum('total_amount'), 2);
 
@@ -248,20 +233,7 @@ class SalesReportService
             ->values()
             ->all();
 
-        $grandItemTotals = collect($itemColumns)->mapWithKeys(fn ($itemLabel) => [$itemLabel => 0])->all();
-        $grandPriceTotals = collect($priceColumns)->mapWithKeys(fn ($price) => [$price['key'] => 0.0])->all();
-        $grandPriceQtyTotals = collect($priceColumns)->mapWithKeys(fn ($price) => [$price['key'] => 0])->all();
-
-        foreach ($rowData as $row) {
-            foreach ($itemColumns as $itemLabel) {
-                $grandItemTotals[$itemLabel] += (int) ($row['item_qty_map'][$itemLabel] ?? 0);
-            }
-
-            foreach ($priceColumns as $price) {
-                $grandPriceTotals[$price['key']] += (float) ($row['price_amount_map'][$price['key']] ?? 0);
-                $grandPriceQtyTotals[$price['key']] += (int) ($row['price_qty_map'][$price['key']] ?? 0);
-            }
-        }
+        [$grandItemTotals, $grandPriceTotals, $grandPriceQtyTotals] = $this->sumRowMaps($rowData, $itemColumns, $priceColumns);
 
         $grandSegmentBreakdown = collect($segmentKeys)->map(function (string $label, string $key) use (
             $rowData,
@@ -273,18 +245,7 @@ class SalesReportService
                 ->filter(fn ($row) => $key === 'lapak' ? (bool) ($row['is_lapak'] ?? false) : ! (bool) ($row['is_lapak'] ?? false))
                 ->values();
 
-            $segmentItemTotals = collect($itemColumns)->mapWithKeys(fn ($itemLabel) => [$itemLabel => 0])->all();
-            $segmentPriceTotals = collect($priceColumns)->mapWithKeys(fn ($price) => [$price['key'] => 0.0])->all();
-
-            foreach ($segmentRows as $segmentRow) {
-                foreach ($itemColumns as $itemLabel) {
-                    $segmentItemTotals[$itemLabel] += (int) ($segmentRow['item_qty_map'][$itemLabel] ?? 0);
-                }
-
-                foreach ($priceColumns as $price) {
-                    $segmentPriceTotals[$price['key']] += (float) ($segmentRow['price_amount_map'][$price['key']] ?? 0);
-                }
-            }
+            [$segmentItemTotals, $segmentPriceTotals] = $this->sumRowMaps($segmentRows, $itemColumns, $priceColumns);
 
             $segmentSubtotal = round((float) $segmentRows->sum('total_amount'), 2);
 
@@ -349,28 +310,12 @@ class SalesReportService
             $sectionShipping = round((float) $sectionRows->sum('shipping_cost'), 2);
             $sectionQty = (int) $sectionRows->sum('total_qty');
 
-            $sectionPriceQty = collect($priceColumns)->mapWithKeys(fn ($price) => [$price['key'] => 0])->all();
-            $sectionPriceAmount = collect($priceColumns)->mapWithKeys(fn ($price) => [$price['key'] => 0.0])->all();
-
-            foreach ($sectionRows as $row) {
-                foreach ($priceColumns as $price) {
-                    $sectionPriceQty[$price['key']] += (int) ($row['price_qty_map'][$price['key']] ?? 0);
-                    $sectionPriceAmount[$price['key']] += (float) ($row['price_amount_map'][$price['key']] ?? 0);
-                }
-            }
+            [, $sectionPriceAmount, $sectionPriceQty] = $this->sumRowMaps($sectionRows, [], $priceColumns);
 
             $groups = $sectionRows
                 ->groupBy('date_key')
                 ->map(function ($rows, $dateKey) use ($priceColumns, $grandTotalSales, $sectionTotal) {
-                    $priceQty = collect($priceColumns)->mapWithKeys(fn ($price) => [$price['key'] => 0])->all();
-                    $priceAmount = collect($priceColumns)->mapWithKeys(fn ($price) => [$price['key'] => 0.0])->all();
-
-                    foreach ($rows as $row) {
-                        foreach ($priceColumns as $price) {
-                            $priceQty[$price['key']] += (int) ($row['price_qty_map'][$price['key']] ?? 0);
-                            $priceAmount[$price['key']] += (float) ($row['price_amount_map'][$price['key']] ?? 0);
-                        }
-                    }
+                    [, $priceAmount, $priceQty] = $this->sumRowMaps($rows, [], $priceColumns);
 
                     $subtotal = round((float) $rows->sum('total_amount'), 2);
 
@@ -406,6 +351,50 @@ class SalesReportService
         })->values()->all();
     }
 
+    /**
+     * Jumlahkan peta jarang baris laporan ke peta padat berurutan kolom.
+     *
+     * Hanya entri yang ada di tiap baris yang disapu (O(item per baris)),
+     * bukan baris x seluruh kolom. Pembulatannya sama dengan versi lama:
+     * qty dijumlah sebagai int per baris, nominal sebagai float.
+     *
+     * @param  iterable<array<string, mixed>>  $rows
+     * @param  list<string>  $itemColumns
+     * @param  list<array{key: string}>  $priceColumns
+     * @return array{0: array<string, int>, 1: array<string, float>, 2: array<string, int>}
+     */
+    private function sumRowMaps(iterable $rows, array $itemColumns, array $priceColumns): array
+    {
+        $priceKeys = array_column($priceColumns, 'key');
+        $itemTotals = array_fill_keys($itemColumns, 0);
+        $priceTotals = array_fill_keys($priceKeys, 0.0);
+        $priceQtyTotals = array_fill_keys($priceKeys, 0);
+
+        foreach ($rows as $row) {
+            if ($itemColumns !== []) {
+                foreach ($row['item_qty_map'] as $label => $qty) {
+                    if (isset($itemTotals[$label])) {
+                        $itemTotals[$label] += (int) $qty;
+                    }
+                }
+            }
+
+            foreach ($row['price_amount_map'] as $key => $amount) {
+                if (isset($priceTotals[$key])) {
+                    $priceTotals[$key] += (float) $amount;
+                }
+            }
+
+            foreach ($row['price_qty_map'] as $key => $qty) {
+                if (isset($priceQtyTotals[$key])) {
+                    $priceQtyTotals[$key] += (int) $qty;
+                }
+            }
+        }
+
+        return [$itemTotals, $priceTotals, $priceQtyTotals];
+    }
+
     public function pdfPaperSize(array $reportData, bool $useSectionLayout = false): string|array
     {
         if (($reportData['viewMode'] ?? 'summary') !== 'full') {
@@ -427,62 +416,106 @@ class SalesReportService
         return [0, 0, $width, 842];
     }
 
-    private function salesReportItemLabel($item): string
+    /**
+     * Baris item per Sales Actual sebagai array biasa: label, harga, qty,
+     * subtotal, menu 3S, dan PO asal (mengikuti rantai Barang Sisa/carry
+     * forward sampai ketemu PO).
+     *
+     * Sengaja tanpa model Eloquent: laporan setahun menyentuh puluhan ribu item,
+     * dan menghidrasi item + PO item + PO sebagai model (serta cast decimal di
+     * tiap akses) memakan detik. Bentuk query item sama dengan eager load
+     * `items` (satu WHERE sales_actual_id IN ...), jadi urutan item per Sales
+     * Actual -- yang menentukan urutan kolom bila jumlahnya seri -- tidak berubah.
+     *
+     * @param  Collection<int, SalesActual>  $actuals
+     * @return array<int, list<array{label: string, price: float, qty: float, subtotal: float, is_3s: bool, purchase_order: ?object}>>
+     */
+    private function loadReportLines(Collection $actuals): array
     {
-        $itemName = trim((string) ($item->item_name ?? ''));
+        $columns = ['id', 'sales_actual_id', 'product_id', 'purchase_order_item_id', 'source_sales_actual_item_id', 'item_name', 'unit_price', 'qty_actual', 'subtotal_actual'];
+        $lines = $actuals->mapWithKeys(fn (SalesActual $sa) => [$sa->id => []])->all();
 
-        if ($itemName !== '') {
-            return $itemName;
+        if ($lines === []) {
+            return $lines;
         }
 
-        $customName = trim((string) ($item->custom_name ?? ''));
+        $items = DB::table('sales_actual_items')
+            ->whereIntegerInRaw('sales_actual_id', array_keys($lines))
+            ->get($columns);
 
-        if ($customName !== '') {
-            return $customName;
+        // Rantai sumber (Barang Sisa / carry forward) dimuat bertingkat sampai habis.
+        $byId = $items->keyBy('id')->all();
+        $pending = $items->pluck('source_sales_actual_item_id')->filter()->unique()->reject(fn ($id) => isset($byId[$id]))->values()->all();
+
+        while ($pending !== []) {
+            $sources = DB::table('sales_actual_items')->whereIntegerInRaw('id', $pending)->get($columns);
+
+            foreach ($sources as $source) {
+                $byId[$source->id] = $source;
+            }
+
+            $pending = $sources->pluck('source_sales_actual_item_id')->filter()->unique()->reject(fn ($id) => isset($byId[$id]))->values()->all();
         }
 
-        $productName = trim((string) ($item->product->name ?? ''));
+        $poiIds = collect($byId)->pluck('purchase_order_item_id')->filter()->unique()->values()->all();
+        $poByPoi = $poiIds === [] ? [] : DB::table('purchase_order_items')->whereIntegerInRaw('id', $poiIds)->pluck('purchase_order_id', 'id')->all();
+        $poIds = array_values(array_unique(array_filter($poByPoi)));
+        $purchaseOrders = $poIds === [] ? [] : DB::table('purchase_orders')->whereIntegerInRaw('id', $poIds)
+            ->get(['id', 'po_number', 'recipient_name', 'shipping_cost', 'customer_id'])->keyBy('id')->all();
+        $productIds = $items->pluck('product_id')->filter()->unique()->values()->all();
+        $products = $productIds === [] ? [] : DB::table('products')->whereIntegerInRaw('id', $productIds)
+            ->get(['id', 'name', 'is_3s'])->keyBy('id')->all();
 
-        if ($productName !== '') {
-            return $productName;
-        }
+        $resolvePo = function (object $row) use ($byId, $poByPoi, $purchaseOrders): ?object {
+            $visited = [];
 
-        return 'Item';
-    }
+            while ($row && ! isset($visited[$row->id])) {
+                $visited[$row->id] = true;
+                $poId = $poByPoi[$row->purchase_order_item_id] ?? null;
 
-    private function resolvePurchaseOrderForItem(SalesActualItem $item, array $visited = []): ?PurchaseOrder
-    {
-        if (in_array($item->id, $visited, true)) {
+                if ($poId && isset($purchaseOrders[$poId])) {
+                    return $purchaseOrders[$poId];
+                }
+
+                $row = $row->source_sales_actual_item_id ? ($byId[$row->source_sales_actual_item_id] ?? null) : null;
+            }
+
             return null;
+        };
+
+        foreach ($items as $item) {
+            $product = $products[$item->product_id] ?? null;
+            $label = trim((string) ($item->item_name ?? ''));
+
+            if ($label === '') {
+                $label = trim((string) ($product->name ?? '')) ?: 'Item';
+            }
+
+            $lines[$item->sales_actual_id][] = [
+                'label' => $label,
+                'price' => round((float) $item->unit_price, 2),
+                'qty' => (float) $item->qty_actual,
+                'subtotal' => (float) $item->subtotal_actual,
+                'is_3s' => (bool) ($product->is_3s ?? false),
+                'purchase_order' => $resolvePo($item),
+            ];
         }
 
-        $visited[] = $item->id;
-
-        $purchaseOrder = $item->purchaseOrderItem?->purchaseOrder;
-
-        if ($purchaseOrder) {
-            return $purchaseOrder;
-        }
-
-        if ($item->sourceSalesActualItem) {
-            return $this->resolvePurchaseOrderForItem($item->sourceSalesActualItem, $visited);
-        }
-
-        return null;
+        return $lines;
     }
 
     private function salesReportPriceKey(float $price): string
     {
-        return 'price_' . str_replace('.', '_', number_format($price, 2, '.', ''));
+        return 'price_'.str_replace('.', '_', number_format($price, 2, '.', ''));
     }
 
     private function salesReportPriceLabel(float $price): string
     {
         if (abs(fmod($price, 1000.0)) < 0.01) {
-            return number_format($price / 1000, 0, ',', '.') . 'K';
+            return number_format($price / 1000, 0, ',', '.').'K';
         }
 
-        return 'Rp ' . number_format($price, 0, ',', '.');
+        return 'Rp '.number_format($price, 0, ',', '.');
     }
 
     private function parseDateRange(Request $request): array

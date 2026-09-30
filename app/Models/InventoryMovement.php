@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\InventoryLedgerService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -88,8 +89,10 @@ class InventoryMovement extends Model
         return $query->where('type', $type);
     }
 
+    /** Rentang inklusif per hari yang memakai index (lihat InventoryLedgerService::day()). */
     public function scopeBetween(Builder $query, string $from, string $to): Builder
     {
-        return $query->whereDate('moved_at', '>=', $from)->whereDate('moved_at', '<=', $to);
+        return $query->where('moved_at', '>=', InventoryLedgerService::day($from))
+            ->where('moved_at', '<', InventoryLedgerService::dayAfter($to));
     }
 }

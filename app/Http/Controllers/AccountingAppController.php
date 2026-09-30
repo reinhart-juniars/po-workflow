@@ -2608,20 +2608,50 @@ class AccountingAppController extends Controller
         ];
     }
 
+    /**
+     * Stempel waktu tiap entri per koleksi & kolom, dihitung sekali.
+     *
+     * @var \WeakMap<Collection, array<string, array<int|string, ?string>>>|null
+     */
+    private ?\WeakMap $entryTimestamps = null;
+
     protected function filterEntriesByPeriod(Collection $entries, string $dateField, Carbon $periodStart, Carbon $periodEnd): Collection
     {
-        return $entries->filter(function ($entry) use ($dateField, $periodStart, $periodEnd) {
-            $value = data_get($entry, $dateField);
+        // Cashflow harian memanggil ini untuk tiap hari atas koleksi yang sama.
+        // Dulu tanggal tiap entri di-parse ulang jadi Carbon di setiap panggilan
+        // (hari x entri) -- detik-detik untuk sebulan, menit untuk setahun.
+        // Sekarang tiap entri diubah sekali ke 'Y-m-d H:i:s' (zona aplikasi) dan
+        // dibandingkan sebagai teks; hasil, urutan, dan kuncinya sama.
+        $this->entryTimestamps ??= new \WeakMap;
+        $perField = $this->entryTimestamps[$entries] ?? [];
 
-            if (! $value) {
-                return false;
-            }
+        if (! isset($perField[$dateField])) {
+            $timezone = $periodStart->getTimezone();
+            $perField[$dateField] = $entries->map(function ($entry) use ($dateField, $timezone) {
+                $value = data_get($entry, $dateField);
 
-            $timestamp = $value instanceof Carbon
-                ? $value->copy()
-                : Carbon::parse((string) $value);
+                if (! $value) {
+                    return null;
+                }
 
-            return $timestamp->betweenIncluded($periodStart, $periodEnd);
+                $timestamp = $value instanceof Carbon
+                    ? $value->copy()
+                    : Carbon::parse((string) $value);
+
+                return $timestamp->setTimezone($timezone)->format('Y-m-d H:i:s');
+            })->all();
+            $this->entryTimestamps[$entries] = $perField;
+        }
+
+        // Semua periode laporan dibuat di zona aplikasi yang sama dengan stempelnya.
+        $timestamps = $perField[$dateField];
+        $from = $periodStart->format('Y-m-d H:i:s');
+        $to = $periodEnd->format('Y-m-d H:i:s');
+
+        return $entries->filter(function ($entry, $key) use ($timestamps, $from, $to) {
+            $timestamp = $timestamps[$key] ?? null;
+
+            return $timestamp !== null && $timestamp >= $from && $timestamp <= $to;
         });
     }
 

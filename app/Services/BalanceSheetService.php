@@ -20,6 +20,7 @@ use App\Models\SalesDailyClosing;
 use App\Models\StockOpname;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class BalanceSheetService
 {
@@ -318,6 +319,30 @@ class BalanceSheetService
         return [$openingRows->merge($poRows)->values(), $warnings];
     }
 
+    /**
+     * Nilai stock opname terakhir (opname_date terbesar, lalu id terbesar) per
+     * bahan s/d $asOf, dalam satu query. Rentangnya tak berbatas di awal, jadi
+     * memilih per bahan di database (ROW_NUMBER) -- bukan menarik seluruh
+     * riwayat opname ke PHP yang terus membesar tiap bulan.
+     *
+     * @param  string  $before  batas eksklusif: hari SESUDAH tanggal laporan
+     * @return array<int, float> inventory_item_id => total_value
+     */
+    protected function latestOpnameValuesByItem(string $before): array
+    {
+        $ranked = StockOpname::query()
+            ->where('opname_date', '<', $before)
+            ->select(['inventory_item_id', 'total_value'])
+            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY inventory_item_id ORDER BY opname_date DESC, id DESC) as rn');
+
+        return DB::query()
+            ->fromSub($ranked, 'ranked')
+            ->where('rn', 1)
+            ->pluck('total_value', 'inventory_item_id')
+            ->map(fn ($value) => (float) $value)
+            ->all();
+    }
+
     protected function buildInventoryRows(Carbon $reportDate): array
     {
         // Nilai persediaan di neraca = stok fisik yang tersisa pada tanggal laporan,
@@ -334,6 +359,24 @@ class BalanceSheetService
         $rows = collect();
         $warnings = collect();
 
+        // Tiga query untuk SEMUA bahan (dulu tiga query per bahan: ratusan
+        // query per halaman neraca/dashboard/final). `< hari berikutnya` setara
+        // whereDate(<=) tetapi bisa memakai index.
+        $asOf = $reportDate->toDateString();
+        $nextDay = $reportDate->copy()->addDay()->toDateString();
+        $latestOpnameValues = $this->latestOpnameValuesByItem($nextDay);
+        $openingValues = InventoryOpening::query()
+            ->where('balance_date', '<', $nextDay)
+            ->groupBy('inventory_item_id')
+            ->selectRaw('inventory_item_id, SUM(total_value) as total')
+            ->pluck('total', 'inventory_item_id');
+        $purchaseValues = InventoryPurchase::query()
+            ->addsToStock()
+            ->where('transaction_date', '<', $nextDay)
+            ->groupBy('inventory_item_id')
+            ->selectRaw('inventory_item_id, SUM(total_value) as total')
+            ->pluck('total', 'inventory_item_id');
+
         foreach ($itemsByCategory as $category => $categoryItems) {
             /** @var InventoryItem $firstItem */
             $firstItem = $categoryItems->first();
@@ -343,15 +386,8 @@ class BalanceSheetService
             $fallbackItemNames = collect();
 
             foreach ($categoryItems as $item) {
-                $latestOpname = StockOpname::query()
-                    ->where('inventory_item_id', $item->id)
-                    ->whereDate('opname_date', '<=', $reportDate->toDateString())
-                    ->orderByDesc('opname_date')
-                    ->orderByDesc('id')
-                    ->first(['total_value']);
-
-                if ($latestOpname) {
-                    $categoryValue += (float) $latestOpname->total_value;
+                if (array_key_exists($item->id, $latestOpnameValues)) {
+                    $categoryValue += (float) $latestOpnameValues[$item->id];
 
                     continue;
                 }
@@ -359,16 +395,8 @@ class BalanceSheetService
                 // Belum pernah ada stock opname: pakai estimasi saldo awal + pembelian
                 // (belum dikurangi pemakaian) sebagai fallback terakhir, sambil kasih
                 // warning supaya di-opname.
-                $opening = (float) InventoryOpening::query()
-                    ->where('inventory_item_id', $item->id)
-                    ->whereDate('balance_date', '<=', $reportDate->toDateString())
-                    ->sum('total_value');
-
-                $purchases = (float) InventoryPurchase::query()
-                    ->addsToStock()
-                    ->where('inventory_item_id', $item->id)
-                    ->whereDate('transaction_date', '<=', $reportDate->toDateString())
-                    ->sum('total_value');
+                $opening = (float) ($openingValues[$item->id] ?? 0);
+                $purchases = (float) ($purchaseValues[$item->id] ?? 0);
 
                 $itemFallback = $opening + $purchases;
 
