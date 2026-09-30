@@ -380,7 +380,8 @@
     <tr><td><b>Bahan</b></td><td>Nama bahan.</td></tr>
   </table>
   <p>Menekan <b>Enter</b> tanpa memilih baris membuka <b>halaman hasil lengkap</b>, yang menampilkan semua temuan dikelompokkan per jenis dokumen.</p>
-  <div class="tip">Pencarian hanya menampilkan dokumen yang <b>boleh Anda buka</b>. Dua orang dengan peran berbeda bisa mendapat hasil berbeda untuk kata kunci yang sama — itu memang begitu, bukan kerusakan. Lihat pertanyaan di bab 15.</div>
+  <div class="tip">Pencarian hanya menampilkan dokumen yang <b>boleh Anda buka</b>. Dua orang dengan peran berbeda bisa mendapat hasil berbeda untuk kata kunci yang sama — itu memang begitu, bukan kerusakan. Lihat pertanyaan di bab 16.</div>
+  <div class="fig"><img src="img/cari-dokumen.jpg" alt="Cari dokumen (Ctrl + K): hasil muncul sambil mengetik, dikelompokkan per jenis — di sini menu dan bahan yang mengandung kata “nasi”."><div class="cap">Cari dokumen (Ctrl + K): hasil muncul sambil mengetik, dikelompokkan per jenis — di sini menu dan bahan yang mengandung kata “nasi”.</div></div>
 
   <h3>Tombol dan tanda yang sering ditemui</h3>
   <ul>
@@ -421,7 +422,6 @@
   </table>
   <div class="fig"><img src="img/admin-orders.jpg" alt="Admin › Purchase Orders: form PO baru di atas; daftar PO hari ini di bawahnya."><div class="cap">Admin › Purchase Orders: form PO baru di atas; daftar PO hari ini di bawahnya.</div></div>
   <div class="fig"><img src="img/admin-spk.jpg" alt="Admin › SPK: pesanan dikelompokkan ke slot jadwal masak. Menyimpan SPK otomatis membuat SPK Produksi di Inventory."><div class="cap">Admin › SPK: pesanan dikelompokkan ke slot jadwal masak. Menyimpan SPK otomatis membuat SPK Produksi di Inventory.</div></div>
-  <div class="fig"><img src="img/katalog.jpg" alt="Marketing › Katalog Foto Menu: satu tombol Unggah foto dan centang Tampil di website per menu; cari nama atau SKU, dan ikon corong untuk menyaring foto/website."><div class="cap">Marketing › Katalog Foto Menu: satu tombol Unggah foto dan centang Tampil di website per menu; cari nama atau SKU, dan ikon corong untuk menyaring foto/website.</div></div>
 
   <h3>Marketing</h3>
   <table class="grid">
@@ -429,6 +429,16 @@
     <tr><td>Dashboard</td><td>Berapa menu aktif yang sudah punya foto, berapa yang tampil di website, dan daftar menu yang sudah tampil di website tapi <b>belum punya foto</b>.</td></tr>
     <tr><td>Katalog Foto Menu</td><td>Satu foto resmi per menu untuk materi promosi. Tekan <b>Unggah foto</b> (atau <b>Ganti foto</b>) di kartu menu, pilih berkas, dan foto langsung terunggah. JPG, PNG, WEBP maks. 5 MB; sistem otomatis mengecilkannya. Centang <b>Tampil di website</b> untuk menu yang terbit di website &mdash; langsung tersimpan tanpa tombol Simpan. SKU menjadi nama menu di website, jadi menu tanpa SKU tidak bisa dicentang. Menu nonaktif tidak terbit walau tercentang. <b>Ganti SKU</b>: klik SKU di kartu (ikon pensil), ketik, lalu Enter. Admin juga bisa menggantinya dari Master Menu; bila menunya sedang tampil di website, pihak lain (admin atau marketing) menerima lonceng, dan semua penggantian tercatat di Audit Logs. Saring dengan ikon corong: foto ada/belum, tampil/tidak tampil di website.</td></tr>
   </table>
+  <div class="fig"><img src="img/marketing-dashboard.jpg" alt="Marketing › Dashboard: jumlah menu aktif, yang sudah berfoto, yang tampil di website, dan daftar “Perlu Foto Dulu” — menu yang sudah dicentang tampil di website tetapi belum punya foto."><div class="cap">Marketing › Dashboard: jumlah menu aktif, yang sudah berfoto, yang tampil di website, dan daftar “Perlu Foto Dulu” — menu yang sudah dicentang tampil di website tetapi belum punya foto.</div></div>
+  <div class="fig"><img src="img/katalog.jpg" alt="Marketing › Katalog Foto Menu: satu kartu per menu dengan SKU (ikon pensil untuk mengganti), centang Tampil di website, dan tombol Unggah foto."><div class="cap">Marketing › Katalog Foto Menu: satu kartu per menu dengan SKU (ikon pensil untuk mengganti), centang Tampil di website, dan tombol Unggah foto.</div></div>
+  <p><b>Langkah menyiapkan satu menu untuk website:</b></p>
+  <ol>
+    <li>Buka <b>Marketing › Katalog Foto Menu</b>, cari menunya lewat kotak <i>Cari nama atau SKU</i>.</li>
+    <li>Periksa <b>SKU</b> di kartu: inilah nama yang dibaca pelanggan di website. Kalau masih berupa kode (mis. <i>ALACARTE-AYAM-BISTIK</i>), klik ikon pensil, ketik nama yang enak dibaca, tekan <b>Enter</b>.</li>
+    <li>Tekan <b>Unggah foto</b>, pilih foto. Foto dari HP boleh langsung dipakai — sistem mengecilkan dan meluruskan sendiri.</li>
+    <li>Centang <b>Tampil di website</b>. Tersimpan saat itu juga, tanpa tombol Simpan.</li>
+    <li>Kembali ke <b>Dashboard</b>: menu yang tampil di website tetapi belum berfoto ada di daftar <i>Perlu Foto Dulu</i>. Targetnya daftar itu kosong.</li>
+  </ol>
 
   <h3>Sales</h3>
   <table class="grid">
@@ -474,6 +484,17 @@
   </table>
   <div class="fig"><img src="img/accounting-cashflow.jpg" alt="Accounting › Laporan Cashflow: sisi Debet (uang masuk) dan Kredit (uang keluar) berdampingan."><div class="cap">Accounting › Laporan Cashflow: sisi Debet (uang masuk) dan Kredit (uang keluar) berdampingan.</div></div>
 
+  <h3>Membaca Laporan Laba Rugi</h3>
+  <p>Blok atas Laba Rugi menghitung <b>Bahan Baku Terpakai</b> dari Bahan Baku Lama + Bahan Baku Baru − Sisa Stok, ditambah/dikurangi Barang Sisa Awal dan Akhir. Di bawahnya ada <b>rincian</b> yang sudah termasuk di angka itu (Barang Hilang, Barang Temuan, Barang Sisa Dibuang). Supaya laporan tetap ringkas, rincian ini <b>tertutup</b> dulu:</p>
+  <ol>
+    <li>Cari baris <b>Bahan Baku Terpakai</b>. Kalau bulan itu ada rinciannya, di sebelah tulisannya muncul tombol kecil <b>Lihat rincian</b>.</li>
+    <li>Klik barisnya (di mana saja pada baris itu). Rincian “termasuk …” terbuka di bawahnya dan tombolnya berubah menjadi <b>Tutup rincian</b>.</li>
+    <li>Klik sekali lagi untuk menutup. Hal yang sama berlaku di <b>Laporan Final</b>.</li>
+  </ol>
+  <p>Tidak ada tombol berarti bulan itu tidak ada Barang Hilang, Temuan, maupun Barang Sisa yang dibuang. Di <b>Export PDF/Excel</b> rincian selalu tercetak, karena kertas tidak bisa diklik.</p>
+  <div class="fig"><img src="img/laba-rugi-tertutup.jpg" alt="Laba Rugi: rincian tertutup. Tombol “Lihat rincian” di baris Bahan Baku Terpakai menandakan ada rincian di dalamnya."><div class="cap">Laba Rugi: rincian tertutup. Tombol “Lihat rincian” di baris Bahan Baku Terpakai menandakan ada rincian di dalamnya.</div></div>
+  <div class="fig"><img src="img/laba-rugi-rincian.jpg" alt="Setelah baris diklik: rincian Barang Hilang, Barang Temuan (angka dalam kurung = mengurangi), dan Barang Sisa Dibuang. Klik lagi untuk menutup."><div class="cap">Setelah baris diklik: rincian Barang Hilang, Barang Temuan (angka dalam kurung = mengurangi), dan Barang Sisa Dibuang. Klik lagi untuk menutup.</div></div>
+
   <h3>Hubungan dengan Inventory</h3>
   <ul>
     <li><b>Laporan Pemakaian Bahan</b> dan angka <b>Bahan Baku Terpakai</b> di Laba Rugi berasal dari Inventory (Bab 11).</li>
@@ -493,7 +514,7 @@
   <table class="grid">
     <tr><th style="width: 26%">Menu</th><th>Untuk apa</th></tr>
     <tr><td>Dashboard</td><td>Ringkasan: bahan di bawah stok minimum, antrean form yang menunggu Anda, SPK terdekat, perubahan harga terakhir.</td></tr>
-    <tr><td>Item Inventaris</td><td>Daftar bahan (nama, satuan, harga per satuan, stok minimum). Setiap perubahan harga tersimpan di <b>Histori Harga</b>.</td></tr>
+    <tr><td>Item Inventaris</td><td>Daftar bahan (nama, satuan, harga per satuan, stok minimum). Setiap perubahan harga tersimpan di <b>Histori Harga</b>. Tombol <b>Export Riwayat Harga</b> mengunduh seluruh histori harga semua bahan ke Excel; <b>Import Excel</b> untuk mengisi atau memperbarui banyak bahan sekaligus.</td></tr>
     <tr><td>Master Supplier</td><td>Daftar pemasok bahan baku: nama, kontak, telepon, rekening, <b>termin bayar</b> (hari), dan bahan yang dipasok. Halaman supplier juga menampilkan riwayat pembeliannya. Supplier yang sudah punya transaksi tidak bisa dihapus &mdash; nonaktifkan saja.</td></tr>
     <tr><td>Pembelian Bahan Baku</td><td>Rekap pembelian bahan beserta supplier dan kondisi barang (Baik / Tidak Baik). Sebagian besar terisi otomatis dari Form Kebutuhan. Untuk pembelian kredit, jatuh tempo yang dikosongkan diisi dari termin bayar supplier.</td></tr>
     <tr><td>Stock Opname</td><td>Hasil hitung fisik stok per periode dalam <b>rupiah per kategori</b>; menjadi dasar nilai persediaan di Neraca.</td></tr>
@@ -510,27 +531,39 @@
   <h3>Kelompok Resep & HPP</h3>
   <table class="grid">
     <tr><th style="width: 26%">Menu</th><th>Untuk apa</th></tr>
-    <tr><td>Resep & Menu</td><td>Resep tiap menu: bahan, takaran, hasil (porsi). Dari sini tombol <b>Analisa HPP</b> menghitung harga pokok, OHC, profit, dan harga jual.</td></tr>
+    <tr><td>Resep & Menu</td><td>Resep tiap menu: bahan, takaran, hasil (porsi). Daftarnya langsung menampilkan <b>HPP / hasil, HPP + OHC, Harga Jual, Profit %</b> dan <b>Status Hitungan</b> (<i>Lengkap</i> atau <i>Belum Lengkap</i> bila ada baris yang belum tertaut). Tab di atas memisahkan Menu Utama, Sub-Menu, yang belum dipetakan, dan yang bahannya belum tertaut. Saringan (ikon corong): <b>Kategori</b> dan <b>Profit di bawah target</b>. Tombol <b>Export Daftar Menu</b> mengunduh daftar itu ke Excel. Di dalam resep, baris yang belum bisa ditautkan ke bahan boleh diberi <b>Harga Manual / Satuan</b> supaya biayanya tetap terhitung. Dari sini tombol <b>Analisa HPP</b> menghitung harga pokok, OHC, profit, dan harga jual.</td></tr>
     <tr><td>Pencocokan Menu</td><td>Daftar kerja menautkan menu di Master Menu (Admin) ke resepnya, diurutkan dari yang paling laku 90 hari terakhir. Tiap baris punya tiga jalan keluar: <b>Tautkan</b> ke resep yang ada, <b>Buat Resep</b>, atau <b>Tanpa Resep</b> (mis. minuman kemasan). Bisa dikerjakan lewat Excel (export, isi, import).</td></tr>
     <tr><td>Konversi Satuan</td><td>Aturan mengubah satuan resep ke satuan harga (mis. 1 kg = 16 butir). Tanpa aturan ini, biaya baris resep dihitung nol — halaman <i>Konversi yang Belum Diatur</i> menunjukkan mana yang kurang.</td></tr>
     <tr><td>Bahan Belum Cocok</td><td>Nama bahan di resep yang belum terhubung ke daftar bahan. Tautkan, buat baru, atau abaikan.</td></tr>
     <tr><td>Perbandingan HPP</td><td>Membandingkan HPP menurut resep × produksi dengan HPP menurut opname, per periode. Dasar Owner memutuskan sumber HPP mana yang dipakai laporan.</td></tr>
     <tr><td><b>Susut Bahan</b></td><td>Indikator per bahan: <b style="color:#059669;">hijau</b> (susut di bawah 1%), <b style="color:#b45309;">kuning</b> (1–10%), <b style="color:#e11d48;">merah</b> (di atas 10%). Klik sebuah bahan untuk melihat SPK dan menu yang memakainya — di situlah susutnya bisa dilacak. Cara hitungnya di Bab 12.</td></tr>
+    <tr><td>Pekerjaan Menu</td><td>Template pembagian kerja dapur per menu (mis. “goreng ayam”, “siapkan sambal”). Tekan ikon pensil untuk mengatur pekerjaan sebuah menu. Template ini disalin ke <b>Lembar Kerja</b> setiap SPK Produksi, jadi cukup diatur sekali. Bisa diisi lewat Excel (Export Excel, isi, Import Excel).</td></tr>
     <tr><td>Menu Tidak Diproduksi</td><td>Menu aktif yang tidak pernah masuk SPK Produksi dalam rentang yang dipilih (bawaan 3 bulan terakhir), beserta kapan terakhir diproduksi dan terakhir terjual. Bahan evaluasi: dihentikan, dipromosikan ulang, atau sekadar belum punya resep. Bisa diekspor Excel.</td></tr>
   </table>
   <div class="fig"><img src="img/hpp.jpg" alt="Resep & Menu › Analisa HPP: HPP per porsi, OHC, profit, harga jual; baris yang menahan perhitungan dilipat di bawahnya."><div class="cap">Resep & Menu › Analisa HPP: HPP per porsi, OHC, profit, harga jual; baris yang menahan perhitungan dilipat di bawahnya.</div></div>
   <div class="fig"><img src="img/konversi-belum.jpg" alt="Konversi Satuan › Belum Diatur: pasangan satuan yang perlu aturan supaya biaya resep terhitung."><div class="cap">Konversi Satuan › Belum Diatur: pasangan satuan yang perlu aturan supaya biaya resep terhitung.</div></div>
+  <div class="fig"><img src="img/resep-menu.jpg" alt="Resep & Menu: HPP, HPP + OHC, harga jual, Profit %, dan Status Hitungan per resep; tab di atas dan ikon corong untuk menyaring, Export Daftar Menu di kanan atas."><div class="cap">Resep & Menu: HPP, HPP + OHC, harga jual, Profit %, dan Status Hitungan per resep; tab di atas dan ikon corong untuk menyaring, Export Daftar Menu di kanan atas.</div></div>
+  <div class="fig"><img src="img/pencocokan-menu.jpg" alt="Pencocokan Menu: menu di Admin yang belum tertaut ke resep, diurutkan dari yang paling laku; tombol Tautkan memakai usulan resep dengan skor kemiripannya."><div class="cap">Pencocokan Menu: menu di Admin yang belum tertaut ke resep, diurutkan dari yang paling laku; tombol Tautkan memakai usulan resep dengan skor kemiripannya.</div></div>
+  <div class="fig"><img src="img/pekerjaan-menu.jpg" alt="Pekerjaan Menu: template pembagian kerja per menu yang disalin ke Lembar Kerja setiap SPK Produksi."><div class="cap">Pekerjaan Menu: template pembagian kerja per menu yang disalin ke Lembar Kerja setiap SPK Produksi.</div></div>
+  <div class="fig"><img src="img/menu-tidak-diproduksi.jpg" alt="Menu Tidak Diproduksi: menu aktif yang tidak muncul di SPK Produksi dalam rentang yang dipilih, beserta kapan terakhir diproduksi dan terjual."><div class="cap">Menu Tidak Diproduksi: menu aktif yang tidak muncul di SPK Produksi dalam rentang yang dipilih, beserta kapan terakhir diproduksi dan terjual.</div></div>
 
   <h3>Kelompok Produksi</h3>
   <table class="grid">
     <tr><th style="width: 26%">Menu</th><th>Untuk apa</th></tr>
-    <tr><td>SPK Produksi</td><td>Jadwal masak dari SPK admin: menu & jumlah. Punya Form Kebutuhan, Lembar Kerja (pembagian tugas), Plating, dan cetak PDF.</td></tr>
+    <tr><td>SPK Produksi</td><td>Jadwal masak dari SPK admin: menu & jumlah. Dari halamannya ada:
+      <br>• <b>Form Kebutuhan</b> — daftar belanja & stok (Bab 9).
+      <br>• <b>Breakdown Bahan</b> — semua menu di SPK dipecah sampai bahan mentah (sub-resep ikut diurai), direkap per bahan, dan dicocokkan dengan stok di Kartu Stok: kolom <i>Perlu Beli</i> = kebutuhan − stok sistem. Menu yang belum punya resep disebutkan di kotak kuning — tautkan resepnya di Pencocokan Menu. Bisa <b>Export Excel</b>.
+      <br>• <b>Lembar Kerja</b> (menu Lainnya) — pembagian tugas dapur: <b>Salin dari Template Menu</b> mengisi dari Pekerjaan Menu, lalu tentukan pelaksana dan centang yang selesai; <b>Export Excel</b> untuk ditempel di dapur.
+      <br>• <b>Plating</b> (menu Lainnya) — komponen isi piring tiap menu (kuah, lauk, nasi, kemasan) dengan jumlah porsinya; <b>Komponen per Menu</b>, <b>Cetak Plating</b> (PDF), dan <b>Export Excel</b>.</td></tr>
     <tr><td>Form Kebutuhan</td><td>Daftar semua form beserta statusnya. Alur lengkapnya di Bab 9.</td></tr>
     <tr><td>Kartu Stok</td><td>Catatan keluar-masuk tiap bahan (saldo awal, pembelian, pemakaian, <b>Barang Hilang</b>, <b>Barang Temuan</b>). Hanya dibaca — terisi otomatis dari form, Tutup SPK, dan Opname Bahan.</td></tr>
     <tr><td>Pelaksana</td><td>Daftar orang dapur untuk lembar kerja.</td></tr>
   </table>
-  <div class="fig"><img src="img/spk-produksi.jpg" alt="SPK Produksi: menu & jumlah yang harus dimasak; tombol Form Kebutuhan, dan menu Lainnya untuk lembar kerja, plating, cetak."><div class="cap">SPK Produksi: menu & jumlah yang harus dimasak; tombol Form Kebutuhan, dan menu Lainnya untuk lembar kerja, plating, cetak.</div></div>
-  <div class="fig"><img src="img/kartu-stok.jpg" alt="Kartu Stok: keluar-masuk tiap bahan dengan saldo berjalan — terisi otomatis."><div class="cap">Kartu Stok: keluar-masuk tiap bahan dengan saldo berjalan — terisi otomatis.</div></div>
+  <div class="fig"><img src="img/spk-produksi.jpg" alt="SPK Produksi: data SPK di atas; tombol Form Kebutuhan, Breakdown Bahan, dan menu Lainnya untuk Lembar Kerja, Plating, dan cetak."><div class="cap">SPK Produksi: data SPK di atas; tombol Form Kebutuhan, Breakdown Bahan, dan menu Lainnya untuk Lembar Kerja, Plating, dan cetak.</div></div>
+  <div class="fig"><img src="img/breakdown-bahan.jpg" alt="Breakdown Bahan: ringkasan porsi yang terhitung, bahan dibutuhkan, dan yang perlu dibeli; kotak kuning menyebut menu yang belum punya resep; tabel rekap bahan & stok di bawahnya."><div class="cap">Breakdown Bahan: ringkasan porsi yang terhitung, bahan dibutuhkan, dan yang perlu dibeli; kotak kuning menyebut menu yang belum punya resep; tabel rekap bahan & stok di bawahnya.</div></div>
+  <div class="fig"><img src="img/lembar-kerja.jpg" alt="Lembar Kerja: pembagian tugas dapur per SPK. “Salin dari Template Menu” mengisinya dari Pekerjaan Menu."><div class="cap">Lembar Kerja: pembagian tugas dapur per SPK. “Salin dari Template Menu” mengisinya dari Pekerjaan Menu.</div></div>
+  <div class="fig"><img src="img/plating.jpg" alt="Plating: komponen isi piring per menu beserta jumlah porsi; Cetak Plating untuk PDF, Export Excel untuk diolah."><div class="cap">Plating: komponen isi piring per menu beserta jumlah porsi; Cetak Plating untuk PDF, Export Excel untuk diolah.</div></div>
+  <div class="fig"><img src="img/kartu-stok.jpg" alt="Kartu Stok: keluar-masuk tiap bahan dengan saldo berjalan — terisi otomatis. Label oranye = Barang Hilang, biru = Barang Temuan."><div class="cap">Kartu Stok: keluar-masuk tiap bahan dengan saldo berjalan — terisi otomatis. Label oranye = Barang Hilang, biru = Barang Temuan.</div></div>
   <div class="fig"><img src="img/pembelian.jpg" alt="Pembelian Bahan Baku: catatan pembelian beserta kondisi Baik / Tidak Baik dan nilai barang rusak."><div class="cap">Pembelian Bahan Baku: catatan pembelian beserta kondisi Baik / Tidak Baik dan nilai barang rusak.</div></div>
 </div>
 
@@ -575,6 +608,12 @@
     <span class="step">Isi <b>Pemakaian Aktual</b> & <b>Sisa Stok</b> (kalau dihitung)</span>
     <span class="step act">Tutup SPK</span>
   </div>
+  <div class="fig"><img src="img/tutup-spk.jpg" alt="Meja 4 (Produksi): setelah form diperiksa, kolom Pemakaian dan Sisa Stok terbuka di ujung kanan tabel. Kosong = ikut resep / tidak dihitung."><div class="cap">Meja 4 (Produksi): setelah form diperiksa, kolom Pemakaian dan Sisa Stok terbuka di ujung kanan tabel. Kosong = ikut resep / tidak dihitung.</div></div>
+  <table class="grid">
+    <tr><th style="width: 22%">Kolom</th><th>Kalau dikosongkan</th><th>Kalau diisi</th></tr>
+    <tr><td>Pemakaian</td><td>Dianggap sama dengan <b>Kebutuhan</b> resep.</td><td>Angka ini yang keluar dari Kartu Stok. Lebih besar dari resep = <b>lebih pakai</b>, ikut dihitung di Susut Bahan.</td></tr>
+    <tr><td>Sisa Stok</td><td>Tidak dihitung; stok mengikuti perhitungan sistem.</td><td>Hasil hitung fisik sisa bahan setelah masak. Sistem membandingkannya dengan saldo Kartu Stok: kurang = <b>Barang Hilang</b>, lebih = <b>Barang Temuan</b> (Bab 12).</td></tr>
+  </table>
 
   <h3>Status form dan artinya</h3>
   <table class="grid">
@@ -652,6 +691,18 @@
   <h2>12. Susut, Barang Hilang, dan Barang Sisa</h2>
   <p>Tiga hal ini menjawab pertanyaan yang sama: <b>ke mana perginya barang yang tidak terjual atau tidak terpakai sesuai resep?</b> Dulu semuanya tersembunyi di dalam angka HPP; sekarang masing-masing punya namanya sendiri.</p>
 
+  <h3>Peta singkat: kejadian apa, dicatat di mana</h3>
+  <table class="grid">
+    <tr><th style="width: 30%">Kejadian</th><th style="width: 32%">Dicatat di</th><th>Muncul di laporan sebagai</th></tr>
+    <tr><td>Sisa bahan setelah masak ternyata kurang / lebih dari catatan</td><td>Kolom <b>Sisa Stok</b> saat Tutup SPK (Bab 9)</td><td>Barang Hilang / Barang Temuan</td></tr>
+    <tr><td>Hitung fisik gudang di luar SPK (mingguan, akhir bulan)</td><td><b>Inventory › Opname Bahan</b></td><td>Barang Hilang / Barang Temuan</td></tr>
+    <tr><td>Dapur memakai lebih banyak dari resep</td><td>Kolom <b>Pemakaian</b> saat Tutup SPK</td><td>“Lebih pakai” di Susut Bahan</td></tr>
+    <tr><td>Porsi terkirim tetapi tidak terjual (retur)</td><td>Otomatis saat <b>Sales Actual</b> disubmit</td><td>Barang Sisa (persediaan)</td></tr>
+    <tr><td>Barang Sisa dijual ke customer lain</td><td><b>Sales › Barang Sisa › Jual</b> atau panel di Sales Actual</td><td>Penjualan biasa; HPP-nya pindah ke bulan terjual</td></tr>
+    <tr><td>Barang Sisa tidak layak jual</td><td><b>Sales › Barang Sisa › Buang</b></td><td>Barang Sisa Dibuang (rincian HPP) & Laporan Waste</td></tr>
+    <tr><td>Barang datang rusak tetapi tetap dibayar</td><td>Form Kebutuhan, perlakuan <b>Dibayar</b> (Bab 10)</td><td>Kerugian Barang Rusak (Pengeluaran)</td></tr>
+  </table>
+
   <h3>Barang Hilang dan Barang Temuan</h3>
   <p>Setiap kali stok dihitung fisik — kolom <b>Sisa Stok</b> saat Tutup SPK, atau halaman <b>Inventory › Opname Bahan</b> — hasilnya dibandingkan dengan saldo Kartu Stok:</p>
   <table class="grid">
@@ -660,6 +711,17 @@
     <tr><td>Lebih <b>banyak</b> dari Kartu Stok</td><td><b>Barang Temuan</b> sebesar selisihnya</td></tr>
     <tr><td>Sama</td><td>Tidak ada catatan</td></tr>
   </table>
+  <p><b>Langkah Opname Bahan (hitung fisik di gudang):</b></p>
+  <ol>
+    <li>Hitung fisik bahan di gudang. Tidak perlu semua sekaligus — boleh satu rak atau satu kategori.</li>
+    <li>Buka <b>Inventory › Opname Bahan</b>. Isi <b>Tanggal opname</b> (hari penghitungan, bukan hari ini bila berbeda) dan, bila perlu, <b>Catatan</b> (mis. <i>opname akhir bulan</i>).</li>
+    <li>Persempit daftar lewat <b>Kategori</b> atau <b>Cari bahan</b>.</li>
+    <li>Ketik hasil hitung di kolom <b>Hitung Fisik</b>. Kolom <b>Selisih</b> langsung memberi tahu hasilnya: <i>Hilang</i> (merah), <i>Temuan</i>, atau <i>Saldo awal</i> untuk bahan yang belum pernah tercatat. Bahan yang tidak dihitung biarkan kosong — tidak diubah.</li>
+    <li>Tekan <b>Simpan</b> di bawah tabel. Hasilnya langsung tercatat di Kartu Stok dengan label <i>Barang Hilang</i> / <i>Barang Temuan</i>.</li>
+  </ol>
+  <div class="fig"><img src="img/opname-bahan.jpg" alt="Opname Bahan: setelah hasil hitung diketik, kolom Selisih menunjukkan Temuan, Hilang, atau Saldo awal (bahan yang belum pernah tercatat)."><div class="cap">Opname Bahan: setelah hasil hitung diketik, kolom Selisih menunjukkan Temuan, Hilang, atau Saldo awal (bahan yang belum pernah tercatat).</div></div>
+  <div class="fig"><img src="img/kartu-stok.jpg" alt="Kartu Stok setelah opname dan Tutup SPK: baris Barang Hilang (oranye, qty merah) dan Barang Temuan (biru) dengan nilai rupiahnya dan saldo s/d tanggal."><div class="cap">Kartu Stok setelah opname dan Tutup SPK: baris Barang Hilang (oranye, qty merah) dan Barang Temuan (biru) dengan nilai rupiahnya dan saldo s/d tanggal.</div></div>
+  <div class="tip"><b>Contoh Opname Bahan:</b> Kartu Stok bawang merah 121 gram. Dihitung ternyata 160 gram → Temuan 39 gram. Kalau dihitung 100 gram → Hilang 21 gram. Setelah disimpan, saldo Kartu Stok menjadi angka hitungan itu.</div>
   <p>Di Laba Rugi keduanya tampil sebagai <b>rincian di bawah Bahan Baku Terpakai</b> (“termasuk Barang Hilang …”). Nilainya memang sudah termasuk di Bahan Baku Terpakai, jadi rincian ini <b>tidak mengubah Laba</b> — ia hanya menunjukkan berapa bagian HPP yang bukan pemakaian masak. Barang Hilang berbeda dengan <b>Kerugian Barang Rusak</b> (barang datang rusak tetapi tetap dibayar), yang tetap ada di Pengeluaran.</p>
   <div class="tip"><b>Contoh:</b> beli 1 kg ayam untuk dipotong 12. Potongan terakhir kecil, sehingga saat sisa stok dihitung, ayam tinggal 0,5 kg padahal menurut kartu stok seharusnya 1 kg. Selisih 0,5 kg tercatat sebagai Barang Hilang. Kalau bulan berikutnya ada ayam yang ternyata masih tersimpan dan terhitung lebih, itu Barang Temuan.</div>
 
@@ -673,9 +735,10 @@
     <tr><td style="color:#e11d48;"><b>Merah</b></td><td>di atas 10%</td><td>Telusuri. Bahan merah selalu tampil paling atas.</td></tr>
   </table>
   <p>Batas 1% dan 10% bisa diubah Owner di <b>Pengaturan Inventory</b>. <b>Klik sebuah bahan</b> untuk melihat ke mana susutnya pergi: tiap SPK yang memakainya (resep, aktual, hilang, temuan) dan <b>menu</b> apa saja yang memakai bahan itu, lengkap dengan bagian susut per menu (dibagi menurut takaran resepnya — perkiraan, karena dapur mencatat pemakaian per bahan, bukan per menu).</p>
+  <div class="tip">Langkah membaca Susut Bahan: pilih rentang <b>Dari</b>–<b>Sampai</b>; lihat kotak ringkasan (jumlah merah, kuning, hijau, dan nilai susut); mulai dari bahan <b>merah</b> paling atas; klik namanya dan baca bagian <i>Ke mana susut … pergi</i> di bawah tabel: per SPK (resep, aktual, hilang, temuan) dan hasil Opname Bahan.</div>
   <div class="warn">Susut hanya bisa dilacak kalau dapur mengisi <b>Pemakaian Aktual</b> dan/atau <b>Sisa Stok</b> sebelum Tutup SPK, dan gudang melakukan Opname Bahan secara berkala. Tanpa hitungan fisik, sistem tidak tahu ada barang yang hilang.</div>
   <div class="fig"><img src="img/susut-bahan.jpg" alt="Inventory › Susut Bahan: ringkasan merah/kuning/hijau dan nilai susut, lalu rincian per bahan; bahan merah paling atas."><div class="cap">Inventory › Susut Bahan: ringkasan merah/kuning/hijau dan nilai susut, lalu rincian per bahan; bahan merah paling atas.</div></div>
-  <div class="fig"><img src="img/susut-bahan-lacak.jpg" alt="Setelah bahan diklik: SPK yang memakainya (resep, aktual, hilang, temuan) dan menu yang menanggung susutnya."><div class="cap">Setelah bahan diklik: SPK yang memakainya (resep, aktual, hilang, temuan) dan menu yang menanggung susutnya.</div></div>
+  <div class="fig"><img src="img/susut-bahan-lacak.jpg" alt="Setelah bahan diklik: “Ke mana susut Bawang Merah pergi” — per SPK dengan menu yang memakainya (porsi, kebutuhan, bagian), lalu catatan dari Opname Bahan."><div class="cap">Setelah bahan diklik: “Ke mana susut Bawang Merah pergi” — per SPK dengan menu yang memakainya (porsi, kebutuhan, bagian), lalu catatan dari Opname Bahan.</div></div>
 </div>
 
 <div class="page">
@@ -693,15 +756,35 @@
     <li>Satu retur boleh dipecah ke beberapa customer. Barang Sisa yang sudah ditambahkan ke draft langsung dikunci, jadi tidak bisa terjual dua kali.</li>
     <li>Barang Sisa tidak punya batas umur; biasanya terjual keesokan harinya.</li>
   </ul>
-  <div class="fig"><img src="img/penjualan-barang-sisa.jpg" alt="Sales Actual (draft): baris Barang Sisa menyebut asal returnya dan punya tautan Lepas; panel Penjualan Barang Sisa di bawah untuk menambah yang lain."><div class="cap">Sales Actual (draft): baris Barang Sisa menyebut asal returnya dan punya tautan Lepas; panel Penjualan Barang Sisa di bawah untuk menambah yang lain.</div></div>
+  <p><b>Langkah menjual dari halaman Barang Sisa:</b></p>
+  <ol>
+    <li>Buka <b>Sales › Barang Sisa</b>. Tiap baris = satu retur: tanggal, <b>asal</b> (customer & nomor Sales Actual), menu, <b>sisa</b> yang masih ada, HPP per porsi, dan nilainya.</li>
+    <li>Tekan <b>▸ Jual</b> pada menunya. Pilih <b>Sales Actual tujuan (draft)</b> — customer & tanggal pembeli — lalu isi <b>Qty</b> dan <b>Harga</b> (terisi harga lama, boleh diubah).</li>
+    <li>Tekan <b>Tambahkan ke Sales Actual</b>. Anda dibawa ke Sales Actual pembeli; baris Barang Sisa sudah ada di tabelnya.</li>
+    <li>Isi qty yang benar-benar terjual seperti biasa, lalu <b>Submit Sales Actual</b>. Kalau tidak habis, sisanya kembali menjadi Barang Sisa.</li>
+  </ol>
+  <div class="fig"><img src="img/barang-sisa.jpg" alt="Sales › Barang Sisa: total qty dan nilai (HPP) di atas; tiap retur dengan asal, menu, sisa, HPP per porsi, dan tombol Jual / Buang."><div class="cap">Sales › Barang Sisa: total qty dan nilai (HPP) di atas; tiap retur dengan asal, menu, sisa, HPP per porsi, dan tombol Jual / Buang.</div></div>
+  <div class="fig"><img src="img/barang-sisa-jual.jpg" alt="Tombol ▸ Jual terbuka: pilih Sales Actual tujuan (draft), qty, dan harga, lalu Tambahkan ke Sales Actual."><div class="cap">Tombol ▸ Jual terbuka: pilih Sales Actual tujuan (draft), qty, dan harga, lalu Tambahkan ke Sales Actual.</div></div>
+  <div class="fig"><img src="img/penjualan-barang-sisa.jpg" alt="Di Sales Actual pembeli: baris Barang Sisa menyebut asal returnya dan punya tautan merah “Lepas dari Sales Actual ini”; panel Penjualan Barang Sisa di bawahnya untuk menambah yang lain."><div class="cap">Di Sales Actual pembeli: baris Barang Sisa menyebut asal returnya dan punya tautan merah “Lepas dari Sales Actual ini”; panel Penjualan Barang Sisa di bawahnya untuk menambah yang lain.</div></div>
+  <p><b>Langkah membuang Barang Sisa yang tidak layak jual:</b></p>
+  <ol>
+    <li>Di <b>Sales › Barang Sisa</b>, tekan <b>▸ Buang</b> pada menunya.</li>
+    <li>Isi <b>Qty</b>, <b>Tanggal</b> dibuang, dan <b>Alasan</b> (wajib, mis. <i>basi</i>, <i>tumpah saat dikemas</i>).</li>
+    <li>Tekan <b>Catat Dibuang</b>. Qty itu keluar dari stok Barang Sisa dan masuk <b>Laporan Waste</b>; nilainya muncul sebagai “termasuk Barang Sisa Dibuang” di Laba Rugi.</li>
+  </ol>
+  <div class="fig"><img src="img/barang-sisa-buang.jpg" alt="Tombol ▸ Buang terbuka: qty, tanggal, dan alasan wajib, lalu Catat Dibuang."><div class="cap">Tombol ▸ Buang terbuka: qty, tanggal, dan alasan wajib, lalu Catat Dibuang.</div></div>
+  <p><b>Memantau:</b> <b>Laporan Sales Final &amp; Retur</b> menunjukkan tiap Sales Actual yang disubmit beserta qty returnya dan ke mana retur itu pergi (dijual ke siapa, dibuang, atau masih tersisa); <b>Laporan Waste</b> merinci yang dibuang beserta nilai cost dan nilai jual yang hilang.</p>
+  <div class="fig"><img src="img/laporan-final-retur.jpg" alt="Sales › Laporan Sales Final & Retur: total penjualan final dan total retur; tombol Buka pada tiap baris menampilkan rinciannya."><div class="cap">Sales › Laporan Sales Final & Retur: total penjualan final dan total retur; tombol Buka pada tiap baris menampilkan rinciannya.</div></div>
+  <div class="fig"><img src="img/laporan-waste.jpg" alt="Sales › Laporan Waste: total qty dibuang, nilai cost (bahan baku + OHC), nilai harga jual yang hilang, dan rincian per tanggal dengan alasannya."><div class="cap">Sales › Laporan Waste: total qty dibuang, nilai cost (bahan baku + OHC), nilai harga jual yang hilang, dan rincian per tanggal dengan alasannya.</div></div>
 
   <h3>Barang Sisa di laporan keuangan</h3>
   <p>Barang Sisa dinilai sebesar <b>HPP menunya</b> (biaya bahan baku per porsi). Selama belum terjual atau dibuang, nilainya adalah <b>persediaan</b>:</p>
   <ul>
-    <li><b>Neraca</b>: baris <i>Barang Sisa - Persediaan Akhir</i> di kelompok Persediaan.</li>
-    <li><b>Laba Rugi</b>: <i>Barang Sisa Akhir</i> mengurangi Bahan Baku Terpakai bulan ini (bahan untuk porsi yang belum laku tidak dibebankan dulu), dan <i>Barang Sisa Awal</i> menambah Bahan Baku Terpakai bulan berikutnya, saat porsinya terjual. Yang dibuang tampil sebagai rincian “termasuk Barang Sisa Dibuang”.</li>
+    <li><b>Neraca</b>: baris <i>Barang Sisa - Persediaan Akhir</i> di kelompok Persediaan (klik kelompok Persediaan untuk membukanya).</li>
+    <li><b>Laba Rugi</b>: <i>Barang Sisa Akhir</i> mengurangi Bahan Baku Terpakai bulan ini (bahan untuk porsi yang belum laku tidak dibebankan dulu), dan <i>Barang Sisa Awal</i> menambah Bahan Baku Terpakai bulan berikutnya, saat porsinya terjual. Yang dibuang tampil sebagai rincian “termasuk Barang Sisa Dibuang” — klik baris Bahan Baku Terpakai untuk melihatnya (Bab 7).</li>
   </ul>
-  <div class="fig"><img src="img/laba-rugi-rincian.jpg" alt="Laba Rugi: Barang Sisa Awal/Akhir di blok bahan baku, dan rincian “termasuk” Barang Hilang, Barang Temuan, Barang Sisa Dibuang di bawah Bahan Baku Terpakai."><div class="cap">Laba Rugi: Barang Sisa Awal/Akhir di blok bahan baku, dan rincian “termasuk” Barang Hilang, Barang Temuan, Barang Sisa Dibuang di bawah Bahan Baku Terpakai.</div></div>
+<div class="fig"><img src="img/neraca-barang-sisa.jpg" alt="Neraca › Persediaan (dibuka): Barang Sisa - Persediaan Akhir tercatat di samping persediaan bahan baku dan kemasan, sebesar nilai HPP retur yang belum terjual/dibuang."><div class="cap">Neraca › Persediaan (dibuka): Barang Sisa - Persediaan Akhir tercatat di samping persediaan bahan baku dan kemasan, sebesar nilai HPP retur yang belum terjual/dibuang.</div></div>
+  <div class="fig"><img src="img/laba-rugi-rincian.jpg" alt="Laba Rugi dengan rincian dibuka: Barang Sisa Akhir di blok bahan baku — sama dengan nilai di Neraca dan di halaman Barang Sisa — dan rincian Barang Hilang, Temuan, Sisa Dibuang."><div class="cap">Laba Rugi dengan rincian dibuka: Barang Sisa Akhir di blok bahan baku — sama dengan nilai di Neraca dan di halaman Barang Sisa — dan rincian Barang Hilang, Temuan, Sisa Dibuang.</div></div>
   <div class="tip"><b>Contoh:</b> 30 September dikirim 10 porsi nasi goreng (HPP Rp 5.000), terjual 7, retur 3. Barang Sisa akhir September Rp 15.000 — Laba September lebih tinggi Rp 15.000 dan Neraca mencatat persediaan Rp 15.000. Tanggal 1 Oktober ketiganya dijual ke customer lain Rp 12.000/porsi: penjualan Oktober Rp 36.000, dan Rp 15.000 pindah ke HPP Oktober. Jumlah laba dua bulan tetap sama; yang berubah hanya bulan tempat biayanya dicatat.</div>
   <p class="small muted">Retur sebelum tanggal yang diatur di Pengaturan Inventory (<i>Barang Sisa dihitung sebagai persediaan mulai</i>) tidak dinilai sebagai persediaan, supaya laporan bulan yang sudah dilaporkan tidak bergeser.</p>
 </div>
@@ -733,6 +816,7 @@
     <li>Rentang bawaan laporan Menu Tidak Diproduksi (bulan).</li>
     <li>Awalan nomor dokumen SPK Produksi dan Form Kebutuhan.</li>
   </ul>
+  <div class="fig"><img src="img/pengaturan-inventory.jpg" alt="Inventory › Pengaturan Inventory (khusus Owner): angka bawaan resep, sumber HPP, aturan Form Kebutuhan, dan batas-batas lain. Tekan Simpan Pengaturan setelah mengubah."><div class="cap">Inventory › Pengaturan Inventory (khusus Owner): angka bawaan resep, sumber HPP, aturan Form Kebutuhan, dan batas-batas lain. Tekan Simpan Pengaturan setelah mengubah.</div></div>
 </div>
 
 <!-- ============ 13. MEMULAI ============ -->
@@ -879,6 +963,14 @@
   <h3>Sebuah bahan merah di Susut Bahan. Apa yang harus saya lakukan?</h3>
   <p>Klik bahannya. Lihat SPK mana yang susutnya besar dan menu apa yang memakainya: resep yang takarannya tidak sesuai kenyataan (potongan, tulang, kulit), bahan yang dipakai di luar resep, atau hitungan sisa stok yang keliru. Perbaiki resepnya bila memang takarannya yang salah.</p>
 
+  <h3>Di Laba Rugi saya tidak melihat Barang Hilang / Temuan.</h3>
+  <p>Rinciannya tertutup. Klik baris <b>Bahan Baku Terpakai</b> (tombol <i>Lihat rincian</i>). Kalau tombolnya tidak ada, bulan itu memang tidak ada Barang Hilang, Temuan, maupun Barang Sisa yang dibuang.</p>
+  <h3>Nilai sebuah Barang Sisa Rp 0.</h3>
+  <p>Menunya belum punya HPP (biaya bahan baku per porsi). Lengkapi resepnya di Inventory › Resep &amp; Menu atau cek Admin › Menu Tanpa HPP/OHC. Barang Sisa tanpa HPP tetap bisa dijual dan dibuang, hanya nilainya tidak ikut ke persediaan dan Laba Rugi.</p>
+  <h3>Barang Sisa hilang dari daftar setelah saya tekan Jual.</h3>
+  <p>Wajar: qty itu sudah dipesan untuk Sales Actual pembeli supaya tidak terjual dua kali. Kalau salah pilih, buka Sales Actual pembeli (masih draft) dan tekan <b>Lepas dari Sales Actual ini</b>; qty-nya kembali ke Barang Sisa.</p>
+  <h3>Opname Bahan menulis “Saldo awal”, bukan Hilang/Temuan.</h3>
+  <p>Bahan itu belum pernah tercatat di Kartu Stok, jadi hitungan pertama menjadi saldo awalnya. Hitungan berikutnya baru dibandingkan dan bisa menjadi Hilang atau Temuan.</p>
   <h3>Lupa password.</h3>
   <p>Minta Owner mereset lewat Master User. Anda akan mendapat password sementara dan diminta menggantinya saat masuk.</p>
 
