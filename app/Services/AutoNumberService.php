@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class AutoNumberService
 {
@@ -13,6 +13,7 @@ class AutoNumberService
     public function peek(string $prefix): string
     {
         [$today, $seq] = $this->currentSeq($prefix);
+
         return $this->format($prefix, $today, $seq + 1);
     }
 
@@ -23,7 +24,39 @@ class AutoNumberService
     public function next(string $prefix): string
     {
         [$today, $seq] = $this->currentSeq($prefix);
+
         return $this->format($prefix, $today, $seq + 1);
+    }
+
+    /**
+     * Simpan dokumen bernomor dengan aman saat beberapa orang menyimpan
+     * bersamaan. Nomor diambil dari nomor terbesar yang ada (+1), jadi dua
+     * penyimpanan di detik yang sama bisa mendapat nomor yang sama; index unik
+     * menolak yang kedua. Di sini seluruh penyimpanan dijalankan dalam satu
+     * transaksi (tidak ada dokumen setengah jadi), dan bila ditolak karena
+     * nomor kembar, $create dipanggil lagi -- ia harus mengambil nomor baru
+     * di dalam callback-nya.
+     *
+     * @template T
+     *
+     * @param  callable(): T  $create
+     * @return T
+     */
+    public function retryOnDuplicate(callable $create, int $attempts = 5): mixed
+    {
+        for ($attempt = 1; ; $attempt++) {
+            try {
+                return DB::transaction($create);
+            } catch (UniqueConstraintViolationException $e) {
+                if ($attempt >= $attempts) {
+                    throw $e;
+                }
+
+                // Jeda acak singkat supaya penyimpanan yang bentrok tidak
+                // langsung bertabrakan lagi di nomor berikutnya.
+                usleep(random_int(5, 40) * 1000);
+            }
+        }
     }
 
     /**
@@ -45,6 +78,7 @@ class AutoNumberService
                 $seq = (int) $m[1];
             }
         }
+
         return [$today, $seq];
     }
 

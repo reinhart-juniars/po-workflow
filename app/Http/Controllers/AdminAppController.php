@@ -13,6 +13,7 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\Spk;
 use App\Models\User;
+use App\Services\AutoNumberService;
 use App\Services\ProductionOrderService;
 use App\Support\UiLabel;
 use Carbon\Carbon;
@@ -192,81 +193,88 @@ class AdminAppController extends Controller
             'items.*.notes' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $poNumber = $this->generatePoNumber();
+        // Dua admin yang menyimpan di detik yang sama bisa mendapat nomor PO
+        // yang sama; nomor diambil ulang dan seluruh PO (header, item, audit
+        // log) disimpan dalam satu transaksi -- lihat AutoNumberService.
+        $po = app(AutoNumberService::class)->retryOnDuplicate(function () use ($data, $r) {
+            $poNumber = $this->generatePoNumber();
 
-        $po = PurchaseOrder::create([
-            'po_number' => $poNumber,
-            'customer_id' => $data['customer_id'],
-            'recipient_name' => $data['recipient_name'],
-            'shipping_address' => $data['shipping_address'],
-            'area_id' => $data['area_id'],
-            'delivery_date' => Carbon::parse($data['delivery_date'])->toDateString(),
-            'delivery_time' => $data['delivery_time'] ?? null,
-            'discount_amount' => $data['discount_amount'] ?? 0,
-            'shipping_cost' => $data['shipping_cost'] ?? 0,
-            'payment_type' => $data['payment_type'],
-            'cash_account_id' => ($data['payment_type'] ?? 'cash') === 'cash'
-                ? ($data['cash_account_id'] ?? null)
-                : null,
-            'receivable_days' => $this->normalizeReceivableDays($data),
-            'due_date' => $this->calculatePaymentDueDate($data),
-            'cash_received_at' => null,
-            'cash_received_by' => null,
-            'receivable_status' => $this->defaultReceivableStatus($data),
-            'status' => 'draft',
-            'created_by' => Auth::id(),
-        ]);
-
-        $totalQty = 0;
-        $totalAmount = 0;
-
-        foreach ($data['items'] as $row) {
-            $product = Product::find($row['product_id']);
-            $price = $product->base_price ?? 0;
-            $qty = (int) $row['qty'];
-            $notes = $row['notes'] ?? null;
-
-            $subtotal = $price * $qty;
-            $totalQty += $qty;
-            $totalAmount += $subtotal;
-
-            PurchaseOrderItem::create([
-                'purchase_order_id' => $po->id,
-                'product_id' => $product->id,
-                'qty' => $qty,
-                'unit_price' => $price,
-                'raw_material_cost' => $product->raw_material_cost,
-                'overhead_cost' => $product->overhead_cost,
-                'subtotal' => $subtotal,
-                'notes' => $notes,
+            $po = PurchaseOrder::create([
+                'po_number' => $poNumber,
+                'customer_id' => $data['customer_id'],
+                'recipient_name' => $data['recipient_name'],
+                'shipping_address' => $data['shipping_address'],
+                'area_id' => $data['area_id'],
+                'delivery_date' => Carbon::parse($data['delivery_date'])->toDateString(),
+                'delivery_time' => $data['delivery_time'] ?? null,
+                'discount_amount' => $data['discount_amount'] ?? 0,
+                'shipping_cost' => $data['shipping_cost'] ?? 0,
+                'payment_type' => $data['payment_type'],
+                'cash_account_id' => ($data['payment_type'] ?? 'cash') === 'cash'
+                    ? ($data['cash_account_id'] ?? null)
+                    : null,
+                'receivable_days' => $this->normalizeReceivableDays($data),
+                'due_date' => $this->calculatePaymentDueDate($data),
+                'cash_received_at' => null,
+                'cash_received_by' => null,
+                'receivable_status' => $this->defaultReceivableStatus($data),
+                'status' => 'draft',
+                'created_by' => Auth::id(),
             ]);
-        }
 
-        // total akhir: (sum item - diskon) + ongkir
-        $discount = $data['discount_amount'] ?? 0;
-        $shippingCost = $data['shipping_cost'] ?? 0;
+            $totalQty = 0;
+            $totalAmount = 0;
 
-        $po->total_qty = $totalQty;
-        $po->total_amount = max(0, $totalAmount - $discount + $shippingCost);
-        $po->save();
+            foreach ($data['items'] as $row) {
+                $product = Product::find($row['product_id']);
+                $price = $product->base_price ?? 0;
+                $qty = (int) $row['qty'];
+                $notes = $row['notes'] ?? null;
 
-        // 🔹 CATAT AUDIT LOG (CREATE)
-        AuditLog::create([
-            'user_id' => Auth::id(),
-            'entity' => 'purchase_orders',   // bebas: 'purchase_order' / 'po'
-            'entity_id' => $po->id,
-            'purchase_order_id' => $po->id,            // boleh dipakai juga, sekalian
-            'action' => 'created',
-            'message' => sprintf(
-                'User %s telah membuat PO dengan ID %s pada %s',
-                Auth::user()->name ?? 'Unknown',
-                $po->po_number,
-                now()->format('d-m-Y H:i')
-            ),
-            'before_json' => null,
-            'after_json' => json_encode($po->toArray()),
-            'ip_address' => $r->ip(),
-        ]);
+                $subtotal = $price * $qty;
+                $totalQty += $qty;
+                $totalAmount += $subtotal;
+
+                PurchaseOrderItem::create([
+                    'purchase_order_id' => $po->id,
+                    'product_id' => $product->id,
+                    'qty' => $qty,
+                    'unit_price' => $price,
+                    'raw_material_cost' => $product->raw_material_cost,
+                    'overhead_cost' => $product->overhead_cost,
+                    'subtotal' => $subtotal,
+                    'notes' => $notes,
+                ]);
+            }
+
+            // total akhir: (sum item - diskon) + ongkir
+            $discount = $data['discount_amount'] ?? 0;
+            $shippingCost = $data['shipping_cost'] ?? 0;
+
+            $po->total_qty = $totalQty;
+            $po->total_amount = max(0, $totalAmount - $discount + $shippingCost);
+            $po->save();
+
+            // 🔹 CATAT AUDIT LOG (CREATE)
+            AuditLog::create([
+                'user_id' => Auth::id(),
+                'entity' => 'purchase_orders',   // bebas: 'purchase_order' / 'po'
+                'entity_id' => $po->id,
+                'purchase_order_id' => $po->id,            // boleh dipakai juga, sekalian
+                'action' => 'created',
+                'message' => sprintf(
+                    'User %s telah membuat PO dengan ID %s pada %s',
+                    Auth::user()->name ?? 'Unknown',
+                    $po->po_number,
+                    now()->format('d-m-Y H:i')
+                ),
+                'before_json' => null,
+                'after_json' => json_encode($po->toArray()),
+                'ip_address' => $r->ip(),
+            ]);
+
+            return $po;
+        });
 
         return redirect()
             ->route('adminapp.orders.index')
