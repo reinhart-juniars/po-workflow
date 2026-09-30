@@ -19,6 +19,56 @@ lewat `git pull` sebagai **user deploy** (bukan `www-data`).
   dan shell user deploy di server. Catat jam mulai/selesai tiap langkah di kolom
   "Jejak" pada checklist di bagian akhir.
 
+## 0a. Domain `3sone.w3scatering.com` (H-14, terpisah dari cutover)
+
+Pindahkan alamat **sebelum** hari cutover, masih dengan kode lama, supaya hari H hanya
+mengganti kode. Kalau ada masalah di hari H, penyebabnya pasti bukan DNS atau sertifikat.
+
+1. **DNS** — di panel DNS tempat `w3scatering.com` dikelola, tambahkan satu record:
+   `A` · nama `3sone` · nilai = IP publik server · TTL 300 (5 menit).
+   Jangan ubah record lain: `@`, `www`, dan `MX` milik situs dan email W3S.
+   Cek dari laptop: `nslookup 3sone.w3scatering.com` harus menjawab IP server
+   (biasanya < 1 jam; paling lama 24 jam).
+2. **nginx** — server block baru, `root` ke folder `public` aplikasi:
+   ```nginx
+   server {
+       listen 80;
+       server_name 3sone.w3scatering.com;
+       root /var/www/po-workflow/public;
+       index index.php;
+       client_max_body_size 10M;          # unggah foto katalog (maks. 5 MB)
+       add_header X-Robots-Tag "noindex, nofollow" always;   # aplikasi internal
+       location / { try_files $uri $uri/ /index.php?$query_string; }
+       location ~ \.php$ {
+           include snippets/fastcgi-php.conf;
+           fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+       }
+       location ~ /\.(?!well-known) { deny all; }
+   }
+   ```
+   `sudo nginx -t && sudo systemctl reload nginx`.
+3. **HTTPS** (Let's Encrypt, gratis, perpanjang otomatis):
+   `sudo certbot --nginx -d 3sone.w3scatering.com --redirect`, lalu
+   `sudo certbot renew --dry-run` untuk memastikan perpanjangan otomatis jalan.
+4. **`.env`** aplikasi:
+   ```
+   APP_URL=https://3sone.w3scatering.com
+   SESSION_SECURE_COOKIE=true
+   ```
+   lalu `php artisan config:cache`. `APP_URL` wajib benar: foto Katalog Menu memakai
+   alamat ini, dan prefetch menu hanya jalan lewat HTTPS.
+5. **Cloudflare / proxy?** Bila DNS lewat Cloudflare dengan awan oranye (proxy) atau ada
+   load balancer di depan server, Laravel harus mempercayai proxy itu, kalau tidak
+   tautan jadi `http://` dan form gagal. Minta tim IT menambahkan `trustProxies` di
+   `bootstrap/app.php` (satu baris + tes) **sebelum** langkah ini. Tanpa proxy: lewati.
+6. **Alamat lama** dialihkan permanen ke alamat baru, supaya bookmark tim tetap jalan:
+   di server block lama, `return 301 https://3sone.w3scatering.com$request_uri;`.
+7. **Uji**: buka `https://3sone.w3scatering.com` di Chrome (gembok terkunci), login,
+   buka satu halaman tiap aplikasi, dan buka alamat lama (harus pindah ke alamat baru).
+   Semua orang perlu login ulang sekali (cookie terikat ke alamat) — umumkan ke tim.
+   Setelah cutover (§9), tambahkan ke smoke test: unggah satu foto di Katalog Foto Menu
+   dan pastikan fotonya tampil (menguji `APP_URL` + `storage:link`).
+
 ## 1. Bekukan Master Menu Revamp (H-1)
 
 1. Umumkan ke tim: setelah jam X tidak ada lagi input di Master Menu Revamp.
