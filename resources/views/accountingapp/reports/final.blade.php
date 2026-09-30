@@ -375,12 +375,7 @@
                             <td class="value-cell">{{ $formatCurrency((float) $profitLoss['sisaStok']) }}</td>
                         </tr>
                         @include('partials.pl-leftover-rows', ['profitLoss' => $profitLoss, 'fmt' => $formatCurrency, 'labelClass' => 'indent', 'valueClass' => 'value-cell'])
-                        <tr class="subtotal-row">
-                            <td class="label-cell">Bahan Baku Terpakai</td>
-                            <td class="value-cell"></td>
-                            <td class="value-cell">{{ $formatCurrency((float) $profitLoss['bahanBakuTerpakai']) }}</td>
-                        </tr>
-                        @include('partials.pl-hpp-detail-rows', ['profitLoss' => $profitLoss, 'fmt' => $formatCurrency, 'labelClass' => 'indent', 'valueClass' => 'value-cell'])
+                        @include('partials.pl-bahan-baku-terpakai', ['profitLoss' => $profitLoss, 'fmt' => $formatCurrency])
 
                         <tr class="spacer-row">
                             <td colspan="3">&nbsp;</td>

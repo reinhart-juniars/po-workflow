@@ -132,6 +132,44 @@ it('menampilkan Barang Hilang sebagai rincian HPP tanpa mengubah Laba', function
         ->assertSee('termasuk Barang Hilang');
 });
 
+it('menyembunyikan rincian HPP di web sampai Bahan Baku Terpakai diklik, tetapi ekspor selalu menampilkannya', function () {
+    Role::findOrCreate('accounting', 'web');
+    $accounting = User::factory()->create(['force_password_change' => false, 'is_active' => true]);
+    $accounting->assignRole('accounting');
+    $params = ['date_from' => '2026-09-01', 'date_to' => '2026-09-30'];
+    $toggle = 'data-hpp-toggle';
+
+    // Kontrol positif: belum ada Barang Hilang -> baris biasa, tanpa tombol rincian.
+    $d = spkDenganBarangHilang(tutup: false);
+    $this->actingAs($accounting)->get(route('accountingapp.reports.profit-loss', $params))
+        ->assertOk()
+        ->assertSee('Bahan Baku Terpakai')
+        ->assertDontSee($toggle, false)
+        ->assertDontSee('termasuk Barang Hilang');
+
+    app(ProductionCompletionService::class)->complete($d['order']->fresh());
+
+    foreach (['accountingapp.reports.profit-loss', 'accountingapp.reports.final'] as $route) {
+        $this->actingAs($accounting)->get(route($route, $params))
+            ->assertOk()
+            ->assertSee($toggle, false)
+            // Barisnya ada di halaman, tetapi tertutup sampai diklik.
+            ->assertSeeInOrder(['aria-expanded="false"', 'data-hpp-detail hidden', 'termasuk Barang Hilang'], false);
+    }
+
+    // Ekspor (PDF/Excel) tidak bisa diklik: rincian dirender tanpa hidden.
+    $html = view('partials.pl-hpp-detail-rows', [
+        'profitLoss' => ['barangHilang' => 3600.0],
+        'fmt' => fn (float $v) => 'Rp '.number_format($v, 0, ',', '.'),
+        'labelClass' => 'indent-cell',
+        'valueClass' => 'num',
+    ])->render();
+
+    expect($html)->toContain('termasuk Barang Hilang')
+        ->and($html)->toContain('Rp 3.600')
+        ->and($html)->not->toContain('hidden');
+});
+
 it('mencatat hasil Opname Bahan sebagai Barang Hilang, Barang Temuan, atau Saldo Awal', function () {
     $d = siapkanProduksi();
     $ledger = app(InventoryLedgerService::class);

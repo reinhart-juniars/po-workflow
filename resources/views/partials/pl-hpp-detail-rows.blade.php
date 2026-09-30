@@ -4,18 +4,16 @@
   dalam, bukan dijumlah lagi) -- terpisah dari Kerugian Barang Rusak yang ada
   di Pengeluaran. Hanya baris yang bernilai yang tampil.
 
-  Parameter: $profitLoss, $fmt, $labelClass, $valueClass.
+  Parameter: $profitLoss, $fmt, $labelClass, $valueClass,
+             $collapsible (opsional, web saja): tersembunyi sampai baris
+             Bahan Baku Terpakai diklik (lihat pl-bahan-baku-terpakai).
 --}}
 @php
-  $hppDetailRows = collect([
-      ['label' => 'Barang Hilang', 'amount' => (float) ($profitLoss['barangHilang'] ?? 0)],
-      // Temuan mengurangi HPP: ditampilkan negatif.
-      ['label' => 'Barang Temuan', 'amount' => -1 * (float) ($profitLoss['barangTemuan'] ?? 0)],
-      ['label' => 'Barang Sisa Dibuang', 'amount' => (float) ($profitLoss['barangSisaDibuang'] ?? 0)],
-  ])->filter(fn (array $row) => abs($row['amount']) >= 0.005);
+  $hppDetailRows = \App\Support\HppDetailRows::from($profitLoss);
+  $collapsible = $collapsible ?? false;
 @endphp
 @foreach ($hppDetailRows as $row)
-  <tr class="hpp-detail-row">
+  <tr class="hpp-detail-row" @if ($collapsible) data-hpp-detail hidden @endif>
     <td class="{{ $labelClass }}" style="padding-left: 2.25em; font-style: italic;">termasuk {{ $row['label'] }}</td>
     <td class="{{ $valueClass }}" style="font-style: italic;">{{ $fmt($row['amount']) }}</td>
     <td class="{{ $valueClass }}"></td>
