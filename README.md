@@ -86,6 +86,7 @@ Dokumen:
 - `version.txt` — riwayat rilis; **baris terakhirnya** jadi nomor versi yang tampil di halaman masuk (`App\Support\AppVersion`). Rilis baru = tambah satu baris `v.X.Y keterangan`.
 - [docs/PANDUAN-3S-ONE.pdf](docs/PANDUAN-3S-ONE.pdf) — **Panduan Pengguna** (bahasa awam, dengan diagram alur). Sumbernya `docs/panduan/panduan-3s-one.html`; bangun ulang dengan `php artisan panduan:pdf`.
 - [docs/ACCESS.md](docs/ACCESS.md) — izin & matriks peran, cara mengubahnya
+- [docs/DEPLOY-DIGITALOCEAN.md](docs/DEPLOY-DIGITALOCEAN.md) — deploy server baru DigitalOcean (3sone.w3scatering.com): latihan & pemetaan Oktober, resmi 1 November
 - [docs/CUTOVER.md](docs/CUTOVER.md) — runbook deploy, migrasi data, rollback
 - [docs/UAT.md](docs/UAT.md) — checklist UAT Bagian A bersama Owner
 
@@ -97,6 +98,7 @@ Dokumen:
 | `inventory:migrate-master-menu {--db} {--database} {--dry-run} {--force}` | Pindahkan bahan, harga, resep, mismatch, pelaksana, template, SPK riwayat (idempoten) |
 | `inventory:map-recipes-to-products {--dry-run}` | Tautkan produk → resep yang namanya cocok persis (sisanya lewat Pencocokan Menu) |
 | `inventory:validate-migration {--fix} {--fail-on=error}` | Laporan validasi pasca migrasi + pembersihan aman |
+| `inventory:carry-master-data --from-database= {--database} {--dry-run} {--force}` | Bawa data master (bahan, resep, pemetaan menu, konversi, supplier, pengaturan, akun & peran, riwayat produksi Master Menu) dari database latihan ke database resmi yang baru dimigrasi dari dump v2; ID bahan dipetakan ulang, transaksi latihan ditinggal. Lihat `docs/DEPLOY-DIGITALOCEAN.md` §14 |
 | `access:sync {--reset}` | Sinkronkan izin modul ke peran |
 | `profit:check` | Periksa profit menu keseluruhan terhadap batas; lonceng bila berubah keadaan (dijadwalkan harian 06:30) |
 | `db:clone-to-staging` | Salin database kerja ke `po_workflow_staging` |

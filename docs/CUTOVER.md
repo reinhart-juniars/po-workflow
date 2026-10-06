@@ -4,8 +4,15 @@ Panduan memindahkan Master Menu Revamp (SQLite lokal) ke po-workflow di server d
 menyalakan modul Inventory/Resep/Produksi untuk pemakaian sehari-hari. Ditulis untuk
 orang yang melakukan deploy; setiap langkah punya perintah dan cara memastikannya.
 
-Prasyarat: po-workflow sudah berjalan di server (nginx + php-fpm 8.2 + MySQL), deploy
-lewat `git pull` sebagai **user deploy** (bukan `www-data`).
+Prasyarat: po-workflow sudah berjalan di server (nginx + php-fpm **8.3/8.4** + MySQL), deploy
+lewat `git pull` sebagai **user deploy** (bukan `www-data`). PHP 8.2 tidak cukup lagi:
+`composer.lock` memuat paket yang butuh PHP ≥ 8.3.
+
+> **Server baru DigitalOcean (Okt 2026):** urutan lengkap dari membuat Droplet, database latihan
+> Oktober, sampai pindah resmi 1 November ada di [DEPLOY-DIGITALOCEAN.md](DEPLOY-DIGITALOCEAN.md).
+> Migrasi Master Menu di dokumen ini (§5–6) hanya dijalankan ke database latihan; database resmi
+> November menerima data master dari database latihan, bukan dari `app.db`. Antrean keputusan
+> klien (§7) tetap berlaku.
 
 ---
 
@@ -41,7 +48,7 @@ mengganti kode. Kalau ada masalah di hari H, penyebabnya pasti bukan DNS atau se
        location / { try_files $uri $uri/ /index.php?$query_string; }
        location ~ \.php$ {
            include snippets/fastcgi-php.conf;
-           fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+           fastcgi_pass unix:/run/php/php8.3-fpm.sock;
        }
        location ~ /\.(?!well-known) { deny all; }
    }
