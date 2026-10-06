@@ -12,6 +12,8 @@
 /.vscode
 /.zed
 /auth.json
+# Dump database & app.db Master Menu: berisi data pelanggan dan keuangan
+/backup
 /node_modules
 /public/build
 /public/hot
