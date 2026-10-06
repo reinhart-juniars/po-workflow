@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('delivery_orders', function (Blueprint $table) {
             $table->id();
             $table->string('do_code')->unique();
-            $table->foreignId('area_id')->constrained()->restrictOnDelete();
+            $table->foreignId('area_id')->constrained()->cascadeOnUpdate()->restrictOnDelete();
             $table->dateTime('scheduled_at')->index();
-            $table->foreignId('driver_user_id')->constrained('users')->restrictOnDelete();
-            $table->enum('status', ['ready','on_delivery','delivered'])->index();
+            $table->foreignId('driver_user_id')->constrained('users')->cascadeOnUpdate()->restrictOnDelete();
+            $table->string('status')->default('ready');
             $table->text('notes')->nullable();
             $table->timestamps();
         });

@@ -1,0 +1,87 @@
+# Hak Akses Modul Inventory Terpadu
+
+Aplikasi ini memakai **peran** (spatie/laravel-permission `Role`) sejak awal: aplikasi
+Blade dijaga middleware `ensure.role:`, dan panel inventory (`/inventory`, bagian dari cangkang 3S) dibuka untuk peran di
+`User::PANEL_ROLES`. Modul baru (Inventory, Resep, Produksi) menambah lapisan **izin**
+di atasnya supaya pemilik bisa menggeser hak per peran tanpa mengubah kode.
+
+Sumber kebenaran daftar izin dan matriks bawaannya: `app/Support/Access/ModuleAccess.php`.
+Policy di `app/Policies/*Policy.php` (turunan `ModulePolicy`) dan halaman khusus
+(`canAccess()`) membaca izin itu. Tes yang menjaganya: `tests/Feature/Security/ModuleAccessTest.php`
+(tes arsitektur membaca daftar resource panel yang sebenarnya, jadi resource baru tanpa
+policy membuat build merah).
+
+## Izin
+
+| Izin | Membuka |
+|---|---|
+| `inventory.view` / `inventory.manage` | Item Inventaris, Pembelian Bahan Baku, Stock Opname, Saldo Awal, Konversi Satuan, Laporan Mutasi Stok (+ import/export) |
+| `recipe.view` / `recipe.manage` | Resep & Menu, Analisa HPP, Bahan Belum Cocok (tautkan/buat/abaikan), import/export resep |
+| `production.view` / `production.manage` | SPK Produksi (buat dari slot, segarkan, siap, batalkan), Form Kebutuhan (susun, isi, simpan), Lembar Kerja, Plating, Pelaksana |
+| `production.complete` | Tutup SPK (posting pemakaian & penyesuaian ke kartu stok) |
+| `requisition.approve` | Setujui Form Kebutuhan |
+| `requisition.check` | Penerimaan barang di Form Kebutuhan (Diterima/Ditolak/Harga Beli/cara pembayaran) dan Periksa (posting saldo awal & pembelian ke kartu stok, membuat Pembelian Bahan Baku + kas keluar / hutang) |
+| `ledger.view` | Kartu Stok (di UI; kunci izinnya tetap `ledger`), Perbandingan HPP |
+| `settings.manage` | Pengaturan modul |
+| `notification.price` | Menerima lonceng perubahan harga bahan & harga jual menu (Bagian B.1) |
+| `notification.profit` | Menerima lonceng profit menu keseluruhan keluar dari batas (Bagian B.2) |
+
+`view` = daftar & detail; `manage` = tambah/ubah/hapus. Superadmin lolos semua lewat
+`Gate::before`, tanpa perlu izin eksplisit.
+
+## Matriks bawaan
+
+| Izin | owner | admin | accounting | inventory | inventory-supervisor | production |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|
+| inventory.view | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| inventory.manage | ✓ | ✓ | ✓ | ✓ | ✓ | – |
+| recipe.view | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| recipe.manage | ✓ | ✓ | – | ✓ | ✓ | – |
+| production.view | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| production.manage | ✓ | ✓ | – | – | – | ✓ |
+| production.complete | ✓ | ✓ | – | – | – | ✓ |
+| requisition.approve | ✓ | ✓ | – | – | ✓ | – |
+| requisition.check | ✓ | ✓ | ✓ | ✓ | ✓ | – |
+| ledger.view | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| settings.manage | ✓ | – | – | – | – | – |
+| notification.price | ✓ | ✓ | ✓ | – | ✓ | – |
+| notification.profit | ✓ | ✓ | – | – | – | – |
+
+Peran **`inventory-supervisor`** (Supervisor Gudang) = staf inventory + `requisition.approve`:
+dialah yang menyetujui atau menolak Form Kebutuhan yang **diajukan** produksi (status
+`submitted`). Owner/admin tetap bisa menyetujui sebagai cadangan. Alur meja:
+produksi *Ajukan* → supervisor *Setujui* / *Tolak* (kembali ke produksi dengan alasan) →
+gudang *Periksa* → produksi *Tutup SPK*; tiap perpindahan mengirim notifikasi lonceng.
+
+Peran **`inventory`** (staf inventory/gudang) dipilih Owner di Master User dan hanya
+membuka aplikasi Inventory -- tidak punya aplikasi Blade manapun. Dia mengelola bahan,
+pembelian, opname, saldo awal, mencocokkan nama bahan resep, dan memeriksa Form
+Kebutuhan saat barang dibeli; menyusun/menyetujui/menutup SPK produksi tetap di
+produksi/admin/owner.
+
+Peran **`marketing`** hanya membuka aplikasi Blade Marketing (`/marketing-app`): Katalog Foto
+Menu dan centang menu yang tampil di website. Tanpa izin modul apa pun. Admin/sales yang juga
+mengurus katalog diberi peran tambahan `marketing` di Master User.
+
+`sales`, `marketing`, dan `delivery` tidak membuka panel sama sekali (bukan `PANEL_ROLES`). Peran
+`production` **ditambahkan** ke `PANEL_ROLES` di Phase 4 karena Form Kebutuhan
+menggantikan form kertas yang diisi tim produksi.
+
+Pemisahan tahap Form Kebutuhan: yang menyusun/mengisi (produksi) bukan yang menyetujui
+(owner/admin), dan yang memeriksa saat barang dibeli (accounting/admin) bukan yang menutup
+SPK (produksi/admin).
+
+## Mengubah hak
+
+- Geser izin lewat database (mis. tinker: `Role::findByName('production')->givePermissionTo('recipe.manage')`),
+  lalu `php artisan permission:cache-reset`. Pengubahan manual **tidak** ditimpa `access:sync` biasa.
+- `php artisan access:sync` — dijalankan setiap deploy; menambah izin/peran yang belum ada dan
+  memberikan izin bawaan yang hilang, tanpa mencabut yang ditambahkan manual.
+- `php artisan access:sync --reset` — kembalikan setiap peran persis ke matriks bawaan.
+- Izin baru: tambahkan ke `ModuleAccess::PERMISSIONS` + `DEFAULT_MATRIX`, pakai di policy/aksi,
+  dan tambahkan kasusnya ke `ModuleAccessTest`.
+
+Perhatian: `mountAction` Livewire bisa dipanggil dari konsol browser meski tombolnya
+tersembunyi, jadi aksi bertahap memakai `->authorize('izin')` (Filament menolak
+mount/call untuk aksi yang tidak berizin) **dan** metode `save()` halaman memeriksa izin
+sendiri (`abort_unless`).

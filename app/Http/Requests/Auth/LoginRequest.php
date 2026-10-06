@@ -27,7 +27,8 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'name' => ['nullable', 'string'],
+            'email' => ['nullable', 'email'],
             'password' => ['required', 'string'],
         ];
     }
@@ -41,11 +42,36 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        $loginField = $this->filled('email') ? 'email' : 'name';
+
+        if (! $this->filled($loginField)) {
+            throw ValidationException::withMessages([
+                $loginField => 'Email atau username wajib diisi.',
+            ]);
+        }
+
+        if (! Auth::attempt([
+            $loginField => $this->input($loginField),
+            'password' => $this->string('password')->toString(),
+        ], $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                $loginField => trans('auth.failed'),
+            ]);
+        }
+
+        // Akun nonaktif tidak boleh masuk walau kata sandinya benar; sesi yang
+        // terlanjur dibuat Auth::attempt dibatalkan lagi supaya penolakan ini
+        // sungguhan, bukan sekadar pesan di layar.
+        if (! Auth::user()?->is_active) {
+            Auth::logout();
+            $this->session()->invalidate();
+            $this->session()->regenerateToken();
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                $loginField => 'Akun ini nonaktif. Hubungi pemilik untuk mengaktifkannya kembali.',
             ]);
         }
 
@@ -80,6 +106,10 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        $identifier = $this->filled('email')
+            ? $this->string('email')->toString()
+            : $this->string('name')->toString();
+
+        return Str::transliterate(Str::lower($identifier).'|'.$this->ip());
     }
 }

@@ -1,3 +1,989 @@
+@import url("https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    :root {
+        --brand-50: #f5f8ff;
+        --brand-100: #e8eeff;
+        --brand-500: #3455db;
+        --brand-600: #2644bd;
+        --brand-700: #1d3493;
+        --ink-900: #0f172a;
+    }
+
+    /* Latar halaman = slate-50, sama dengan panel Filament. */
+    body {
+        @apply min-h-screen font-body text-slate-800;
+        background: #f8fafc;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+        @apply font-display tracking-tight text-slate-900;
+    }
+}
+
+@layer components {
+    .page-wrap {
+        @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+    }
+
+    .app-shell {
+        @apply min-h-screen pb-8;
+    }
+
+    .app-card {
+        @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+    }
+
+    .app-sidebar {
+        @apply rounded-xl border border-slate-200 bg-white p-2 shadow-sm;
+    }
+
+    .app-main-panel {
+        @apply min-w-0;
+    }
+
+    .nav-link {
+        @apply block rounded-xl px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900;
+    }
+
+    .nav-link-active {
+        @apply bg-brand-50 text-brand-600 ring-1 ring-brand-100;
+    }
+
+    .nav-section-title {
+        @apply px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400;
+    }
+
+    .btn-primary {
+        @apply inline-flex min-h-[42px] items-center justify-center rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500/40;
+    }
+
+    .btn-ghost {
+        @apply inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50;
+    }
+
+    .btn-secondary {
+        @apply inline-flex min-h-[42px] items-center justify-center rounded-xl bg-slate-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400/40;
+    }
+
+    .btn-outline {
+        @apply inline-flex min-h-[42px] items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300/40;
+    }
+
+    .btn-success {
+        @apply inline-flex min-h-[42px] items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/40;
+    }
+
+    .btn-export {
+        @apply inline-flex min-h-[42px] items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition focus:outline-none focus:ring-2;
+    }
+
+    .btn-export-excel {
+        @apply btn-export bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500/40;
+    }
+
+    .btn-export-pdf {
+        @apply btn-export bg-rose-600 hover:bg-rose-700 focus:ring-rose-500/40;
+    }
+
+    .btn-warning {
+        @apply inline-flex min-h-[38px] items-center justify-center rounded-xl bg-amber-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-400/40;
+    }
+
+    .btn-danger {
+        @apply inline-flex min-h-[38px] items-center justify-center rounded-xl bg-rose-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-400/40;
+    }
+
+    .btn-link {
+        @apply inline-flex min-h-[38px] items-center justify-center rounded-lg px-2 py-2 text-sm font-semibold text-brand-600 transition hover:bg-brand-50 hover:text-brand-700;
+    }
+
+    .btn-link-danger {
+        @apply inline-flex min-h-[38px] items-center justify-center rounded-lg px-2 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 hover:text-rose-700;
+    }
+
+    /* Aksi baris tabel berupa ikon (components/row-action), setara tombol
+       ikon Edit/Hapus di panel Filament. Label tampil sebagai tooltip putih
+       di atas ikon seperti tooltip Filament; tepi kanannya sejajar ikon
+       supaya tidak terpotong wadah tabel yang bisa digulir ke samping. */
+    .row-actions {
+        @apply inline-flex items-center gap-1 whitespace-nowrap;
+    }
+
+    .row-action {
+        @apply relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60;
+    }
+
+    .row-action:active {
+        transform: scale(0.94);
+    }
+
+    .row-action-primary { @apply text-brand-600 hover:bg-brand-50 hover:text-brand-700; }
+    .row-action-danger { @apply text-rose-600 hover:bg-rose-50 hover:text-rose-700; }
+    .row-action-warning { @apply text-amber-600 hover:bg-amber-50 hover:text-amber-700; }
+    .row-action-success { @apply text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700; }
+    .row-action-gray { @apply text-slate-500 hover:bg-slate-100 hover:text-slate-700; }
+
+    .row-action[data-tooltip]::after,
+    .tt-icon-btn[data-tooltip]::after,
+    .tt-clear[data-tooltip]::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        right: 0;
+        bottom: calc(100% + 6px);
+        z-index: 20;
+        padding: 4px 10px;
+        border-radius: 8px;
+        background: #fff;
+        color: rgb(3 7 18);
+        box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.14), 0 0 0 1px rgba(3, 7, 18, 0.06);
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 18px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(4px);
+        transition: opacity 120ms ease, transform 120ms ease;
+    }
+
+    .row-action[data-tooltip]:hover::after,
+    .row-action[data-tooltip]:focus-visible::after,
+    .tt-icon-btn[data-tooltip][aria-expanded="false"]:hover::after,
+    .tt-clear[data-tooltip]:hover::after {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .tab-trigger {
+        @apply inline-flex min-h-[40px] items-center justify-center rounded-lg px-3 py-2 text-sm font-medium transition;
+    }
+
+    .form-control {
+        @apply w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:border-brand-500 focus:ring-brand-500/30;
+    }
+
+    .flash-success {
+        @apply mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900;
+    }
+
+    .flash-error {
+        @apply mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-900;
+    }
+
+    label {
+        @apply text-sm font-medium text-slate-700;
+    }
+
+    .form-label {
+        @apply mb-1 block text-[13px] font-semibold tracking-[0.01em] text-slate-600;
+    }
+
+    .field-help {
+        @apply mt-1 text-xs leading-relaxed text-slate-500;
+    }
+
+    input:not([type="checkbox"]):not([type="radio"]),
+    select,
+    textarea {
+        @apply w-full rounded-xl border-slate-300 px-3 py-2.5 text-sm focus:border-brand-500 focus:ring-brand-500/30;
+    }
+
+    .dashboard-hero {
+        @apply app-card p-5;
+    }
+
+    .dashboard-hero-title {
+        @apply text-xl sm:text-2xl;
+    }
+
+    .dashboard-hero-subtitle {
+        @apply mt-1.5 max-w-2xl text-xs leading-relaxed text-slate-600 sm:text-sm;
+    }
+
+    .stats-grid {
+        @apply grid gap-3 sm:grid-cols-2 xl:grid-cols-4;
+    }
+
+    .stat-card {
+        @apply app-card p-4;
+    }
+
+    .stat-label {
+        @apply text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500;
+    }
+
+    .stat-value {
+        @apply mt-1.5 font-display text-xl text-slate-900 sm:text-2xl;
+    }
+
+    .stat-value-compact {
+        @apply mt-1.5 font-display text-lg leading-tight text-slate-900 sm:text-xl;
+    }
+
+    .stat-meta {
+        @apply mt-1 text-xs text-slate-500;
+    }
+
+    .table-shell {
+        @apply app-card overflow-hidden;
+    }
+
+    .table-head {
+        @apply border-b border-slate-200/80 bg-slate-50 px-5 py-3 text-sm font-semibold tracking-[0.01em] text-slate-800;
+    }
+
+    .data-table-wrap {
+        @apply overflow-x-auto;
+    }
+
+    .data-table {
+        @apply min-w-full divide-y divide-slate-200 text-sm;
+    }
+
+    .data-table thead th {
+        @apply bg-slate-50/90 px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-[0.08em] text-slate-500;
+    }
+
+    .data-table tbody td {
+        @apply px-4 py-3 text-slate-700;
+    }
+
+    .data-table tbody tr {
+        @apply border-t border-slate-100;
+    }
+
+    /* Worksheet dua sisi (Debet | Kredit): tiap sisi tepat setengah lebar
+       tabel, judul sisi di tengah, dan garis pemisah di antara keduanya. */
+    .data-table.data-table-split {
+        @apply table-fixed;
+    }
+
+    .data-table-split col.split-desc {
+        width: 32%;
+    }
+
+    .data-table-split col.split-amount {
+        width: 18%;
+    }
+
+    .data-table-split thead th.split-title {
+        @apply border-b border-slate-200 text-center;
+    }
+
+    .data-table-split .split-start {
+        @apply border-l border-slate-200;
+    }
+
+    .status-badge {
+        @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold;
+    }
+
+    .page-toolbar {
+        @apply flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between;
+    }
+
+    .toolbar-actions {
+        @apply flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end;
+    }
+
+    .toolbar-inline-form {
+        @apply flex flex-col gap-2 sm:flex-row sm:items-center;
+    }
+
+    .file-input {
+        @apply w-full rounded-xl border border-dashed border-slate-300 bg-white/90 px-3 py-2.5 text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-slate-700 hover:border-slate-400;
+    }
+
+    /* Tombol unggah foto di kartu Katalog: label untuk input file tersembunyi. */
+    .catalog-upload {
+        @apply inline-flex h-9 w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-slate-950/10 transition hover:bg-slate-50 focus-within:ring-2 focus-within:ring-brand-500/60;
+    }
+
+    .catalog-upload.is-busy {
+        @apply pointer-events-none opacity-60;
+    }
+
+    .form-shell {
+        @apply app-card p-5;
+    }
+
+    .tab-card-shell {
+        @apply app-card mb-6 overflow-hidden;
+    }
+
+    .panel-head {
+        @apply border-b border-slate-200/80 px-5 py-4;
+    }
+
+    .section-card {
+        @apply app-card p-5;
+    }
+
+    .sales-page {
+        @apply space-y-4 sm:space-y-5;
+    }
+
+    .sales-hero {
+        @apply p-4 sm:p-6;
+    }
+
+    .sales-filter-grid {
+        @apply mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_220px_220px];
+    }
+
+    .sales-filter-actions {
+        @apply grid grid-cols-2 gap-2 md:col-span-2 xl:col-span-1;
+    }
+
+    .sales-stats-grid {
+        @apply grid grid-cols-2 gap-3 xl:grid-cols-4;
+    }
+
+    .sales-stats-grid-narrow {
+        @apply grid grid-cols-2 gap-3 xl:grid-cols-3;
+    }
+
+    .sales-stats-grid-compact {
+        @apply grid grid-cols-2 gap-3;
+    }
+
+    .sales-stat-card {
+        @apply app-card flex min-h-[106px] flex-col justify-between p-3.5 sm:min-h-[116px] sm:p-5;
+    }
+
+    .sales-stat-value {
+        @apply mt-2 font-display text-xl leading-none text-slate-900 sm:text-[1.75rem];
+    }
+
+    .sales-stat-value-money {
+        @apply mt-2 font-display text-base leading-tight text-slate-900 min-[420px]:text-lg sm:text-2xl;
+    }
+
+    .sales-table .data-table {
+        @apply text-[13px] sm:text-sm;
+    }
+
+    .sales-table .data-table thead th {
+        @apply whitespace-nowrap px-4 py-3;
+    }
+
+    .sales-table .data-table tbody td {
+        @apply align-middle;
+    }
+
+    .sales-table .number-cell {
+        @apply whitespace-nowrap text-right tabular-nums;
+    }
+
+    .sales-table .date-cell {
+        @apply whitespace-nowrap;
+    }
+
+    .sales-table .code-cell {
+        @apply whitespace-nowrap font-mono text-xs text-slate-600;
+    }
+
+    .sales-table .action-cell {
+        @apply whitespace-nowrap text-right;
+    }
+
+    .sales-note-panel {
+        @apply border-t border-slate-200 bg-slate-50/60 p-4 sm:p-5;
+    }
+
+    .sales-layout {
+        @apply mt-4 grid gap-4 lg:mt-6 lg:grid-cols-[240px_1fr] lg:gap-6;
+    }
+
+    .sales-sidebar {
+        @apply lg:sticky lg:top-6 lg:h-fit;
+    }
+
+    .sales-nav {
+        @apply grid grid-cols-2 gap-1 lg:block lg:space-y-1;
+    }
+
+    @media (max-width: 767px) {
+        .sales-responsive-table .data-table-wrap {
+            overflow-x: visible;
+        }
+
+        .sales-responsive-table .data-table {
+            min-width: 0;
+            display: block;
+        }
+
+        .sales-responsive-table .data-table thead {
+            display: none;
+        }
+
+        .sales-responsive-table .data-table tbody {
+            display: grid;
+            gap: 0.75rem;
+            padding: 0.75rem;
+        }
+
+        .sales-responsive-table .data-table tbody tr {
+            display: block;
+            border: 1px solid rgb(226 232 240);
+            border-radius: 0.75rem;
+            background: rgb(255 255 255 / 0.94);
+            box-shadow: 0 10px 24px -22px rgb(15 23 42 / 0.42);
+            overflow: hidden;
+        }
+
+        .sales-responsive-table .data-table tbody tr.empty-row {
+            border: 0;
+            box-shadow: none;
+        }
+
+        .sales-responsive-table .data-table tbody td {
+            display: grid;
+            grid-template-columns: minmax(92px, 0.42fr) minmax(0, 1fr);
+            gap: 0.75rem;
+            align-items: center;
+            padding: 0.75rem 0.875rem;
+            border-top: 1px solid rgb(241 245 249);
+            text-align: right;
+        }
+
+        .sales-responsive-table .data-table tbody td:first-child {
+            border-top: 0;
+        }
+
+        .sales-responsive-table .data-table tbody td::before {
+            content: attr(data-label);
+            text-align: left;
+            font-size: 0.68rem;
+            line-height: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgb(100 116 139);
+        }
+
+        .sales-responsive-table .data-table tbody td.item-cell {
+            display: block;
+            text-align: left;
+            background: rgb(248 250 252 / 0.9);
+        }
+
+        .sales-responsive-table .data-table tbody td.item-cell::before {
+            display: none;
+        }
+
+        .sales-responsive-table .data-table tbody td.action-cell {
+            display: block;
+            text-align: center;
+        }
+
+        .sales-responsive-table .data-table tbody td.action-cell::before {
+            display: none;
+        }
+
+        .sales-responsive-table .data-table tbody td.action-cell .btn-link {
+            width: 100%;
+            min-height: 42px;
+            background: rgb(239 246 255);
+        }
+
+        .sales-responsive-table .data-table tbody td.full-cell {
+            display: block;
+            text-align: center;
+        }
+
+        .sales-responsive-table .data-table tbody td.full-cell::before {
+            display: none;
+        }
+    }
+
+    .table-card {
+        @apply table-shell;
+    }
+
+    .table-card-head {
+        @apply table-head;
+    }
+
+    .form-grid {
+        @apply grid grid-cols-1 gap-4 md:grid-cols-2;
+    }
+
+    .form-grid-3 {
+        @apply grid grid-cols-1 gap-4 md:grid-cols-3;
+    }
+
+    .section-title {
+        @apply text-lg font-semibold tracking-[-0.01em] text-slate-900;
+    }
+
+    .section-subtitle {
+        @apply text-sm leading-relaxed text-slate-500;
+    }
+
+    .report-action-bar {
+        @apply mt-5 flex flex-col gap-3 rounded-2xl border border-slate-200/90 bg-slate-50/90 px-4 py-3 sm:flex-row sm:items-center sm:justify-between;
+    }
+
+    .report-action-text {
+        @apply text-sm leading-relaxed text-slate-600;
+    }
+
+    .panel-title {
+        @apply text-base font-semibold tracking-[-0.01em] text-slate-900;
+    }
+
+    .metric-label {
+        @apply mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500;
+    }
+
+    .metric-value {
+        @apply text-2xl font-display text-slate-900;
+    }
+
+    .metric-value-compact {
+        @apply text-xl font-display leading-tight text-slate-900 sm:text-[1.35rem];
+    }
+
+    .chip {
+        @apply inline-flex items-center rounded-full px-3 py-1.5 text-[11px] font-semibold tracking-[0.03em];
+    }
+
+    .badge-soft {
+        @apply inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-[0.03em];
+    }
+
+    .badge-soft-amber {
+        @apply badge-soft border-amber-200 bg-amber-50 text-amber-800;
+    }
+
+    .badge-soft-slate {
+        @apply badge-soft border-slate-200 bg-slate-100 text-slate-700;
+    }
+
+    .badge-soft-emerald {
+        @apply badge-soft border-emerald-200 bg-emerald-50 text-emerald-700;
+    }
+
+    .badge-soft-rose {
+        @apply badge-soft border-rose-200 bg-rose-50 text-rose-700;
+    }
+
+    .notice-soft {
+        @apply rounded-2xl border px-4 py-3 text-sm leading-relaxed shadow-[0_10px_24px_-18px_rgba(15,23,42,0.28)];
+    }
+
+    .notice-soft-amber {
+        @apply notice-soft border-amber-200/80 bg-amber-50 text-amber-900;
+    }
+
+    .notice-soft-emerald {
+        @apply notice-soft border-emerald-200/80 bg-emerald-50 text-emerald-900;
+    }
+
+    .chip-filter {
+        @apply chip bg-white text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50;
+    }
+
+    .chip-link {
+        @apply chip bg-white text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50;
+    }
+
+    .role-builder {
+        @apply rounded-xl border border-slate-200/80 bg-slate-50/70 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)];
+    }
+
+    .role-builder-list {
+        @apply space-y-1;
+    }
+
+    .role-builder-row {
+        @apply flex items-center gap-1;
+    }
+
+    .role-builder-select {
+        @apply min-h-[34px] rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[12px] text-slate-700 shadow-sm focus:border-brand-500 focus:ring-brand-500/20;
+    }
+
+    .role-builder-add {
+        @apply inline-flex min-h-[28px] items-center justify-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-semibold tracking-[0.02em] text-slate-600 transition hover:border-slate-300 hover:bg-slate-100;
+    }
+
+    .role-builder-remove {
+        @apply inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-[11px] font-semibold text-slate-500 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600;
+    }
+
+    .role-builder-meta {
+        @apply text-[11px] leading-relaxed text-slate-500;
+    }
+
+    .user-role-cell {
+        @apply min-w-[260px];
+    }
+
+    .user-role-editor {
+        @apply max-w-[260px];
+    }
+
+    /* Sebesar tombol "+ Tambah Role" di sebelahnya, didorong ke kanan kotak. */
+    .user-role-submit {
+        @apply ml-auto inline-flex min-h-[28px] items-center justify-center rounded-full bg-brand-500 px-3 py-1 text-[11px] font-semibold text-white shadow-sm transition hover:bg-brand-600;
+    }
+
+    .user-add-form {
+        @apply mt-4 grid grid-cols-1 gap-3 xl:grid-cols-[1.1fr_1.1fr_1.55fr_auto_auto];
+    }
+
+    .dashboard-kpi-grid {
+        @apply grid gap-4 md:grid-cols-2 xl:grid-cols-3;
+    }
+
+    .metric-panel {
+        @apply app-card p-5;
+    }
+
+    .metric-panel-accent,
+    .shell-body .app-card.metric-panel-accent {
+        @apply border-slate-900 bg-slate-950 text-white shadow-sm;
+    }
+
+    .signal-card {
+        @apply app-card p-5;
+    }
+
+    .signal-card-emerald {
+        @apply border-emerald-200 bg-emerald-50;
+    }
+
+    .signal-card-amber {
+        @apply border-amber-200 bg-amber-50;
+    }
+
+    .signal-card-rose {
+        @apply border-rose-200 bg-rose-50;
+    }
+
+    .signal-track {
+        @apply h-2.5 overflow-hidden rounded-full bg-slate-100;
+    }
+
+    .signal-bar {
+        @apply h-full rounded-full;
+    }
+
+    .signal-bar-emerald {
+        @apply bg-emerald-500;
+    }
+
+    .signal-bar-amber {
+        @apply bg-amber-500;
+    }
+
+    .signal-bar-rose {
+        @apply bg-rose-500;
+    }
+
+    .mini-track {
+        @apply h-2.5 overflow-hidden rounded-full bg-slate-100;
+    }
+
+    .mini-track-fill {
+        @apply h-full rounded-full;
+    }
+
+    .mini-track-fill-brand {
+        @apply bg-brand-500;
+    }
+
+    .mini-track-fill-emerald {
+        @apply bg-emerald-500;
+    }
+
+    .mini-track-fill-slate {
+        @apply bg-slate-400;
+    }
+
+    .mini-track-fill-amber {
+        @apply bg-amber-400;
+    }
+
+    .mini-track-fill-orange {
+        @apply bg-orange-400;
+    }
+
+    .mini-track-fill-rose {
+        @apply bg-rose-500;
+    }
+
+    .owner-line-chart {
+        @apply h-72 w-full overflow-visible rounded-2xl bg-slate-50 p-2;
+    }
+
+    .chart-dot {
+        @apply inline-block h-2.5 w-2.5 rounded-full;
+    }
+}
+
+@media (min-width: 1024px) {
+    .sidebar-scroll-panel {
+        align-self: start;
+        position: sticky;
+        top: 1.5rem;
+        height: fit-content;
+        max-height: calc(100vh - 3rem);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-gutter: stable;
+    }
+
+    .sidebar-natural-panel {
+        max-height: none;
+        overflow-y: visible;
+        scrollbar-gutter: auto;
+    }
+}
+
+/* ------------------------------------------------------------------
+   Cangkang 3S ONE (layouts/shell.blade.php): sidebar menu aplikasi.
+   Bilah aplikasi & menu pengguna ada di resources/css/shell.css karena
+   dipakai juga oleh panel Filament.
+   ------------------------------------------------------------------ */
+@layer components {
+    .shell-body {
+        background: #f8fafc;
+    }
+
+    .shell-body .app-card,
+    .shell-body .app-sidebar {
+        @apply rounded-xl border border-gray-200 bg-white shadow-sm backdrop-blur-0;
+    }
+
+    .shell-app-name {
+        @apply rounded-lg bg-brand-100 px-3 py-1.5 text-xs font-bold uppercase leading-[1.125rem] tracking-[0.14em] text-brand-700;
+    }
+
+    /* Sama dengan .sh-app-name di shell.css (Filament); Blade memakai kelas ini. */
+
+    /* Grup & item meniru sidebar Filament (label grup + chevron, item berikon)
+       supaya sidebar Blade dan sidebar Inventory terasa satu keluarga. */
+    .shell-group summary::-webkit-details-marker {
+        display: none;
+    }
+
+    /* Tombol grup Filament: py-2 (tinggi 40), label leading-6, chevron
+       menempel di tepi dalam padding (inset 8px dari tepi kanan grup). */
+    .shell-group-label {
+        @apply flex cursor-pointer select-none list-none items-center gap-x-3 px-2 py-2 text-sm font-medium leading-6 text-gray-500 transition-colors duration-150 hover:text-gray-800;
+    }
+
+    .shell-chevron {
+        @apply h-5 w-5 text-gray-400 transition-transform duration-200 ease-out;
+    }
+
+    .shell-group:not([open]) .shell-chevron {
+        @apply rotate-180;
+    }
+
+    .shell-icon {
+        @apply h-6 w-6 shrink-0 text-gray-400 transition-colors duration-150;
+    }
+
+    .shell-item {
+        @apply flex items-center gap-x-3 rounded-lg px-2 py-2 text-sm font-medium text-gray-700 transition-[background-color,color,transform] duration-150 ease-out hover:bg-gray-100 active:scale-[0.98];
+    }
+
+    .shell-item:focus-visible {
+        @apply outline-none ring-2 ring-brand-500/60;
+    }
+
+    .shell-bullet {
+        @apply ml-1 h-1.5 w-1.5 shrink-0 rounded-full bg-gray-300 transition-[background-color,transform] duration-150 ease-out;
+    }
+
+    .shell-item-active {
+        @apply bg-gray-100 text-brand-600;
+    }
+
+    .shell-item-active .shell-bullet {
+        @apply scale-125 bg-brand-600;
+    }
+
+    .shell-item-active .shell-icon {
+        @apply text-brand-600;
+    }
+
+    /* Tombol aplikasi lama ikut merasakan tekanan */
+    .btn-primary,
+    .btn-ghost {
+        @apply transition-[background-color,color,transform,border-color] duration-150 ease-out active:scale-[0.97];
+    }
+}
+
+/* ------------------------------------------------------------------
+   Toolbar tabel ala panel Filament (components/table-toolbar).
+   Angka diambil dari computed style tabel Filament di /inventory:
+   bilah 12/24 px, kotak cari & tombol ikon 36 px radius 8, popover
+   320 px radius 8 padding 24, chip filter 12 px brand-50/brand-700.
+   Selector sengaja lebih spesifik dari aturan global input/select di atas.
+   ------------------------------------------------------------------ */
+@layer components {
+    .tt-bar {
+        @apply flex min-h-[60px] flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3 sm:px-6;
+    }
+
+    .tt-standalone {
+        @apply app-card mb-5 overflow-visible;
+    }
+
+    .tt-standalone .tt-bar {
+        @apply border-b-0;
+    }
+
+    .tt-standalone .tt-indicators {
+        @apply rounded-b-xl border-b-0;
+    }
+
+    .tt-start {
+        @apply min-w-0 flex-1;
+    }
+
+    .tt-inline .tt-bar {
+        @apply min-h-0 border-b-0 p-0 sm:p-0;
+    }
+
+    .tt-inline .tt-icon-btn {
+        @apply bg-white shadow-sm ring-1 ring-slate-950/10;
+    }
+
+    .tt-title {
+        @apply text-sm font-semibold text-slate-800;
+    }
+
+    .tt-meta {
+        @apply ml-2 text-xs font-medium text-slate-500;
+    }
+
+    .tt-end {
+        @apply flex flex-wrap items-center justify-end gap-3;
+    }
+
+    .tt-search {
+        @apply flex h-9 w-full items-center gap-2 rounded-lg bg-white pl-3 shadow-sm ring-1 ring-slate-950/10 transition focus-within:ring-2 focus-within:ring-brand-600 sm:w-56;
+    }
+
+    .tt-search-icon {
+        @apply h-5 w-5 shrink-0 text-slate-400;
+    }
+
+    .tt .tt-search input[type="search"] {
+        @apply h-9 min-w-0 flex-1 rounded-none border-0 bg-transparent py-1.5 pl-0 pr-3 text-sm text-slate-950 shadow-none placeholder:text-slate-400 focus:border-0 focus:ring-0;
+    }
+
+    .tt-icon-btn {
+        @apply relative inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-50 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600;
+    }
+
+    .tt-icon-btn[aria-expanded="true"] {
+        @apply bg-slate-50 text-slate-700;
+    }
+
+    .tt-badge {
+        @apply absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-md bg-white px-1 text-[10px] font-semibold text-brand-600 ring-1 ring-brand-600/20;
+    }
+
+    .tt-popover {
+        @apply fixed z-50 overflow-y-auto rounded-lg bg-white p-6 shadow-lg ring-1 ring-slate-950/5;
+    }
+
+    .tt-popover[hidden] {
+        display: none;
+    }
+
+    .tt-popover-head {
+        @apply mb-4 flex items-center justify-between gap-3;
+    }
+
+    .tt-popover-title {
+        @apply text-base font-semibold text-slate-950;
+    }
+
+    .tt-reset {
+        @apply text-sm font-semibold text-rose-600 hover:text-rose-500 hover:underline;
+    }
+
+    .tt-fields {
+        @apply flex flex-col gap-4;
+    }
+
+    .tt-field {
+        @apply flex flex-col gap-1.5;
+    }
+
+    .tt-label {
+        @apply text-sm font-medium text-slate-950;
+    }
+
+    .tt input.tt-input:not([type="checkbox"]):not([type="radio"]),
+    .tt select.tt-input {
+        @apply h-9 w-full rounded-lg border-0 bg-white px-3 py-1.5 text-sm font-normal text-slate-950 shadow-sm ring-1 ring-slate-950/10 focus:border-0 focus:ring-2 focus:ring-brand-600;
+    }
+
+    /* Dua baris "Dari / Sampai": kotak tanggal bawaan browser terlalu
+       lebar untuk dua kolom dalam popover 320 px. */
+    .tt-range {
+        @apply grid grid-cols-[3.5rem_1fr] items-center gap-x-2 gap-y-2;
+    }
+
+    .tt-range-label {
+        @apply text-xs font-medium text-slate-500;
+    }
+
+    .tt-presets,
+    .tt-shortcuts {
+        @apply flex flex-wrap gap-1.5;
+    }
+
+    .tt-shortcuts {
+        @apply mb-4;
+    }
+
+    .tt-preset {
+        @apply inline-flex items-center rounded-md bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-200 transition hover:bg-brand-50 hover:text-brand-700 hover:ring-brand-600/20;
+    }
+
+    .tt-apply {
+        @apply mt-6 inline-flex h-9 w-full items-center justify-center rounded-lg bg-brand-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2;
+    }
+
+    .tt-indicators {
+        @apply flex items-center gap-x-3 border-b border-slate-200 bg-slate-50 px-4 py-1.5 sm:px-6;
+    }
+
+    .tt-indicators-label {
+        @apply shrink-0 text-sm font-medium text-slate-700;
+    }
+
+    .tt-chips {
+        @apply flex flex-1 flex-wrap gap-1.5;
+    }
+
+    .tt-chip {
+        @apply inline-flex items-center gap-1 rounded-md bg-brand-50 px-2 py-1 text-xs font-medium text-brand-600 ring-1 ring-inset ring-brand-600/10;
+    }
+
+    .tt-chip-remove {
+        @apply -my-1 -mr-1 inline-flex rounded p-0.5 text-brand-600/60 transition hover:text-brand-600;
+    }
+
+    .tt-clear {
+        @apply relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600;
+    }
+}

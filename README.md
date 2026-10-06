@@ -1,61 +1,130 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# PO-workflow
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi internal W3S Catering: purchase order → SPK → pengiriman → penjualan aktual,
+ditambah inventory, kas/pengeluaran, dan laporan keuangan. Laravel 12 / PHP 8.2 / MySQL,
+satu antarmuka **3S ONE** (Business Control System): bilah aplikasi di atas (Owner, Admin,
+Accounting, Inventory, Sales, Production, Delivery) dan menu aplikasi di sidebar, didefinisikan
+sekali di `App\Support\Navigation` dan dirender oleh layout Blade (`layouts.shell`) maupun panel
+Filament di `/inventory` (inventory, resep, produksi, pengaturan). Satu login (`/login`), satu
+sesi, satu tampilan (`resources/css/shell.css` dipakai keduanya); path lama `/admin` diarahkan ke
+`/inventory`.
 
-## About Laravel
+Tampilan aplikasi Blade meniru tabel panel Filament: filter dalam popover ikon dengan chip
+"Filter aktif" (`<x-table-toolbar>`), aksi baris berupa ikon (`<x-row-action>`), dan animasi geser
+antar menu. Acuan, angka, dan penyimpangan yang disengaja ada di [`docs/DESIGN.md`](docs/DESIGN.md).
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Modul Inventory Terpadu
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Menyatukan Master Menu Revamp (resep & HPP, dulu SQLite lokal) ke dalam po-workflow dan
+menggantikan HPP residual opname dengan pemakaian bahan riil dari resep × produksi.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| Phase | Isi | Di panel |
+|---|---|---|
+| 1 | Item inventaris bertingkat (bucket → bahan), Master Supplier (kontak, rekening, termin bayar, bahan yang dipasok, riwayat pembelian; pembelian/form kebutuhan/hutang menyimpan `supplier_id` + salinan `supplier_name`, termin mengisi jatuh tempo kredit yang kosong), pembelian, opname, saldo awal, laporan mutasi, import/export Excel | Inventory |
+| 2 | Resep & sub-resep, Analisa HPP, aturan konversi satuan per bahan + pendeteksi pasangan yang belum diatur, Bahan Belum Cocok (pencocokan nama), Pencocokan Menu (master produk Admin App ↔ resep, berbasis porsi terjual 90 hari; satu resep boleh dipakai beberapa varian harga, tautan di `products.recipe_id`; export/import Excel sebagai lembar kerja staf: terima_usulan / resep_id / tanpa_resep per baris, baris kosong tidak diubah), import/export resep | Inventory |
+| 3 | SPK Produksi dari slot SPK/PO, Form Kebutuhan bertahap per meja (Dibuat oleh produksi → Diajukan → Disetujui/Ditolak oleh supervisor gudang, dengan notifikasi lonceng → Penerimaan barang: diterima/ditolak/harga beli → Diperiksa: kartu stok + Pembelian Bahan Baku + kas/hutang otomatis → Tutup SPK), kartu stok per bahan, lembar kerja, plating, PDF, Perbandingan HPP resep vs opname | Produksi |
+| 4 | Izin modul (spatie permission) per peran, Pengaturan modul, cangkang & menu 3S terpadu (satu sumber untuk Blade dan Filament), validasi & pembersihan pasca migrasi, runbook cutover & UAT | Sistem |
+| B | Notifikasi perubahan harga bahan & harga jual menu (lonceng di semua aplikasi), notifikasi profit menu keseluruhan keluar dari batas atas/bawah (Pengaturan Inventory; `profit:check` harian), laporan Menu Tidak Diproduksi (rentang bawaan di Pengaturan, export Excel), Katalog Foto Menu berbasis SKU di aplikasi **Marketing** (peran `marketing`; centang menu yang tampil di website, SKU diketik manual karena menjadi nama menu di website; foto dikompres otomatis ke JPG 1600 px) | Inventory / Admin / Marketing |
+| MM | Paritas Master Menu Revamp: **Breakdown Bahan** per PO (Admin › Detail PO) dan per SPK Produksi (menu → bahan mentah, rekap per bahan dicocokkan dengan Kartu Stok → Perlu Beli; `MaterialBreakdownService`), daftar Resep & Menu dengan Harga Jual/Profit %/Margin % + filter *Profit di bawah target* + export Daftar Menu, harga manual per baris resep, export riwayat harga bahan, Plating *Komponen per Menu* + Excel 2 sheet, Excel Breakdown & Lembar Kerja, halaman **Pekerjaan Menu** (template per menu + import/export Excel, membaca berkas Master Menu), migrasi dokumen produksi tanpa Pra SPK | Inventory / Admin |
 
-## Learning Laravel
+## Barang Sisa, Barang Hilang & Susut Bahan (revisi Owner, v3.1)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- **Barang Sisa** (aplikasi Sales › Barang Sisa): retur Sales Actual yang disubmit tidak lagi otomatis
+  dibawa ke draft customer yang sama. Retur masuk stok Barang Sisa (dihitung dari data, tanpa tabel
+  saldo: `qty_return` − Penjualan Barang Sisa − `leftover_disposals`; `LeftoverStockService`) dan boleh
+  dijual ke customer mana pun ("Penjualan Barang Sisa", dari halaman Barang Sisa atau panel di edit
+  Sales Actual) atau dibuang dengan alasan. Cara bayar Penjualan Barang Sisa mengikuti PO customer
+  pembeli di DO-nya (`sales_actual_items.purchase_order_id`); Sales Actual tanpa DO hanya untuk customer
+  asal retur.
+- Nilainya **HPP menu** (snapshot bahan baku di item). Retur yang belum terjual per akhir periode adalah
+  persediaan: baris *Barang Sisa - Persediaan Akhir* di Neraca, *Barang Sisa Awal/Akhir* di blok HPP Laba
+  Rugi (awal menambah, akhir mengurangi Bahan Baku Terpakai). Hanya retur sejak pengaturan
+  `leftover.accounting_start` (bawaan 1 Okt 2026) supaya laporan bulan yang sudah dilaporkan tidak bergeser.
+- **Rincian Barang Sisa per komponen** (adendum Owner, Okt 2026): sebagian porsi retur dipecah user menjadi
+  komponen yang **diketik bebas** (nasi, telur, …) dengan nilai HPP yang juga diketik, acuannya HPP porsi
+  (`leftover_breakdowns` + `leftover_components`). Total nilai tidak boleh melebihi HPP porsi yang dirinci;
+  selisihnya waste pada tanggal rincian. Tiap komponen dijual sesuai yang diambil (Penjualan Barang Sisa dengan
+  `leftover_component_id`, tanpa `product_id`, harga diisi Sales) atau di-waste; rincian bisa diubah/dibatalkan
+  selama belum ada komponen yang terpakai. Persediaan = porsi utuh × HPP menu + sisa komponen × nilai/satuan.
+- **Porsi Tambahan & ganti menu**: customer yang mengganti isi PO setelah dimasak (10+5 jadi 13+2) dicatat di
+  Sales Actual: qty actual menu lama dikurangi (retur → Barang Sisa), menu pengganti lewat Porsi Tambahan
+  (`is_extra_portion`, harga & cara bayar dari PO baris acuannya). Ubah PO di Admin menyegarkan SPK Produksi
+  yang belum ditutup secara otomatis; bila SPK Produksi sudah ditutup, menu/qty PO ditolak dan diarahkan ke
+  Sales Actual.
+- **Barang Hilang / Barang Temuan**: penyesuaian kartu stok (hitung sisa saat Tutup SPK atau halaman
+  **Opname Bahan** di Inventory) bertanda negatif/positif. Tampil sebagai rincian di bawah Bahan Baku
+  Terpakai ("termasuk …") — terpisah dari Kerugian Barang Rusak di Pengeluaran, dan tidak mengubah Laba.
+- **Susut Bahan** (Inventory › Resep & HPP): per bahan, susut = lebih pakai dari resep + hilang − temuan,
+  dibagi kebutuhan resep; indikator hijau/kuning/merah (bawaan < 1% / 1–10% / > 10%, Pengaturan
+  Inventory), klik bahan untuk melihat SPK dan menu yang memakainya (`InventoryShrinkageService`).
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## Pencarian global
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Tombol **Cari dokumen…** di atas sidebar (pintasan <kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>K</kbd>)
+membuka panel pencarian sebagai overlay; tersedia di layout Blade maupun panel Filament.
+Menemukan Purchase Order, Delivery Order, SPK Produksi, pelanggan, menu, dan bahan — termasuk
+lewat kolom relasinya (nomor PO ketemu dari nama pelanggannya).
 
-## Laravel Sponsors
+Letaknya **bukan** di bilah atas dan itu disengaja: bilah itu memuat sampai 8 tab aplikasi untuk
+superadmin/owner, dan menambahkan apa pun di sana — bahkan tombol ikon 38px — membuat tab terakhir
+terpotong. Penempatan ini dijaga tes (`tests/Feature/GlobalSearchTest.php`), bukan sekadar
+kesepakatan.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Aturannya: **sebuah hasil hanya muncul bila peran pengguna memang boleh membuka halaman
+tujuannya.** Jadi Sales tidak menemukan PO, Admin tidak menemukan DO, dan satu PO yang sama
+menautkan Admin ke detail Admin App tetapi Produksi ke halaman progres Production App. Sumber yang
+tidak punya tujuan yang boleh dibuka tidak ikut dicari sama sekali. Daftar sumber beserta pagarnya
+ada di `App\Services\GlobalSearchService::sources()`; menambah entitas baru berarti menuliskan
+pagarnya di sana, dan tes arsitektur di `tests/Feature/Security/GlobalSearchAccessTest.php`
+membuat build merah bila ada sumber tanpa pagar.
 
-### Premium Partners
+Tanpa JavaScript tombolnya menjadi tautan biasa ke `/search`, dan halaman itu membawa form GET-nya
+sendiri — jadi pencarian tetap bisa dilakukan.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Dokumen:
 
-## Contributing
+- `version.txt` — riwayat rilis; **baris terakhirnya** jadi nomor versi yang tampil di halaman masuk (`App\Support\AppVersion`). Rilis baru = tambah satu baris `v.X.Y keterangan`.
+- [docs/PANDUAN-3S-ONE.pdf](docs/PANDUAN-3S-ONE.pdf) — **Panduan Pengguna** (bahasa awam, dengan diagram alur). Sumbernya `docs/panduan/panduan-3s-one.html`; bangun ulang dengan `php artisan panduan:pdf`.
+- [docs/ACCESS.md](docs/ACCESS.md) — izin & matriks peran, cara mengubahnya
+- [docs/DEPLOY-DIGITALOCEAN.md](docs/DEPLOY-DIGITALOCEAN.md) — deploy server baru DigitalOcean (3sone.w3scatering.com): latihan & pemetaan Oktober, resmi 1 November
+- [docs/CUTOVER.md](docs/CUTOVER.md) — runbook deploy, migrasi data, rollback
+- [docs/UAT.md](docs/UAT.md) — checklist UAT Bagian A bersama Owner
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Perintah artisan modul
 
-## Code of Conduct
+| Perintah | Fungsi |
+|---|---|
+| `inventory:audit-master-menu` | Audit rekonsiliasi Master Menu vs po-workflow (Excel) |
+| `inventory:migrate-master-menu {--db} {--database} {--dry-run} {--force}` | Pindahkan bahan, harga, resep, mismatch, pelaksana, template, SPK riwayat (idempoten) |
+| `inventory:map-recipes-to-products {--dry-run}` | Tautkan produk → resep yang namanya cocok persis (sisanya lewat Pencocokan Menu) |
+| `inventory:validate-migration {--fix} {--fail-on=error}` | Laporan validasi pasca migrasi + pembersihan aman |
+| `inventory:carry-master-data --from-database= {--database} {--dry-run} {--force}` | Bawa data master (bahan, resep, pemetaan menu, konversi, supplier, pengaturan, akun & peran, riwayat produksi Master Menu) dari database latihan ke database resmi yang baru dimigrasi dari dump v2; ID bahan dipetakan ulang, transaksi latihan ditinggal. Lihat `docs/DEPLOY-DIGITALOCEAN.md` §14 |
+| `access:sync {--reset}` | Sinkronkan izin modul ke peran |
+| `profit:check` | Periksa profit menu keseluruhan terhadap batas; lonceng bila berubah keadaan (dijadwalkan harian 06:30) |
+| `db:clone-to-staging` | Salin database kerja ke `po_workflow_staging` |
+| `po:audit-cash-in {--fix}` | Audit data kas PO lama |
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Pengembangan
 
-## Security Vulnerabilities
+Dilayani Laravel Herd di `http://po-workflow.test` (jangan jalankan `php artisan serve`).
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+composer install && npm install
+cp .env.example .env && php artisan key:generate
+php artisan migrate && php artisan db:seed      # peran + izin modul ikut tersemai
+npm run dev                                      # atau npm run build
+php artisan test --compact                       # Pest, SQLite :memory:
+vendor/bin/pint --dirty
+```
 
-## License
+`MASTER_MENU_DB_PATH` di `.env` menunjuk `app.db` Master Menu untuk migrasi/audit; kosongkan
+bila tidak ada.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Keamanan
+
+- Halaman inventory (`/inventory/...`) hanya untuk peran `superadmin`, `owner`, `admin`, `accounting`, `inventory` (staf gudang, dipilih di Master User), `production`;
+  setiap resource dijaga policy berbasis izin modul (`tests/Feature/Security/`). Halaman Blade dijaga `ensure.role`.
+- Tes arsitektur menolak resource/halaman panel baru yang tidak punya policy/`canAccess`.
+- Pencarian global menyaring per jenis dokumen dan gagal tertutup: sumber tanpa tujuan yang boleh
+  dibuka tidak dicari. Endpoint saran dibatasi 60 permintaan/menit.
+- Rahasia hanya di `.env` (gitignored; di server mode 600 milik user deploy).

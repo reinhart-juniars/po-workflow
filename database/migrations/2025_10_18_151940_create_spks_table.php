@@ -17,7 +17,7 @@ return new class extends Migration
             $table->dateTime('scheduled_at')->index();
             $table->enum('slot_type', ['fixed_03','fixed_07','fixed_11','custom'])->index();
             $table->foreignId('responsible_user_id')->constrained('users')->restrictOnDelete();
-            $table->enum('status', ['draft','in_process','completed'])->index();
+            $table->string('status')->default('draft');
             $table->text('notes')->nullable();
             $table->timestamps();
         });

@@ -1,0 +1,167 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class SalesActualItem extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'sales_actual_id',
+        'purchase_order_item_id',
+        'purchase_order_id',
+        'product_id',
+        'item_name',
+        'unit',
+        'qty_delivery',
+        'qty_actual',
+        'qty_return',
+        'qty_waste',
+        'qty_cancel',
+        'unit_price',
+        'raw_material_cost',
+        'overhead_cost',
+        'subtotal_actual',
+        'is_carry_forward',
+        'source_sales_actual_item_id',
+        'leftover_component_id',
+        'is_extra_portion',
+        'notes',
+    ];
+
+    protected $casts = [
+        'qty_delivery' => 'decimal:2',
+        'qty_actual' => 'decimal:2',
+        'qty_return' => 'decimal:2',
+        'qty_waste' => 'decimal:2',
+        'qty_cancel' => 'decimal:2',
+        'unit_price' => 'decimal:2',
+        'raw_material_cost' => 'decimal:2',
+        'overhead_cost' => 'decimal:2',
+        'subtotal_actual' => 'decimal:2',
+        'is_carry_forward' => 'boolean',
+        'is_extra_portion' => 'boolean',
+    ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $item) {
+            // Snapshot cost dari sumbernya HANYA untuk item baru.
+            // Setelah tersimpan, perubahan harga/cost master tidak boleh memengaruhi item ini.
+            if (! $item->exists) {
+                if ($item->raw_material_cost === null || $item->overhead_cost === null) {
+                    $source = null;
+
+                    if ($item->purchase_order_item_id) {
+                        $source = PurchaseOrderItem::find($item->purchase_order_item_id);
+                    }
+
+                    if ($source) {
+                        if ($item->raw_material_cost === null) {
+                            $item->raw_material_cost = $source->raw_material_cost;
+                        }
+                        if ($item->overhead_cost === null) {
+                            $item->overhead_cost = $source->overhead_cost;
+                        }
+                    } elseif ($item->product_id) {
+                        $product = Product::find($item->product_id);
+                        if ($product) {
+                            if ($item->raw_material_cost === null) {
+                                $item->raw_material_cost = $product->raw_material_cost;
+                            }
+                            if ($item->overhead_cost === null) {
+                                $item->overhead_cost = $product->overhead_cost;
+                            }
+                        }
+                    }
+                }
+            }
+
+            foreach (['qty_delivery', 'qty_actual', 'qty_waste', 'qty_cancel', 'unit_price'] as $field) {
+                $item->{$field} = max(0, round((float) ($item->{$field} ?? 0), 2));
+            }
+
+            // Waste hanya relevan untuk Penjualan Barang Sisa (retur yang baru
+            // ketahuan tidak layak jual saat akan dijual). Item lain selalu 0.
+            if (! $item->is_carry_forward) {
+                $item->qty_waste = 0;
+            }
+
+            $item->qty_cancel = 0;
+            // Retur (masuk Barang Sisa setelah submit) = qty delivery dikurangi yang
+            // terjual dan yang dibuang (waste).
+            $item->qty_return = max(0, round((float) $item->qty_delivery - (float) $item->qty_actual - (float) $item->qty_waste, 2));
+            $item->subtotal_actual = round((float) $item->qty_actual * (float) $item->unit_price, 2);
+        });
+    }
+
+    public function salesActual(): BelongsTo
+    {
+        return $this->belongsTo(SalesActual::class);
+    }
+
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
+    }
+
+    public function purchaseOrderItem(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrderItem::class);
+    }
+
+    public function sourceSalesActualItem(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'source_sales_actual_item_id');
+    }
+
+    /** PO pembeli untuk Penjualan Barang Sisa: menentukan cara bayar & akun kasnya. */
+    public function purchaseOrder(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrder::class);
+    }
+
+    /**
+     * Penjualan Barang Sisa yang mengambil dari retur item ini. Satu retur
+     * boleh dijual ke beberapa customer, jadi hasMany.
+     */
+    public function leftoverSales(): HasMany
+    {
+        return $this->hasMany(self::class, 'source_sales_actual_item_id');
+    }
+
+    public function leftoverDisposals(): HasMany
+    {
+        return $this->hasMany(LeftoverDisposal::class, 'source_sales_actual_item_id');
+    }
+
+    /** Rincian porsi retur item ini menjadi komponen. */
+    public function leftoverBreakdowns(): HasMany
+    {
+        return $this->hasMany(LeftoverBreakdown::class, 'source_sales_actual_item_id');
+    }
+
+    /** Komponen Barang Sisa yang dijual lewat baris ini (Penjualan Barang Sisa per komponen). */
+    public function leftoverComponent(): BelongsTo
+    {
+        return $this->belongsTo(LeftoverComponent::class);
+    }
+
+    /**
+     * HPP per satuan untuk menilai Barang Sisa: snapshot bahan baku di item,
+     * jatuh ke HPP master menu bila snapshotnya kosong (data lama).
+     */
+    public function leftoverUnitCost(): float
+    {
+        if ($this->raw_material_cost !== null) {
+            return (float) $this->raw_material_cost;
+        }
+
+        return (float) ($this->product?->raw_material_cost ?? 0);
+    }
+}

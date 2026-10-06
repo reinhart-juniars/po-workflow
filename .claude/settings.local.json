@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan *)",
+      "Bash(git stash *)",
+      "Bash(which mysqldump *)",
+      "Bash(\"C:/Program Files/MySQL/MySQL Server 8.0/bin/mysqldump.exe\" --version)",
+      "Bash(mysqldump --version)",
+      "Bash(where.exe mysqldump *)",
+      "Bash(where.exe mysql *)",
+      "Bash(php -l app/Services/DatabaseBackupService.php)",
+      "Bash(php -l app/Http/Controllers/SuperadminBackupController.php)",
+      "Bash(php -l routes/web.php)",
+      "Bash(cd c:/Herd/po-workflow && ls -la routes/web.php; ls \"c:/Users/LENOVO/AppData/Local/Programs/Microsoft VS Code/\" 2>/dev/null | head -5; ls \"c:/Users/LENOVO/AppData/Roaming/Code/Backups/\" 2>/dev/null | head)",
+      "Read(//c/Users/LENOVO/AppData/Local/Programs/Microsoft VS Code/**)",
+      "Read(//c/Users/LENOVO/AppData/Roaming/Code/Backups/**)",
+      "Bash(ls \"c:/Users/LENOVO/AppData/Roaming/Code/Backups/8b640eef5a/\" 2>/dev/null | head; ls \"c:/Users/LENOVO/AppData/Roaming/Code/User/History/\" 2>/dev/null | head)",
+      "Read(//c/Users/LENOVO/AppData/Roaming/Code/User/History/**)",
+      "Bash(git fsck *)"
+    ]
+  }
+}

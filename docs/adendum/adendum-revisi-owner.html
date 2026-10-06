@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Adendum Revisi Owner</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700;800&display=swap">
+<style>
+/* Dokumen A4 untuk dicetak ke PDF. Gaya mengikuti panduan 3S ONE: Public Sans, biru #3455db, datar. */
+:root {
+  --ink: #0f172a; --muted: #526077; --line: #dbe2ec; --soft: #f4f6fa;
+  --brand: #3455db; --brand-soft: #eef1fd; --warn: #8a4b00; --warn-soft: #fff4e0;
+}
+@page { size: A4; margin: 18mm 18mm 20mm; }
+* { box-sizing: border-box; }
+body { margin: 0; color: var(--ink); background: #fff; font: 10.5pt/1.55 "Public Sans", "Segoe UI", sans-serif; }
+.doc { max-width: 174mm; margin: 0 auto; }
+header { border-bottom: 2px solid var(--brand); padding-bottom: 10px; margin-bottom: 16px; }
+.brand { font-size: 8.5pt; font-weight: 700; letter-spacing: .14em; color: var(--brand); text-transform: uppercase; }
+h1 { font-size: 20pt; line-height: 1.15; margin: 4px 0 6px; letter-spacing: -.01em; }
+.meta { color: var(--muted); font-size: 9.5pt; }
+h2 { font-size: 13pt; margin: 22px 0 6px; padding-top: 4px; break-after: avoid; }
+h2 .n { display: inline-block; min-width: 22px; color: var(--brand); }
+h3 { font-size: 10.5pt; margin: 12px 0 4px; break-after: avoid; }
+p { margin: 0 0 8px; }
+ul, ol { margin: 0 0 8px; padding-left: 20px; }
+li { margin-bottom: 3px; }
+table { width: 100%; border-collapse: collapse; margin: 6px 0 10px; font-size: 9.5pt; break-inside: avoid; }
+th, td { text-align: left; vertical-align: top; padding: 5px 8px; border: 1px solid var(--line); }
+th { background: var(--soft); font-weight: 700; }
+td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; }
+tr.total td { font-weight: 700; background: var(--soft); }
+.quote { border-left: 3px solid var(--line); padding: 4px 10px; color: var(--muted); margin: 4px 0 8px; }
+.box { background: var(--brand-soft); border-radius: 6px; padding: 8px 12px; margin: 6px 0 10px; break-inside: avoid; }
+.box.warn { background: var(--warn-soft); }
+.box b.t { color: var(--brand); }
+.box.warn b.t { color: var(--warn); }
+.where { font-weight: 600; color: #2740a4; }
+figure { margin: 6px 0 12px; break-inside: avoid; }
+figure img { width: 72%; border: 1px solid var(--line); border-radius: 4px; display: block; }
+figcaption { font-size: 8.5pt; color: var(--muted); margin-top: 3px; }
+.section { break-inside: auto; }
+footer { margin-top: 22px; padding-top: 8px; border-top: 1px solid var(--line); color: var(--muted); font-size: 8.5pt; }
+</style>
+</head>
+<body>
+<div class="doc">
+
+<header>
+  <div class="brand">3S ONE · W3S Catering</div>
+  <h1>Adendum Revisi Owner</h1>
+  <div class="meta">Catatan kesepakatan setelah presentasi “Dari v2 ke v3.1” · 6 Oktober 2026</div>
+</header>
+
+<p>Dokumen ini mencatat empat penegasan Owner atas revisi yang sudah dikerjakan, beserta cara sistem 3S ONE menjalankannya. Angka rupiah di contoh hanya ilustrasi.</p>
+
+<!-- 1 -->
+<h2><span class="n">1.</span>Sumber HPP (koreksi presentasi halaman 9)</h2>
+<p>Kalimat tentang Perbandingan HPP di halaman 9 presentasi dikoreksi:</p>
+<table>
+  <tr><th style="width: 50%">Tertulis di presentasi</th><th>Seharusnya</th></tr>
+  <tr>
+    <td>“Perbandingan HPP: versi resep × produksi dibandingkan dengan versi opname sebelum Owner memilih sumbernya.”</td>
+    <td>HPP di Laba Rugi dan Neraca memakai <b>pengeluaran real</b>: Saldo Awal + Pembelian Bahan Baku (nota dari gudang) − Sisa Stock Opname. Perbandingan HPP tetap ada sebagai alat pantau: HPP menurut resep × produksi dibandingkan dengan HPP real, supaya selisihnya terlihat dan bisa ditelusuri.</td>
+  </tr>
+</table>
+<ul>
+  <li>Diatur di <span class="where">Inventory › Pengaturan Inventory › Sumber pemakaian bahan untuk HPP</span>, pilihan <i>Residual opname</i> (= pengeluaran real). Berlaku untuk Laporan Pemakaian Bahan, Laba Rugi, Neraca, dan Bahan Baku Real di Analisa HPP.</li>
+  <li>Pembelian Bahan Baku terisi otomatis dari penerimaan barang di gudang, tanpa diketik ulang oleh Accounting.</li>
+  <li>Bila HPP real jauh di atas HPP resep, ada bahan yang terpakai di luar resep (susut, hilang, atau resep perlu diperbarui). Rinciannya dibuka di <span class="where">Inventory › Susut Bahan</span>.</li>
+</ul>
+
+<!-- 2 -->
+<h2><span class="n">2.</span>Selisih opname bahan baku: Barang Hilang dan Barang Temuan</h2>
+<p>Saat sisa bahan baku dihitung fisik dan hasilnya tidak sama dengan catatan Kartu Stok:</p>
+<ul>
+  <li><b>Kurang</b> dari catatan → <b>Barang Hilang</b>.</li>
+  <li><b>Lebih</b> dari catatan → <b>Barang Temuan</b>.</li>
+</ul>
+<div class="box"><b class="t">Contoh:</b> beli 1 kg ayam, dipotong 12 bagian. Potongan terakhir kecil, sehingga saat opname sisa ayam tidak bulat sesuai catatan. Kartu Stok mencatat sisa 1.000 gram, hitungan fisik 500 gram: selisih 500 gram × harga beli dicatat sebagai Barang Hilang.</div>
+<ul>
+  <li>Dicatat dari <span class="where">Inventory › Opname Bahan</span> (hitung fisik per bahan) atau dari hitung sisa saat <span class="where">Tutup SPK</span> produksi.</li>
+  <li>Di <b>Laba Rugi</b> tampil sebagai rincian di bawah <i>Bahan Baku Terpakai</i> (“termasuk Barang Hilang / Barang Temuan”), terpisah dari <i>Kerugian Barang Rusak</i> (barang yang ditolak saat datang).</li>
+  <li>Setiap selisih ikut dihitung di <b>Susut Bahan</b> dengan indikator: hijau di bawah 1%, kuning 1–10%, merah di atas 10%. Bahan yang diklik menunjukkan SPK dan masakan yang memakainya.</li>
+</ul>
+<div class="box warn"><b class="t">Catatan:</b> nilai rupiah sisa stok untuk Laba Rugi dan Neraca diambil dari <b>Stock Opname</b> (per kategori), sedangkan Barang Hilang/Temuan dari <b>Opname Bahan</b> (per bahan). Di akhir bulan keduanya diisi.</div>
+
+<!-- 3 -->
+<h2><span class="n">3.</span>Retur menjadi Barang Sisa</h2>
+<p>Contoh: customer memesan 10 nasi goreng @ Rp 15.000, hari itu 3 porsi diretur.</p>
+<ul>
+  <li>Customer membayar porsi yang diambil: 7 × Rp 15.000 = <b>Rp 105.000</b>.</li>
+  <li>3 porsi retur masuk <span class="where">Sales › Barang Sisa</span>, dinilai sebesar <b>HPP menu</b> (misalnya HPP Rp 9.000/porsi → Rp 27.000). Selama belum terjual, nilainya adalah persediaan.</li>
+</ul>
+
+<h3>Rincian per komponen</h3>
+<p>Barang Sisa bisa dirinci oleh user menjadi komponen, misalnya nasi sekian dan telur sekian:</p>
+<ul>
+  <li><b>Komponen diketik bebas</b>, tidak diambil dari resep, karena nasi yang sudah digoreng tidak bisa kembali menjadi bahan resep.</li>
+  <li><b>Nilai komponen diketik sendiri</b>, dengan acuan HPP menu. Total nilai komponen tidak boleh melebihi HPP porsi yang dirinci; bila lebih kecil, selisihnya dicatat sebagai waste.</li>
+  <li>Boleh merinci sebagian porsi saja; sisanya tetap porsi utuh.</li>
+</ul>
+<table>
+  <tr><th>Komponen (contoh rincian 3 porsi, HPP Rp 27.000)</th><th class="r">Jumlah</th><th>Satuan</th><th class="r">Nilai HPP</th></tr>
+  <tr><td>Nasi goreng</td><td class="r">600</td><td>gram</td><td class="r">Rp 12.000</td></tr>
+  <tr><td>Telur ceplok</td><td class="r">3</td><td>butir</td><td class="r">Rp 7.500</td></tr>
+  <tr><td>Ayam suwir</td><td class="r">150</td><td>gram</td><td class="r">Rp 6.000</td></tr>
+  <tr class="total"><td>Total komponen</td><td></td><td></td><td class="r">Rp 25.500</td></tr>
+  <tr><td colspan="3">Selisih yang tidak terinci (dicatat sebagai waste)</td><td class="r">Rp 1.500</td></tr>
+</table>
+<figure>
+  <img src="../panduan/img/barang-sisa-rinci.jpg" alt="Form Rinci per komponen di halaman Barang Sisa">
+  <figcaption>Sales › Barang Sisa › Rinci per komponen: komponen, jumlah, satuan, dan nilai HPP diketik sendiri; totalnya dibandingkan dengan HPP porsi.</figcaption>
+</figure>
+
+<h3>Penjualan Barang Sisa</h3>
+<ul>
+  <li>Besoknya Barang Sisa bisa dijual ke <b>customer mana pun</b> sebagai <b>Penjualan Barang Sisa</b>, baik porsi utuh maupun <b>per komponen sesuai yang diambil</b> (misalnya 3 telur ke customer lain).</li>
+  <li>Harga jualnya diisi Sales. Cara bayarnya mengikuti PO customer pembeli.</li>
+  <li>Nilai HPP yang terjual keluar dari persediaan dan masuk HPP bulan terjualnya.</li>
+</ul>
+
+<h3>Edit dan waste</h3>
+<ul>
+  <li>Rincian bisa <b>diubah atau dibatalkan</b> selama belum ada komponen yang dijual atau dibuang.</li>
+  <li>Porsi atau komponen yang rusak atau tidak bisa digunakan dicatat sebagai <b>waste</b> (alasan wajib). Nilainya masuk Laporan Waste dan rincian “Barang Sisa Dibuang” di Laba Rugi.</li>
+  <li>Barang Sisa tidak diberi umur. Yang masih ada di akhir bulan dihitung sebagai <b>persediaan</b>: baris <i>Barang Sisa - Persediaan Akhir</i> di Neraca, dan <i>Barang Sisa Awal/Akhir</i> di blok HPP Laba Rugi.</li>
+</ul>
+
+<!-- 4 -->
+<h2><span class="n">4.</span>Customer mengganti isi PO</h2>
+<p>Contoh: PO 10 nasi goreng + 5 bakmi goreng, lalu besoknya customer minta menjadi 13 nasi goreng + 2 bakmi goreng. <b>Perubahan ini diperbolehkan</b>, dengan perlakuan Barang Sisa seperti poin 3.</p>
+<table>
+  <tr><th style="width: 26%">Kapan berubah</th><th>Perlakuan</th></tr>
+  <tr><td>Sebelum dapur memasak</td><td>Admin mengubah PO (alasan perubahan wajib dan tercatat). SPK Produksi yang belum ditutup ikut menyesuaikan otomatis.</td></tr>
+  <tr><td>Sesudah dimasak dan dikirim</td><td>
+    Dicatat di Sales Actual customer:
+    <ul style="margin: 4px 0 0;">
+      <li>Bakmi diterima 2 dari 5 → <b>3 bakmi menjadi Barang Sisa</b>.</li>
+      <li>3 nasi goreng tambahan dicatat sebagai <b>Porsi Tambahan</b>, <b>ditagih dengan harga PO</b>. Bila nasi gorengnya diambil dari stok Barang Sisa, dicatat sebagai Penjualan Barang Sisa.</li>
+    </ul>
+  </td></tr>
+  <tr><td>SPK Produksi sudah ditutup</td><td>Menu dan jumlah di PO tidak diubah lagi (masakan sudah dibuat sesuai PO lama); penggantiannya dicatat di Sales Actual seperti baris di atas. Perubahan selain menu (penerima, alamat, jam) tetap boleh.</td></tr>
+</table>
+<table>
+  <tr><th>Tagihan setelah ganti menu (contoh harga PO)</th><th class="r">Qty</th><th class="r">Harga PO</th><th class="r">Jumlah</th></tr>
+  <tr><td>Nasi goreng (PO)</td><td class="r">10</td><td class="r">Rp 15.000</td><td class="r">Rp 150.000</td></tr>
+  <tr><td>Nasi goreng (Porsi Tambahan)</td><td class="r">3</td><td class="r">Rp 15.000</td><td class="r">Rp 45.000</td></tr>
+  <tr><td>Bakmi goreng (diambil 2 dari 5)</td><td class="r">2</td><td class="r">Rp 14.000</td><td class="r">Rp 28.000</td></tr>
+  <tr class="total"><td>Total ditagih</td><td></td><td></td><td class="r">Rp 223.000</td></tr>
+  <tr><td colspan="3">3 bakmi goreng masuk Barang Sisa, dinilai HPP menu</td><td class="r">persediaan</td></tr>
+</table>
+<figure>
+  <img src="../panduan/img/porsi-tambahan.jpg" alt="Sales Actual dengan Porsi Tambahan">
+  <figcaption>Sales Actual: bakmi diterima 2 dari 5 (retur 3 menjadi Barang Sisa) dan Porsi Tambahan 3 nasi goreng dengan harga PO.</figcaption>
+</figure>
+
+<footer>3S ONE v3.1 · Adendum Revisi Owner · Langkah lengkap untuk pengguna ada di Panduan Pengguna 3S ONE, Bab 12.</footer>
+</div>
+</body>
+</html>

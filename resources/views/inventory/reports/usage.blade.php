@@ -1,0 +1,119 @@
+@extends('layouts.accountingapp', ['title' => 'Laporan Pemakaian Bahan'])
+
+@section('content')
+  <section class="dashboard-hero">
+    <div class="page-toolbar">
+      <div>
+        <h1 class="dashboard-hero-title">Laporan Pemakaian Bahan</h1>
+        <p class="dashboard-hero-subtitle">
+          Pantau bahan baku lama, pembelian, sisa stok, dan total pemakaian setiap item inventory berdasarkan periode yang dipilih.
+        </p>
+      </div>
+    </div>
+
+    <x-table-toolbar inline class="mt-6" :action="route('accountingapp.reports.inventory-usage')" :open="! $selectedItemId"
+      :filters="[
+        ['type' => 'select', 'name' => 'inventory_item_id', 'label' => 'Item', 'placeholder' => 'Pilih item',
+         'options' => $items->mapWithKeys(fn ($i) => [$i->id => $i->name.' ('.$i->unit.')']), 'value' => $selectedItemId ?: null],
+        ['type' => 'date-range', 'label' => 'Periode', 'from' => 'date_from', 'to' => 'date_to',
+       'value' => [$dateFrom, $dateTo]],
+      ]" />
+  </section>
+
+  @if($summary)
+    @include('partials.report-export-actions', [
+      'excelUrl' => route('accountingapp.reports.inventory-usage.export.excel', request()->query()),
+      'pdfUrl' => route('accountingapp.reports.inventory-usage.export.pdf', request()->query()),
+      'caption' => 'Export laporan pemakaian bahan mengikuti item dan rentang tanggal yang sedang dipilih.',
+    ])
+  @endif
+
+  <section class="mt-6 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+    @if($summary)
+      Detail di bawah menampilkan komponen perhitungan pemakaian untuk item
+      <strong>{{ $selectedItem?->name ?? '-' }}</strong>
+      pada periode {{ $dateFrom->format('d M Y') }} - {{ $dateTo->format('d M Y') }}.
+    @else
+      Pilih item bahan baku terlebih dulu untuk menampilkan ringkasan pemakaian pada periode yang dipilih.
+    @endif
+  </section>
+
+  @if($summary)
+    <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-5">
+      <div class="section-card">
+        <div class="metric-label">Bahan Baku Lama</div>
+        <div class="stat-value text-[1.35rem]">{{ number_format($summary['opening'], 2, ',', '.') }}</div>
+      </div>
+      <div class="section-card">
+        <div class="metric-label">Pembelian</div>
+        <div class="stat-value text-[1.35rem]">{{ number_format($summary['purchases'], 2, ',', '.') }}</div>
+      </div>
+      <div class="section-card">
+        <div class="metric-label">Sisa Stok</div>
+        <div class="stat-value text-[1.35rem]">{{ number_format($summary['ending'], 2, ',', '.') }}</div>
+      </div>
+      <div class="section-card">
+        <div class="metric-label">Pemakaian</div>
+        <div class="text-xl font-semibold text-amber-700">{{ number_format($summary['usage'], 2, ',', '.') }}</div>
+        <div class="mt-1 text-xs text-slate-500">
+          @if (($summary['usage_source'] ?? 'residual') === 'resep')
+            Sumber HPP: resep x produksi dari kartu stok (pemakaian + penyesuaian). Residual opname: {{ number_format($summary['usage_residual'] ?? 0, 2, ',', '.') }}
+          @else
+            Sumber HPP: residual opname (Bahan Baku Lama + Pembelian − Sisa Stok).
+          @endif
+        </div>
+      </div>
+      <div class="section-card">
+        <div class="metric-label">Pemakaian Resep</div>
+        <div class="stat-value text-[1.35rem]">{{ number_format($summary['usage_recipe'] ?? 0, 2, ',', '.') }}</div>
+        <div class="mt-1 text-xs text-slate-500">
+          Dari SPK Produksi yang ditutup di periode ini; penyesuaian sisa fisik {{ number_format($summary['adjustment_recipe'] ?? 0, 2, ',', '.') }}.
+          @if (($summary['usage_source'] ?? 'residual') !== 'resep') Pembanding; ubah sumber di Pengaturan. @endif
+        </div>
+      </div>
+    </div>
+
+    <section class="table-shell mt-6">
+      <div class="table-head">
+        Rincian Pemakaian {{ $selectedItem?->name ?? '-' }}@if($selectedItem?->unit) ({{ $selectedItem->unit }})@endif
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Tanggal</th>
+              <th>Jenis</th>
+              <th class="text-right">Total Cost</th>
+              <th>Keterangan</th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach($detailRows as $row)
+              @if($row['kind'] === 'entry')
+                <tr>
+                  <td>{{ $row['date_text'] ?? '-' }}</td>
+                  <td>{{ $row['type'] ?? '-' }}</td>
+                  <td class="text-right">{{ number_format((float) ($row['value'] ?? 0), 2, ',', '.') }}</td>
+                  <td>{{ $row['notes'] ?? '' }}</td>
+                </tr>
+              @elseif($row['kind'] === 'subtotal')
+                <tr class="bg-slate-50 font-semibold text-slate-900">
+                  <td colspan="2">{{ $row['label'] }}</td>
+                  <td class="text-right">{{ number_format((float) ($row['value'] ?? 0), 2, ',', '.') }}</td>
+                  <td>{{ $row['notes'] ?? '' }}</td>
+                </tr>
+              @else
+                <tr class="bg-amber-50 font-bold text-slate-900">
+                  <td colspan="2">{{ $row['label'] }}</td>
+                  <td class="text-right">{{ number_format((float) ($row['value'] ?? 0), 2, ',', '.') }}</td>
+                  <td>{{ $row['notes'] ?? '' }}</td>
+                </tr>
+              @endif
+            @endforeach
+          </tbody>
+        </table>
+      </div>
+    </section>
+  @endif
+@endsection
+
