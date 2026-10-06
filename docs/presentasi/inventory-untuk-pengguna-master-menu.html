@@ -1,0 +1,911 @@
+<title>3S ONE Inventory untuk Master Menu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: tumpukan slide 16:9 berukuran relatif (1 --u = 1px dari kanvas 960x540); di layar sempit slide jadi kartu biasa. Gaya mengikuti 3S ONE: Public Sans, biru #3455db, slate, datar. */
+:root {
+  --bg: #e6ebf2;
+  --slide: #ffffff;
+  --ink: #0f172a;
+  --muted: #526077;
+  --line: #e2e8f0;
+  --soft: #f4f6fa;
+  --brand: #3455db;
+  --brand-ink: #2740a4;
+  --brand-soft: #eef1fd;
+  --on-brand: #ffffff;
+  --ok: #157a3c;
+  --ok-soft: #e8f6ee;
+  --warn: #a35a00;
+  --warn-soft: #fff4e0;
+  --bad: #b42323;
+  --bad-soft: #fdecec;
+  --mark-bg: #0b1020;
+  --mark-fg: #ffffff;
+  --mark-accent: #7dd3fc;
+  --font: "Public Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #070b14; --slide: #0f1626; --ink: #e6eaf2; --muted: #9aa6bb; --line: #223049; --soft: #152036;
+    --brand: #7d95f2; --brand-ink: #aebdf8; --brand-soft: #18234a; --on-brand: #0b1020;
+    --ok: #5bd28a; --ok-soft: #10301f; --warn: #f2b14c; --warn-soft: #34260c; --bad: #f08080; --bad-soft: #3a1515;
+    --mark-bg: #e6eaf2; --mark-fg: #0b1020; --mark-accent: #2740a4;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #070b14; --slide: #0f1626; --ink: #e6eaf2; --muted: #9aa6bb; --line: #223049; --soft: #152036;
+  --brand: #7d95f2; --brand-ink: #aebdf8; --brand-soft: #18234a; --on-brand: #0b1020;
+  --ok: #5bd28a; --ok-soft: #10301f; --warn: #f2b14c; --warn-soft: #34260c; --bad: #f08080; --bad-soft: #3a1515;
+  --mark-bg: #e6eaf2; --mark-fg: #0b1020; --mark-accent: #2740a4;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+
+/* ---------- Bilah atas halaman ---------- */
+.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px;
+  padding: 10px 16px; background: var(--slide); border-bottom: 1px solid var(--line);
+}
+.bar-title { font-weight: 700; font-size: 14px; }
+.bar-title span { color: var(--muted); font-weight: 500; }
+.bar-actions { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--muted); }
+.btn {
+  font: inherit; font-weight: 600; font-size: 13px; color: var(--on-brand); background: var(--brand);
+  border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer;
+}
+.btn:hover { background: var(--brand-ink); }
+.btn:focus-visible, .slide:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+
+.deck { display: grid; gap: 24px; padding-block: 24px 48px; padding-inline: 16px; }
+
+/* ---------- Slide ---------- */
+.slide {
+  container-type: inline-size; position: relative; width: 100%; max-width: 1180px; margin-inline: auto;
+  aspect-ratio: 16 / 9; background: var(--slide); border-radius: 12px; overflow: hidden;
+  box-shadow: 0 1px 2px rgb(15 23 42 / .06), 0 8px 24px rgb(15 23 42 / .06);
+}
+/* Token ukuran dipasang di anak langsung slide, supaya cqi mengacu ke lebar slide. */
+.slide > .in, .slide > .foot {
+  --u: calc(100cqi / 960);
+  --fs-hero: calc(var(--u) * 44); --fs-title: calc(var(--u) * 30); --fs-lead: calc(var(--u) * 15);
+  --fs-body: calc(var(--u) * 13.5); --fs-small: calc(var(--u) * 11.5); --fs-label: calc(var(--u) * 10);
+  --gap: calc(var(--u) * 16); --gap-s: calc(var(--u) * 8); --r: calc(var(--u) * 8);
+}
+.in {
+  position: absolute; inset: 0; display: flex; flex-direction: column; gap: calc(var(--u) * 14);
+  padding: calc(var(--u) * 36) calc(var(--u) * 48) calc(var(--u) * 40);
+  font-size: var(--fs-body); line-height: 1.45;
+}
+.foot {
+  position: absolute; left: calc(var(--u) * 48); right: calc(var(--u) * 48); bottom: calc(var(--u) * 14);
+  display: flex; justify-content: space-between; font-size: var(--fs-label); color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.eyebrow { display: flex; align-items: center; gap: var(--gap-s); font-size: var(--fs-label); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--brand); }
+.chip { display: inline-block; padding: calc(var(--u) * 2) calc(var(--u) * 7); border-radius: calc(var(--u) * 4); background: var(--brand); color: var(--on-brand); letter-spacing: .04em; }
+.chip.muted { background: var(--soft); color: var(--muted); border: 1px solid var(--line); }
+h1, h2, h3, p { margin: 0; }
+h1 { font-size: var(--fs-hero); line-height: 1.08; font-weight: 800; letter-spacing: -.02em; text-wrap: balance; }
+h2 { font-size: var(--fs-title); line-height: 1.15; font-weight: 700; letter-spacing: -.015em; text-wrap: balance; }
+h3 { font-size: var(--fs-lead); line-height: 1.25; font-weight: 700; }
+.lead { font-size: var(--fs-lead); color: var(--muted); max-width: 62ch; }
+.small { font-size: var(--fs-small); color: var(--muted); }
+.k { font-weight: 700; }
+.path { font-weight: 650; color: var(--brand-ink); white-space: nowrap; }
+kbd { font: inherit; font-weight: 700; font-size: .9em; padding: 0 .35em; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; background: var(--soft); }
+
+.grow { flex: 1; min-height: 0; }
+.cols { display: grid; grid-template-columns: var(--cols, 1fr 1fr); gap: calc(var(--u) * 22); min-height: 0; }
+.cols > * { min-width: 0; min-height: 0; }
+.stack { display: flex; flex-direction: column; gap: var(--gap-s); min-height: 0; }
+
+ul.list { margin: 0; padding: 0; list-style: none; display: grid; gap: calc(var(--u) * 7); }
+ul.list li { position: relative; padding-left: calc(var(--u) * 16); }
+ul.list li::before { content: ""; position: absolute; left: 0; top: .6em; width: calc(var(--u) * 6); height: calc(var(--u) * 6); border-radius: 50%; background: var(--brand); }
+ul.list.check li::before { content: "✓"; background: none; color: var(--ok); top: 0; width: auto; height: auto; font-weight: 800; }
+ul.list.dash li::before { background: var(--muted); }
+
+ol.steps { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: calc(var(--u) * 10); }
+ol.steps li { counter-increment: s; display: grid; grid-template-columns: calc(var(--u) * 26) 1fr; gap: calc(var(--u) * 10); align-items: start; }
+ol.steps li::before {
+  content: counter(s); display: grid; place-items: center; width: calc(var(--u) * 24); height: calc(var(--u) * 24);
+  border-radius: 50%; background: var(--brand-soft); color: var(--brand-ink); font-weight: 800; font-size: var(--fs-small);
+}
+
+.shot { border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; background: var(--soft); min-height: 0; }
+.shot img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 62% 0; }
+figure { margin: 0; display: flex; flex-direction: column; gap: calc(var(--u) * 6); min-height: 0; }
+figcaption { font-size: var(--fs-small); color: var(--muted); }
+
+.panel { border: 1px solid var(--line); border-radius: var(--r); padding: calc(var(--u) * 14) calc(var(--u) * 16); background: var(--slide); }
+.panel.soft { background: var(--soft); }
+.note { border-radius: var(--r); padding: calc(var(--u) * 10) calc(var(--u) * 14); background: var(--brand-soft); color: var(--ink); font-size: var(--fs-body); }
+.note.warn { background: var(--warn-soft); }
+.note .k { color: var(--brand-ink); }
+.note.warn .k { color: var(--warn); }
+
+table.t { width: 100%; border-collapse: collapse; font-size: var(--fs-body); }
+.t th { text-align: left; font-size: var(--fs-label); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700; padding: 0 calc(var(--u) * 10) calc(var(--u) * 6); border-bottom: 1px solid var(--line); }
+.t td { padding: calc(var(--u) * 6) calc(var(--u) * 10); border-bottom: 1px solid var(--line); vertical-align: top; }
+.t tr:last-child td { border-bottom: 0; }
+.t td:first-child, .t th:first-child { padding-left: 0; }
+.t .old { color: var(--muted); font-weight: 600; white-space: nowrap; }
+.t .arrow { color: var(--brand); font-weight: 800; padding-inline: 0; width: calc(var(--u) * 18); }
+.tight .t td { padding-block: calc(var(--u) * 4.5); }
+
+/* Sampul */
+.mark { display: inline-grid; place-items: center; width: calc(var(--u) * 46); height: calc(var(--u) * 46); border-radius: calc(var(--u) * 11); background: var(--mark-bg); color: var(--mark-fg); font-weight: 800; line-height: 1; font-size: calc(var(--u) * 12); text-align: center; }
+.mark b { display: block; color: var(--mark-accent); font-size: calc(var(--u) * 9); letter-spacing: .08em; margin-bottom: calc(var(--u) * 2); }
+.brandline { display: flex; align-items: center; gap: calc(var(--u) * 12); }
+.brandline .name { font-weight: 800; font-size: calc(var(--u) * 16); }
+.brandline .sub { font-size: var(--fs-label); letter-spacing: .14em; color: var(--muted); font-weight: 600; }
+.cover { --cols: 1.15fr .85fr; align-items: center; }
+.oldnav { display: grid; gap: calc(var(--u) * 5); }
+.oldnav .row { display: grid; grid-template-columns: 1fr calc(var(--u) * 22) 1.25fr; align-items: center; gap: calc(var(--u) * 6); font-size: var(--fs-small); }
+.oldnav .from { padding: calc(var(--u) * 4) calc(var(--u) * 9); border: 1px dashed var(--line); border-radius: calc(var(--u) * 6); color: var(--muted); font-weight: 600; background: var(--soft); white-space: nowrap; }
+.oldnav .to { padding: calc(var(--u) * 4) calc(var(--u) * 9); border-radius: calc(var(--u) * 6); background: var(--brand-soft); color: var(--brand-ink); font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.oldnav .to.gone { background: transparent; color: var(--muted); font-weight: 500; font-style: italic; padding-left: 0; }
+.oldnav .ar { color: var(--brand); text-align: center; font-weight: 800; }
+.oldnav .head { font-size: var(--fs-label); letter-spacing: .1em; text-transform: uppercase; font-weight: 700; color: var(--muted); }
+
+/* Agenda */
+.agenda { display: grid; grid-template-columns: repeat(4, 1fr); gap: calc(var(--u) * 14); }
+.agenda .panel { display: flex; flex-direction: column; gap: calc(var(--u) * 6); }
+.agenda .num { font-size: calc(var(--u) * 28); font-weight: 800; color: var(--brand); line-height: 1; font-variant-numeric: tabular-nums; }
+.agenda .min { font-size: var(--fs-small); color: var(--muted); margin-top: auto; font-variant-numeric: tabular-nums; }
+
+/* Dulu / sekarang */
+.vs { display: grid; grid-template-columns: 1fr calc(var(--u) * 26) 1.2fr; gap: calc(var(--u) * 6) calc(var(--u) * 10); align-items: stretch; }
+.vs .h { font-size: var(--fs-label); letter-spacing: .1em; text-transform: uppercase; font-weight: 700; color: var(--muted); }
+.vs .h.now { color: var(--brand); }
+.vs .was { padding: calc(var(--u) * 8) calc(var(--u) * 12); border-radius: var(--r); background: var(--soft); color: var(--muted); }
+.vs .is { padding: calc(var(--u) * 8) calc(var(--u) * 12); border-radius: var(--r); border: 1px solid var(--brand); background: var(--slide); }
+.vs .ar { display: grid; place-items: center; color: var(--brand); font-weight: 800; }
+
+/* Alur meja */
+.desks { display: grid; grid-template-columns: repeat(4, 1fr); gap: calc(var(--u) * 10); }
+.desk { border: 1px solid var(--line); border-radius: var(--r); padding: calc(var(--u) * 10) calc(var(--u) * 12); display: flex; flex-direction: column; gap: calc(var(--u) * 4); position: relative; }
+.desk .who { font-size: var(--fs-label); letter-spacing: .08em; text-transform: uppercase; font-weight: 700; color: var(--brand); }
+.desk .act { font-weight: 700; }
+.desk .bt { margin-top: auto; align-self: flex-start; font-size: var(--fs-small); font-weight: 700; padding: calc(var(--u) * 2) calc(var(--u) * 8); border-radius: calc(var(--u) * 5); background: var(--brand); color: var(--on-brand); }
+.desk + .desk::before { content: "→"; position: absolute; left: calc(var(--u) * -10); top: 50%; transform: translate(-50%, -50%); color: var(--brand); font-weight: 800; }
+
+/* Otomatis */
+.auto { display: grid; gap: calc(var(--u) * 6); }
+.auto .row { display: grid; grid-template-columns: calc(var(--u) * 120) 1fr; gap: calc(var(--u) * 10); padding: calc(var(--u) * 6) calc(var(--u) * 10); border-radius: calc(var(--u) * 6); background: var(--ok-soft); }
+.auto .row b { color: var(--ok); }
+
+/* Susut */
+.lights { display: grid; gap: calc(var(--u) * 5); }
+.light { display: flex; align-items: center; gap: calc(var(--u) * 8); font-size: var(--fs-small); }
+.dot { width: calc(var(--u) * 11); height: calc(var(--u) * 11); border-radius: 50%; flex: none; }
+.dot.g { background: var(--ok); } .dot.y { background: var(--warn); } .dot.r { background: var(--bad); }
+
+/* Timeline */
+.timeline { display: grid; grid-template-columns: repeat(4, 1fr); gap: calc(var(--u) * 12); position: relative; }
+.timeline::before { content: ""; position: absolute; left: calc(var(--u) * 8); right: calc(var(--u) * 8); top: calc(var(--u) * 8); height: 2px; background: var(--line); }
+.tl { position: relative; display: flex; flex-direction: column; gap: calc(var(--u) * 4); padding-top: calc(var(--u) * 26); }
+.tl::before { content: ""; position: absolute; left: 0; top: calc(var(--u) * 2); width: calc(var(--u) * 14); height: calc(var(--u) * 14); border-radius: 50%; background: var(--slide); border: 3px solid var(--brand); }
+.tl.end::before { background: var(--brand); }
+.tl .when { font-size: var(--fs-label); letter-spacing: .08em; text-transform: uppercase; font-weight: 700; color: var(--brand); }
+
+/* FAQ / latihan */
+.qa { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--u) * 10) calc(var(--u) * 22); }
+.qa .q { font-weight: 700; }
+.qa .a { color: var(--muted); font-size: var(--fs-small); margin-top: calc(var(--u) * 2); }
+
+/* Contekan */
+.cheat { display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: calc(var(--u) * 14); }
+.cheat h3 { font-size: var(--fs-small); text-transform: uppercase; letter-spacing: .08em; color: var(--brand); margin-bottom: calc(var(--u) * 6); }
+.cheat .t { font-size: var(--fs-small); }
+.cheat .t td { padding-block: calc(var(--u) * 3); }
+.cheat .t td:first-child { white-space: nowrap; }
+
+.big-url { font-size: calc(var(--u) * 22); font-weight: 800; color: var(--brand-ink); letter-spacing: -.01em; word-break: break-all; }
+.center-v { justify-content: center; }
+
+/* ---------- Layar sempit: slide menjadi kartu yang memanjang ---------- */
+@media (max-width: 720px) {
+  body:not(.present) .slide { aspect-ratio: auto; }
+  body:not(.present) .slide > .in, body:not(.present) .slide > .foot {
+    --u: 0.8px; --fs-hero: 30px; --fs-title: 22px; --fs-lead: 15px; --fs-body: 14px; --fs-small: 13px; --fs-label: 11px;
+  }
+  body:not(.present) .in { position: static; padding: 24px 18px 44px; }
+  body:not(.present) .foot { left: 18px; right: 18px; bottom: 14px; }
+  body:not(.present) .cols, body:not(.present) .agenda, body:not(.present) .desks, body:not(.present) .qa,
+  body:not(.present) .cheat, body:not(.present) .timeline { grid-template-columns: 1fr; }
+  body:not(.present) .desk + .desk::before { content: "↓"; left: 50%; top: -9px; }
+  body:not(.present) .timeline::before { display: none; }
+  body:not(.present) .shot img { height: auto; }
+  body:not(.present) .shot { max-height: 280px; }
+  body:not(.present) .scroll-x { overflow-x: auto; }
+  body:not(.present) .vs { grid-template-columns: 1fr; }
+  body:not(.present) .vs .ar { transform: rotate(90deg); }
+  body:not(.present) .vs .h { display: none; }
+  body:not(.present) .oldnav .row { grid-template-columns: 1fr 16px 1.2fr; }
+}
+
+/* ---------- Mode presentasi ---------- */
+body.present { background: #000; overflow: hidden; }
+body.present .bar, body.present .deck > .slide:not(.on) { display: none; }
+body.present .deck { padding: 0; }
+body.present .slide.on {
+  position: fixed; inset: 0; margin: auto; z-index: 10;
+  width: min(100vw, calc(100vh * 16 / 9)); height: auto; max-width: none; border-radius: 0; box-shadow: none;
+}
+.counter { position: fixed; right: 12px; bottom: 10px; z-index: 11; font-size: 12px; color: #9aa6bb; font-variant-numeric: tabular-nums; display: none; }
+body.present .counter { display: block; }
+
+@media (prefers-reduced-motion: no-preference) {
+  body.present .slide.on .in { animation: fade .18s ease-out; }
+  @keyframes fade { from { opacity: .4; } to { opacity: 1; } }
+}
+
+/* ---------- Cetak / PDF: satu slide per halaman 960x540 ---------- */
+@page { size: 960px 540px; margin: 0; }
+@media print {
+  body { background: var(--slide); }
+  .bar, .counter { display: none !important; }
+  .deck { display: block; padding: 0; }
+  .slide { width: 960px; height: 540px; max-width: none; aspect-ratio: auto; border-radius: 0; box-shadow: none; break-after: page; margin: 0; }
+}
+</style>
+
+<header class="bar">
+  <div class="bar-title">3S ONE · Inventory <span>· pelatihan pengguna Master Menu Revamp</span></div>
+  <div class="bar-actions">
+    <span><kbd>←</kbd> <kbd>→</kbd> pindah slide · <kbd>Esc</kbd> keluar</span>
+    <button class="btn" id="present-btn" type="button">Mode presentasi</button>
+  </div>
+</header>
+
+<main class="deck">
+
+<!-- 1. Sampul -->
+<section class="slide" tabindex="-1">
+  <div class="in">
+    <div class="brandline"><span class="mark"><b>3S</b>ONE</span><div><div class="name">3S ONE</div><div class="sub">BUSINESS CONTROL SYSTEM</div></div></div>
+    <div class="cols cover grow">
+      <div class="stack" style="gap: calc(var(--u) * 14);">
+        <div class="eyebrow"><span class="chip">Pelatihan pengguna</span> Rabu, 7 Oktober 2026</div>
+        <h1>Dari Master Menu Revamp ke Aplikasi Inventory</h1>
+        <p class="lead">Resep, bahan, dan produksi sekarang ada di 3S ONE, satu sistem dengan Admin, Gudang, dan Accounting. Satu login, bisa dibuka dari laptop atau HP mana pun.</p>
+      </div>
+      <div class="oldnav" aria-label="Menu Master Menu Revamp dan padanannya di 3S ONE">
+        <div class="row"><span class="head">Master Menu</span><span></span><span class="head">3S ONE · Inventory</span></div>
+        <div class="row"><span class="from">Bahan Baku</span><span class="ar">→</span><span class="to">Item Inventaris</span></div>
+        <div class="row"><span class="from">Sub-Menu</span><span class="ar">→</span><span class="to">Resep &amp; Menu</span></div>
+        <div class="row"><span class="from">Menu Utama</span><span class="ar">→</span><span class="to">Resep &amp; Menu</span></div>
+        <div class="row"><span class="from">Order</span><span class="ar">→</span><span class="to gone">dari PO Admin, otomatis</span></div>
+        <div class="row"><span class="from">Pra SPK</span><span class="ar">→</span><span class="to">SPK Produksi</span></div>
+        <div class="row"><span class="from">Menu Plating</span><span class="ar">→</span><span class="to">Plating</span></div>
+        <div class="row"><span class="from">Pekerjaan Menu</span><span class="ar">→</span><span class="to">Pekerjaan Menu</span></div>
+        <div class="row"><span class="from">Produksi</span><span class="ar">→</span><span class="to">Lembar Kerja</span></div>
+        <div class="row"><span class="from">Mismatch</span><span class="ar">→</span><span class="to">Bahan Belum Cocok</span></div>
+      </div>
+    </div>
+  </div>
+  <footer class="foot"><span>W3S Catering · 3S ONE v3.1 · 3sone.w3scatering.com</span><span>1</span></footer>
+</section>
+
+<!-- 2. Agenda -->
+<section class="slide" tabindex="-1">
+  <div class="in">
+    <div class="eyebrow">Agenda</div>
+    <h2>Hari ini kita belajar empat hal</h2>
+    <div class="agenda grow">
+      <div class="panel"><div class="num">1</div><h3>Masuk dan berkeliling</h3><p class="small">Alamat baru, login, letak menu, lonceng, pencarian cepat.</p><div class="min">5 menit</div></div>
+      <div class="panel"><div class="num">2</div><h3>Menu lama pindah ke mana</h3><p class="small">Bahan Baku, resep, Pra SPK, Plating, Pekerjaan Menu, Produksi, Mismatch.</p><div class="min">15 menit</div></div>
+      <div class="panel"><div class="num">3</div><h3>Yang baru</h3><p class="small">Form Kebutuhan digital, barang datang, Kartu Stok, Opname Bahan, Susut Bahan.</p><div class="min">20 menit</div></div>
+      <div class="panel"><div class="num">4</div><h3>Oktober: latihan dan pemetaan</h3><p class="small">Apa yang dibawa ke November, siapa memetakan apa, lalu praktik langsung.</p><div class="min">20 menit</div></div>
+    </div>
+    <div class="note"><span class="k">Bawa laptop atau HP.</span> Sesi terakhir adalah latihan langsung di sistem dengan akun masing-masing.</div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>2</span></footer>
+</section>
+
+<!-- 3. Kenapa pindah -->
+<section class="slide" tabindex="-1">
+  <div class="in">
+    <div class="eyebrow">Kenapa pindah</div>
+    <h2>Yang dulu repot, sekarang dikerjakan sistem</h2>
+    <div class="vs grow">
+      <span class="h">Dulu di Master Menu Revamp</span><span></span><span class="h now">Sekarang di 3S ONE</span>
+      <div class="was">Hanya bisa dibuka di satu laptop tempat aplikasinya dipasang.</div><div class="ar">→</div><div class="is">Dibuka dari laptop atau HP mana pun lewat <span class="k">3sone.w3scatering.com</span>.</div>
+      <div class="was">Order dan Pra SPK diketik ulang dari pesanan yang sudah ada di sistem 3S.</div><div class="ar">→</div><div class="is"><span class="k">SPK Produksi terbentuk sendiri</span> begitu Admin menyusun SPK.</div>
+      <div class="was">Harga bahan di aplikasi berbeda dengan catatan belanja.</div><div class="ar">→</div><div class="is"><span class="k">Satu daftar harga.</span> Harga beli dari nota langsung memperbarui HPP resep.</div>
+      <div class="was">Form kebutuhan bahan ditulis di kertas dan ditandatangani.</div><div class="ar">→</div><div class="is"><span class="k">Form Kebutuhan digital:</span> ajukan, setujui, terima barang. Tercatat siapa dan kapan.</div>
+      <div class="was">Stok tidak tercatat per bahan, hanya dari opname bulanan.</div><div class="ar">→</div><div class="is"><span class="k">Kartu Stok per bahan</span>, bisa ditelusuri sampai ke SPK mana.</div>
+    </div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>3</span></footer>
+</section>
+
+<!-- 4. Data ikut pindah -->
+<section class="slide" tabindex="-1">
+  <div class="in">
+    <div class="eyebrow">Data Anda</div>
+    <h2>Pekerjaan Anda di Master Menu tidak hilang</h2>
+    <div class="cols grow">
+      <div class="panel stack">
+        <h3>Ikut dipindahkan</h3>
+        <ul class="list check">
+          <li>Semua bahan baku beserta <span class="k">riwayat harganya</span></li>
+          <li>Resep Menu Utama dan Sub-Menu, lengkap dengan takaran</li>
+          <li>Pekerjaan Menu (template pembagian kerja dapur)</li>
+          <li>Daftar Pelaksana</li>
+          <li>Riwayat produksi lama, sebagai arsip</li>
+        </ul>
+      </div>
+      <div class="panel soft stack">
+        <h3>Berubah cara kerjanya</h3>
+        <ul class="list dash">
+          <li><span class="k">Order</span> tidak diketik lagi. Pesanan datang dari PO dan SPK yang dibuat Admin.</li>
+          <li><span class="k">Stok per bahan</span> mulai 1 November dari hitungan pertama di Opname Bahan atau Stok Awal di Form Kebutuhan pertama.</li>
+          <li>Nama bahan di resep yang tidak cocok dengan daftar bahan masuk antrean <span class="k">Bahan Belum Cocok</span>.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="note warn"><span class="k">Selama Oktober</span> Master Menu Revamp masih dipakai untuk produksi, tetapi perbaikan resep dan bahan dikerjakan di 3S ONE. Master Menu Revamp dibekukan 31 Oktober.</div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>4</span></footer>
+</section>
+
+<!-- 5. Cara masuk -->
+<section class="slide" tabindex="-1">
+  <div class="in">
+    <div class="eyebrow"><span class="chip">1</span> Masuk dan berkeliling</div>
+    <h2>Cara masuk</h2>
+    <div class="cols grow" style="--cols: .8fr 1.2fr;">
+      <div class="stack" style="gap: calc(var(--u) * 14);">
+        <ol class="steps">
+          <li><div>Buka Chrome, ketik <span class="k">3sone.w3scatering.com</span>. Simpan sebagai bookmark.</div></li>
+          <li><div>Isi <span class="k">username atau email</span> dan password.</div></li>
+          <li><div>Akun baru: ganti password sementara saat pertama masuk. Password jangan dibagi atau difoto.</div></li>
+          <li><div>Klik tab <span class="path">Inventory</span> di bilah atas.</div></li>
+        </ol>
+        <div class="note">Versi sistem tertulis di kiri bawah halaman masuk (<span class="k">v3.1</span>). Sebutkan saat melapor masalah.</div>
+      </div>
+      <figure class="grow"><div class="shot grow"><img src="../panduan/img/login.jpg" alt="Halaman Masuk ke 3S ONE dengan kolom username atau email dan password"></div></figure>
+    </div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>5</span></footer>
+</section>
+
+<!-- 6. Tata letak -->
+<section class="slide" tabindex="-1">
+  <div class="in">
+    <div class="eyebrow"><span class="chip">1</span> Masuk dan berkeliling</div>
+    <h2>Lima hal di layar yang perlu dikenali</h2>
+    <div class="cols grow" style="--cols: 1.25fr .75fr;">
+      <figure class="grow"><div class="shot grow"><img src="../panduan/img/inventory-dashboard.jpg" alt="Dashboard Inventory dengan tab aplikasi di atas dan menu di kiri"></div><figcaption>Inventory › Dashboard</figcaption></figure>
+      <ul class="list">
+        <li><span class="k">Tab aplikasi di atas.</span> Hanya yang sesuai peran Anda yang muncul.</li>
+        <li><span class="k">Menu kiri, tiga kelompok:</span> Inventory, Resep &amp; HPP, Produksi.</li>
+        <li><span class="k">Angka kecil di menu</span> = pekerjaan yang masih menunggu.</li>
+        <li><span class="k">Lonceng</span> = giliran Anda: form menunggu persetujuan, barang siap dibelanjakan, form ditolak.</li>
+        <li><span class="k"><kbd>Ctrl</kbd> + <kbd>K</kbd></span> = cari bahan, menu, atau SPK dari halaman mana pun.</li>
+      </ul>
+    </div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>6</span></footer>
+</section>
+
+<!-- 7. Peta pindah -->
+<section class="slide" tabindex="-1">
+  <div class="in tight">
+    <div class="eyebrow"><span class="chip">2</span> Menu lama pindah ke mana</div>
+    <h2>Peta pindah: menu Master Menu di 3S ONE</h2>
+    <div class="grow scroll-x">
+      <table class="t">
+        <thead><tr><th>Di Master Menu</th><th></th><th>Di 3S ONE</th><th>Catatan</th></tr></thead>
+        <tbody>
+          <tr><td class="old">Bahan Baku</td><td class="arrow">→</td><td><span class="path">Inventory › Item Inventaris</span></td><td class="small">histori harga tercatat otomatis</td></tr>
+          <tr><td class="old">Sub-Menu</td><td class="arrow">→</td><td><span class="path">Resep &amp; HPP › Resep &amp; Menu</span></td><td class="small">tab Sub-Menu</td></tr>
+          <tr><td class="old">Menu Utama</td><td class="arrow">→</td><td><span class="path">Resep &amp; HPP › Resep &amp; Menu</span></td><td class="small">tab Menu Utama, plus Analisa HPP</td></tr>
+          <tr><td class="old">Order</td><td class="arrow">→</td><td>tidak perlu lagi</td><td class="small">pesanan datang dari PO di aplikasi Admin</td></tr>
+          <tr><td class="old">Pra SPK</td><td class="arrow">→</td><td><span class="path">Produksi › SPK Produksi › Breakdown Bahan</span></td><td class="small">SPK Produksi terbentuk sendiri</td></tr>
+          <tr><td class="old">Menu Plating</td><td class="arrow">→</td><td><span class="path">SPK Produksi › Lainnya › Plating</span></td><td class="small">cetak PDF atau Excel</td></tr>
+          <tr><td class="old">Pekerjaan Menu</td><td class="arrow">→</td><td><span class="path">Resep &amp; HPP › Pekerjaan Menu</span></td><td class="small">template, diatur sekali per menu</td></tr>
+          <tr><td class="old">Produksi</td><td class="arrow">→</td><td><span class="path">SPK Produksi › Lainnya › Lembar Kerja</span></td><td class="small">PIC dan pekerjaan per SPK</td></tr>
+          <tr><td class="old">Mismatch</td><td class="arrow">→</td><td><span class="path">Resep &amp; HPP › Bahan Belum Cocok</span></td><td class="small">tautkan, buat baru, atau abaikan</td></tr>
+          <tr><td class="old">Pengaturan</td><td class="arrow">→</td><td><span class="path">Inventory › Pengaturan Inventory</span></td><td class="small">khusus Owner</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>7</span></footer>
+</section>
+
+<!-- 8. Item Inventaris -->
+<section class="slide" tabindex="-1">
+  <div class="in">
+    <div class="eyebrow"><span class="chip">2</span> <span class="chip muted">Bahan Baku</span> → Item Inventaris</div>
+    <h2>Satu daftar bahan, harganya punya riwayat</h2>
+    <div class="cols grow" style="--cols: .8fr 1.2fr;">
+      <div class="stack" style="gap: calc(var(--u) * 12);">
+        <ul class="list">
+          <li>Satu bahan = satu baris: nama, satuan, harga per satuan, stok minimum.</li>
+          <li>Setiap perubahan harga tercatat di <span class="k">Histori Harga</span>: kapan, dari berapa ke berapa, dan dari form mana.</li>
+          <li><span class="k">Export Riwayat Harga</span> untuk semua bahan ke Excel. <span class="k">Import Excel</span> untuk mengubah banyak bahan sekaligus.</li>
+          <li>Bahan di bawah stok minimum muncul di Dashboard dan lonceng.</li>
+        </ul>
+        <div class="note"><span class="k">Cari dulu sebelum menambah bahan.</span> Jangan sampai ada "Minyak" dan "Minyak Goreng" berdampingan.</div>
+      </div>
+      <figure class="grow"><div class="shot grow"><img src="../panduan/img/inventory-items.jpg" alt="Daftar Item Inventaris dengan harga per satuan"></div><figcaption>Inventory › Item Inventaris</figcaption></figure>
+    </div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>8</span></footer>
+</section>
+
+<!-- 9. Resep & Menu -->
+<section class="slide" tabindex="-1">
+  <div class="in">
+    <div class="eyebrow"><span class="chip">2</span> <span class="chip muted">Menu Utama · Sub-Menu</span> → Resep &amp; Menu</div>
+    <h2>Resep langsung menunjukkan HPP dan profitnya</h2>
+    <div class="cols grow" style="--cols: 1.2fr .8fr;">
+      <figure class="grow"><div class="shot grow"><img src="../panduan/img/resep-menu.jpg" alt="Daftar Resep dan Menu dengan kolom HPP, harga jual, dan profit"></div><figcaption>Resep &amp; HPP › Resep &amp; Menu</figcaption></figure>
+      <div class="stack" style="gap: calc(var(--u) * 12);">
+        <ul class="list">
+          <li>Tab di atas memisahkan <span class="k">Menu Utama</span> dan <span class="k">Sub-Menu</span>, seperti dulu.</li>
+          <li>Kolom HPP, HPP + OHC, Harga Jual, dan Profit % terlihat tanpa membuka resep.</li>
+          <li><span class="k">Status Hitungan</span>: Lengkap, atau Belum Lengkap bila ada bahan yang belum tertaut.</li>
+          <li>Tombol <span class="k">Analisa HPP</span> merinci harga pokok, OHC, dan harga jual per porsi.</li>
+          <li>Baris yang belum bisa ditautkan boleh diberi Harga Manual supaya biayanya tetap terhitung.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>9</span></footer>
+</section>
+
+<!-- 10. Order + Pra SPK -->
+<section class="slide" tabindex="-1">
+  <div class="in">
+    <div class="eyebrow"><span class="chip">2</span> <span class="chip muted">Order · Pra SPK</span> → SPK Produksi</div>
+    <h2>Tidak ada lagi mengetik ulang pesanan</h2>
+    <div class="cols grow" style="--cols: .8fr 1.2fr;">
+      <div class="stack" style="gap: calc(var(--u) * 10);">
+        <div class="auto">
+          <div class="row" style="background: var(--soft);"><b style="color: var(--ink);">Admin</b><span>membuat PO dan menyusun SPK, sama seperti biasa</span></div>
+          <div class="row"><b>Otomatis</b><span>SPK Produksi terbentuk: menu dan jumlah porsi dari SPK</span></div>
+          <div class="row"><b>Breakdown Bahan</b><span>semua menu diurai sampai bahan mentah, sub-resep ikut, lalu direkap per bahan</span></div>
+          <div class="row"><b>Perlu Beli</b><span>kebutuhan dikurangi stok di Kartu Stok</span></div>
+        </div>
+        <div class="note warn"><span class="k">Kotak kuning</span> di Breakdown Bahan menyebut menu yang belum punya resep. Tautkan resepnya di <span class="path">Pencocokan Menu</span>.</div>
+      </div>
+      <figure class="grow"><div class="shot grow"><img src="../panduan/img/breakdown-bahan.jpg" alt="Halaman Breakdown Bahan dengan rekap bahan dan kolom Perlu Beli"></div><figcaption>SPK Produksi › Breakdown Bahan (dulu Rekap Bahan di Pra SPK)</figcaption></figure>
+    </div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>10</span></footer>
+</section>
+
+<!-- 11. Lembar kerja & plating -->
+<section class="slide" tabindex="-1">
+  <div class="in">
+    <div class="eyebrow"><span class="chip">2</span> <span class="chip muted">Produksi · Pekerjaan Menu · Menu Plating</span></div>
+    <h2>Pembagian kerja dan plating menempel di SPK</h2>
+    <div class="cols grow">
+      <div class="stack grow">
+        <h3>Lembar Kerja <span class="small">(dulu: Produksi)</span></h3>
+        <p class="small">Tekan <span class="k">Salin dari Template Menu</span>: pekerjaan diambil dari Pekerjaan Menu. Pilih pelaksana, centang yang selesai, Export Excel untuk ditempel di dapur.</p>
+        <figure class="grow"><div class="shot grow"><img src="../panduan/img/lembar-kerja.jpg" alt="Lembar Kerja berisi pembagian tugas dapur per SPK"></div></figure>
+      </div>
+      <div class="stack grow">
+        <h3>Plating <span class="small">(dulu: Menu Plating)</span></h3>
+        <p class="small">Komponen isi piring tiap menu (nasi, lauk, kuah, kemasan) dengan jumlah porsinya. <span class="k">Cetak Plating</span> untuk PDF.</p>
+        <figure class="grow"><div class="shot grow"><img src="../panduan/img/plating.jpg" alt="Halaman Plating berisi komponen per menu"></div></figure>
+      </div>
+    </div>
+    <p class="small">Template pekerjaan diatur sekali per menu di <span class="path">Resep &amp; HPP › Pekerjaan Menu</span>, lalu disalin ke setiap SPK.</p>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>11</span></footer>
+</section>
+
+<!-- 12. Pekerjaan rumah HPP -->
+<section class="slide" tabindex="-1">
+  <div class="in">
+    <div class="eyebrow"><span class="chip">2</span> <span class="chip muted">Mismatch</span> → tiga antrean</div>
+    <h2>Tiga antrean supaya HPP bisa dipercaya</h2>
+    <div class="cols grow" style="--cols: 1fr 1fr 1fr;">
+      <div class="panel stack" style="border-color: var(--brand);">
+        <span class="eyebrow" style="color: var(--ok);">Pengaruh terbesar ke HPP</span>
+        <h3>Konversi Satuan › Belum Diatur</h3>
+        <p>Resep memakai "butir", bahan dibeli per "kg". Isi aturannya: <span class="k">1 kg telur = 16 butir</span>.</p>
+        <p class="small">Tanpa aturan ini, biaya baris resep itu dihitung nol.</p>
+      </div>
+      <div class="panel stack">
+        <span class="eyebrow">Dulu: Mismatch</span>
+        <h3>Bahan Belum Cocok</h3>
+        <p>Nama bahan di resep yang belum terhubung ke Item Inventaris. Pilih: <span class="k">Tautkan</span>, <span class="k">Buat baru</span>, atau <span class="k">Abaikan</span>.</p>
+        <p class="small">Resep baru sering menambah satu-dua baris. Cek tiap minggu.</p>
+      </div>
+      <div class="panel stack">
+        <span class="eyebrow">Baru</span>
+        <h3>Pencocokan Menu</h3>
+        <p>Menu yang dijual Admin tapi belum tertaut ke resep, urut dari yang paling laku. Pilih: <span class="k">Tautkan</span>, <span class="k">Buat Resep</span>, atau <span class="k">Tanpa Resep</span>.</p>
+        <p class="small">20 menu teratas biasanya sudah dua pertiga porsi terjual. Mulai dari atas.</p>
+      </div>
+    </div>
+    <div class="note"><span class="k">Target sebelum 1 November:</span> Bahan Belum Cocok = 0, Konversi Belum Diatur = 0, dan kartu Profit menu di Dashboard Inventory menampilkan angka, bukan "–".</div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>12</span></footer>
+</section>
+
+<!-- 13. Form Kebutuhan -->
+<section class="slide" tabindex="-1">
+  <div class="in">
+    <div class="eyebrow"><span class="chip">3</span> Yang baru</div>
+    <h2>Form Kebutuhan: dari dapur sampai barang datang</h2>
+    <div class="desks">
+      <div class="desk"><span class="who">Meja 1 · Produksi</span><span class="act">Susun form</span><span class="small">Kebutuhan dihitung dari resep × porsi. Isi Stok Awal hasil hitung fisik, Beli terhitung sendiri.</span><span class="bt">Ajukan</span></div>
+      <div class="desk"><span class="who">Meja 2 · Supervisor Gudang</span><span class="act">Periksa angkanya</span><span class="small">Dapat lonceng. Cek Stok Awal, Beli, perkiraan biaya. Tolak wajib dengan alasan.</span><span class="bt">Setujui / Tolak</span></div>
+      <div class="desk"><span class="who">Meja 3 · Staf Gudang</span><span class="act">Barang datang</span><span class="small">Isi Diterima, alasan Ditolak, Harga Beli dari nota, cara bayar.</span><span class="bt">Periksa</span></div>
+      <div class="desk"><span class="who">Meja 4 · Produksi</span><span class="act">Setelah masak</span><span class="small">Isi Pemakaian Aktual dan Sisa Stok bila dihitung. Kosong = ikut resep.</span><span class="bt">Tutup SPK</span></div>
+    </div>
+    <div class="cols grow" style="--cols: 1.3fr .7fr;">
+      <figure class="grow"><div class="shot grow"><img src="../panduan/img/form-produksi.jpg" alt="Form Kebutuhan di meja produksi dengan kolom Kebutuhan, Stok Awal, dan Beli"></div><figcaption>Meja 1: Stok Awal diisi, Beli terhitung sendiri</figcaption></figure>
+      <div class="stack">
+        <div class="note warn"><span class="k">Periksa dan Tutup SPK tidak bisa diulang.</span> Keduanya menulis ke kartu stok dan buku kas. Sistem selalu minta konfirmasi dulu.</div>
+        <p class="small">Kolom yang terkunci bukan rusak: artinya giliran meja lain. Keterangan di atas tabel menyebut siapa yang sedang memegang form.</p>
+      </div>
+    </div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>13</span></footer>
+</section>
+
+<!-- 14. Barang datang -->
+<section class="slide" tabindex="-1">
+  <div class="in">
+    <div class="eyebrow"><span class="chip">3</span> Yang baru · Meja 3</div>
+    <h2>Barang datang diketik sekali, sisanya otomatis</h2>
+    <div class="cols grow" style="--cols: 1fr 1fr;">
+      <div class="stack" style="gap: calc(var(--u) * 10);">
+        <div class="panel soft stack">
+          <h3>Contoh: beli 20 kg ayam</h3>
+          <p>Datang 18 kg bagus, 2 kg busuk dikembalikan. Nota Rp 38.000/kg, tunai.</p>
+          <table class="t">
+            <tbody>
+              <tr><td>Diterima</td><td class="k">18</td></tr>
+              <tr><td>Ditolak</td><td>2 <span class="small">(terhitung sendiri = Beli − Diterima)</span></td></tr>
+              <tr><td>Alasan · Perlakuan</td><td>busuk · <span class="k">Retur</span> (tidak dibayar)</td></tr>
+              <tr><td>Harga Beli</td><td class="k">Rp 38.000</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="small">Kalau supplier tetap menagih 20 kg, pilih perlakuan <span class="k">Dibayar</span>: Rp 76.000 tercatat sebagai Kerugian Barang Rusak.</p>
+      </div>
+      <div class="stack">
+        <h3>Saat tombol Periksa ditekan</h3>
+        <div class="auto">
+          <div class="row"><b>Kartu Stok</b><span>ayam +18 kg @ Rp 38.000</span></div>
+          <div class="row"><b>Pembelian</b><span>Pembelian Bahan Baku Rp 684.000, kondisi Baik</span></div>
+          <div class="row"><b>Kas</b><span>Kas Kecil − Rp 684.000 (atau hutang supplier bila kredit)</span></div>
+          <div class="row"><b>Harga master</b><span>harga ayam jadi Rp 38.000, tercatat di histori</span></div>
+        </div>
+        <div class="note">Accounting <span class="k">tidak perlu mengetik nota ini lagi</span>. Sistem menolak Periksa bila alasan, harga beli, atau cara bayar belum diisi.</div>
+      </div>
+    </div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>14</span></footer>
+</section>
+
+<!-- 15. Kartu stok, opname, susut -->
+<section class="slide" tabindex="-1">
+  <div class="in">
+    <div class="eyebrow"><span class="chip">3</span> Yang baru</div>
+    <h2>Stok yang bisa ditelusuri</h2>
+    <div class="cols grow" style="--cols: 1fr 1fr 1fr;">
+      <div class="stack grow">
+        <h3>Kartu Stok</h3>
+        <p class="small">Keluar-masuk tiap bahan dengan saldo berjalan. Terisi sendiri dari Form Kebutuhan, Tutup SPK, dan Opname Bahan. Hanya dibaca.</p>
+        <figure class="grow"><div class="shot grow"><img src="../panduan/img/kartu-stok.jpg" alt="Kartu Stok per bahan dengan saldo berjalan"></div></figure>
+      </div>
+      <div class="stack grow">
+        <h3>Opname Bahan</h3>
+        <p class="small">Hitung fisik per bahan kapan saja. Kurang dari catatan = <span class="k">Barang Hilang</span>, lebih = <span class="k">Barang Temuan</span>.</p>
+        <figure class="grow"><div class="shot grow"><img src="../panduan/img/opname-bahan.jpg" alt="Opname Bahan dengan kolom hasil hitung dan selisih"></div></figure>
+      </div>
+      <div class="stack grow">
+        <h3>Susut Bahan</h3>
+        <div class="lights">
+          <div class="light"><span class="dot g"></span>Hijau: susut di bawah 1%</div>
+          <div class="light"><span class="dot y"></span>Kuning: 1–10%</div>
+          <div class="light"><span class="dot r"></span>Merah: di atas 10%. Klik untuk melihat SPK dan menunya.</div>
+        </div>
+        <figure class="grow"><div class="shot grow"><img src="../panduan/img/susut-bahan.jpg" alt="Indikator Susut Bahan hijau, kuning, merah"></div></figure>
+      </div>
+    </div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>15</span></footer>
+</section>
+
+<!-- 16. Peran -->
+<section class="slide" tabindex="-1">
+  <div class="in">
+    <div class="eyebrow"><span class="chip">3</span> Siapa mengerjakan apa</div>
+    <h2>Tiap orang hanya melihat tombol bagiannya</h2>
+    <div class="grow scroll-x">
+      <table class="t">
+        <thead><tr><th>Peran</th><th>Biasanya</th><th>Mengerjakan</th><th>Tidak bisa</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Production</td><td>tim dapur</td><td>menyusun dan mengajukan Form Kebutuhan, Lembar Kerja, Plating, Tutup SPK</td><td class="small">menyetujui form, memeriksa barang datang, mengubah resep</td></tr>
+          <tr><td class="k">Supervisor Gudang</td><td>kepala gudang</td><td><span class="k">Setujui / Tolak</span> Form Kebutuhan, ditambah semua pekerjaan staf gudang</td><td class="small">menyusun form, Tutup SPK</td></tr>
+          <tr><td class="k">Inventory</td><td>staf gudang</td><td>bahan, supplier, pembelian, opname, resep dan antreannya, Periksa barang datang</td><td class="small">menyetujui form, Tutup SPK</td></tr>
+          <tr><td class="k">Owner / Admin</td><td>pemilik, admin</td><td>semua di atas sebagai cadangan; Pengaturan Inventory khusus Owner</td><td class="small">–</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note">Yang menyusun form bukan yang menyetujuinya, dan yang memeriksa barang bukan yang menutup SPK. Satu orang boleh punya lebih dari satu peran; minta Owner lewat Master User.</div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>16</span></footer>
+</section>
+
+<!-- 17. Oktober latihan -->
+<section class="slide" tabindex="-1">
+  <div class="in">
+    <div class="eyebrow"><span class="chip">4</span> Oktober</div>
+    <h2>Oktober untuk latihan dan pemetaan, November resmi</h2>
+    <div class="timeline">
+      <div class="tl"><span class="when">Hari ini</span><span class="k">Pelatihan</span><span class="small">Kenalan dengan menu dan alur Form Kebutuhan.</span></div>
+      <div class="tl"><span class="when">Setelah pelatihan</span><span class="k">3S ONE dibuka</span><span class="small">Akun dan peran dibagikan. Data awal = data v2 dan Master Menu.</span></div>
+      <div class="tl"><span class="when">Oktober</span><span class="k">Latihan + pemetaan</span><span class="small">Progres dicek tiap Senin: 12, 19, 26 Oktober.</span></div>
+      <div class="tl end"><span class="when">1 November</span><span class="k">3S ONE resmi</span><span class="small">Data v2 sampai 31 Oktober dipindah. v2 dan Master Menu Revamp dibekukan.</span></div>
+    </div>
+    <div class="cols grow">
+      <div class="panel stack" style="border-color: var(--ok);">
+        <h3 style="color: var(--ok);">Dibawa ke November</h3>
+        <p class="small">Pekerjaan sungguhan, kerjakan dengan benar:</p>
+        <ul class="list check">
+          <li>Bahan: nama, satuan, harga, stok minimum, supplier</li>
+          <li>Konversi Satuan dan keputusan Bahan Belum Cocok</li>
+          <li>Resep, takaran, Pencocokan Menu, Pekerjaan Menu</li>
+          <li>Pengaturan, akun dan peran, foto katalog</li>
+        </ul>
+      </div>
+      <div class="panel soft stack">
+        <h3>Dibuang 1 November</h3>
+        <p class="small">Latihan, semua tombol boleh dicoba:</p>
+        <ul class="list dash">
+          <li>SPK Produksi, Form Kebutuhan, Lembar Kerja</li>
+          <li>Barang datang, pembelian, kas dari Periksa</li>
+          <li>Kartu Stok, Opname Bahan, Sales Actual</li>
+        </ul>
+      </div>
+    </div>
+    <div class="note warn"><span class="k">Pekerjaan sehari-hari Oktober tetap di sistem lama</span>: v2 untuk PO, SPK, penjualan, kas; Master Menu Revamp dan form kertas untuk produksi.</div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>17</span></footer>
+</section>
+
+<!-- 17b. PR Oktober -->
+<section class="slide" tabindex="-1">
+  <div class="in tight">
+    <div class="eyebrow"><span class="chip">4</span> Pemetaan Oktober</div>
+    <h2>PR Oktober: siapa memetakan apa</h2>
+    <div class="grow scroll-x">
+      <table class="t">
+        <thead><tr><th>Pekerjaan</th><th>Di menu</th><th>Siapa</th><th>Selesai kalau</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Aturan satuan</td><td><span class="path">Konversi Satuan › Belum Diatur</span></td><td>dapur + gudang</td><td>angkanya 0 <span class="small">(kerjakan pertama)</span></td></tr>
+          <tr><td class="k">Nama bahan</td><td><span class="path">Bahan Belum Cocok</span></td><td>staf inventory</td><td>angkanya 0</td></tr>
+          <tr><td class="k">Menu ke resep</td><td><span class="path">Pencocokan Menu</span></td><td>Owner + admin</td><td>60 menu terlaris tertaut / Tanpa Resep</td></tr>
+          <tr><td class="k">Data bahan</td><td><span class="path">Item Inventaris</span></td><td>gudang</td><td>satuan dan harga benar, tanpa nama kembar</td></tr>
+          <tr><td class="k">Pemasok</td><td><span class="path">Master Supplier</span></td><td>gudang</td><td>kontak, termin, dan bahan yang dipasok terisi</td></tr>
+          <tr><td class="k">Takaran resep</td><td><span class="path">Resep &amp; Menu › Analisa HPP</span></td><td>dapur + Owner</td><td>HPP per porsi masuk akal, status Lengkap</td></tr>
+          <tr><td class="k">Pembagian kerja</td><td><span class="path">Pekerjaan Menu</span></td><td>dapur</td><td>menu yang sering dimasak punya template</td></tr>
+          <tr><td class="k">Foto menu</td><td><span class="path">Marketing › Katalog Foto Menu</span></td><td>marketing / admin</td><td>menu terlaris berfoto</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note"><span class="k">Satu bahan = satu baris.</span> Sebelum membuat bahan baru, cari dulu dengan <kbd>Ctrl</kbd> + <kbd>K</kbd>. Data coba-coba diberi awalan <span class="k">[LATIHAN]</span> dan dihapus sebelum 27 Oktober.</div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>18</span></footer>
+</section>
+
+<!-- 18. Kebiasaan -->
+<section class="slide" tabindex="-1">
+  <div class="in">
+    <div class="eyebrow"><span class="chip">4</span> Kebiasaan mulai November</div>
+    <h2>Setelah berjalan, pekerjaannya ringan</h2>
+    <div class="cols grow" style="--cols: 1.3fr 1fr 1fr;">
+      <div class="panel stack">
+        <h3>Setiap hari</h3>
+        <ul class="list">
+          <li><span class="k">Dapur:</span> Form Kebutuhan, isi Stok Awal, Ajukan.</li>
+          <li><span class="k">Supervisor:</span> buka lonceng, Setujui atau Tolak dengan alasan jelas.</li>
+          <li><span class="k">Gudang:</span> barang datang, isi Diterima, Ditolak, Harga Beli, lalu Periksa sekali.</li>
+          <li><span class="k">Dapur:</span> setelah masak isi Sisa Stok, lalu Tutup SPK.</li>
+        </ul>
+      </div>
+      <div class="panel stack">
+        <h3>Setiap minggu</h3>
+        <ul class="list">
+          <li><span class="k">Gudang:</span> cek bahan di bawah stok minimum.</li>
+          <li><span class="k">Gudang:</span> Opname Bahan untuk bahan mahal: ayam, daging, minyak.</li>
+          <li><span class="k">Inventory:</span> jaga Bahan Belum Cocok dan Konversi tetap 0.</li>
+        </ul>
+      </div>
+      <div class="panel stack">
+        <h3>Setiap bulan</h3>
+        <ul class="list">
+          <li><span class="k">Gudang:</span> Stock Opname akhir periode.</li>
+          <li><span class="k">Owner:</span> Perbandingan HPP, Susut Bahan yang merah, Menu Tidak Diproduksi.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="note warn"><span class="k">Hindari:</span> belanja di luar Form Kebutuhan tanpa dicatat · membuat bahan dengan nama mirip bahan lama · mengganti satuan bahan yang sudah punya riwayat (buat aturan konversi saja).</div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>19</span></footer>
+</section>
+
+<!-- 19. FAQ -->
+<section class="slide" tabindex="-1">
+  <div class="in">
+    <div class="eyebrow">Yang sering ditanyakan</div>
+    <h2>Lima pertanyaan yang pasti muncul</h2>
+    <div class="qa grow">
+      <div><p class="q">Tombol Setujui tidak ada, padahal formnya ada.</p><p class="a">Setujui hanya untuk Supervisor Gudang (atau Owner/Admin), dan baru muncul setelah dapur menekan Ajukan.</p></div>
+      <div><p class="q">Form saya ditolak supervisor.</p><p class="a">Baca alasannya di kotak merah di atas tabel, perbaiki isian, Simpan, lalu Ajukan lagi.</p></div>
+      <div><p class="q">Biaya resep dihitung nol atau ada tanda merah.</p><p class="a">Ada bahan yang belum tertaut (Bahan Belum Cocok) atau satuannya belum bisa dikonversi. Lengkapi, HPP langsung terhitung.</p></div>
+      <div><p class="q">Salah isi harga beli dan sudah menekan Periksa.</p><p class="a">Periksa tidak bisa diulang. Minta Accounting mengoreksi di Pembelian Bahan Baku, dan perbaiki harga bahan di Item Inventaris.</p></div>
+      <div><p class="q">Barang datang lebih banyak dari yang dibeli.</p><p class="a">Diterima tidak boleh melebihi Beli. Kelebihannya dicatat Accounting sebagai pembelian terpisah (Pembelian Stok).</p></div>
+      <div><p class="q">Lupa password.</p><p class="a">Minta Owner mereset lewat Master User. Anda dapat password sementara dan diminta menggantinya saat masuk.</p></div>
+    </div>
+    <p class="small">Jawaban lengkap: Panduan Pengguna 3S ONE, bab 16.</p>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>20</span></footer>
+</section>
+
+<!-- 20. Latihan -->
+<section class="slide" tabindex="-1">
+  <div class="in">
+    <div class="eyebrow"><span class="chip">4</span> Latihan</div>
+    <h2>Coba sendiri: enam tugas, 20 menit</h2>
+    <div class="cols grow">
+      <ol class="steps">
+        <li><div>Masuk ke <span class="k">3sone.w3scatering.com</span> dan ganti password sementara.</div></li>
+        <li><div>Tekan <kbd>Ctrl</kbd> + <kbd>K</kbd>, ketik <span class="k">ayam</span>, buka bahannya, lihat Histori Harga.</div></li>
+        <li><div>Buka <span class="path">Resep &amp; Menu</span>, pilih satu menu terlaris, tekan Analisa HPP. Statusnya Lengkap?</div></li>
+      </ol>
+      <ol class="steps" start="4" style="counter-reset: s 3;">
+        <li><div>Buka SPK Produksi untuk besok, lalu <span class="path">Breakdown Bahan</span>. Bahan apa yang paling banyak Perlu Beli?</div></li>
+        <li><div>Di SPK yang sama, buka <span class="path">Lainnya › Lembar Kerja</span> dan lihat isi Salin dari Template Menu.</div></li>
+        <li><div>Bersama trainer: selesaikan satu baris di <span class="path">Konversi Satuan › Belum Diatur</span>.</div></li>
+      </ol>
+    </div>
+    <div class="note"><span class="k">Transaksi Oktober dibuang 1 November, jadi semua tombol boleh dicoba.</span> Tapi bahan, resep, dan konversi yang Anda ubah ikut dibawa: kerjakan dengan benar, dan beri awalan [LATIHAN] untuk data coba-coba.</div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>21</span></footer>
+</section>
+
+<!-- 21. Contekan -->
+<section class="slide" tabindex="-1">
+  <div class="in">
+    <div class="eyebrow">Contekan · cetak dan tempel</div>
+    <h2>3S ONE Inventory dalam satu halaman</h2>
+    <div class="cheat grow">
+      <div>
+        <h3>Menu lama → menu baru</h3>
+        <table class="t">
+          <tbody>
+            <tr><td class="old">Bahan Baku</td><td>Item Inventaris</td></tr>
+            <tr><td class="old">Menu Utama / Sub-Menu</td><td>Resep &amp; Menu</td></tr>
+            <tr><td class="old">Order</td><td>tidak perlu (dari PO Admin)</td></tr>
+            <tr><td class="old">Pra SPK</td><td>SPK Produksi › Breakdown Bahan</td></tr>
+            <tr><td class="old">Menu Plating</td><td>SPK Produksi › Plating</td></tr>
+            <tr><td class="old">Pekerjaan Menu</td><td>Pekerjaan Menu</td></tr>
+            <tr><td class="old">Produksi</td><td>SPK Produksi › Lembar Kerja</td></tr>
+            <tr><td class="old">Mismatch</td><td>Bahan Belum Cocok</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3>Form Kebutuhan</h3>
+        <table class="t">
+          <tbody>
+            <tr><td class="k">1 · Dapur</td><td>Stok Awal → Ajukan</td></tr>
+            <tr><td class="k">2 · Supervisor</td><td>Setujui / Tolak + alasan</td></tr>
+            <tr><td class="k">3 · Gudang</td><td>Diterima, Harga Beli → Periksa</td></tr>
+            <tr><td class="k">4 · Dapur</td><td>Sisa Stok → Tutup SPK</td></tr>
+          </tbody>
+        </table>
+        <h3 style="margin-top: calc(var(--u) * 12);">Susut Bahan</h3>
+        <div class="lights">
+          <div class="light"><span class="dot g"></span>&lt; 1% aman</div>
+          <div class="light"><span class="dot y"></span>1–10% perhatikan</div>
+          <div class="light"><span class="dot r"></span>&gt; 10% telusuri SPK dan menunya</div>
+        </div>
+      </div>
+      <div class="stack">
+        <h3>Alamat dan pintasan</h3>
+        <p class="k" style="color: var(--brand-ink);">3sone.w3scatering.com</p>
+        <p class="small"><kbd>Ctrl</kbd> + <kbd>K</kbd> cari bahan, menu, SPK</p>
+        <p class="small">Lonceng = giliran Anda</p>
+        <p class="small">Angka di menu kiri = antrean</p>
+        <h3 style="margin-top: calc(var(--u) * 8);">Target sistem siap</h3>
+        <p class="small">Bahan Belum Cocok = 0<br>Konversi Belum Diatur = 0<br>Profit menu di Dashboard tampil angka</p>
+      </div>
+    </div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>22</span></footer>
+</section>
+
+<!-- 22. Penutup -->
+<section class="slide" tabindex="-1">
+  <div class="in center-v">
+    <div class="brandline"><span class="mark"><b>3S</b>ONE</span><div><div class="name">3S ONE</div><div class="sub">BUSINESS CONTROL SYSTEM</div></div></div>
+    <h1 style="margin-top: calc(var(--u) * 18);">Tanya jawab</h1>
+    <p class="lead">Panduan lengkap dengan gambar layar ada di <span class="k">Panduan Pengguna 3S ONE</span>: bab 8 (Aplikasi Inventory), 9–10 (Form Kebutuhan dan barang datang), 12 (susut dan barang sisa), 14 (memulai), dan 16 (pertanyaan).</p>
+    <p class="big-url" style="margin-top: calc(var(--u) * 10);">3sone.w3scatering.com</p>
+  </div>
+  <footer class="foot"><span>W3S Catering · 3S ONE v3.1</span><span>23</span></footer>
+</section>
+
+</main>
+<div class="counter" id="counter" aria-live="polite"></div>
+
+<script>
+(function () {
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var counter = document.getElementById('counter');
+  var btn = document.getElementById('present-btn');
+  var current = 0;
+
+  function show(n) {
+    current = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach(function (s, k) { s.classList.toggle('on', k === current); });
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+  }
+
+  // Slide yang paling banyak terlihat di layar menjadi titik mulai presentasi.
+  function visibleIndex() {
+    var best = 0, bestArea = -1, vh = window.innerHeight;
+    slides.forEach(function (s, k) {
+      var r = s.getBoundingClientRect();
+      var area = Math.max(0, Math.min(r.bottom, vh) - Math.max(r.top, 0));
+      if (area > bestArea) { bestArea = area; best = k; }
+    });
+    return best;
+  }
+
+  function enter() {
+    document.body.classList.add('present');
+    show(visibleIndex());
+    var el = document.documentElement;
+    if (el.requestFullscreen) { el.requestFullscreen().catch(function () {}); }
+  }
+
+  function exit() {
+    document.body.classList.remove('present');
+    var target = slides[current];
+    slides.forEach(function (s) { s.classList.remove('on'); });
+    if (document.fullscreenElement && document.exitFullscreen) { document.exitFullscreen().catch(function () {}); }
+    target.scrollIntoView({ block: 'center' });
+  }
+
+  btn.addEventListener('click', enter);
+
+  document.addEventListener('keydown', function (e) {
+    if (!document.body.classList.contains('present')) return;
+    if (['ArrowRight', 'PageDown', ' ', 'Enter'].indexOf(e.key) > -1) { e.preventDefault(); show(current + 1); }
+    else if (['ArrowLeft', 'PageUp', 'Backspace'].indexOf(e.key) > -1) { e.preventDefault(); show(current - 1); }
+    else if (e.key === 'Home') { show(0); }
+    else if (e.key === 'End') { show(slides.length - 1); }
+    else if (e.key === 'Escape') { exit(); }
+  });
+
+  // Klik sepertiga kiri = mundur, sisanya = maju.
+  document.querySelector('.deck').addEventListener('click', function (e) {
+    if (!document.body.classList.contains('present')) return;
+    show(e.clientX < window.innerWidth / 3 ? current - 1 : current + 1);
+  });
+})();
+</script>
