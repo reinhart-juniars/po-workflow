@@ -86,7 +86,7 @@
                         @endphp
                         <tr>
                             <td class="item-cell" data-label="Item">
-                                @if ($isDraft && $item->is_carry_forward)
+                                @if ($isDraft && $item->is_carry_forward && ! $item->leftover_component_id)
                                     <select
                                         name="items[{{ $item->id }}][product_id]"
                                         class="form-control min-w-52 js-carry-product"
@@ -117,10 +117,21 @@
                                         {{ $item->unit ?: '-' }}
                                         @if ($item->is_carry_forward)
                                             | @include('salesapp.partials.leftover-origin', ['item' => $item])
+                                        @elseif ($item->is_extra_portion)
+                                            | <span class="font-semibold text-brand-600">Porsi Tambahan</span>, harga {{ $item->purchaseOrder?->po_number ?? 'PO' }}
                                         @elseif ($item->purchaseOrderItem?->purchaseOrder)
                                             | {{ $item->purchaseOrderItem->purchaseOrder->po_number }}
                                         @endif
                                     </div>
+                                    @if ($isDraft && $item->is_carry_forward)
+                                        <button type="submit" form="remove-leftover-{{ $item->id }}" class="mt-1 text-xs font-semibold text-rose-600 hover:underline">
+                                            Lepas dari Sales Actual ini
+                                        </button>
+                                    @elseif ($isDraft && $item->is_extra_portion)
+                                        <button type="submit" form="remove-extra-{{ $item->id }}" class="mt-1 text-xs font-semibold text-rose-600 hover:underline">
+                                            Hapus Porsi Tambahan
+                                        </button>
+                                    @endif
                                 @endif
                             </td>
                             <td class="number-cell" data-label="Qty Delivery">{{ number_format((float) $item->qty_delivery, 2, ',', '.') }}</td>
@@ -212,6 +223,49 @@
                 @method('DELETE')
             </form>
         @endforeach
+        @foreach ($salesActual->items->where('is_extra_portion', true) as $item)
+            <form id="remove-extra-{{ $item->id }}" method="POST" class="hidden"
+                action="{{ route('salesapp.actuals.extra-portions.destroy', [$salesActual, $item]) }}"
+                onsubmit="return confirm('Hapus Porsi Tambahan {{ $item->item_name }}?')">
+                @csrf
+                @method('DELETE')
+            </form>
+        @endforeach
+
+        <form method="POST" action="{{ route('salesapp.actuals.extra-portions.store', $salesActual) }}" class="section-card">
+            @csrf
+            <h2 class="panel-title">Porsi Tambahan</h2>
+            <p class="section-subtitle mt-1">
+                Customer minta lebih dari yang dikirim, misalnya ganti menu (10 Nasi Goreng + 5 Bakmi menjadi 13 + 2):
+                kurangi qty actual menu yang tidak diambil (otomatis jadi Barang Sisa), lalu tambahkan porsi menu penggantinya di sini.
+                Harganya mengikuti harga PO. Bila porsinya diambil dari Barang Sisa, pakai Penjualan Barang Sisa di bawah.
+            </p>
+
+            @if ($extraPortionLines->isEmpty())
+                <p class="mt-3 text-sm text-slate-500">Sales Actual ini tidak punya menu dari PO.</p>
+            @else
+                <div class="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_8rem_auto] sm:items-end">
+                    <div>
+                        <label class="form-label" for="extra-line">Menu PO</label>
+                        <select id="extra-line" name="extra_line_id" class="form-control" required>
+                            <option value="">Pilih menu</option>
+                            @foreach ($extraPortionLines as $line)
+                                <option value="{{ $line->id }}" @selected((string) old('extra_line_id') === (string) $line->id)>
+                                    {{ $line->item_name }} - Rp {{ number_format((float) $line->unit_price, 0, ',', '.') }}
+                                    ({{ $line->purchaseOrderItem?->purchaseOrder?->po_number ?? 'PO' }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label" for="extra-qty">Qty</label>
+                        <input id="extra-qty" type="number" name="extra_qty" step="0.01" min="0.01"
+                            value="{{ old('extra_qty') }}" class="form-control text-right tabular-nums" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Tambahkan</button>
+                </div>
+            @endif
+        </form>
 
         <form method="POST" action="{{ route('salesapp.actuals.leftovers.store', $salesActual) }}" class="section-card">
             @csrf
@@ -220,23 +274,40 @@
                 Jual retur yang masih tersedia ke customer ini. Cara bayarnya mengikuti PO customer ini di DO.
             </p>
 
-            @if ($leftoverStock->isEmpty())
+            @if ($leftoverStock->isEmpty() && $leftoverComponents->isEmpty())
                 <p class="mt-3 text-sm text-slate-500">Tidak ada Barang Sisa yang tersedia.</p>
             @else
                 <div class="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_8rem_10rem_auto] sm:items-end">
                     <div>
                         <label class="form-label" for="leftover-entry">Barang Sisa</label>
-                        <select id="leftover-entry" name="leftover_entry_id" class="form-control js-leftover-entry" required>
+                        <select id="leftover-entry" name="leftover_source" class="form-control js-leftover-entry" required>
                             <option value="">Pilih Barang Sisa</option>
-                            @foreach ($leftoverStock as $row)
-                                <option value="{{ $row['entry_id'] }}"
-                                    data-available="{{ $row['available_qty'] }}"
-                                    data-price="{{ $row['unit_price'] }}"
-                                    @selected((string) old('leftover_entry_id') === (string) $row['entry_id'])>
-                                    {{ $row['item_name'] }} - sisa {{ number_format($row['available_qty'], 2, ',', '.') }}
-                                    (retur {{ $row['customer_name'] ?? '-' }}, {{ \Illuminate\Support\Carbon::parse($row['returned_at'])->format('d M') }})
-                                </option>
-                            @endforeach
+                            @if ($leftoverStock->isNotEmpty())
+                                <optgroup label="Porsi utuh">
+                                    @foreach ($leftoverStock as $row)
+                                        <option value="entry:{{ $row['entry_id'] }}"
+                                            data-available="{{ $row['available_qty'] }}"
+                                            data-price="{{ $row['unit_price'] }}"
+                                            @selected(old('leftover_source') === 'entry:' . $row['entry_id'])>
+                                            {{ $row['item_name'] }} - sisa {{ number_format($row['available_qty'], 2, ',', '.') }}
+                                            (retur {{ $row['customer_name'] ?? '-' }}, {{ \Illuminate\Support\Carbon::parse($row['returned_at'])->format('d M') }})
+                                        </option>
+                                    @endforeach
+                                </optgroup>
+                            @endif
+                            @if ($leftoverComponents->isNotEmpty())
+                                <optgroup label="Komponen rincian (harga diisi sendiri)">
+                                    @foreach ($leftoverComponents as $row)
+                                        <option value="component:{{ $row['component_id'] }}"
+                                            data-available="{{ $row['available_qty'] }}"
+                                            data-price=""
+                                            @selected(old('leftover_source') === 'component:' . $row['component_id'])>
+                                            {{ $row['name'] }} - sisa {{ number_format($row['available_qty'], 2, ',', '.') }} {{ $row['unit'] }}
+                                            (rincian {{ $row['origin_name'] }}, retur {{ $row['customer_name'] ?? '-' }})
+                                        </option>
+                                    @endforeach
+                                </optgroup>
+                            @endif
                         </select>
                     </div>
                     <div>

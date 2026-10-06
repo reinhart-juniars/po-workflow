@@ -29,6 +29,8 @@ class SalesActualItem extends Model
         'subtotal_actual',
         'is_carry_forward',
         'source_sales_actual_item_id',
+        'leftover_component_id',
+        'is_extra_portion',
         'notes',
     ];
 
@@ -43,6 +45,7 @@ class SalesActualItem extends Model
         'overhead_cost' => 'decimal:2',
         'subtotal_actual' => 'decimal:2',
         'is_carry_forward' => 'boolean',
+        'is_extra_portion' => 'boolean',
     ];
 
     protected static function booted(): void
@@ -135,6 +138,18 @@ class SalesActualItem extends Model
     public function leftoverDisposals(): HasMany
     {
         return $this->hasMany(LeftoverDisposal::class, 'source_sales_actual_item_id');
+    }
+
+    /** Rincian porsi retur item ini menjadi komponen. */
+    public function leftoverBreakdowns(): HasMany
+    {
+        return $this->hasMany(LeftoverBreakdown::class, 'source_sales_actual_item_id');
+    }
+
+    /** Komponen Barang Sisa yang dijual lewat baris ini (Penjualan Barang Sisa per komponen). */
+    public function leftoverComponent(): BelongsTo
+    {
+        return $this->belongsTo(LeftoverComponent::class);
     }
 
     /**

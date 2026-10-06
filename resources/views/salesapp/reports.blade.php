@@ -104,9 +104,19 @@
                                 <td class="number-cell" data-label="Qty Retur">
                                     {{ number_format((float) $item->qty_return, 2, ',', '.') }}</td>
                                 <td data-label="Dijual / Dibuang">
+                                    @foreach ($item->leftoverBreakdowns as $breakdown)
+                                        <div>
+                                            {{ number_format((float) $breakdown->portion_qty, 2, ',', '.') }} dirinci:
+                                            {{ $breakdown->components->map(fn ($component) => $component->name.' '.number_format((float) $component->qty, 2, ',', '.').' '.$component->unit)->implode(', ') }}
+                                        </div>
+                                    @endforeach
                                     @forelse ($item->leftoverSales as $sale)
                                         <div>
-                                            {{ number_format((float) $sale->qty_delivery, 2, ',', '.') }} ke
+                                            {{ number_format((float) $sale->qty_delivery, 2, ',', '.') }}
+                                            @if ($sale->leftoverComponent)
+                                                {{ $sale->unit }} {{ $sale->leftoverComponent->name }}
+                                            @endif
+                                            ke
                                             {{ $sale->salesActual?->customer?->name ?? '-' }}
                                             {{ $sale->salesActual?->sales_date?->format('d M Y') }}
                                             <span class="text-xs text-slate-500">({{ $sale->salesActual?->isSubmitted() ? 'final' : 'draft' }})</span>
@@ -115,11 +125,15 @@
                                     @endforelse
                                     @foreach ($item->leftoverDisposals as $disposal)
                                         <div class="text-rose-600">
-                                            {{ number_format((float) $disposal->qty, 2, ',', '.') }} dibuang
+                                            {{ number_format((float) $disposal->qty, 2, ',', '.') }}
+                                            @if ($disposal->component)
+                                                {{ $disposal->component->unit }} {{ $disposal->component->name }}
+                                            @endif
+                                            dibuang
                                             {{ $disposal->disposed_at?->format('d M Y') }}
                                         </div>
                                     @endforeach
-                                    @if ($item->leftoverSales->isEmpty() && $item->leftoverDisposals->isEmpty())
+                                    @if ($item->leftoverSales->isEmpty() && $item->leftoverDisposals->isEmpty() && $item->leftoverBreakdowns->isEmpty())
                                         <span class="text-amber-700">Masih di Barang Sisa</span>
                                     @endif
                                 </td>

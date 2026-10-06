@@ -9,6 +9,7 @@ use App\Models\CashAccount;
 use App\Models\Customer;
 use App\Models\DeliveryOrder;
 use App\Models\Product;
+use App\Models\ProductionOrder;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\Spk;
@@ -326,6 +327,20 @@ class AdminAppController extends Controller
             'edit_reason' => ['required', 'string', 'max:1000'],
         ]);
 
+        $itemsChanged = $this->purchaseOrderItemsChanged($po, $data['items']);
+        $productionOrders = $itemsChanged ? $this->productionOrdersForPurchaseOrder($po) : collect();
+        $closedProduction = $productionOrders->firstWhere('status', ProductionOrder::STATUS_COMPLETED);
+
+        // Dapur sudah memasak dan menutup SPK Produksi sesuai PO lama: mengubah
+        // menu di PO akan menghapus jejak masakan yang terlanjur dibuat. Ganti
+        // menu dicatat di Sales Actual (kelebihan jadi Barang Sisa, menu
+        // pengganti lewat Porsi Tambahan dengan harga PO).
+        if ($closedProduction) {
+            return back()
+                ->withInput()
+                ->with('error', "Menu PO tidak bisa diubah karena SPK Produksi {$closedProduction->number} sudah ditutup (masakan sudah dibuat). Catat penggantian menu di Sales Actual: kurangi qty actual menu yang tidak diambil (otomatis jadi Barang Sisa), lalu tambah Porsi Tambahan untuk menu penggantinya.");
+        }
+
         $before = [
             'po' => $po->fresh(['customer', 'area', 'items.product', 'cashAccount'])?->toArray(),
         ];
@@ -424,9 +439,57 @@ class AdminAppController extends Controller
             'ip_address' => $r->ip(),
         ]);
 
+        // SPK Produksi yang belum ditutup ikut menyesuaikan menu PO terbaru.
+        $catatanProduksi = '';
+
+        foreach ($productionOrders->filter(fn (ProductionOrder $order) => $order->isEditable()) as $order) {
+            try {
+                app(ProductionOrderService::class)->generateFromSpk($order->spk, Auth::id());
+                $catatanProduksi .= " SPK Produksi {$order->number} ikut disesuaikan.";
+            } catch (\Throwable $e) {
+                report($e);
+                $catatanProduksi .= " SPK Produksi {$order->number} belum bisa disesuaikan: {$e->getMessage()}";
+            }
+        }
+
         return redirect()
             ->route('adminapp.orders.show', $po->id)
-            ->with('success', "PO dengan ID {$po->po_number} berhasil diperbarui dan tersinkron ke accounting.");
+            ->with('success', "PO dengan ID {$po->po_number} berhasil diperbarui dan tersinkron ke accounting.".$catatanProduksi);
+    }
+
+    /**
+     * Apakah menu/qty PO berubah (urutan baris diabaikan)?
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     */
+    protected function purchaseOrderItemsChanged(PurchaseOrder $po, array $rows): bool
+    {
+        $normalize = fn ($pairs) => collect($pairs)
+            ->groupBy('product_id')
+            ->map(fn ($group) => (int) $group->sum('qty'))
+            ->sortKeys()
+            ->all();
+
+        $old = $normalize($po->items->map(fn (PurchaseOrderItem $item) => ['product_id' => (int) $item->product_id, 'qty' => (int) $item->qty]));
+        $new = $normalize(collect($rows)->map(fn (array $row) => ['product_id' => (int) $row['product_id'], 'qty' => (int) $row['qty']]));
+
+        return $old !== $new;
+    }
+
+    /** SPK Produksi (selain yang dibatalkan) dari slot SPK yang memuat PO ini. */
+    protected function productionOrdersForPurchaseOrder(PurchaseOrder $po)
+    {
+        $spkIds = $po->spks()->pluck('spks.id');
+
+        if ($spkIds->isEmpty()) {
+            return collect();
+        }
+
+        return ProductionOrder::query()
+            ->with('spk')
+            ->whereIn('spk_id', $spkIds)
+            ->where('status', '!=', ProductionOrder::STATUS_CANCELLED)
+            ->get();
     }
 
     protected function resolveOrderPaymentStateForUpdate(PurchaseOrder $po, array $data): array

@@ -432,7 +432,7 @@ class SalesReportService
      */
     private function loadReportLines(Collection $actuals): array
     {
-        $columns = ['id', 'sales_actual_id', 'product_id', 'purchase_order_item_id', 'source_sales_actual_item_id', 'item_name', 'unit_price', 'qty_actual', 'subtotal_actual'];
+        $columns = ['id', 'sales_actual_id', 'product_id', 'purchase_order_item_id', 'purchase_order_id', 'source_sales_actual_item_id', 'item_name', 'unit_price', 'qty_actual', 'subtotal_actual'];
         $lines = $actuals->mapWithKeys(fn (SalesActual $sa) => [$sa->id => []])->all();
 
         if ($lines === []) {
@@ -459,7 +459,8 @@ class SalesReportService
 
         $poiIds = collect($byId)->pluck('purchase_order_item_id')->filter()->unique()->values()->all();
         $poByPoi = $poiIds === [] ? [] : DB::table('purchase_order_items')->whereIntegerInRaw('id', $poiIds)->pluck('purchase_order_id', 'id')->all();
-        $poIds = array_values(array_unique(array_filter($poByPoi)));
+        // PO langsung di baris (Penjualan Barang Sisa ke customer lain, Porsi Tambahan).
+        $poIds = array_values(array_unique(array_filter([...array_values($poByPoi), ...collect($byId)->pluck('purchase_order_id')->all()])));
         $purchaseOrders = $poIds === [] ? [] : DB::table('purchase_orders')->whereIntegerInRaw('id', $poIds)
             ->get(['id', 'po_number', 'recipient_name', 'shipping_cost', 'customer_id'])->keyBy('id')->all();
         $productIds = $items->pluck('product_id')->filter()->unique()->values()->all();
@@ -471,7 +472,7 @@ class SalesReportService
 
             while ($row && ! isset($visited[$row->id])) {
                 $visited[$row->id] = true;
-                $poId = $poByPoi[$row->purchase_order_item_id] ?? null;
+                $poId = $poByPoi[$row->purchase_order_item_id] ?? $row->purchase_order_id ?? null;
 
                 if ($poId && isset($purchaseOrders[$poId])) {
                     return $purchaseOrders[$poId];

@@ -63,7 +63,7 @@
                     <tbody>
                         @forelse ($wasteRows as $row)
                             @php
-                                $wasteCost = $row['qty'] * $row['cost_per_unit'];
+                                $wasteCost = $row['cost_total'] ?? $row['qty'] * $row['cost_per_unit'];
                                 $wasteSelling = $row['qty'] * $row['unit_price'];
                             @endphp
                             <tr>

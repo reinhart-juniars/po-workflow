@@ -166,6 +166,126 @@ class SalesActualService
         return $salesActual->fresh(['customer', 'deliveryOrder', 'items']);
     }
 
+    /**
+     * Porsi Tambahan: customer meminta lebih dari yang dikirim, mis. mengganti
+     * 10 Nasi Goreng + 5 Bakmi menjadi 13 + 2. Kelebihan menu lama cukup
+     * dikurangi dari qty actual (otomatis menjadi retur -> Barang Sisa); porsi
+     * menu pengganti yang dimasak baru ditambahkan di sini dan ditagih dengan
+     * harga PO baris acuannya. Cara bayarnya mengikuti PO itu.
+     */
+    public function addExtraPortion(SalesActual $salesActual, SalesActualItem $poLine, float $qty, ?string $ipAddress = null): SalesActualItem
+    {
+        $this->ensureDraft($salesActual);
+        $qty = round($qty, 2);
+
+        if ($qty <= 0) {
+            throw ValidationException::withMessages(['extra_qty' => 'Qty Porsi Tambahan harus lebih dari 0.']);
+        }
+
+        $poLine->loadMissing('purchaseOrderItem.purchaseOrder');
+        $purchaseOrder = $poLine->purchaseOrderItem?->purchaseOrder;
+
+        if ((int) $poLine->sales_actual_id !== (int) $salesActual->id || ! $purchaseOrder) {
+            throw ValidationException::withMessages(['extra_line_id' => 'Pilih menu dari PO di Sales Actual ini.']);
+        }
+
+        return DB::transaction(function () use ($salesActual, $poLine, $purchaseOrder, $qty, $ipAddress) {
+            $beforePayload = $this->salesActualAuditPayload($salesActual->load('items'));
+
+            // Porsi Tambahan menu yang sama dari PO yang sama digabung dalam satu baris.
+            $item = SalesActualItem::query()
+                ->where('sales_actual_id', $salesActual->id)
+                ->where('is_extra_portion', true)
+                ->where('purchase_order_id', $purchaseOrder->id)
+                ->where('product_id', $poLine->product_id)
+                ->where('unit_price', $poLine->unit_price)
+                ->lockForUpdate()
+                ->first();
+
+            if ($item) {
+                $item->fill([
+                    'qty_delivery' => (float) $item->qty_delivery + $qty,
+                    'qty_actual' => (float) $item->qty_actual + $qty,
+                ])->save();
+            } else {
+                $item = SalesActualItem::query()->create([
+                    'sales_actual_id' => $salesActual->id,
+                    'purchase_order_item_id' => null,
+                    'purchase_order_id' => $purchaseOrder->id,
+                    'product_id' => $poLine->product_id,
+                    'item_name' => $poLine->item_name,
+                    'unit' => $poLine->unit,
+                    'qty_delivery' => $qty,
+                    'qty_actual' => $qty,
+                    'qty_return' => 0,
+                    'qty_cancel' => 0,
+                    // Harga PO (sudah termasuk porsi diskon PO), bukan harga master terbaru.
+                    'unit_price' => (float) $poLine->unit_price,
+                    'raw_material_cost' => $poLine->raw_material_cost,
+                    'overhead_cost' => $poLine->overhead_cost,
+                    'is_carry_forward' => false,
+                    'is_extra_portion' => true,
+                    'source_sales_actual_item_id' => null,
+                    'notes' => null,
+                ]);
+            }
+
+            $salesActual->refresh()->load('items');
+            $this->writeAuditLog(
+                $salesActual,
+                'sales_actual_extra_portion_added',
+                sprintf(
+                    'Porsi Tambahan %s %s (harga PO %s Rp %s) ditambahkan ke Sales Actual #%s oleh %s.',
+                    number_format($qty, 2, ',', '.'),
+                    $poLine->item_name,
+                    $purchaseOrder->po_number,
+                    number_format((float) $poLine->unit_price, 0, ',', '.'),
+                    $salesActual->id,
+                    Auth::user()->name ?? 'Unknown'
+                ),
+                $beforePayload,
+                $this->salesActualAuditPayload($salesActual),
+                $ipAddress
+            );
+
+            return $item->fresh();
+        });
+    }
+
+    /** Hapus baris Porsi Tambahan dari Sales Actual draft. */
+    public function removeExtraPortion(SalesActualItem $item, ?string $ipAddress = null): void
+    {
+        $item->loadMissing('salesActual');
+        $salesActual = $item->salesActual;
+
+        if (! $item->is_extra_portion) {
+            throw ValidationException::withMessages(['extra' => 'Hanya baris Porsi Tambahan yang bisa dihapus.']);
+        }
+
+        $this->ensureDraft($salesActual);
+
+        DB::transaction(function () use ($item, $salesActual, $ipAddress) {
+            $beforePayload = $this->salesActualAuditPayload($salesActual->load('items'));
+            $item->delete();
+            $salesActual->refresh()->load('items');
+
+            $this->writeAuditLog(
+                $salesActual,
+                'sales_actual_extra_portion_removed',
+                sprintf(
+                    'Porsi Tambahan %s %s dihapus dari Sales Actual #%s oleh %s.',
+                    number_format((float) $item->qty_delivery, 2, ',', '.'),
+                    $item->item_name,
+                    $salesActual->id,
+                    Auth::user()->name ?? 'Unknown'
+                ),
+                $beforePayload,
+                $this->salesActualAuditPayload($salesActual),
+                $ipAddress
+            );
+        });
+    }
+
     public function submit(SalesActual $salesActual, ?string $ipAddress = null): SalesActual
     {
         $salesActual->loadMissing(['customer', 'deliveryOrder', 'items']);
@@ -417,7 +537,8 @@ class SalesActualService
     {
         $updateData = [];
 
-        if (! blank($data['product_id'] ?? null)) {
+        // Komponen Barang Sisa bukan menu: namanya tetap, hanya harganya yang diisi.
+        if (! $item->leftover_component_id && ! blank($data['product_id'] ?? null)) {
             $product = Product::query()->findOrFail($data['product_id']);
 
             $updateData['product_id'] = $product->id;
@@ -854,6 +975,8 @@ class SalesActualService
                     'subtotal_actual' => (float) $item->subtotal_actual,
                     'is_carry_forward' => (bool) $item->is_carry_forward,
                     'source_sales_actual_item_id' => $item->source_sales_actual_item_id,
+                    'leftover_component_id' => $item->leftover_component_id,
+                    'is_extra_portion' => (bool) $item->is_extra_portion,
                     'purchase_order_id' => $item->purchase_order_id,
                 ])
                 ->values()

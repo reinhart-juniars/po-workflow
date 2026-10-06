@@ -29,6 +29,7 @@ use App\Http\Controllers\OwnerAppController;
 use App\Http\Controllers\OwnerUserController;
 use App\Http\Controllers\ProductionAppController;
 use App\Http\Controllers\ProfitLossReportController;
+use App\Http\Controllers\SalesActualExtraPortionController;
 use App\Http\Controllers\SalesAppController;
 use App\Http\Controllers\SuperadminBackupController;
 use App\Http\Controllers\SuperadminDashboardController;
@@ -276,6 +277,15 @@ Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:sales|ow
         Route::get('/barang-sisa', [LeftoverStockController::class, 'index'])->name('leftovers.index');
         Route::post('/barang-sisa/{entry}/jual', [LeftoverStockController::class, 'sell'])->name('leftovers.sell');
         Route::post('/barang-sisa/{entry}/buang', [LeftoverStockController::class, 'dispose'])->name('leftovers.dispose');
+        // Rincian Barang Sisa per komponen (diketik bebas) + jual/buang per komponen.
+        Route::post('/barang-sisa/{entry}/rinci', [LeftoverStockController::class, 'breakDown'])->name('leftovers.breakdowns.store');
+        Route::put('/barang-sisa/rincian/{breakdown}', [LeftoverStockController::class, 'updateBreakdown'])->name('leftovers.breakdowns.update');
+        Route::delete('/barang-sisa/rincian/{breakdown}', [LeftoverStockController::class, 'cancelBreakdown'])->name('leftovers.breakdowns.destroy');
+        Route::post('/barang-sisa/komponen/{component}/jual', [LeftoverStockController::class, 'sellComponent'])->name('leftovers.components.sell');
+        Route::post('/barang-sisa/komponen/{component}/buang', [LeftoverStockController::class, 'disposeComponent'])->name('leftovers.components.dispose');
+        // Porsi Tambahan: customer minta lebih dari yang dikirim (ganti menu), ditagih harga PO.
+        Route::post('/actuals/{salesActual}/porsi-tambahan', [SalesActualExtraPortionController::class, 'store'])->name('actuals.extra-portions.store');
+        Route::delete('/actuals/{salesActual}/porsi-tambahan/{item}', [SalesActualExtraPortionController::class, 'destroy'])->name('actuals.extra-portions.destroy');
         Route::get('/reports', function () {
             return redirect()->route('salesapp.reports.final-retur');
         })->name('reports');

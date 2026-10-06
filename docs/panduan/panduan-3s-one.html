@@ -444,7 +444,7 @@
   <table class="grid">
     <tr><th style="width: 28%">Menu</th><th>Untuk apa</th></tr>
     <tr><td>Dashboard</td><td>Penjualan hari ini dan bulan berjalan. Buka Sales Actual untuk mengisi qty yang benar-benar terjual; sisanya otomatis menjadi retur.</td></tr>
-    <tr><td><b>Barang Sisa</b></td><td>Retur dari Sales Actual yang sudah disubmit. Barang Sisa boleh <b>dijual ke customer mana pun</b> (tombol <b>Jual</b>: pilih Sales Actual draft tujuan, qty, harga) atau <b>dibuang</b> bila tidak layak jual (tombol <b>Buang</b>, alasan wajib). Rinciannya di Bab 12.</td></tr>
+    <tr><td><b>Barang Sisa</b></td><td>Retur dari Sales Actual yang sudah disubmit. Barang Sisa boleh <b>dijual ke customer mana pun</b> (tombol <b>Jual</b>: pilih Sales Actual draft tujuan, qty, harga) atau <b>dibuang</b> bila tidak layak jual (tombol <b>Buang</b>, alasan wajib). Seporsi juga bisa <b>dirinci per komponen</b> (nasi, telur, …) yang dijual atau di-waste sendiri-sendiri. Customer yang mengganti menu dicatat di Sales Actual dengan <b>Porsi Tambahan</b> (harga PO). Rinciannya di Bab 12.</td></tr>
     <tr><td>Laporan Sales Final & Retur</td><td>Penjualan yang benar-benar terjadi setelah retur, dan ke mana tiap retur pergi: dijual ke siapa, dibuang, atau masih di Barang Sisa.</td></tr>
     <tr><td>Laporan Waste</td><td>Barang Sisa yang dibuang — baik yang ketahuan tidak layak saat dijual ulang, maupun yang dibuang langsung dari halaman Barang Sisa.</td></tr>
     <tr><td>Laporan Penjualan</td><td>Rekap penjualan per periode (juga terbaca Accounting). Mode <b>Ringkas</b> muat satu lembar; mode <b>Lihat Lengkap</b> menampilkan jumlah per harga jual untuk tiap pelanggan, dipisah Lapak dan Retail, dengan subtotal per tanggal.</td></tr>
@@ -700,6 +700,8 @@
     <tr><td>Porsi terkirim tetapi tidak terjual (retur)</td><td>Otomatis saat <b>Sales Actual</b> disubmit</td><td>Barang Sisa (persediaan)</td></tr>
     <tr><td>Barang Sisa dijual ke customer lain</td><td><b>Sales › Barang Sisa › Jual</b> atau panel di Sales Actual</td><td>Penjualan biasa; HPP-nya pindah ke bulan terjual</td></tr>
     <tr><td>Barang Sisa tidak layak jual</td><td><b>Sales › Barang Sisa › Buang</b></td><td>Barang Sisa Dibuang (rincian HPP) & Laporan Waste</td></tr>
+    <tr><td>Barang Sisa dirinci per komponen</td><td><b>Sales › Barang Sisa › Rinci per komponen</b></td><td>Komponen tetap persediaan sebesar nilai yang diketik; selisih tidak terinci masuk Barang Sisa Dibuang</td></tr>
+    <tr><td>Customer mengganti menu (mis. 10+5 menjadi 13+2)</td><td>Sales Actual: qty actual menu lama dikurangi, menu pengganti lewat <b>Porsi Tambahan</b></td><td>Kelebihan menjadi Barang Sisa; Porsi Tambahan ditagih harga PO</td></tr>
     <tr><td>Barang datang rusak tetapi tetap dibayar</td><td>Form Kebutuhan, perlakuan <b>Dibayar</b> (Bab 10)</td><td>Kerugian Barang Rusak (Pengeluaran)</td></tr>
   </table>
 
@@ -773,6 +775,35 @@
     <li>Tekan <b>Catat Dibuang</b>. Qty itu keluar dari stok Barang Sisa dan masuk <b>Laporan Waste</b>; nilainya muncul sebagai “termasuk Barang Sisa Dibuang” di Laba Rugi.</li>
   </ol>
   <div class="fig"><img src="img/barang-sisa-buang.jpg" alt="Tombol ▸ Buang terbuka: qty, tanggal, dan alasan wajib, lalu Catat Dibuang."><div class="cap">Tombol ▸ Buang terbuka: qty, tanggal, dan alasan wajib, lalu Catat Dibuang.</div></div>
+  <h3>Merinci Barang Sisa per komponen</h3>
+  <p>Seporsi retur sering tidak dijual utuh: nasinya diambil satu customer, telurnya customer lain, sisanya tidak layak. Karena itu Barang Sisa bisa <b>dirinci per komponen</b>. Komponennya <b>diketik bebas</b> (bukan dari resep, karena nasi yang sudah digoreng tidak bisa kembali menjadi bahan), dan <b>nilai HPP</b> tiap komponen juga diketik sendiri dengan acuan HPP menunya.</p>
+  <ol>
+    <li>Di <b>Sales › Barang Sisa</b>, buka <b>▸ Rinci … per komponen</b> di bawah baris menunya.</li>
+    <li>Isi <b>Porsi dirinci</b> (boleh sebagian), tanggal, dan catatan bila perlu.</li>
+    <li>Tulis tiap komponen: nama, jumlah, satuan, dan nilai HPP-nya. Baris yang dikosongkan diabaikan. Di bawahnya terlihat <i>Total nilai komponen … dari HPP …</i>.</li>
+    <li>Tekan <b>Simpan Rincian</b>. Porsi itu keluar dari stok porsi utuh dan muncul sebagai kotak <b>Rincian</b> berisi komponennya.</li>
+  </ol>
+  <ul>
+    <li><b>Total nilai komponen tidak boleh melebihi HPP porsi yang dirinci.</b> Kalau lebih kecil, selisihnya dicatat sebagai <b>waste</b> (“tidak terinci”) pada tanggal rincian dan ikut Laporan Waste.</li>
+    <li>Tiap komponen punya tombol <b>▸ Jual</b> (pilih Sales Actual tujuan, qty sesuai yang diambil, dan harga per satuan yang diisi sendiri) dan <b>▸ Waste</b> (qty, tanggal, alasan wajib). Komponen juga bisa dipilih dari panel <b>Penjualan Barang Sisa</b> di Sales Actual, di kelompok <i>Komponen rincian</i>.</li>
+    <li>Selama belum ada komponen yang dijual atau dibuang, rincian bisa diubah (<b>▸ Ubah rincian</b>) atau dibatalkan (<b>Batalkan rincian</b>) dan porsinya kembali ke stok.</li>
+    <li>Komponen yang belum terjual di akhir bulan tetap tercatat sebagai persediaan Barang Sisa, sebesar nilai yang diketik.</li>
+  </ul>
+  <div class="tip"><b>Contoh:</b> 3 porsi nasi goreng diretur, HPP Rp 9.000/porsi (Rp 27.000). Dirinci menjadi nasi goreng 600 gram Rp 12.000, telur ceplok 3 butir Rp 7.500, ayam suwir 150 gram Rp 6.000 — total Rp 25.500; Rp 1.500 sisanya dicatat sebagai waste. Besoknya 3 telur dijual ke customer lain Rp 3.000/butir: penjualan Rp 9.000, dan Rp 7.500 keluar dari persediaan.</div>
+  <div class="fig"><img src="img/barang-sisa-rinci.jpg" alt="Form Rinci per komponen di bawah baris Barang Sisa: porsi dirinci, tanggal, catatan, lalu komponen dengan jumlah, satuan, dan nilai HPP; total nilai komponen dibandingkan dengan HPP porsinya."><div class="cap">Form Rinci per komponen di bawah baris Barang Sisa: porsi dirinci, tanggal, catatan, lalu komponen dengan jumlah, satuan, dan nilai HPP; total nilai komponen dibandingkan dengan HPP porsinya.</div></div>
+  <div class="fig"><img src="img/barang-sisa-komponen.jpg" alt="Kotak Rincian: tiap komponen dengan sisa, HPP per satuan, nilai, serta tombol Jual dan Waste; Ubah rincian dan Batalkan rincian selama belum ada komponen yang terpakai."><div class="cap">Kotak Rincian: tiap komponen dengan sisa, HPP per satuan, nilai, serta tombol Jual dan Waste; Ubah rincian dan Batalkan rincian selama belum ada komponen yang terpakai.</div></div>
+
+  <h3>Customer mengganti isi pesanan</h3>
+  <p>Contoh: PO 10 nasi goreng + 5 bakmi goreng, lalu customer minta menjadi 13 nasi goreng + 2 bakmi. Ini boleh.</p>
+  <table class="grid">
+    <tr><th style="width: 28%">Kapan</th><th>Caranya</th></tr>
+    <tr><td>Sebelum dapur memasak</td><td>Admin mengubah PO (alasan wajib). SPK Produksi yang belum ditutup <b>ikut menyesuaikan otomatis</b>.</td></tr>
+    <tr><td>Sesudah dimasak dan dikirim</td><td>Di Sales Actual customer: isi qty actual bakmi <b>2</b> (3 sisanya otomatis menjadi retur, lalu Barang Sisa setelah submit). Untuk 3 nasi goreng tambahan, pakai panel <b>Porsi Tambahan</b>: pilih menu PO-nya, isi qty 3, <b>Tambahkan</b>. Harganya <b>harga PO</b> dan cara bayarnya ikut PO itu. Bila nasi gorengnya diambil dari Barang Sisa, pakai <b>Penjualan Barang Sisa</b> saja.</td></tr>
+    <tr><td>SPK Produksi sudah ditutup</td><td>Menu dan jumlah PO tidak bisa diubah lagi di Admin (masakannya sudah dibuat sesuai PO lama). Catat penggantiannya di Sales Actual seperti baris di atas. Perubahan selain menu (penerima, alamat, jam) tetap boleh.</td></tr>
+  </table>
+  <p>Salah menambahkan Porsi Tambahan? Selama Sales Actual masih draft, tekan <b>Hapus Porsi Tambahan</b> pada barisnya.</p>
+  <div class="fig"><img src="img/porsi-tambahan.jpg" alt="Sales Actual: bakmi diterima 2 dari 5 (retur 3), baris Porsi Tambahan 3 nasi goreng dengan harga PO, dan panel Porsi Tambahan untuk memilih menu PO serta qty."><div class="cap">Sales Actual: bakmi diterima 2 dari 5 (retur 3), baris Porsi Tambahan 3 nasi goreng dengan harga PO, dan panel Porsi Tambahan untuk memilih menu PO serta qty.</div></div>
+
   <p><b>Memantau:</b> <b>Laporan Sales Final &amp; Retur</b> menunjukkan tiap Sales Actual yang disubmit beserta qty returnya dan ke mana retur itu pergi (dijual ke siapa, dibuang, atau masih tersisa); <b>Laporan Waste</b> merinci yang dibuang beserta nilai cost dan nilai jual yang hilang.</p>
   <div class="fig"><img src="img/laporan-final-retur.jpg" alt="Sales › Laporan Sales Final & Retur: total penjualan final dan total retur; tombol Buka pada tiap baris menampilkan rinciannya."><div class="cap">Sales › Laporan Sales Final & Retur: total penjualan final dan total retur; tombol Buka pada tiap baris menampilkan rinciannya.</div></div>
   <div class="fig"><img src="img/laporan-waste.jpg" alt="Sales › Laporan Waste: total qty dibuang, nilai cost (bahan baku + OHC), nilai harga jual yang hilang, dan rincian per tanggal dengan alasannya."><div class="cap">Sales › Laporan Waste: total qty dibuang, nilai cost (bahan baku + OHC), nilai harga jual yang hilang, dan rincian per tanggal dengan alasannya.</div></div>
@@ -969,6 +1000,10 @@
   <p>Menunya belum punya HPP (biaya bahan baku per porsi). Lengkapi resepnya di Inventory › Resep &amp; Menu atau cek Admin › Menu Tanpa HPP/OHC. Barang Sisa tanpa HPP tetap bisa dijual dan dibuang, hanya nilainya tidak ikut ke persediaan dan Laba Rugi.</p>
   <h3>Barang Sisa hilang dari daftar setelah saya tekan Jual.</h3>
   <p>Wajar: qty itu sudah dipesan untuk Sales Actual pembeli supaya tidak terjual dua kali. Kalau salah pilih, buka Sales Actual pembeli (masih draft) dan tekan <b>Lepas dari Sales Actual ini</b>; qty-nya kembali ke Barang Sisa.</p>
+  <h3>Rincian Barang Sisa tidak bisa diubah lagi.</h3>
+  <p>Ada komponen yang sudah dijual (termasuk yang masih di draft Sales Actual) atau sudah di-waste. Lepas dulu dari Sales Actual draft-nya bila itu salah tambah; komponen yang sudah di-waste tidak bisa dikembalikan.</p>
+  <h3>Menu PO tidak bisa diubah: “SPK Produksi sudah ditutup”.</h3>
+  <p>Dapur sudah memasak sesuai PO lama. Catat penggantian menu di Sales Actual: kurangi qty actual menu yang tidak diambil (jadi Barang Sisa), lalu tambahkan Porsi Tambahan untuk menu penggantinya.</p>
   <h3>Opname Bahan menulis “Saldo awal”, bukan Hilang/Temuan.</h3>
   <p>Bahan itu belum pernah tercatat di Kartu Stok, jadi hitungan pertama menjadi saldo awalnya. Hitungan berikutnya baru dibandingkan dan bisa menjadi Hilang atau Temuan.</p>
   <h3>Lupa password.</h3>

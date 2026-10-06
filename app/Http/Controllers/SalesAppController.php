@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\ViewExcelExport;
+use App\Models\LeftoverBreakdown;
 use App\Models\LeftoverDisposal;
 use App\Models\Product;
 use App\Models\SalesActual;
@@ -82,6 +83,7 @@ class SalesAppController extends Controller
             'deliveryOrder',
             'items.product',
             'items.purchaseOrderItem.purchaseOrder',
+            'items.purchaseOrder',
             'items.sourceSalesActualItem.salesActual.customer',
         ]);
 
@@ -106,8 +108,13 @@ class SalesAppController extends Controller
         $leftoverStock = $salesActual->isDraft()
             ? $leftovers->available()->reject(fn (array $row) => (int) $row['sales_actual_id'] === (int) $salesActual->id)->values()
             : collect();
+        $leftoverComponents = $salesActual->isDraft()
+            ? $leftovers->availableComponents()->reject(fn (array $row) => (int) $row['sales_actual_id'] === (int) $salesActual->id)->values()
+            : collect();
+        // Menu PO di Sales Actual ini: acuan harga Porsi Tambahan.
+        $extraPortionLines = $salesActual->items->whereNotNull('purchase_order_item_id')->values();
 
-        return view('salesapp.edit', compact('salesActual', 'products', 'leftoverStock'));
+        return view('salesapp.edit', compact('salesActual', 'products', 'leftoverStock', 'leftoverComponents', 'extraPortionLines'));
     }
 
     public function update(Request $request, SalesActual $salesActual)
@@ -172,7 +179,7 @@ class SalesAppController extends Controller
         $totalReturns = (clone $itemsQuery)->sum('qty_return');
 
         $returnItems = (clone $itemsQuery)
-            ->with(['salesActual.customer', 'product', 'leftoverSales.salesActual.customer', 'leftoverDisposals'])
+            ->with(['salesActual.customer', 'product', 'leftoverSales.salesActual.customer', 'leftoverSales.leftoverComponent', 'leftoverDisposals.component', 'leftoverBreakdowns.components'])
             ->where('qty_return', '>', 0)
             ->orderByDesc('qty_return')
             ->get();
@@ -242,31 +249,65 @@ class SalesAppController extends Controller
             ]);
 
         $disposals = LeftoverDisposal::query()
-            ->with(['sourceItem.salesActual.customer'])
+            ->with(['sourceItem.salesActual.customer', 'component'])
             ->whereDate('disposed_at', '>=', $dateFrom->toDateString())
             ->whereDate('disposed_at', '<=', $dateTo->toDateString())
             ->get()
-            ->map(fn (LeftoverDisposal $disposal) => [
-                'date' => $disposal->disposed_at,
-                'customer_name' => $disposal->sourceItem?->salesActual?->customer?->name,
-                'item_name' => $disposal->sourceItem?->item_name,
-                'unit' => $disposal->sourceItem?->unit,
-                'qty' => (float) $disposal->qty,
-                'cost_per_unit' => (float) $disposal->sourceItem?->raw_material_cost + (float) $disposal->sourceItem?->overhead_cost,
-                'unit_price' => (float) $disposal->sourceItem?->unit_price,
-                'source' => 'Dibuang dari stok',
-                'notes' => $disposal->reason,
+            ->map(fn (LeftoverDisposal $disposal) => $disposal->component
+                ? [
+                    // Komponen rincian: nilainya yang diketik user, tanpa harga jual.
+                    'date' => $disposal->disposed_at,
+                    'customer_name' => $disposal->sourceItem?->salesActual?->customer?->name,
+                    'item_name' => $disposal->component->name.' (rincian '.$disposal->sourceItem?->item_name.')',
+                    'unit' => $disposal->component->unit,
+                    'qty' => (float) $disposal->qty,
+                    'cost_per_unit' => $disposal->component->unitCost(),
+                    'unit_price' => 0.0,
+                    'source' => 'Komponen dibuang',
+                    'notes' => $disposal->reason,
+                ]
+                : [
+                    'date' => $disposal->disposed_at,
+                    'customer_name' => $disposal->sourceItem?->salesActual?->customer?->name,
+                    'item_name' => $disposal->sourceItem?->item_name,
+                    'unit' => $disposal->sourceItem?->unit,
+                    'qty' => (float) $disposal->qty,
+                    'cost_per_unit' => (float) $disposal->sourceItem?->raw_material_cost + (float) $disposal->sourceItem?->overhead_cost,
+                    'unit_price' => (float) $disposal->sourceItem?->unit_price,
+                    'source' => 'Dibuang dari stok',
+                    'notes' => $disposal->reason,
+                ]);
+
+        // Nilai porsi yang tidak terinci ke komponen saat Barang Sisa dirinci.
+        $unallocated = LeftoverBreakdown::query()
+            ->with(['sourceItem.salesActual.customer', 'components'])
+            ->whereDate('broken_at', '>=', $dateFrom->toDateString())
+            ->whereDate('broken_at', '<=', $dateTo->toDateString())
+            ->get()
+            ->filter(fn (LeftoverBreakdown $breakdown) => $breakdown->unallocatedValue() > 0)
+            ->map(fn (LeftoverBreakdown $breakdown) => [
+                'date' => $breakdown->broken_at,
+                'customer_name' => $breakdown->sourceItem?->salesActual?->customer?->name,
+                'item_name' => $breakdown->sourceItem?->item_name.' (selisih rincian)',
+                'unit' => 'rupiah',
+                'qty' => 0.0,
+                'cost_per_unit' => 0.0,
+                'cost_total' => $breakdown->unallocatedValue(),
+                'unit_price' => 0.0,
+                'source' => 'Tidak terinci',
+                'notes' => $breakdown->notes,
             ]);
 
         $wasteRows = $salesWaste
             ->concat($disposals)
+            ->concat($unallocated)
             ->sortBy([
                 fn (array $a, array $b) => [$a['date']?->toDateString(), $a['item_name']] <=> [$b['date']?->toDateString(), $b['item_name']],
             ])
             ->values();
 
         $totalWasteQty = round((float) $wasteRows->sum('qty'), 2);
-        $totalWasteCost = round((float) $wasteRows->sum(fn (array $row) => $row['qty'] * $row['cost_per_unit']), 2);
+        $totalWasteCost = round((float) $wasteRows->sum(fn (array $row) => $row['cost_total'] ?? $row['qty'] * $row['cost_per_unit']), 2);
         $totalWasteSelling = round((float) $wasteRows->sum(fn (array $row) => $row['qty'] * $row['unit_price']), 2);
 
         return compact(

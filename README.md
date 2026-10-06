@@ -40,6 +40,17 @@ menggantikan HPP residual opname dengan pemakaian bahan riil dari resep × produ
   persediaan: baris *Barang Sisa - Persediaan Akhir* di Neraca, *Barang Sisa Awal/Akhir* di blok HPP Laba
   Rugi (awal menambah, akhir mengurangi Bahan Baku Terpakai). Hanya retur sejak pengaturan
   `leftover.accounting_start` (bawaan 1 Okt 2026) supaya laporan bulan yang sudah dilaporkan tidak bergeser.
+- **Rincian Barang Sisa per komponen** (adendum Owner, Okt 2026): sebagian porsi retur dipecah user menjadi
+  komponen yang **diketik bebas** (nasi, telur, …) dengan nilai HPP yang juga diketik, acuannya HPP porsi
+  (`leftover_breakdowns` + `leftover_components`). Total nilai tidak boleh melebihi HPP porsi yang dirinci;
+  selisihnya waste pada tanggal rincian. Tiap komponen dijual sesuai yang diambil (Penjualan Barang Sisa dengan
+  `leftover_component_id`, tanpa `product_id`, harga diisi Sales) atau di-waste; rincian bisa diubah/dibatalkan
+  selama belum ada komponen yang terpakai. Persediaan = porsi utuh × HPP menu + sisa komponen × nilai/satuan.
+- **Porsi Tambahan & ganti menu**: customer yang mengganti isi PO setelah dimasak (10+5 jadi 13+2) dicatat di
+  Sales Actual: qty actual menu lama dikurangi (retur → Barang Sisa), menu pengganti lewat Porsi Tambahan
+  (`is_extra_portion`, harga & cara bayar dari PO baris acuannya). Ubah PO di Admin menyegarkan SPK Produksi
+  yang belum ditutup secara otomatis; bila SPK Produksi sudah ditutup, menu/qty PO ditolak dan diarahkan ke
+  Sales Actual.
 - **Barang Hilang / Barang Temuan**: penyesuaian kartu stok (hitung sisa saat Tutup SPK atau halaman
   **Opname Bahan** di Inventory) bertanda negatif/positif. Tampil sebagai rincian di bawah Bahan Baku
   Terpakai ("termasuk …") — terpisah dari Kerugian Barang Rusak di Pengeluaran, dan tidak mengubah Laba.
