@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\InventoryUnitConversionResource\Pages;
+namespace App\Filament\Menu\Resources\InventoryUnitConversionResource\Pages;
 
-use App\Filament\Resources\InventoryUnitConversionResource;
+use App\Filament\Menu\Resources\InventoryUnitConversionResource;
 use App\Support\Units\Unit;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;

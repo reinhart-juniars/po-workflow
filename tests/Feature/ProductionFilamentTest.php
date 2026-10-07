@@ -1,6 +1,6 @@
 <?php
 
-use App\Filament\Pages\HppComparisonReport;
+use App\Filament\Menu\Pages\HppComparisonReport;
 use App\Filament\Resources\InventoryMovementResource;
 use App\Filament\Resources\ProductionOrderResource;
 use App\Filament\Resources\RequisitionResource;

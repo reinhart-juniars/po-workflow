@@ -30,6 +30,8 @@ use Illuminate\Support\Facades\Auth;
  */
 class InventoryPurchaseResource extends Resource
 {
+    use \App\Filament\Concerns\InInventoryPanel;
+
     protected static ?string $model = InventoryPurchase::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Pages;
+namespace App\Filament\Menu\Pages;
 
 use App\Services\ProductionUsageService;
 use App\Support\Settings\Settings;
@@ -23,11 +23,15 @@ use Illuminate\Support\Collection;
  */
 class HppComparisonReport extends Page implements HasForms
 {
+    use \App\Filament\Concerns\PageInPanel;
+
+    protected static string $ownerPanel = 'menu';
+
     use InteractsWithForms;
 
     protected static ?string $navigationIcon = 'heroicon-o-scale';
 
-    protected static ?string $navigationGroup = 'Resep & HPP';
+    protected static ?string $navigationGroup = 'HPP & OHC';
 
     protected static ?string $navigationLabel = 'Perbandingan HPP';
 

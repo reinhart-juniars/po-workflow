@@ -1,7 +1,7 @@
 <?php
 
-use App\Filament\Resources\InventoryUnitConversionResource\Pages\CreateInventoryUnitConversion;
-use App\Filament\Resources\InventoryUnitConversionResource\Pages\MissingUnitConversions;
+use App\Filament\Menu\Resources\InventoryUnitConversionResource\Pages\CreateInventoryUnitConversion;
+use App\Filament\Menu\Resources\InventoryUnitConversionResource\Pages\MissingUnitConversions;
 use App\Models\InventoryItem;
 use App\Models\InventoryUnitConversion;
 use App\Models\Recipe;

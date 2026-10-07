@@ -111,7 +111,7 @@ it('menampilkan kebutuhan bahan di Detail PO admin dan di SPK Produksi', functio
         ->assertSee('Tepung Terigu')
         ->assertSee('1 menu belum punya resep')
         ->assertSee('ES TEH (20 cup)')
-        ->assertSee(route('filament.admin.pages.pencocokan-menu'), false);
+        ->assertSee(route('filament.menu.pages.pencocokan-menu'), false);
 
     $order = app(ProductionOrderService::class)->generateFromSpk($data['spk']);
     $this->actingAs($admin)->get('/inventory/production-orders/'.$order->id.'/bahan')

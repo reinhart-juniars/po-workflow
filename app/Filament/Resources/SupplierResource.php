@@ -27,6 +27,8 @@ use Illuminate\Support\Facades\Auth;
  */
 class SupplierResource extends Resource
 {
+    use \App\Filament\Concerns\InInventoryPanel;
+
     protected static ?string $model = Supplier::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-building-storefront';

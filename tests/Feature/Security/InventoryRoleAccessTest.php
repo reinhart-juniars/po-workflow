@@ -41,14 +41,14 @@ it('membuka aplikasi inventory untuk peran inventory sesuai izin bawaannya, dan 
 
     actingAs($gudang);
 
-    // Beranda peran = dashboard Inventory; tab aplikasi hanya Inventory.
+    // Beranda peran = dashboard Inventory; tab aplikasi Inventory + Menu (baca saja).
     get('/dashboard')->assertRedirect(route('filament.admin.pages.dashboard'));
     get('/inventory')->assertRedirect(route('filament.admin.pages.dashboard'));
-    expect(collect(Navigation::tabs($gudang))->pluck('key')->all())->toBe(['inventory']);
+    expect(collect(Navigation::tabs($gudang))->pluck('key')->all())->toBe(['inventory', 'menu']); // resep & HPP hanya dibaca
 
     get('/inventory/dashboard')->assertOk();
     get('/inventory/inventory-items')->assertOk();
-    get('/inventory/recipes')->assertOk();
+    get('/menu/recipes')->assertOk();
     get('/inventory/inventory-movements')->assertOk();
     get('/inventory/production-orders')->assertOk();
 
@@ -59,10 +59,12 @@ it('membuka aplikasi inventory untuk peran inventory sesuai izin bawaannya, dan 
     get('/accounting-app')->assertForbidden();
     get('/production-app')->assertForbidden();
 
-    // Izin bawaan: kelola inventory & resep, periksa form kebutuhan, tanpa
-    // menyusun/menyetujui/menutup SPK produksi.
+    // Izin bawaan: kelola inventory, baca resep (diatur tim menu sejak
+    // 7 Okt 2026), periksa form kebutuhan, tanpa menyusun/menyetujui/menutup
+    // SPK produksi.
     expect($gudang->can('inventory.manage'))->toBeTrue()
-        ->and($gudang->can('recipe.manage'))->toBeTrue()
+        ->and($gudang->can('recipe.view'))->toBeTrue()
+        ->and($gudang->can('recipe.manage'))->toBeFalse()
         ->and($gudang->can('requisition.check'))->toBeTrue()
         ->and($gudang->can('production.manage'))->toBeFalse()
         ->and($gudang->can('requisition.approve'))->toBeFalse()

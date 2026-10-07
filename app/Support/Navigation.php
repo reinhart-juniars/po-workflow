@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
  *
  * Dua tingkat, seperti yang sudah dikenal pengguna: **aplikasi** di bilah
  * atas (Owner, Admin, Accounting, Inventory, Sales, Marketing, Production,
- * Delivery, Superadmin) dan **menu aplikasi** di sidebar, dikelompokkan per seksi.
+ * Menu, Delivery, Superadmin) dan **menu aplikasi** di sidebar, dikelompokkan per seksi.
  *
  * Dibaca oleh dua penyaji: layout Blade (`layouts.shell`) dan panel
  * Filament (modul inventory). Bilah aplikasinya sama persis di keduanya;
@@ -37,6 +37,7 @@ class Navigation
             'admin' => ['label' => 'Admin', 'icon' => 'heroicon-o-clipboard-document-list', 'dashboard' => 'adminapp.dashboard', 'pattern' => 'admin-app*', 'roles' => ['admin', 'owner', 'superadmin']],
             'accounting' => ['label' => 'Accounting', 'icon' => 'heroicon-o-banknotes', 'dashboard' => 'accountingapp.dashboard', 'pattern' => 'accounting-app*', 'roles' => ['accounting', 'owner', 'superadmin']],
             'inventory' => ['label' => 'Inventory', 'icon' => 'heroicon-o-cube', 'dashboard' => 'filament.admin.pages.dashboard', 'pattern' => 'inventory*', 'roles' => User::PANEL_ROLES],
+            'menu' => ['label' => 'Menu', 'icon' => 'heroicon-o-book-open', 'dashboard' => 'filament.menu.pages.dashboard', 'pattern' => 'menu*', 'roles' => User::MENU_ROLES],
             'sales' => ['label' => 'Sales', 'icon' => 'heroicon-o-shopping-bag', 'dashboard' => 'salesapp.dashboard', 'pattern' => 'sales-app*', 'roles' => ['sales', 'owner', 'superadmin']],
             'marketing' => ['label' => 'Marketing', 'icon' => 'heroicon-o-megaphone', 'dashboard' => 'marketingapp.dashboard', 'pattern' => 'marketing-app*', 'roles' => ['marketing', 'owner', 'superadmin']],
             'production' => ['label' => 'Production', 'icon' => 'heroicon-o-fire', 'dashboard' => 'productionapp.dashboard', 'pattern' => 'production-app*', 'roles' => ['production', 'owner', 'superadmin']],
@@ -144,24 +145,33 @@ class Navigation
                     ['label' => 'Pembelian Bahan Baku', 'route' => 'filament.admin.resources.inventory-purchases.index', 'can' => 'inventory.view'],
                     ['label' => 'Stock Opname', 'route' => 'filament.admin.resources.stock-opnames.index', 'can' => 'inventory.view'],
                     ['label' => 'Opname Bahan', 'route' => 'filament.admin.pages.opname-bahan', 'can' => 'inventory.manage'],
+                    ['label' => 'Susut Bahan', 'route' => 'filament.admin.pages.susut-bahan', 'can' => 'ledger.view'],
                     ['label' => 'Saldo Awal Stok', 'route' => 'filament.admin.resources.inventory-openings.index', 'can' => 'inventory.view'],
                     ['label' => 'Pengaturan Inventory', 'route' => 'filament.admin.pages.pengaturan-inventory', 'can' => 'settings.manage'],
-                ],
-                'Resep & HPP' => [
-                    ['label' => 'Resep & Menu', 'route' => 'filament.admin.resources.recipes.index', 'can' => 'recipe.view'],
-                    ['label' => 'Pencocokan Menu', 'route' => 'filament.admin.pages.pencocokan-menu', 'can' => 'recipe.view'],
-                    ['label' => 'Pekerjaan Menu', 'route' => 'filament.admin.pages.pekerjaan-menu', 'can' => 'recipe.view'],
-                    ['label' => 'Konversi Satuan', 'route' => 'filament.admin.resources.inventory-unit-conversions.index', 'can' => 'inventory.view'],
-                    ['label' => 'Bahan Belum Cocok', 'route' => 'filament.admin.resources.recipe-mismatches.index', 'can' => 'recipe.view'],
-                    ['label' => 'Perbandingan HPP', 'route' => 'filament.admin.pages.hpp-comparison-report', 'can' => 'ledger.view'],
-                    ['label' => 'Susut Bahan', 'route' => 'filament.admin.pages.susut-bahan', 'can' => 'ledger.view'],
-                    ['label' => 'Menu Tidak Diproduksi', 'route' => 'filament.admin.pages.menu-tidak-diproduksi', 'can' => 'recipe.view'],
                 ],
                 'Produksi' => [
                     ['label' => 'SPK Produksi', 'route' => 'filament.admin.resources.production-orders.index', 'can' => 'production.view'],
                     ['label' => 'Form Kebutuhan', 'route' => 'filament.admin.resources.requisitions.index', 'can' => 'production.view'],
                     ['label' => 'Kartu Stok', 'route' => 'filament.admin.resources.inventory-movements.index', 'can' => 'ledger.view'],
                     ['label' => 'Pelaksana', 'route' => 'filament.admin.resources.production-workers.index', 'can' => 'production.view'],
+                ],
+            ],
+            // Aplikasi Menu (panel Filament /menu): resep & biaya menu. Harga
+            // jual dan profit ke customer tetap di Admin › Master Menu.
+            'menu' => [
+                'Ringkasan' => [
+                    ['label' => 'Dashboard', 'route' => 'filament.menu.pages.dashboard', 'can' => 'recipe.view'],
+                ],
+                'Menu & Resep' => [
+                    ['label' => 'Menu Utama & Sub Menu', 'route' => 'filament.menu.resources.recipes.index', 'can' => 'recipe.view'],
+                    ['label' => 'Pencocokan Menu', 'route' => 'filament.menu.pages.pencocokan-menu', 'can' => 'recipe.view'],
+                    ['label' => 'Pekerjaan Menu', 'route' => 'filament.menu.pages.pekerjaan-menu', 'can' => 'recipe.view'],
+                ],
+                'HPP & OHC' => [
+                    ['label' => 'Konversi Satuan', 'route' => 'filament.menu.resources.inventory-unit-conversions.index', 'can' => 'recipe.view'],
+                    ['label' => 'Bahan Belum Cocok', 'route' => 'filament.menu.resources.recipe-mismatches.index', 'can' => 'recipe.view'],
+                    ['label' => 'Perbandingan HPP', 'route' => 'filament.menu.pages.hpp-comparison-report', 'can' => 'ledger.view'],
+                    ['label' => 'Menu Tidak Diproduksi', 'route' => 'filament.menu.pages.menu-tidak-diproduksi', 'can' => 'recipe.view'],
                 ],
             ],
             'sales' => [

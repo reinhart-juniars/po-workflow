@@ -24,15 +24,19 @@ use Illuminate\Support\Collection;
  */
 class ShrinkageReport extends Page implements HasForms
 {
+    use \App\Filament\Concerns\PageInPanel;
+
+    protected static string $ownerPanel = 'admin';
+
     use InteractsWithForms;
 
     protected static ?string $navigationIcon = 'heroicon-o-exclamation-triangle';
 
-    protected static ?string $navigationGroup = 'Resep & HPP';
+    protected static ?string $navigationGroup = 'Inventory';
 
     protected static ?string $navigationLabel = 'Susut Bahan';
 
-    protected static ?int $navigationSort = 45;
+    protected static ?int $navigationSort = 36;
 
     protected static ?string $slug = 'susut-bahan';
 

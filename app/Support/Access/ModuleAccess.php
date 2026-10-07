@@ -63,9 +63,11 @@ class ModuleAccess
             'settings.manage',
             'notification.price', 'notification.profit',
         ],
+        // Admin mengurus customer & harga jual (Admin › Master Menu); resep dan
+        // biayanya hanya dibaca -- dipegang tim menu (revisi 7 Okt 2026).
         'admin' => [
             'inventory.view', 'inventory.manage',
-            'recipe.view', 'recipe.manage',
+            'recipe.view',
             'production.view', 'production.manage', 'production.complete',
             'requisition.approve', 'requisition.check',
             'ledger.view',
@@ -80,11 +82,11 @@ class ModuleAccess
             'notification.price',
         ],
         // Staf inventory/gudang: kelola bahan, pembelian, opname, saldo awal,
-        // cocokkan nama bahan resep, dan periksa form kebutuhan saat barang
-        // dibeli. Tidak menyusun/menyetujui/menutup SPK produksi.
+        // dan periksa form kebutuhan saat barang dibeli. Resep hanya dibaca.
+        // Tidak menyusun/menyetujui/menutup SPK produksi.
         'inventory' => [
             'inventory.view', 'inventory.manage',
-            'recipe.view', 'recipe.manage',
+            'recipe.view',
             'production.view',
             'requisition.check',
             'ledger.view',
@@ -93,11 +95,18 @@ class ModuleAccess
         // menolak Form Kebutuhan yang diajukan produksi.
         'inventory-supervisor' => [
             'inventory.view', 'inventory.manage',
-            'recipe.view', 'recipe.manage',
+            'recipe.view',
             'production.view',
             'requisition.approve', 'requisition.check',
             'ledger.view',
             'notification.price',
+        ],
+        // Tim menu: susun resep menu utama & sub menu, HPP, OHC, pencocokan
+        // ke produk, konversi satuan. Membuka aplikasi Menu saja.
+        'menu' => [
+            'recipe.view', 'recipe.manage',
+            'ledger.view',
+            'notification.price', 'notification.profit',
         ],
         'production' => [
             'inventory.view',

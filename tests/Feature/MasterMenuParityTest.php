@@ -6,9 +6,9 @@ use App\Exports\PlatingExport;
 use App\Exports\PriceHistoryExport;
 use App\Exports\ProductionTasksExport;
 use App\Exports\RecipeTasksExport;
-use App\Filament\Pages\RecipeTaskTemplates;
+use App\Filament\Menu\Pages\RecipeTaskTemplates;
+use App\Filament\Menu\Resources\RecipeResource\Pages\ListRecipes;
 use App\Filament\Resources\ProductionOrderResource\Pages\PlatingSheet;
-use App\Filament\Resources\RecipeResource\Pages\ListRecipes;
 use App\Models\ProductionTask;
 use App\Models\ProductionWorker;
 use App\Models\Recipe;
@@ -73,7 +73,7 @@ it('menandai menu yang profit nyatanya di bawah target dan bisa menyaringnya', f
 
 it('memindahkan resep antara Menu Utama dan Sub-Menu dari daftar', function () {
     $data = siapkanProduksi();
-    $this->actingAs(penggunaParitas('admin'));
+    $this->actingAs(penggunaParitas('menu'));
 
     Livewire::test(ListRecipes::class)->callTableAction('pindah_jenis', $data['recipe']);
     expect($data['recipe']->fresh()->jenis)->toBe(Recipe::JENIS_SUB);
@@ -192,7 +192,7 @@ it('membuka halaman Pekerjaan Menu untuk pemegang recipe.view dan menawarkan tug
     // Tanpa duplikat beda huruf besar/kecil.
     expect(ProductionTask::taskOptions())->toBe(['Goreng', 'Packing']);
 
-    $this->actingAs(penggunaParitas('admin'))->get('/inventory/pekerjaan-menu')
+    $this->actingAs(penggunaParitas('admin'))->get('/menu/pekerjaan-menu')
         ->assertOk()->assertSee('Pekerjaan Menu')->assertSee('Gorengan')->assertSee('Goreng adonan — Mia');
 
     Livewire::test(RecipeTaskTemplates::class)
@@ -201,5 +201,5 @@ it('membuka halaman Pekerjaan Menu untuk pemegang recipe.view dan menawarkan tug
 });
 
 it('menolak halaman Pekerjaan Menu untuk peran tanpa recipe.view', function () {
-    $this->actingAs(penggunaParitas('sales'))->get('/inventory/pekerjaan-menu')->assertForbidden();
+    $this->actingAs(penggunaParitas('sales'))->get('/menu/pekerjaan-menu')->assertForbidden();
 });

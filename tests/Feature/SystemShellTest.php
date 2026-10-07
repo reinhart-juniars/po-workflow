@@ -60,19 +60,29 @@ it('memakai istilah Indonesia di menu dan halaman kartu stok, bukan "ledger"', f
         ->assertOk()->assertSee('Kartu Stok')->assertDontSee('Ledger');
 });
 
-it('mendaftarkan setiap resource dan halaman filament ke menu aplikasi inventory dengan grup yang sama', function () {
-    $menu = Navigation::menus()['inventory'];
-    $routes = collect($menu)->flatten(1)->pluck('route')->all();
-    $groups = array_keys($menu);
+it('mendaftarkan setiap resource dan halaman filament ke menu aplikasinya dengan grup yang sama', function () {
+    // Panel Filament => aplikasi di Navigation. Panel baru wajib masuk di sini.
+    $panels = ['admin' => 'inventory', 'menu' => 'menu'];
 
-    foreach (\Filament\Facades\Filament::getResources() as $resource) {
-        expect(in_array($resource::getRouteBaseName().'.index', $routes, true))->toBeTrue("Resource {$resource} belum ada di Navigation.");
-        expect(in_array($resource::getNavigationGroup(), $groups, true))->toBeTrue("Grup '{$resource::getNavigationGroup()}' pada {$resource} tidak ada di Navigation.");
-    }
+    expect(array_keys(\Filament\Facades\Filament::getPanels()))->toEqualCanonicalizing(array_keys($panels));
 
-    foreach (\Filament\Facades\Filament::getPages() as $page) {
-        expect(in_array($page::getRouteName(), $routes, true))->toBeTrue("Halaman {$page} belum ada di Navigation.");
-        expect(in_array($page::getNavigationGroup(), $groups, true))->toBeTrue("Grup '{$page::getNavigationGroup()}' pada {$page} tidak ada di Navigation.");
+    foreach ($panels as $panelId => $app) {
+        $panel = \Filament\Facades\Filament::getPanel($panelId);
+        $menu = Navigation::menus()[$app];
+        $routes = collect($menu)->flatten(1)->pluck('route')->all();
+        $groups = array_keys($menu);
+
+        expect($panel->getResources())->not->toBeEmpty();
+
+        foreach ($panel->getResources() as $resource) {
+            expect(in_array($resource::getRouteBaseName().'.index', $routes, true))->toBeTrue("Resource {$resource} belum ada di menu {$app}.");
+            expect(in_array($resource::getNavigationGroup(), $groups, true))->toBeTrue("Grup '{$resource::getNavigationGroup()}' pada {$resource} tidak ada di menu {$app}.");
+        }
+
+        foreach ($panel->getPages() as $page) {
+            expect(in_array($page::getRouteName(), $routes, true))->toBeTrue("Halaman {$page} belum ada di menu {$app}.");
+            expect(in_array($page::getNavigationGroup(), $groups, true))->toBeTrue("Grup '{$page::getNavigationGroup()}' pada {$page} tidak ada di menu {$app}.");
+        }
     }
 });
 
@@ -117,10 +127,22 @@ it('menampilkan sidebar menu aplikasi yang sedang dibuka saja', function () {
         ->assertSee('Purchase Orders')
         ->assertDontSee('Pengeluaran');
 
-    $this->actingAs($owner)->get('/inventory/recipes')->assertOk()
-        ->assertSee('Resep &amp; Menu', false)
-        ->assertSee('SPK Produksi')
+    // Aplikasi Menu hanya menampilkan menunya sendiri, bukan menu Inventory.
+    $this->actingAs($owner)->get('/menu/recipes')->assertOk()
+        ->assertSee('Menu Utama')
+        ->assertSee('Sub Menu')
+        ->assertSee('Pencocokan Menu')
+        ->assertDontSee('SPK Produksi')
         ->assertDontSee('Pengeluaran');
+});
+
+it('tidak menampilkan menu aplikasi Menu di sidebar Inventory', function () {
+    // `it` terpisah: navigasi Filament dipasang sekali per proses tes, jadi
+    // dua panel dalam satu `it` saling mewarisi sidebar.
+    $this->actingAs(penggunaShell('owner'))->get('/inventory/production-orders')->assertOk()
+        ->assertSee('SPK Produksi')
+        ->assertDontSee('Pencocokan Menu')
+        ->assertDontSee('Konversi Satuan');
 });
 
 it('menyaring tab dan menu menurut peran', function () {
@@ -141,8 +163,9 @@ it('menyaring tab dan menu menurut peran', function () {
     // Positive control: owner melihat semua tab dan Pengaturan Inventory
     // (dari definisi menu, karena navigasi Filament dipasang sekali per proses).
     $owner = penggunaShell('owner');
-    expect(collect(Navigation::tabs($owner))->pluck('key')->all())->toBe(['owner', 'admin', 'accounting', 'inventory', 'sales', 'marketing', 'production', 'delivery']);
-    expect(collect(Navigation::sidebar('inventory', $owner))->pluck('label')->all())->toBe(['Ringkasan', 'Inventory', 'Resep & HPP', 'Produksi']);
+    expect(collect(Navigation::tabs($owner))->pluck('key')->all())->toBe(['owner', 'admin', 'accounting', 'inventory', 'menu', 'sales', 'marketing', 'production', 'delivery']);
+    expect(collect(Navigation::sidebar('inventory', $owner))->pluck('label')->all())->toBe(['Ringkasan', 'Inventory', 'Produksi']);
+    expect(collect(Navigation::sidebar('menu', $owner))->pluck('label')->all())->toBe(['Ringkasan', 'Menu & Resep', 'HPP & OHC']);
     expect(collect(collect(Navigation::sidebar('inventory', $owner))->firstWhere('label', 'Inventory')['items'])->pluck('label')->all())->toContain('Pengaturan Inventory');
 
     $akunting = penggunaShell('accounting');
@@ -153,6 +176,10 @@ it('memakai satu pintu masuk, beranda peran, dan mengarahkan path lama', functio
     $this->get('/inventory/inventory-items')->assertRedirect(route('login'));
     $this->get('/admin')->assertRedirect('/inventory');
     $this->get('/admin/recipes/157/hpp')->assertRedirect('/inventory/recipes/157/hpp');
+    // Resep pindah ke aplikasi Menu: tautan lama /inventory/... ikut diarahkan.
+    $this->get('/inventory/recipes/157/hpp')->assertRedirect('/menu/recipes/157/hpp');
+    $this->get('/inventory/pencocokan-menu')->assertRedirect('/menu/pencocokan-menu');
+    $this->get('/inventory/production-orders')->assertRedirect(route('login')); // kontrol: modul Inventory tidak ikut dialihkan
     expect(Route::has('filament.admin.auth.login'))->toBeFalse();
 
     $akunting = penggunaShell('accounting');

@@ -34,6 +34,22 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'production',
     ];
 
+    /**
+     * Peran yang membuka aplikasi Menu (panel Filament /menu): tim menu yang
+     * mengatur resep, plus peran yang perlu membaca resep & HPP. Siapa yang
+     * boleh *mengubah* diputuskan izin recipe.manage di ModuleAccess --
+     * bawaannya hanya menu, owner, superadmin.
+     */
+    public const MENU_ROLES = [
+        'superadmin',
+        'owner',
+        'menu',
+        'admin',
+        'accounting',
+        'inventory',
+        'inventory-supervisor',
+    ];
+
     /** Nama peran untuk ditampilkan. */
     public static function roleLabel(string $role): string
     {
@@ -47,6 +63,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'accounting' => 'Accounting',
         'inventory' => 'Inventory (staf gudang)',
         'inventory-supervisor' => 'Supervisor Gudang',
+        'menu' => 'Menu (resep & HPP)',
         'sales' => 'Sales',
         'marketing' => 'Marketing',
         'production' => 'Production',
@@ -64,6 +81,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'accounting',
         'inventory',
         'inventory-supervisor',
+        'menu',
         'sales',
         'marketing',
         'production',
@@ -77,6 +95,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'accounting' => 'accountingapp.dashboard',
         'inventory' => 'filament.admin.pages.dashboard',
         'inventory-supervisor' => 'filament.admin.pages.dashboard',
+        'menu' => 'filament.menu.pages.dashboard',
         'sales' => 'salesapp.dashboard',
         'marketing' => 'marketingapp.dashboard',
         'production' => 'productionapp.dashboard',
@@ -141,6 +160,16 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
             array_splice($keys, $pos === false ? count($keys) : $pos + 1, 0, 'inventory');
         }
 
+        // Aplikasi Menu (panel /menu) tepat sesudah Inventory: resep dan
+        // bahan dibaca berdampingan.
+        if ($this->is_active && $this->hasAnyRole(self::MENU_ROLES)) {
+            $pos = array_search('inventory', $keys, true);
+            if ($pos === false) {
+                $pos = array_search('accounting', $keys, true);
+            }
+            array_splice($keys, $pos === false ? count($keys) : $pos + 1, 0, 'menu');
+        }
+
         return array_values(array_unique($keys));
     }
 
@@ -193,6 +222,6 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->is_active && $this->hasAnyRole(self::PANEL_ROLES);
+        return $this->is_active && $this->hasAnyRole($panel->getId() === 'menu' ? self::MENU_ROLES : self::PANEL_ROLES);
     }
 }

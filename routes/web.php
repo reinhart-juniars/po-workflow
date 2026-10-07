@@ -326,6 +326,17 @@ Route::get('/inventory', fn () => redirect(auth()->check() ? \App\Support\Naviga
     ->middleware('web')
     ->name('inventory.home');
 
+Route::get('/menu', fn () => redirect(auth()->check() ? \App\Support\Navigation::dashboardUrl(auth()->user()) : route('login')))
+    ->middleware('web')
+    ->name('menu.home');
+
+// Resep & HPP pindah dari aplikasi Inventory ke aplikasi Menu (revisi
+// 7 Okt 2026). Tautan lama -- bookmark, panduan PDF -- diarahkan ke sana.
+Route::get('/inventory/{slug}/{path?}', fn (string $slug, ?string $path = null) => redirect('/menu/'.$slug.($path ? '/'.$path : ''), 301))
+    ->whereIn('slug', ['recipes', 'recipe-mismatches', 'inventory-unit-conversions', 'pencocokan-menu', 'pekerjaan-menu', 'hpp-comparison-report', 'menu-tidak-diproduksi'])
+    ->where('path', '.*')
+    ->name('menu.legacy-redirect');
+
 Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:superadmin'])
     ->prefix('superadmin')
     ->name('superadmin.')

@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\RecipeMismatchResource\Pages;
+namespace App\Filament\Menu\Resources\RecipeMismatchResource\Pages;
 
-use App\Filament\Resources\RecipeMismatchResource;
+use App\Filament\Menu\Resources\RecipeMismatchResource;
 use App\Models\RecipeMismatch;
 use Filament\Resources\Pages\ListRecords;
 

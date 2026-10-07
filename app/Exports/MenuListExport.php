@@ -2,7 +2,7 @@
 
 namespace App\Exports;
 
-use App\Filament\Resources\RecipeResource;
+use App\Filament\Menu\Resources\RecipeResource;
 use App\Models\Recipe;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;

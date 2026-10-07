@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Menu\Resources;
 
-use App\Filament\Resources\RecipeMismatchResource\Pages;
+use App\Filament\Menu\Resources\RecipeMismatchResource\Pages;
 use App\Models\InventoryItem;
 use App\Models\RecipeMismatch;
 use App\Services\RecipeMismatchResolver;
@@ -24,11 +24,13 @@ use Filament\Tables\Table;
  */
 class RecipeMismatchResource extends Resource
 {
+    use \App\Filament\Concerns\InMenuPanel;
+
     protected static ?string $model = RecipeMismatch::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-question-mark-circle';
 
-    protected static ?string $navigationGroup = 'Resep & HPP';
+    protected static ?string $navigationGroup = 'HPP & OHC';
 
     protected static ?string $navigationLabel = 'Bahan Belum Cocok';
 

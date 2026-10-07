@@ -2,7 +2,7 @@
 
 namespace App\Exports;
 
-use App\Filament\Pages\MenuMatching;
+use App\Filament\Menu\Pages\MenuMatching;
 use App\Models\Product;
 use App\Models\Recipe;
 use App\Services\MenuMatchSuggester;

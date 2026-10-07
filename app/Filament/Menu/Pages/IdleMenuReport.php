@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Pages;
+namespace App\Filament\Menu\Pages;
 
 use App\Exports\IdleMenusExport;
 use App\Services\IdleMenuReportService;
@@ -24,11 +24,15 @@ use Maatwebsite\Excel\Facades\Excel;
  */
 class IdleMenuReport extends Page implements HasForms
 {
+    use \App\Filament\Concerns\PageInPanel;
+
+    protected static string $ownerPanel = 'menu';
+
     use InteractsWithForms;
 
     protected static ?string $navigationIcon = 'heroicon-o-eye-slash';
 
-    protected static ?string $navigationGroup = 'Resep & HPP';
+    protected static ?string $navigationGroup = 'HPP & OHC';
 
     protected static ?string $navigationLabel = 'Menu Tidak Diproduksi';
 

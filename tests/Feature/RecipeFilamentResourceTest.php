@@ -1,7 +1,7 @@
 <?php
 
-use App\Filament\Resources\RecipeMismatchResource;
-use App\Filament\Resources\RecipeResource;
+use App\Filament\Menu\Resources\RecipeMismatchResource;
+use App\Filament\Menu\Resources\RecipeResource;
 use App\Models\InventoryItem;
 use App\Models\Recipe;
 use App\Models\RecipeItem;
@@ -19,14 +19,14 @@ use Spatie\Permission\Models\Role;
  * sebelum tersimpan.
  */
 beforeEach(function () {
-    Role::findOrCreate('admin', 'web');
+    Role::findOrCreate('menu', 'web');
 
     $this->user = User::factory()->create([
         'is_active' => true,
         'force_password_change' => false,
     ]);
 
-    $this->user->assignRole('admin');
+    $this->user->assignRole('menu');
     $this->actingAs($this->user);
 
     $this->bucket = InventoryItem::query()->create([

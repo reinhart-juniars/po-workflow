@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\RecipeResource\Pages;
+namespace App\Filament\Menu\Resources\RecipeResource\Pages;
 
-use App\Filament\Resources\RecipeResource;
+use App\Filament\Menu\Resources\RecipeResource;
 use App\Models\Product;
 use App\Services\MenuMatchSuggester;
 use Filament\Resources\Pages\CreateRecord;

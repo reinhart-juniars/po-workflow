@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Filament\Resources\RecipeResource\Pages;
+namespace App\Filament\Menu\Resources\RecipeResource\Pages;
 
 use App\Exports\MenuListExport;
 use App\Exports\RecipesExport;
-use App\Filament\Resources\RecipeResource;
+use App\Filament\Menu\Resources\RecipeResource;
 use App\Imports\RecipesImport;
 use App\Models\Recipe;
 use Filament\Actions;

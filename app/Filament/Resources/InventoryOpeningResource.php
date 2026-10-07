@@ -14,6 +14,8 @@ use Filament\Tables\Table;
 
 class InventoryOpeningResource extends Resource
 {
+    use \App\Filament\Concerns\InInventoryPanel;
+
     protected static ?string $model = InventoryOpening::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-flag';

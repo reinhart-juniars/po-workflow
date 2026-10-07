@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Pages;
+namespace App\Filament\Menu\Pages;
 
 use App\Exports\RecipeTasksExport;
 use App\Imports\SheetsToArrayImport;
@@ -30,11 +30,15 @@ use RuntimeException;
  */
 class RecipeTaskTemplates extends Page implements HasTable
 {
+    use \App\Filament\Concerns\PageInPanel;
+
+    protected static string $ownerPanel = 'menu';
+
     use InteractsWithTable;
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
 
-    protected static ?string $navigationGroup = 'Resep & HPP';
+    protected static ?string $navigationGroup = 'Menu & Resep';
 
     protected static ?string $navigationLabel = 'Pekerjaan Menu';
 

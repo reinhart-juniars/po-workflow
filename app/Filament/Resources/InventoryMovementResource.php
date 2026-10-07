@@ -22,6 +22,8 @@ use Filament\Tables\Table;
  */
 class InventoryMovementResource extends Resource
 {
+    use \App\Filament\Concerns\InInventoryPanel;
+
     protected static ?string $model = InventoryMovement::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-queue-list';

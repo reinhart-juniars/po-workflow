@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Menu\Resources;
 
-use App\Filament\Resources\RecipeResource\Pages;
+use App\Filament\Menu\Resources\RecipeResource\Pages;
 use App\Models\InventoryItem;
 use App\Models\Product;
 use App\Models\Recipe;
@@ -32,11 +32,13 @@ use Filament\Tables\Table;
  */
 class RecipeResource extends Resource
 {
+    use \App\Filament\Concerns\InMenuPanel;
+
     protected static ?string $model = Recipe::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-book-open';
 
-    protected static ?string $navigationGroup = 'Resep & HPP';
+    protected static ?string $navigationGroup = 'Menu & Resep';
 
     protected static ?string $navigationLabel = 'Resep & Menu';
 
@@ -571,6 +573,46 @@ class RecipeResource extends Resource
                 $fail('Baris ini menunjuk bahan sekaligus sub-menu. Pilih salah satu; biayanya tidak bisa dihitung dua kali.');
             }
         };
+    }
+
+    /**
+     * Dua pintu ke resource yang sama: Menu Utama (yang dijual) dan Sub Menu
+     * (komponen di dalam menu lain). Keduanya tab di daftar resep; di sidebar
+     * dipisah karena tim menu bekerja per jenis. Halaman resep tertentu
+     * menyalakan pintu sesuai jenis resepnya.
+     *
+     * @return array<\Filament\Navigation\NavigationItem>
+     */
+    public static function getNavigationItems(): array
+    {
+        $isSubPage = function (): bool {
+            if (request()->query('activeTab') === 'sub') {
+                return true;
+            }
+
+            $record = request()->route('record');
+
+            return $record !== null && Recipe::query()->whereKey($record)->value('jenis') === Recipe::JENIS_SUB;
+        };
+        $onResource = fn () => request()->routeIs(static::getRouteBaseName().'.*');
+
+        return [
+            \Filament\Navigation\NavigationItem::make('Menu Utama')
+                ->group(static::getNavigationGroup())
+                ->icon('heroicon-o-book-open')
+                ->isActiveWhen(fn () => $onResource() && ! $isSubPage())
+                ->badge(static::getNavigationBadge(), color: static::getNavigationBadgeColor())
+                ->badgeTooltip(static::getNavigationBadgeTooltip())
+                ->sort(10)
+                ->url(static::getUrl('index', ['activeTab' => 'utama'])),
+
+            \Filament\Navigation\NavigationItem::make('Sub Menu')
+                ->group(static::getNavigationGroup())
+                ->icon('heroicon-o-square-3-stack-3d')
+                ->isActiveWhen(fn () => $onResource() && $isSubPage())
+                ->sort(11)
+                ->url(static::getUrl('index', ['activeTab' => 'sub'])),
+        ];
     }
 
     public static function getNavigationBadge(): ?string

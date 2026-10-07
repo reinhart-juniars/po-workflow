@@ -116,7 +116,7 @@ class AdminAppController extends Controller
 
         // Breakdown menu -> bahan mentah, dicocokkan dengan stok kartu stok.
         $breakdown = app(\App\Services\MaterialBreakdownService::class)->forPurchaseOrder($po);
-        $matchUrl = auth()->user()?->can('recipe.view') ? route('filament.admin.pages.pencocokan-menu') : null;
+        $matchUrl = auth()->user()?->can('recipe.view') ? route('filament.menu.pages.pencocokan-menu') : null;
 
         return view('adminapp.order_show', compact('po', 'breakdown', 'matchUrl'));
     }

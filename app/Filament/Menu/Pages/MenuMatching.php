@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Filament\Pages;
+namespace App\Filament\Menu\Pages;
 
 use App\Exports\MenuMatchingExport;
-use App\Filament\Resources\RecipeResource;
+use App\Filament\Menu\Resources\RecipeResource;
 use App\Imports\MenuMatchingImport;
 use App\Models\Product;
 use App\Models\Recipe;
@@ -32,6 +32,10 @@ use Maatwebsite\Excel\Facades\Excel;
  */
 class MenuMatching extends Page implements HasTable
 {
+    use \App\Filament\Concerns\PageInPanel;
+
+    protected static string $ownerPanel = 'menu';
+
     use InteractsWithTable;
 
     public const STATUS_BELUM = 'belum';
@@ -45,7 +49,7 @@ class MenuMatching extends Page implements HasTable
 
     protected static ?string $navigationIcon = 'heroicon-o-link';
 
-    protected static ?string $navigationGroup = 'Resep & HPP';
+    protected static ?string $navigationGroup = 'Menu & Resep';
 
     protected static ?string $navigationLabel = 'Pencocokan Menu';
 

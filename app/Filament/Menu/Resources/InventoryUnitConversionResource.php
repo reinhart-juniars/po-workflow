@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Menu\Resources;
 
-use App\Filament\Resources\InventoryUnitConversionResource\Pages;
+use App\Filament\Menu\Resources\InventoryUnitConversionResource\Pages;
 use App\Models\InventoryItem;
 use App\Models\InventoryUnitConversion;
 use App\Services\MissingUnitConversionScanner;
@@ -24,11 +24,13 @@ use Filament\Tables\Table;
  */
 class InventoryUnitConversionResource extends Resource
 {
+    use \App\Filament\Concerns\InMenuPanel;
+
     protected static ?string $model = InventoryUnitConversion::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-scale';
 
-    protected static ?string $navigationGroup = 'Resep & HPP';
+    protected static ?string $navigationGroup = 'HPP & OHC';
 
     protected static ?string $navigationLabel = 'Konversi Satuan';
 
