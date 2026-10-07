@@ -40,7 +40,7 @@
     </p>
 
     <div class="space-y-2">
-        <div class="hidden gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500 sm:grid {{ $columns }}">
+        <div class="hidden gap-2 text-xs font-medium text-slate-500 sm:grid {{ $columns }}">
             <span>Komponen</span><span class="text-right">Jumlah</span><span>Satuan</span><span class="text-right">Nilai HPP (Rp)</span>
         </div>
         @foreach ($rows as $index => $row)

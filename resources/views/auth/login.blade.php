@@ -10,76 +10,67 @@
 </head>
 
 {{--
-  Halaman masuk: satu pintu untuk seluruh 3S ONE. Dua bidang datar -- panel
-  gelap berisi identitas, panel putih berisi form -- tanpa kabut/gradasi.
+  Halaman masuk: satu pintu untuk seluruh 3S ONE. Mengikuti halaman masuk
+  panel Filament (kartu di tengah kanvas slate-50) supaya layar pertama
+  sudah satu bahasa dengan isi sistem. Di bawah kartu, deretan aplikasi
+  memakai pil bilah aplikasi yang sama (shell.css .sh-tab) -- bukan tautan,
+  hanya menunjukkan apa saja yang ada di dalam.
 --}}
-<body class="min-h-full bg-gray-50">
-    <main class="grid min-h-dvh lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <section class="hidden flex-col justify-between bg-slate-950 px-12 py-12 text-white lg:flex">
-            <div class="flex items-center gap-3">
+<body class="min-h-full bg-slate-50">
+    <main class="login-page">
+        <div class="login-column">
+            <div class="login-brand">
                 @include('partials.brand-mark', ['size' => 'lg'])
                 <div class="leading-tight">
-                    <p class="text-lg font-bold tracking-tight text-white">3S ONE</p>
-                    <p class="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">Business Control System</p>
+                    <p class="login-wordmark">3S ONE</p>
+                    <p class="login-tagline">Business Control System</p>
                 </div>
             </div>
 
-            <div>
-                <h1 class="max-w-lg font-display text-5xl leading-[1.02] tracking-[-0.035em] text-white">
-                    Satu sistem untuk pesanan, produksi, stok, dan keuangan.
-                </h1>
-                <p class="mt-6 max-w-md text-[15px] leading-7 text-slate-300">
-                    Owner, Admin, Accounting, Inventory, Sales, Production, dan Delivery bekerja di data yang sama.
-                </p>
-            </div>
-
-            <p class="text-xs text-slate-500">W3S Catering · 3S ONE {{ \App\Support\AppVersion::label() }}</p>
-        </section>
-
-        <section class="flex items-center justify-center px-5 py-8 sm:px-8">
-            <div class="w-full max-w-sm">
-                <div class="mb-8 flex items-center gap-3 lg:hidden">
-                    @include('partials.brand-mark', ['size' => 'md'])
-                    <div class="leading-tight">
-                        <p class="text-sm font-bold tracking-tight text-slate-900">3S ONE</p>
-                        <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Business Control System · {{ \App\Support\AppVersion::label() }}</p>
-                    </div>
-                </div>
-
-                <h2 class="font-display text-3xl tracking-tight text-slate-900">Masuk ke 3S ONE</h2>
-                <p class="mt-2 text-sm text-slate-500">Pakai username atau email beserta password.</p>
+            <section class="login-card" aria-labelledby="login-title">
+                <h1 id="login-title" class="login-title">Masuk ke 3S ONE</h1>
+                <p class="login-subtitle">Pakai username atau email beserta password.</p>
 
                 @if ($errors->any())
-                    <div class="flash-error mt-6 mb-0" role="alert">{{ $errors->first() }}</div>
+                    <div class="flash-error mb-0 mt-6" role="alert">{{ $errors->first() }}</div>
                 @endif
 
-                <form method="POST" action="{{ url('/login') }}" class="mt-8 space-y-5">
+                <form method="POST" action="{{ url('/login') }}" class="mt-6 space-y-5">
                     @csrf
 
                     <div>
                         <label for="name" class="form-label">Username atau email</label>
-                        <input id="name" name="name" type="text" class="form-control py-3 text-base"
+                        <input id="name" name="name" type="text" class="form-control"
                             value="{{ old('name') }}" required autofocus autocomplete="username" autocapitalize="none">
                     </div>
 
                     <div>
                         <label for="password" class="form-label">Password</label>
-                        <input id="password" name="password" type="password" class="form-control py-3 text-base" required
+                        <input id="password" name="password" type="password" class="form-control" required
                             autocomplete="current-password">
                     </div>
 
-                    <div class="flex items-center justify-between gap-4 pt-1">
-                        <label for="remember" class="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-600">
-                            <input id="remember" type="checkbox" name="remember"
-                                class="h-4 w-4 rounded border-slate-300 text-brand-500 focus:ring-brand-500/30">
-                            Ingat saya
-                        </label>
+                    <label for="remember" class="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-950">
+                        <input id="remember" type="checkbox" name="remember" class="h-4 w-4">
+                        Ingat saya
+                    </label>
 
-                        <button type="submit" class="btn-primary px-6">Masuk</button>
-                    </div>
+                    <button type="submit" class="btn-primary w-full">Masuk</button>
                 </form>
+            </section>
+
+            <div class="login-apps" aria-label="Aplikasi di dalam 3S ONE">
+                @foreach (\App\Support\Navigation::apps() as $key => $app)
+                    @continue($key === 'superadmin')
+                    <span class="sh-tab">
+                        @svg($app['icon'], '', ['aria-hidden' => 'true'])
+                        <span>{{ $app['label'] }}</span>
+                    </span>
+                @endforeach
             </div>
-        </section>
+
+            <p class="login-foot">W3S Catering · 3S ONE {{ \App\Support\AppVersion::label() }}</p>
+        </div>
     </main>
 </body>
 

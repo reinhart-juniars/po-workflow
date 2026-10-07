@@ -5,7 +5,7 @@
     $canDeleteInventoryPurchase = auth()->user()?->hasAnyRole(['owner', 'superadmin']);
   @endphp
 
-  <h1 class="text-2xl font-bold mb-4">Monitoring Pembelian Stok</h1>
+  <h1 class="page-title mb-6">Monitoring Pembelian Stok</h1>
 
   <div class="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
     Input pembelian stok sekarang dilakukan lewat menu <strong>Pengeluaran</strong>. Halaman ini dipakai untuk monitoring histori pembelian stok tunai maupun kredit.

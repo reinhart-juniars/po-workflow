@@ -1,7 +1,7 @@
 @extends('layouts.accountingapp', ['title' => 'Kategori Pengeluaran'])
 
 @section('content')
-  <h1 class="text-2xl font-bold mb-4">Kategori Pengeluaran</h1>
+  <h1 class="page-title mb-6">Kategori Pengeluaran</h1>
 
   <div class="section-card mb-6">
     <h2 class="panel-title mb-4">Tambah Kategori Pengeluaran</h2>

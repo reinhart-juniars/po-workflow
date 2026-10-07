@@ -140,6 +140,18 @@
     </main>
   </div>
 
+  {{-- Tombol unggah satu-klik (mis. Import Excel): input file ber-data-auto-submit
+       mengirim formnya begitu berkas dipilih. Tanpa Alpine (cangkang tidak memuatnya). --}}
+  <script>
+    document.addEventListener('change', function (event) {
+      var input = event.target;
+      if (!input.matches || !input.matches('input[type=file][data-auto-submit]') || !input.files.length) return;
+      var label = input.closest('label') && input.closest('label').querySelector('[data-import-label]');
+      if (label) label.textContent = 'Mengunggah ' + input.files[0].name + '…';
+      input.form.requestSubmit ? input.form.requestSubmit() : input.form.submit();
+    });
+  </script>
+
   {{-- Penanda akhir halaman: transisi menunggu sampai sini (partials/page-transition) --}}
   <span id="sh-page-end" hidden></span>
 </body>

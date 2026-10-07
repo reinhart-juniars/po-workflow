@@ -85,7 +85,7 @@
       </div>
 
       <div class="pt-2">
-        <button class="px-4 py-2 rounded bg-indigo-600 text-white text-sm">
+        <button class="btn-primary">
           Simpan Password Baru
         </button>
       </div>

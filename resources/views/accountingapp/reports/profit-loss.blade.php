@@ -32,10 +32,8 @@
 
     .final-pl-table tr.section-row td {
       background: rgb(241 245 249);
-      font-weight: 800;
+      font-weight: 600;
       font-size: 12px;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
       color: rgb(15 23 42);
     }
 
@@ -47,7 +45,7 @@
 
     .final-pl-table tr.major-row td {
       background: rgb(219 234 254);
-      font-weight: 800;
+      font-weight: 600;
       color: rgb(15 23 42);
       font-size: 13.5px;
     }
@@ -55,7 +53,7 @@
     .final-pl-table tr.profit-row td {
       background: rgb(220 252 231);
       color: rgb(20 83 45);
-      font-weight: 800;
+      font-weight: 600;
     }
 
     .final-pl-table tr.profit-row.negative td {
@@ -82,7 +80,7 @@
     .final-pl-table tr.grand-total-row td {
       background: rgb(254 252 232);
       color: rgb(120 53 15);
-      font-weight: 800;
+      font-weight: 600;
     }
 
     .final-pl-table .extra-tag {
@@ -94,8 +92,6 @@
       font-size: 10px;
       font-weight: 700;
       color: rgb(71 85 105);
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
     }
 
     .final-card {
@@ -181,7 +177,6 @@
       margin-top: 0.1rem;
       font-size: 10px;
       font-weight: 700;
-      letter-spacing: 0.01em;
     }
 
     .profitloss-cell-trend.up {
@@ -230,7 +225,7 @@
       background: white;
       color: rgb(29 52 147);
       font-size: 0.9rem;
-      font-weight: 800;
+      font-weight: 600;
       line-height: 1;
       box-shadow: inset 0 0 0 1px rgb(191 219 254);
     }
@@ -446,7 +441,7 @@
     <section class="table-shell mt-6">
       <div class="table-head flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <span>Worksheet Laba Rugi Tahunan</span>
-        <span class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Tahun {{ $selectedYear }}</span>
+        <span class="text-xs font-medium text-slate-500">Tahun {{ $selectedYear }}</span>
       </div>
       <div class="profitloss-yearly-wrap">
         <table class="profitloss-yearly-table">

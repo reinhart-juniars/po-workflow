@@ -37,31 +37,31 @@
 <section class="form-shell mt-4">
   <div class="form-grid">
     <div>
-      <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Customer</p>
+      <p class="text-xs font-medium text-slate-500">Customer</p>
       <p class="mt-1 font-semibold text-slate-800">{{ $po->customer->name ?? '-' }}</p>
     </div>
     <div>
-      <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">No Telepon</p>
+      <p class="text-xs font-medium text-slate-500">No Telepon</p>
       <p class="mt-1 font-semibold text-slate-800">{{ $po->customer->phone ?? '-' }}</p>
     </div>
     <div class="md:col-span-2">
-      <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Alamat Kirim</p>
+      <p class="text-xs font-medium text-slate-500">Alamat Kirim</p>
       <p class="mt-1 font-semibold text-slate-800">{{ $po->shipping_address }}</p>
     </div>
     <div>
-      <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Tanggal Kirim</p>
+      <p class="text-xs font-medium text-slate-500">Tanggal Kirim</p>
       <p class="mt-1 font-semibold text-slate-800">{{ $po->delivery_date ? \Carbon\Carbon::parse($po->delivery_date)->format('d M Y') : '-' }}</p>
     </div>
     <div>
-      <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Jam Terima</p>
+      <p class="text-xs font-medium text-slate-500">Jam Terima</p>
       <p class="mt-1 font-semibold text-slate-800">{{ $po->delivery_time ?: '-' }}</p>
     </div>
     <div>
-      <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Jenis Pembayaran</p>
+      <p class="text-xs font-medium text-slate-500">Jenis Pembayaran</p>
       <p class="mt-1 font-semibold text-slate-800">{{ $po->payment_type === 'receivable' ? 'Piutang' : 'Tunai' }}</p>
     </div>
     <div>
-      <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Tempo Piutang</p>
+      <p class="text-xs font-medium text-slate-500">Tempo Piutang</p>
       <p class="mt-1 font-semibold text-slate-800">
         @if($po->payment_type === 'receivable' && $po->receivable_days)
           {{ $po->receivable_days }} hari
@@ -71,13 +71,13 @@
       </p>
     </div>
     <div>
-      <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Jatuh Tempo</p>
+      <p class="text-xs font-medium text-slate-500">Jatuh Tempo</p>
       <p class="mt-1 font-semibold text-slate-800">
         {{ $po->due_date ? \Carbon\Carbon::parse($po->due_date)->format('d M Y') : '-' }}
       </p>
     </div>
     <div>
-      <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Akun Kas</p>
+      <p class="text-xs font-medium text-slate-500">Akun Kas</p>
       <p class="mt-1 font-semibold text-slate-800">{{ $po->cashAccount->name ?? '-' }}</p>
     </div>
   </div>

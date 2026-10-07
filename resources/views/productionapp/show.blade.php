@@ -163,7 +163,7 @@
     <form
       action="{{ route('productionapp.orders.cancel', $po->id) }}"
       method="POST"
-      class="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl"
+      class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl ring-1 ring-slate-950/5"
     >
       @csrf
       <h2 id="cancelModalTitle" class="text-base font-semibold text-slate-900">
@@ -200,7 +200,7 @@
         </button>
         <button
           type="submit"
-          class="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-500"
+          class="btn-danger"
         >
           Ya, Batalkan PO
         </button>

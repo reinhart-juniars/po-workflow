@@ -1,7 +1,7 @@
 @extends('layouts.accountingapp', ['title' => 'Monitoring Hutang'])
 
 @section('content')
-  <h1 class="text-2xl font-bold mb-4">Monitoring Hutang</h1>
+  <h1 class="page-title mb-6">Monitoring Hutang</h1>
 
   <div class="mb-4 notice-soft-amber">
     Hutang lewat jatuh tempo: <strong>{{ number_format($overduePayablesCount, 0, ',', '.') }}</strong> |

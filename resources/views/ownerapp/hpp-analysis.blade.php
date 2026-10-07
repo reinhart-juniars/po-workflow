@@ -35,13 +35,13 @@
             <p class="stat-label">Selisih</p>
             <div class="mt-1 space-y-2">
                 <div class="rounded-lg border border-slate-100 bg-slate-50/70 p-2">
-                    <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">BB (Real − Hitungan)</p>
+                    <p class="text-xs font-medium text-slate-500">BB (Real − Hitungan)</p>
                     <p class="text-base font-semibold {{ $totalSelisihBb >= 0 ? 'text-rose-600' : 'text-emerald-600' }}">
                         Rp {{ number_format($totalSelisihBb, 0, ',', '.') }}
                     </p>
                 </div>
                 <div class="rounded-lg border border-slate-100 bg-slate-50/70 p-2">
-                    <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">OHC (Real − Hitungan)</p>
+                    <p class="text-xs font-medium text-slate-500">OHC (Real − Hitungan)</p>
                     <p class="text-base font-semibold {{ $totalSelisihOhc >= 0 ? 'text-rose-600' : 'text-emerald-600' }}">
                         Rp {{ number_format($totalSelisihOhc, 0, ',', '.') }}
                     </p>
@@ -62,13 +62,13 @@
             <p class="stat-label">Profit</p>
             <div class="mt-1 space-y-2">
                 <div class="rounded-lg border border-slate-100 bg-slate-50/70 p-2">
-                    <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Hitungan</p>
+                    <p class="text-xs font-medium text-slate-500">Hitungan</p>
                     <p class="text-base font-semibold {{ $totalProfitJual >= 0 ? 'text-emerald-600' : 'text-rose-600' }}">
                         Rp {{ number_format($totalProfitJual, 0, ',', '.') }}
                     </p>
                 </div>
                 <div class="rounded-lg border border-slate-100 bg-slate-50/70 p-2">
-                    <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Real</p>
+                    <p class="text-xs font-medium text-slate-500">Real</p>
                     <p class="text-base font-semibold {{ $totalProfitReal >= 0 ? 'text-emerald-700' : 'text-rose-700' }}">
                         Rp {{ number_format($totalProfitReal, 0, ',', '.') }}
                     </p>
@@ -80,13 +80,13 @@
             <p class="stat-label">Profit (%)</p>
             <div class="mt-1 space-y-2">
                 <div class="rounded-lg border border-slate-100 bg-slate-50/70 p-2">
-                    <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Hitungan</p>
+                    <p class="text-xs font-medium text-slate-500">Hitungan</p>
                     <p class="text-base font-semibold text-slate-900">
                         {{ $totalProfitPercent !== null ? number_format($totalProfitPercent, 2, ',', '.') . '%' : '-' }}
                     </p>
                 </div>
                 <div class="rounded-lg border border-slate-100 bg-slate-50/70 p-2">
-                    <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Real</p>
+                    <p class="text-xs font-medium text-slate-500">Real</p>
                     <p class="text-base font-semibold {{ ($totalProfitRealPercent ?? 0) >= 0 ? 'text-slate-900' : 'text-rose-700' }}">
                         {{ $totalProfitRealPercent !== null ? number_format($totalProfitRealPercent, 2, ',', '.') . '%' : '-' }}
                     </p>

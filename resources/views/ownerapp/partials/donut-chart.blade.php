@@ -78,8 +78,8 @@
 
         <div class="absolute inset-0 flex items-center justify-center">
           <div class="flex h-[116px] w-[116px] flex-col items-center justify-center rounded-full bg-white/95 px-3 text-center shadow-sm ring-1 ring-slate-200/80 sm:h-[124px] sm:w-[124px]">
-            <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">Total</p>
-            <p class="mt-1 break-words text-sm font-display leading-tight text-slate-900 sm:text-base">{{ $chart['total_label'] }}</p>
+            <p class="text-xs font-medium text-slate-400">Total</p>
+            <p class="mt-1 break-words text-sm font-semibold tracking-tight tabular-nums leading-tight text-slate-900 sm:text-base">{{ $chart['total_label'] }}</p>
           </div>
         </div>
       </div>
@@ -87,21 +87,21 @@
       @if (! empty($chart['top_categories']))
         <div class="mt-6">
           <div class="mb-3 flex items-center justify-between gap-3">
-            <h3 class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Top 3 Pengeluaran Terbesar</h3>
+            <h3 class="text-sm font-medium text-slate-500">Top 3 Pengeluaran Terbesar</h3>
             <span class="text-xs text-slate-500">Rangkuman kategori utama pada periode aktif</span>
           </div>
 
           <div class="grid gap-3 md:grid-cols-3">
             @foreach ($chart['top_categories'] as $item)
-              <div class="rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
+              <div class="rounded-xl bg-slate-50 p-4 ring-1 ring-inset ring-slate-950/5">
                 <div class="flex items-center justify-between gap-3">
                   <span class="inline-flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold text-white" style="background: {{ $item['color'] }}">
                     {{ $item['rank'] }}
                   </span>
-                  <span class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">{{ $item['percentage_label'] }}</span>
+                  <span class="text-xs font-medium text-slate-400">{{ $item['percentage_label'] }}</span>
                 </div>
                 <p class="mt-3 text-sm font-semibold text-slate-900">{{ $item['label'] }}</p>
-                <p class="mt-1 text-lg font-display text-slate-900">{{ $item['value_label'] }}</p>
+                <p class="mt-1 text-lg font-semibold tracking-tight tabular-nums text-slate-900">{{ $item['value_label'] }}</p>
               </div>
             @endforeach
           </div>
@@ -109,7 +109,7 @@
       @endif
 
       {{-- @if (! empty($chart['largest_category']))
-        <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-slate-700">
+        <div class="mt-4 rounded-xl bg-amber-50 ring-1 ring-inset ring-amber-600/20 px-4 py-3 text-sm text-slate-700">
           <span class="font-semibold text-slate-900">Kategori terbesar:</span>
           {{ $chart['largest_category']['label'] }} ({{ $chart['largest_category']['percentage_label'] }}) dengan nilai {{ $chart['largest_category']['value_label'] }}.
         </div>

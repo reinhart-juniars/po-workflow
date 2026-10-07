@@ -208,7 +208,7 @@
                         <div>
                             <p class="metric-label">{{ $weekTab['label'] }}</p>
                             <p
-                                class="text-lg font-display {{ (float) $weekTab['net_cashflow'] >= 0 ? 'text-slate-900' : 'text-rose-700' }}">
+                                class="text-lg font-semibold tracking-tight tabular-nums {{ (float) $weekTab['net_cashflow'] >= 0 ? 'text-slate-900' : 'text-rose-700' }}">
                                 Rp {{ number_format((float) $weekTab['net_cashflow'], 0, ',', '.') }}
                             </p>
                         </div>
@@ -284,7 +284,7 @@
                         @if ($chartGranularity === 'week' && ($period['group_label'] ?? null) !== $currentWeekGroup)
                             <tr class="bg-slate-50">
                                 <td colspan="8"
-                                    class="px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                                    class="px-4 py-3 text-xs font-medium text-slate-500">
                                     {{ $period['group_label'] }}
                                 </td>
                             </tr>

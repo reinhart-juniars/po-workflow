@@ -35,8 +35,6 @@
             margin-bottom: 0.8rem;
             font-size: 0.7rem;
             font-weight: 700;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
             color: rgb(100 116 139);
         }
 
@@ -75,9 +73,7 @@
             background: rgb(226 232 240 / 0.96);
             text-align: center;
             font-size: 11px;
-            font-weight: 800;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
+            font-weight: 600;
             color: rgb(15 23 42);
         }
 
@@ -113,7 +109,6 @@
             background: rgb(248 250 252);
             font-size: 12px;
             font-weight: 700;
-            letter-spacing: 0.01em;
             color: rgb(51 65 85);
         }
 
@@ -131,7 +126,7 @@
 
         .sales-sheet-total td {
             background: rgb(219 234 254);
-            font-weight: 800;
+            font-weight: 600;
             color: rgb(15 23 42);
             font-size: 13px;
         }
@@ -199,9 +194,7 @@
         .sales-summary-title {
             margin-bottom: 0.45rem;
             font-size: 11px;
-            font-weight: 800;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
+            font-weight: 600;
             color: rgb(100 116 139);
         }
 
@@ -238,9 +231,7 @@
             background: rgb(226 232 240 / 0.96);
             text-align: center;
             font-size: 11px;
-            font-weight: 800;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
+            font-weight: 600;
             color: rgb(15 23 42);
         }
 
@@ -281,14 +272,12 @@
         .sales-meta-line {
             font-size: 11px;
             line-height: 1.35;
-            letter-spacing: 0.01em;
             color: rgb(100 116 139);
         }
 
         .sales-matrix-date-row td {
             background: rgb(248 250 252);
             font-weight: 700;
-            letter-spacing: 0.01em;
             color: rgb(51 65 85);
         }
 
@@ -306,7 +295,7 @@
 
         .sales-matrix-total td {
             background: rgb(219 234 254);
-            font-weight: 800;
+            font-weight: 600;
             color: rgb(15 23 42);
             font-size: 13px;
         }
@@ -373,7 +362,6 @@
         .sales-sheet .sales-meta-line {
             font-size: 11px;
             line-height: 1.35;
-            letter-spacing: 0.01em;
             color: rgb(71 85 105);
         }
 
@@ -403,7 +391,6 @@
             font-size: 10.5px;
             line-height: 1.35;
             font-weight: 700;
-            letter-spacing: 0.01em;
         }
 
         .sales-report-summary-stack {
@@ -422,9 +409,7 @@
             margin-bottom: 0.45rem;
             font-size: 0.68rem;
             line-height: 1rem;
-            font-weight: 800;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
+            font-weight: 600;
             color: rgb(100 116 139);
         }
 
@@ -470,7 +455,6 @@
             background: rgb(248 250 252);
             font-weight: 700;
             color: rgb(51 65 85);
-            letter-spacing: 0.01em;
         }
 
         .sales-report-subtotal-row td {
@@ -487,7 +471,7 @@
 
         .sales-report-total-row td {
             background: rgb(219 234 254);
-            font-weight: 800;
+            font-weight: 600;
             color: rgb(15 23 42);
         }
 
@@ -527,7 +511,7 @@
 
         .sales-section-head-title {
             font-size: 13.5px;
-            font-weight: 800;
+            font-weight: 600;
             letter-spacing: -0.01em;
             color: rgb(15 23 42);
         }
@@ -584,9 +568,7 @@
             background: rgb(241 245 249);
             text-align: center;
             font-size: 10.5px;
-            font-weight: 800;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
+            font-weight: 600;
             color: rgb(15 23 42);
             border-top: 0;
         }
@@ -637,7 +619,6 @@
             font-weight: 700;
             color: rgb(51 65 85);
             font-size: 11.5px;
-            letter-spacing: 0.02em;
         }
 
         .sales-section-subtotal td {
@@ -648,7 +629,7 @@
 
         .sales-section-section-total td {
             background: rgb(254 243 199);
-            font-weight: 800;
+            font-weight: 600;
             color: rgb(120 53 15);
         }
 
@@ -657,7 +638,6 @@
             margin-top: 0.18rem;
             font-size: 10px;
             font-weight: 700;
-            letter-spacing: 0.01em;
             color: inherit;
             opacity: 0.85;
         }
@@ -699,9 +679,7 @@
             border-top: 0;
             text-align: left;
             font-size: 10.5px;
-            font-weight: 800;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
+            font-weight: 600;
             color: rgb(15 23 42);
         }
 
@@ -713,7 +691,7 @@
 
         .sales-summary-section-table tr.total td {
             background: rgb(219 234 254);
-            font-weight: 800;
+            font-weight: 600;
             color: rgb(15 23 42);
             font-size: 14px;
         }
@@ -892,7 +870,7 @@
         </section>
 
         @if ($segmentScope === 'all')
-            <section class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <section class="mt-4 rounded-xl bg-slate-50 px-4 py-3 ring-1 ring-inset ring-slate-950/5">
                 <div class="sales-legend">
                     {{-- <span class="sales-legend-chip">
           <span class="sales-legend-dot sales-legend-dot-lapak"></span>

@@ -11,18 +11,17 @@
         width: 100%;
         table-layout: auto;
     }
+    /* 9 kolom: sedikit lebih rapat dari .data-table standar (14/600, kalimat
+       biasa), tanpa huruf kapital. */
     .products-table th,
     .products-table td {
-        padding: 0.45rem 0.5rem;
-        font-size: 12px;
-        line-height: 1.35;
+        padding: 0.75rem 0.625rem;
+        font-size: 13px;
+        line-height: 1.4;
     }
-    .products-table thead th {
-        font-size: 10.5px;
-        text-transform: uppercase;
-        letter-spacing: 0.02em;
-        color: rgb(71 85 105);
-        background: rgb(248 250 252);
+    .products-table th:first-child,
+    .products-table td:first-child {
+        padding-left: 1.5rem;
     }
     .products-table .tabular-nums {
         font-variant-numeric: tabular-nums lining-nums;
@@ -39,15 +38,6 @@
         white-space: normal;
         word-break: break-word;
     }
-    @media (max-width: 1100px) {
-        .products-table {
-            font-size: 11px;
-        }
-        .products-table th,
-        .products-table td {
-            padding: 0.35rem 0.4rem;
-        }
-    }
 </style>
 @endpush
 
@@ -62,7 +52,7 @@
                 + Tambah Menu Baru
             </a>
 
-            <a href="{{ route('adminapp.products.export.excel') }}" class="btn-success gap-2">
+            <a href="{{ route('adminapp.products.export.excel') }}" class="btn-gray">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2">
                     <path d="M12 3v12" />
@@ -72,19 +62,20 @@
                 <span>Export Excel</span>
             </a>
 
-            <form method="POST" action="{{ route('adminapp.products.import.excel') }}" enctype="multipart/form-data"
-                class="toolbar-inline-form">
+            {{-- Satu tombol seperti Import di panel Filament: pilih berkas lalu
+                 langsung terkirim ke pratinjau (belum di-commit). --}}
+            <form method="POST" action="{{ route('adminapp.products.import.excel') }}" enctype="multipart/form-data">
                 @csrf
-                <input type="file" name="excel_file" accept=".xlsx,.xls,.csv" class="file-input" required>
-                <button type="submit" class="btn-outline gap-2 whitespace-nowrap">
+                <label class="btn-gray w-full cursor-pointer whitespace-nowrap focus-within:ring-2 focus-within:ring-brand-600 sm:w-auto">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2">
+                        stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path d="M12 21V9" />
                         <path d="m17 14-5-5-5 5" />
                         <path d="M5 3h14" />
                     </svg>
-                    <span>Import Excel</span>
-                </button>
+                    <span data-import-label>Import Excel</span>
+                    <input type="file" name="excel_file" accept=".xlsx,.xls,.csv" class="sr-only" required data-auto-submit>
+                </label>
             </form>
         </div>
     </div>
@@ -243,7 +234,7 @@
                                     <div class="text-[10px] font-mono text-slate-400">{{ $product->sku }}</div>
                                 @endif
                                 @if ($anyLow)
-                                    <span class="mt-1 inline-block rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-700"
+                                    <span class="mt-1 badge-soft-rose"
                                           title="Profit atau margin di bawah 25% — perlu review harga atau biaya">
                                         Margin rendah
                                     </span>
@@ -262,7 +253,7 @@
                                     <div class="mt-1 text-[11px] text-slate-400">Tanpa resep</div>
                                 @elseif (auth()->user()?->can('recipe.view'))
                                     <a href="{{ route('filament.menu.pages.pencocokan-menu') }}"
-                                       class="mt-1 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700"
+                                       class="mt-1 badge-soft-amber"
                                        title="Belum ditautkan ke resep di aplikasi Menu — buka Pencocokan Menu">
                                         Belum ada resep
                                     </a>

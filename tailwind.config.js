@@ -15,7 +15,9 @@ module.exports = {
             fontFamily: {
                 sans: ['"Public Sans"', ...defaultTheme.fontFamily.sans],
                 body: ['"Public Sans"', ...defaultTheme.fontFamily.sans],
-                display: ['"Space Grotesk"', ...defaultTheme.fontFamily.sans],
+                // Dulu Space Grotesk untuk judul; kini satu font (Public Sans) di
+                // seluruh sistem. Kunci 'display' dipertahankan untuk kelas lama.
+                display: ['"Public Sans"', ...defaultTheme.fontFamily.sans],
             },
             colors: {
                 // Sama persis dengan palet panel Filament (AdminPanelProvider):

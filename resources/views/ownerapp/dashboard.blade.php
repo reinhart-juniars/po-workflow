@@ -29,11 +29,11 @@
 
     <section class="dashboard-kpi-grid mt-4">
         <article class="metric-panel metric-panel-accent">
-            <p class="metric-label text-white/80">Total Penjualan</p>
-            <p class="metric-value-compact text-white">
+            <p class="metric-label">Total Penjualan</p>
+            <p class="metric-value-compact">
                 <span class="whitespace-nowrap">Rp {{ number_format($totalSales, 0, ',', '.') }}</span>
             </p>
-            <p class="stat-meta text-white/80">PO selesai pada periode ini</p>
+            <p class="stat-meta">PO selesai pada periode ini</p>
         </article>
 
         <article class="metric-panel">
@@ -122,7 +122,7 @@
             <article class="signal-card signal-card-{{ $cashHealth['tone'] }}">
                 <div>
                     <p class="metric-label">{{ $cashHealth['title'] }}</p>
-                    <p class="text-xl font-display text-slate-900">{{ $cashHealth['status'] }}</p>
+                    <p class="text-xl font-semibold tracking-tight tabular-nums text-slate-900">{{ $cashHealth['status'] }}</p>
                     <span
                         class="mt-3 inline-flex badge-soft {{ $cashHealth['tone'] === 'emerald' ? 'badge-soft-emerald' : ($cashHealth['tone'] === 'amber' ? 'badge-soft-amber' : ($cashHealth['tone'] === 'rose' ? 'badge-soft-rose' : 'badge-soft-slate')) }}">
                         {{ $cashHealth['meta'] }}
@@ -144,7 +144,7 @@
             <article class="signal-card signal-card-{{ $profitSignal['tone'] }}">
                 <div>
                     <p class="metric-label">{{ $profitSignal['title'] }}</p>
-                    <p class="text-xl font-display text-slate-900">{{ $profitSignal['status'] }}</p>
+                    <p class="text-xl font-semibold tracking-tight tabular-nums text-slate-900">{{ $profitSignal['status'] }}</p>
                     <span
                         class="mt-3 inline-flex badge-soft {{ $profitSignal['tone'] === 'emerald' ? 'badge-soft-emerald' : ($profitSignal['tone'] === 'amber' ? 'badge-soft-amber' : ($profitSignal['tone'] === 'rose' ? 'badge-soft-rose' : 'badge-soft-slate')) }}">
                         {{ $profitSignal['meta'] }}
@@ -196,7 +196,7 @@
                 </div>
                 <div class="text-right">
                     <p class="metric-label">Total</p>
-                    <p class="text-lg font-display text-slate-900">Rp
+                    <p class="text-lg font-semibold tracking-tight tabular-nums text-slate-900">Rp
                         {{ number_format($outstandingReceivable, 0, ',', '.') }}</p>
                 </div>
             </div>

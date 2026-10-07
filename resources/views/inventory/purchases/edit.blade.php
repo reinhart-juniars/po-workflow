@@ -7,7 +7,7 @@
     $selectedCashAccountId = old('cash_account_id', $inventoryPurchase->cashOut?->cash_account_id);
   @endphp
 
-  <h1 class="text-2xl font-bold mb-4">Edit Pembelian Stok</h1>
+  <h1 class="page-title mb-6">Edit Pembelian Stok</h1>
 
   <div class="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
     Perbaiki data pembelian stok di sini. Untuk tipe <strong>Kredit</strong>, kategori pengeluaran dan akun kas tidak dipakai.

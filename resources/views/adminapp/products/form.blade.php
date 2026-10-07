@@ -151,7 +151,7 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <thead>
-                        <tr class="text-left text-xs uppercase tracking-wide text-slate-500">
+                        <tr class="text-left text-xs text-slate-500">
                             <th class="px-3 py-2">Berlaku Sejak</th>
                             <th class="px-3 py-2 text-right">Bahan Baku</th>
                             <th class="px-3 py-2 text-right">Overhead</th>
@@ -178,7 +178,7 @@
                                         {{ $history->effective_from->format('H:i') }}
                                         @if ($i === 0)
                                             <span
-                                                class="ml-1 inline-flex items-center rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-emerald-700">
+                                                class="ml-1 inline-flex items-center rounded bg-emerald-100 px-1.5 py-0.5 text-xs font-medium text-emerald-700">
                                                 Aktif
                                             </span>
                                         @endif
