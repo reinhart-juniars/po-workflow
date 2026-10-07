@@ -987,3 +987,16 @@
         @apply relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600;
     }
 }
+
+/* ---------- Asal HPP & OHC menu (Admin › Master Menu) ----------
+   'resep' = diturunkan dari aplikasi Menu, terkunci; 'tertahan' = resep
+   tertaut tapi hitungannya belum lengkap, masih angka manual. */
+.cost-source { padding: 10px 14px; border: 1px solid #ccd5f6; border-radius: 12px; background: #ebeefb; font-size: 13px; line-height: 19px; color: #2740a4; }
+.cost-source.is-held { border-color: #fde68a; background: #fffbeb; color: #92400e; }
+.cost-source-title { margin: 0; font-weight: 500; }
+.cost-source-note { margin: 2px 0 0; font-size: 12px; opacity: .85; }
+.cost-source a { font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.cost-tag { display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 6px; font-size: 10px; line-height: 16px; font-weight: 600; vertical-align: 1px; }
+.cost-tag.is-recipe { background: #ebeefb; color: #2740a4; }
+.cost-tag.is-manual { background: #f1f5f9; color: #64748b; }
+input.is-locked { background: #f8fafc; color: #475569; cursor: default; }

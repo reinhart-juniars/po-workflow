@@ -159,6 +159,12 @@ class InventoryItem extends Model
         });
 
         static::updated(function (self $item) {
+            // HPP & OHC produk yang mengikuti resep ikut harga bahan, dari
+            // jalur mana pun harganya berubah (form, import, Form Kebutuhan).
+            if ($item->wasChanged(['unit_price', 'pack_price', 'pack_qty', 'unit'])) {
+                app(\App\Services\ProductRecipeCostSync::class)->queueIngredient($item->id);
+            }
+
             if (static::$priceChangeSource === null || (! $item->wasChanged('unit_price') && ! $item->wasChanged('pack_price'))) {
                 return;
             }

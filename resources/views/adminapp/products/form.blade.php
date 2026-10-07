@@ -47,20 +47,48 @@
                     required>
             </div>
 
+            @php
+                // HPP & OHC dari resep (aplikasi Menu) terkunci di sini; admin
+                // mengatur harga jual dan melihat profitnya.
+                $fromRecipe = $product->costFollowsRecipe();
+                $costStatus ??= null;
+                $recipeUrl ??= null;
+            @endphp
             <div class="md:col-span-2">
+                @if ($fromRecipe)
+                    <div class="cost-source is-recipe mb-4">
+                        <p class="cost-source-title">HPP &amp; OHC mengikuti resep <b>{{ $product->recipe?->name }}</b></p>
+                        <p class="cost-source-note">
+                            Diatur tim menu di aplikasi Menu
+                            @if ($product->cost_synced_at)
+                                · diperbarui {{ $product->cost_synced_at->translatedFormat('d M Y H:i') }}
+                            @endif
+                            @if ($recipeUrl)
+                                · <a href="{{ $recipeUrl }}">Lihat rincian HPP</a>
+                            @endif
+                        </p>
+                    </div>
+                @elseif ($costStatus && $product->recipe_id && $costStatus['state'] === 'tertahan')
+                    <div class="cost-source is-held mb-4">
+                        <p class="cost-source-title">Masih manual: {{ $costStatus['reason'] }}</p>
+                        <p class="cost-source-note">Begitu hitungan resepnya lengkap di aplikasi Menu, HPP &amp; OHC menu ini otomatis mengikuti resep.</p>
+                    </div>
+                @endif
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
                     <div>
                         <label for="raw_material_cost" class="mb-1.5 block">Bahan Baku</label>
                         <input id="raw_material_cost" type="number" step="0.01" min="0" name="raw_material_cost"
-                            value="{{ old('raw_material_cost', $product->raw_material_cost) }}">
-                        <p class="mt-1 text-xs text-slate-500">Kosongkan jika belum ada data biaya bahan baku.</p>
+                            value="{{ old('raw_material_cost', $product->raw_material_cost) }}"
+                            @if ($fromRecipe) readonly aria-readonly="true" class="is-locked" @endif>
+                        <p class="mt-1 text-xs text-slate-500">{{ $fromRecipe ? 'Dari resep.' : 'Kosongkan jika belum ada data biaya bahan baku.' }}</p>
                     </div>
 
                     <div>
                         <label for="overhead_cost" class="mb-1.5 block">Overhead Cost</label>
                         <input id="overhead_cost" type="number" step="0.01" min="0" name="overhead_cost"
-                            value="{{ old('overhead_cost', $product->overhead_cost) }}">
-                        <p class="mt-1 text-xs text-slate-500">Isi biaya operasional tambahan per menu bila ada.</p>
+                            value="{{ old('overhead_cost', $product->overhead_cost) }}"
+                            @if ($fromRecipe) readonly aria-readonly="true" class="is-locked" @endif>
+                        <p class="mt-1 text-xs text-slate-500">{{ $fromRecipe ? 'Dari resep (OHC % × HPP).' : 'Isi biaya operasional tambahan per menu bila ada.' }}</p>
                     </div>
 
                     <div>

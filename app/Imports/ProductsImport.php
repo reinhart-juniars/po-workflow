@@ -143,6 +143,12 @@ class ProductsImport implements SkipsEmptyRows, ToCollection, WithHeadingRow
             unset($payload['sku']);
         }
 
+        // HPP & OHC menu yang mengikuti resep diatur di aplikasi Menu; kolom
+        // Excel-nya diabaikan supaya import tidak menimpa hitungan resep.
+        if ($product?->costFollowsRecipe()) {
+            unset($payload['raw_material_cost'], $payload['overhead_cost']);
+        }
+
         return $payload;
     }
 

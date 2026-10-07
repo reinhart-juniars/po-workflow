@@ -36,6 +36,12 @@ class RecipeItem extends Model
                 $item->unit = Unit::canonical($item->unit);
             }
         });
+
+        // Baris resep berubah -> HPP produk yang mengikuti resep dihitung
+        // ulang sekali di akhir request (ProductRecipeCostSync).
+        $queue = fn (self $item) => app(\App\Services\ProductRecipeCostSync::class)->queueRecipe((int) $item->recipe_id);
+        static::saved($queue);
+        static::deleted($queue);
     }
 
     public function recipe(): BelongsTo

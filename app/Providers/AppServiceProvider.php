@@ -23,6 +23,8 @@ class AppServiceProvider extends ServiceProvider
         // Pengaturan modul dibaca di banyak tempat dalam satu request; satu
         // instance supaya cache-nya juga satu.
         $this->app->singleton(Settings::class);
+        // Antrean sinkron HPP produk dari resep hidup sepanjang satu request.
+        $this->app->singleton(\App\Services\ProductRecipeCostSync::class);
     }
 
     /**
