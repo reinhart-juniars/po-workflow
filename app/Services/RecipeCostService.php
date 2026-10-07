@@ -90,6 +90,147 @@ class RecipeCostService
     }
 
     /**
+     * Pohon kebutuhan satu resep untuk sejumlah hasil.
+     *
+     * Berbeda dengan requirements() yang meratakan semuanya menjadi bahan
+     * mentah, di sini baris resep tampil apa adanya: sub-menu tetap satu
+     * simpul dengan rinciannya sendiri di bawahnya, sedalam apa pun. Jumlah
+     * tiap simpul dalam satuan baris resep (yang ditakar dapur); biaya
+     * sub-menu = jumlah biaya anak-anaknya, jadi totalnya sama dengan
+     * requirements() selama semua baris bisa dihitung.
+     *
+     * @param  float  $quantity  Jumlah yang diproduksi, dalam satuan hasil resep.
+     * @return array{nodes: list<array<string, mixed>>, total_cost: float, complete: bool}
+     */
+    public function tree(Recipe $recipe, float $quantity): array
+    {
+        $yield = (float) $recipe->yield_qty;
+
+        if ($yield <= 0) {
+            return ['nodes' => [], 'total_cost' => 0.0, 'complete' => false];
+        }
+
+        $nodes = $this->branch($recipe, $quantity / $yield, []);
+
+        return [
+            'nodes' => $nodes,
+            'total_cost' => round(array_sum(array_map(fn ($node) => (float) $node['cost'], $nodes)), 2),
+            'complete' => collect($nodes)->every(fn ($node) => $node['complete']),
+        ];
+    }
+
+    /**
+     * Satu tingkat pohon: baris resep dikali pengali hasil.
+     *
+     * Simpul: kind (ingredient|recipe|unmatched), name, qty, unit, section,
+     * cost (null bila tak terhitung), complete, issue, children.
+     *
+     * @param  array<int, int>  $visiting
+     * @return list<array<string, mixed>>
+     */
+    protected function branch(Recipe $recipe, float $multiplier, array $visiting): array
+    {
+        $visiting[] = $recipe->id;
+        $nodes = [];
+
+        foreach ($recipe->items()->with(['inventoryItem', 'refRecipe'])->get() as $item) {
+            $qty = round((float) $item->qty * $multiplier, 4);
+
+            $node = [
+                'kind' => 'unmatched',
+                'name' => $item->raw_name,
+                'qty' => $qty,
+                'unit' => $item->unit,
+                'section' => $item->section,
+                'cost' => null,
+                'complete' => false,
+                'issue' => null,
+                'children' => [],
+            ];
+
+            if ($item->ref_recipe_id !== null) {
+                $nodes[] = $this->subRecipeNode($item, $node, $qty, $visiting);
+
+                continue;
+            }
+
+            if ($item->inventory_item_id !== null && $item->inventoryItem) {
+                $ingredient = $item->inventoryItem;
+                $price = $ingredient->effectiveUnitPrice();
+                $converted = $this->convertQuantity($qty, $item->unit, $ingredient->unit, $ingredient->id);
+
+                $node['kind'] = 'ingredient';
+                $node['name'] = $ingredient->name;
+
+                if ($converted === null) {
+                    $node['issue'] = 'Satuan "'.$item->unit.'" belum bisa dikonversi ke "'.$ingredient->unit.'".';
+                } elseif ($price === null) {
+                    $node['issue'] = 'Harga bahan belum diisi.';
+                } else {
+                    $node['cost'] = round($converted * $price, 2);
+                    $node['complete'] = true;
+                }
+
+                $nodes[] = $node;
+
+                continue;
+            }
+
+            // Belum tertaut: harga cadangan dipakai bila ada, tetap ditandai.
+            if ($item->unit_price_snapshot !== null) {
+                $node['cost'] = round($qty * (float) $item->unit_price_snapshot, 2);
+            }
+            $node['issue'] = 'Belum ditautkan ke bahan.';
+            $nodes[] = $node;
+        }
+
+        return $nodes;
+    }
+
+    /**
+     * @param  array<string, mixed>  $node
+     * @param  array<int, int>  $visiting
+     * @return array<string, mixed>
+     */
+    protected function subRecipeNode(RecipeItem $item, array $node, float $qty, array $visiting): array
+    {
+        $sub = $item->refRecipe;
+        $node['kind'] = 'recipe';
+
+        if (! $sub) {
+            $node['issue'] = 'Sub-menu sudah tidak ada.';
+
+            return $node;
+        }
+
+        $node['name'] = $sub->name;
+
+        // Putaran resep tidak diurai lagi -- pohonnya tidak akan pernah selesai.
+        if (in_array($sub->id, $visiting, true)) {
+            $node['issue'] = 'Resep berputar; tidak diurai.';
+
+            return $node;
+        }
+
+        $converted = $this->convertQuantity($qty, $item->unit, $sub->yield_unit);
+        $subYield = (float) $sub->yield_qty;
+
+        if ($converted === null || $subYield <= 0) {
+            $node['issue'] = $subYield <= 0
+                ? 'Sub-menu tidak punya jumlah hasil (yield).'
+                : 'Satuan "'.$item->unit.'" tidak sepadan dengan satuan hasil sub-menu "'.$sub->yield_unit.'".';
+
+            return $node;
+        }
+
+        $node['children'] = $this->branch($sub, $converted / $subYield, $visiting);
+        $node['cost'] = round(array_sum(array_map(fn ($child) => (float) $child['cost'], $node['children'])), 2);
+        $node['complete'] = $node['children'] !== [] && collect($node['children'])->every(fn ($child) => $child['complete']);
+
+        return $node;
+    }
+
+    /**
      * @param  array<int, int>  $visiting  Rantai resep yang sedang dihitung, untuk deteksi putaran.
      * @return array<string, mixed>
      */

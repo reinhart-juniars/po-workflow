@@ -118,32 +118,39 @@
                     <summary>
                         <span class="sh-bd-menu-name">{{ $menu['label'] }}</span>
                         <span class="sh-bd-menu-meta">
-                            {{ $qty($menu['qty']) }} {{ $menu['unit'] }} · {{ count($menu['rows']) }} bahan · {{ $rp($menu['total_cost']) }}
+                            {{ $qty($menu['qty']) }} {{ $menu['unit'] }} · {{ count($menu['tree']) }} komponen
+                            @php $subs = collect($menu['tree'])->where('kind', 'recipe')->count(); @endphp
+                            @if ($subs > 0)
+                                ({{ $subs }} sub-menu)
+                            @endif
+                            · {{ count($menu['rows']) }} bahan mentah · {{ $rp($menu['total_cost']) }}
                             @if ($menu['issues'] !== [])
                                 · <span class="sh-grid-bad">belum lengkap</span>
                             @endif
                         </span>
                     </summary>
-                    @if ($menu['recipe'] !== $menu['label'])
-                        <p class="sh-bd-note">Resep: {{ $menu['recipe'] }}</p>
+                    @php $subCount = collect($menu['tree'])->where('kind', 'recipe')->count(); @endphp
+                    <div class="sh-bd-menu-bar">
+                        <p class="sh-bd-note">
+                            @if ($menu['recipe'] !== $menu['label'])
+                                Resep: {{ $menu['recipe'] }} ·
+                            @endif
+                            Susunan resep untuk {{ $qty($menu['qty']) }} {{ $menu['unit'] }}; jumlah dalam satuan takaran resep.
+                        </p>
+                        @if ($subCount > 0)
+                            <button type="button" class="sh-tree-toggle" data-tree-toggle>Buka semua sub-menu</button>
+                        @endif
+                    </div>
+                    @if ($menu['tree'] !== [])
+                        <div class="sh-tree" role="table" aria-label="Susunan resep {{ $menu['label'] }}">
+                            <div class="sh-tree-row sh-tree-head" role="row">
+                                <span>Komponen</span><span class="num">Jumlah</span><span>Satuan</span><span class="num">Biaya</span>
+                            </div>
+                            @include('partials.recipe-tree', ['nodes' => $menu['tree'], 'depth' => 0])
+                        </div>
+                    @else
+                        <p class="sh-bd-note sh-grid-muted">Belum ada bahan yang bisa dihitung.</p>
                     @endif
-                    <table class="sh-table">
-                        <thead>
-                            <tr><th>Bahan</th><th class="text-right">Jumlah</th><th>Satuan</th><th class="text-right">Biaya</th></tr>
-                        </thead>
-                        <tbody>
-                            @forelse ($menu['rows'] as $row)
-                                <tr>
-                                    <td>{{ $row['name'] }}</td>
-                                    <td class="text-right">{{ $qty($row['qty']) }}</td>
-                                    <td>{{ $row['unit'] }}</td>
-                                    <td class="text-right">{{ $rp($row['total_cost']) }}</td>
-                                </tr>
-                            @empty
-                                <tr><td colspan="4" class="sh-grid-muted">Belum ada bahan yang bisa dihitung.</td></tr>
-                            @endforelse
-                        </tbody>
-                    </table>
                     @if ($menu['issues'] !== [])
                         <ul class="sh-bd-issues">
                             @foreach ($menu['issues'] as $issue)
@@ -156,3 +163,17 @@
         </div>
     @endif
 </div>
+
+@once
+    {{-- Satu pendengar untuk semua tombol "Buka semua sub-menu" (tanpa Alpine). --}}
+    <script>
+        document.addEventListener('click', function (event) {
+            var button = event.target.closest('[data-tree-toggle]');
+            if (!button) return;
+            var nodes = button.closest('.sh-bd-menu').querySelectorAll('.sh-tree-node');
+            var open = Array.prototype.some.call(nodes, function (node) { return !node.open; });
+            nodes.forEach(function (node) { node.open = open; });
+            button.textContent = open ? 'Tutup semua sub-menu' : 'Buka semua sub-menu';
+        });
+    </script>
+@endonce

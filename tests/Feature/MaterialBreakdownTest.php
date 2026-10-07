@@ -123,3 +123,62 @@ it('menampilkan kebutuhan bahan di Detail PO admin dan di SPK Produksi', functio
     // Peran tanpa production.view (sales) tidak bisa membuka halaman SPK-nya.
     $this->actingAs(penggunaBreakdown('sales'))->get('/inventory/production-orders/'.$order->id.'/bahan')->assertForbidden();
 });
+
+it('menyusun rincian per menu bertingkat: sub-menu jadi simpul sendiri dengan bahan di bawahnya', function () {
+    $data = siapkanProduksi();
+
+    // Gorengan (10 porsi) = 250 gr tepung + 150 ml minyak + 10 porsi Adonan;
+    // Adonan (10 porsi) = 100 gr tepung + 2 porsi Bumbu; Bumbu (2 porsi) = 50 ml minyak.
+    $bumbu = Recipe::query()->create(['name' => 'Bumbu Dasar', 'jenis' => Recipe::JENIS_SUB, 'yield_qty' => 2, 'yield_unit' => 'porsi', 'ohc_pct' => 0, 'profit_pct' => 0]);
+    RecipeItem::query()->create(['recipe_id' => $bumbu->id, 'inventory_item_id' => $data['minyak']->id, 'raw_name' => 'minyak', 'qty' => 50, 'unit' => 'ml']);
+    $adonan = Recipe::query()->create(['name' => 'Adonan', 'jenis' => Recipe::JENIS_SUB, 'yield_qty' => 10, 'yield_unit' => 'porsi', 'ohc_pct' => 0, 'profit_pct' => 0]);
+    RecipeItem::query()->create(['recipe_id' => $adonan->id, 'inventory_item_id' => $data['tepung']->id, 'raw_name' => 'tepung', 'qty' => 100, 'unit' => 'gr']);
+    RecipeItem::query()->create(['recipe_id' => $adonan->id, 'ref_recipe_id' => $bumbu->id, 'raw_name' => 'Bumbu', 'qty' => 2, 'unit' => 'porsi']);
+    RecipeItem::query()->create(['recipe_id' => $data['recipe']->id, 'ref_recipe_id' => $adonan->id, 'raw_name' => 'Adonan', 'qty' => 10, 'unit' => 'porsi']);
+
+    // PO#2 = 50 porsi = 5x resep Gorengan.
+    $menu = app(MaterialBreakdownService::class)->forPurchaseOrder($data['pos'][1])['menus'][0];
+    $tree = collect($menu['tree']);
+
+    expect($tree->pluck('kind')->all())->toBe(['ingredient', 'ingredient', 'recipe']);
+
+    $adonanNode = $tree->firstWhere('kind', 'recipe');
+    expect($adonanNode)->toMatchArray(['name' => 'Adonan', 'qty' => 50.0, 'unit' => 'porsi', 'complete' => true])
+        ->and(collect($adonanNode['children'])->pluck('name')->all())->toBe(['Tepung Terigu', 'Bumbu Dasar']);
+
+    // Sub-menu di dalam sub-menu tetap diurai: 50 porsi Adonan = 10 porsi Bumbu = 250 ml minyak.
+    $bumbuNode = collect($adonanNode['children'])->firstWhere('kind', 'recipe');
+    expect($bumbuNode)->toMatchArray(['qty' => 10.0, 'unit' => 'porsi'])
+        ->and($bumbuNode['children'][0])->toMatchArray(['name' => 'Minyak Goreng', 'qty' => 250.0, 'unit' => 'ml', 'cost' => 5000.0]);
+
+    // Biaya pohon = biaya rekap bahan mentah (tidak ada yang hilang/terhitung dua kali).
+    $treeCost = round($tree->sum('cost'), 2);
+    expect($treeCost)->toBe($menu['total_cost'])
+        ->and($adonanNode['cost'])->toBe(round(collect($adonanNode['children'])->sum('cost'), 2));
+});
+
+it('menandai sub-menu yang satuannya tidak sepadan tanpa mengurainya', function () {
+    $data = siapkanProduksi();
+    $adonan = Recipe::query()->create(['name' => 'Adonan', 'jenis' => Recipe::JENIS_SUB, 'yield_qty' => 1, 'yield_unit' => 'kg', 'ohc_pct' => 0, 'profit_pct' => 0]);
+    RecipeItem::query()->create(['recipe_id' => $adonan->id, 'inventory_item_id' => $data['tepung']->id, 'raw_name' => 'tepung', 'qty' => 1, 'unit' => 'kg']);
+    RecipeItem::query()->create(['recipe_id' => $data['recipe']->id, 'ref_recipe_id' => $adonan->id, 'raw_name' => 'Adonan', 'qty' => 2, 'unit' => 'porsi']);
+
+    $node = collect(app(MaterialBreakdownService::class)->forPurchaseOrder($data['pos'][0])['menus'][0]['tree'])->firstWhere('kind', 'recipe');
+
+    expect($node)->toMatchArray(['name' => 'Adonan', 'complete' => false, 'children' => [], 'cost' => null])
+        ->and($node['issue'])->toContain('tidak sepadan');
+});
+
+it('menampilkan sub-menu dengan panah buka-tutup di halaman Breakdown Bahan', function () {
+    $data = siapkanProduksi();
+    $adonan = Recipe::query()->create(['name' => 'Adonan Khusus', 'jenis' => Recipe::JENIS_SUB, 'yield_qty' => 10, 'yield_unit' => 'porsi', 'ohc_pct' => 0, 'profit_pct' => 0]);
+    RecipeItem::query()->create(['recipe_id' => $adonan->id, 'inventory_item_id' => $data['tepung']->id, 'raw_name' => 'tepung', 'qty' => 100, 'unit' => 'gr']);
+    RecipeItem::query()->create(['recipe_id' => $data['recipe']->id, 'ref_recipe_id' => $adonan->id, 'raw_name' => 'Adonan', 'qty' => 10, 'unit' => 'porsi']);
+    $order = app(ProductionOrderService::class)->generateFromSpk($data['spk']);
+
+    $this->actingAs(penggunaBreakdown('admin'))->get('/inventory/production-orders/'.$order->id.'/bahan')
+        ->assertOk()
+        ->assertSee('class="sh-tree-node"', false)
+        ->assertSeeInOrder(['Adonan Khusus', 'Sub-menu · 1', 'Tepung Terigu'])
+        ->assertSee('Buka semua sub-menu');
+});
