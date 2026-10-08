@@ -10,25 +10,48 @@
 </head>
 
 {{--
-  Halaman masuk 3S ONE. Dua bidang datar (tanpa gradasi/kaca): form yang lega
-  di kiri, dan di kanan panel brand berisi pratinjau isi sistem -- kartu-kartu
-  kecil yang memakai bahasa visual aplikasi (KPI, Tagihan Pembelian, susunan
-  resep). Interaksi tanpa Alpine: lihat <script> di bawah.
+  Halaman masuk sistem internal W3S Catering. Gaya portal korporat, bukan
+  halaman produk SaaS: panel identitas di kiri (tanpa angka atau data contoh
+  apa pun -- supaya tidak dikira data perusahaan yang sebenarnya) dan form di
+  kanan. Bidang datar, tanpa gradasi/kaca. Interaksi tanpa Alpine (script bawah).
 --}}
 <body class="min-h-full bg-white">
     <main class="lg-page">
+        <aside class="lg-identity">
+            <div class="lg-identity-top">
+                @include('partials.brand-mark', ['size' => 'lg'])
+                <div class="leading-tight">
+                    <p class="lg-identity-name">3S ONE</p>
+                    <p class="lg-identity-tag">Business Control System</p>
+                </div>
+            </div>
+
+            <div class="lg-identity-body">
+                <p class="lg-identity-company">W3S Catering</p>
+                <h2 class="lg-identity-title">Sistem internal perusahaan</h2>
+                <p class="lg-identity-text">
+                    Pesanan, produksi, persediaan, pembelian, dan keuangan dikelola dalam satu sistem.
+                </p>
+            </div>
+
+            <div class="lg-identity-notice">
+                <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clip-rule="evenodd"/></svg>
+                <p>Hanya untuk karyawan dan pihak yang diberi akun oleh perusahaan.</p>
+            </div>
+        </aside>
+
         <section class="lg-form-side">
             <header class="lg-brand">
                 @include('partials.brand-mark', ['size' => 'md'])
                 <div class="leading-tight">
                     <p class="lg-wordmark">3S ONE</p>
-                    <p class="lg-tagline">Business Control System</p>
+                    <p class="lg-tagline">W3S Catering</p>
                 </div>
             </header>
 
             <div class="lg-form-wrap">
-                <h1 class="lg-title">Selamat datang kembali</h1>
-                <p class="lg-subtitle">Masuk dengan username atau email untuk melanjutkan pekerjaan Anda.</p>
+                <h1 class="lg-title">Masuk</h1>
+                <p class="lg-subtitle">Gunakan username atau email dan password akun Anda.</p>
 
                 @if ($errors->any())
                     <div class="flash-error mb-0 mt-6" role="alert">{{ $errors->first() }}</div>
@@ -66,66 +89,12 @@
                         <span data-submit-label>Masuk</span>
                     </button>
                 </form>
+
+                <p class="lg-help">Lupa password atau akun terkunci? Hubungi Owner atau administrator sistem untuk reset.</p>
             </div>
 
-            <footer class="lg-foot">W3S Catering · 3S ONE {{ \App\Support\AppVersion::label() }}</footer>
+            <footer class="lg-foot">3S ONE {{ \App\Support\AppVersion::label() }} · W3S Catering</footer>
         </section>
-
-        {{-- Pratinjau isi sistem: dekoratif, disembunyikan dari pembaca layar. --}}
-        <aside class="lg-showcase" aria-hidden="true">
-            <div class="lg-showcase-inner">
-                <p class="lg-eyebrow">Satu sistem, satu data</p>
-                <h2 class="lg-headline">Pesanan, produksi, stok, dan keuangan bekerja di data yang sama.</h2>
-
-                <div class="lg-stack">
-                    <div class="lg-card lg-card-kpi" style="--i: 0">
-                        <p class="lg-card-label">Penjualan bulan ini</p>
-                        <p class="lg-card-value">Rp 128.450.000</p>
-                        <p class="lg-card-trend">
-                            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.577 4.878a.75.75 0 01.919-.53l4.78 1.281a.75.75 0 01.531.919l-1.281 4.78a.75.75 0 01-1.449-.387l.81-3.022a19.407 19.407 0 00-5.594 5.203.75.75 0 01-1.139.093L7 10.06l-4.72 4.72a.75.75 0 01-1.06-1.061l5.25-5.25a.75.75 0 011.06 0l3.074 3.073a20.923 20.923 0 015.545-4.931l-3.042-.815a.75.75 0 01-.53-.919z" clip-rule="evenodd"/></svg>
-                            12,4% dari bulan lalu
-                        </p>
-                        <svg class="lg-spark" viewBox="0 0 120 32" preserveAspectRatio="none"><polyline points="0,26 15,22 30,24 45,16 60,18 75,11 90,13 105,6 120,8" /></svg>
-                    </div>
-
-                    <div class="lg-card lg-card-bills" style="--i: 1">
-                        <div class="lg-card-head">
-                            <p class="lg-card-title">Tagihan Pembelian</p>
-                            <span class="lg-pill is-warn">3 menunggu</span>
-                        </div>
-                        <ul class="lg-rows">
-                            <li><span>TGH-0012 · Pasar Induk</span><b>Rp 1.240.000</b></li>
-                            <li><span>TGH-0011 · Toko Sembako</span><b>Rp 860.500</b></li>
-                            <li><span>TGH-0010 · Belanja lepas</span><b>Rp 312.000</b></li>
-                        </ul>
-                        <div class="lg-card-foot">
-                            <div>
-                                <p class="lg-card-label">Total menunggu dibayar</p>
-                                <p class="lg-card-total">Rp 2.412.500</p>
-                            </div>
-                            <span class="lg-fake-btn">Bayar</span>
-                        </div>
-                    </div>
-
-                    <div class="lg-card lg-card-tree" style="--i: 2">
-                        <p class="lg-card-title">Nasi Ayam Bakar · 80 porsi</p>
-                        <ul class="lg-tree">
-                            <li><span class="lg-caret is-open"></span>Bumbu Bakar <em>Sub menu</em></li>
-                            <li class="is-child">Kecap manis · 1,2 liter</li>
-                            <li class="is-child">Bawang merah · 640 gram</li>
-                            <li><span class="lg-caret"></span>Sambal Dasar <em>Sub menu</em></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="lg-apps">
-                    @foreach (\App\Support\Navigation::apps() as $key => $app)
-                        @continue($key === 'superadmin')
-                        <span>{{ $app['label'] }}</span>
-                    @endforeach
-                </div>
-            </div>
-        </aside>
     </main>
 
     <script>

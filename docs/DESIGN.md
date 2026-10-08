@@ -104,13 +104,14 @@ Di Filament, Edit/Hapus sebagai ikon diatur global di
   `*/exports/`, `*_pdf`) tidak disentuh: dompdf punya gayanya sendiri.
 - **Master Menu sedikit lebih rapat** (13 px, padding 12×10) dari tabel
   standar karena 9 kolom; tetap kalimat biasa.
-- **Halaman masuk: dua bidang** (revisi 9 Okt 2026, permintaan "gaya modern").
-  Kiri form lega (maks. 400 px, field & tombol 44 px, lihat/sembunyikan
-  password, peringatan Caps Lock, tombol "Memproses…"). Kanan, mulai 1180 px,
-  panel brand **solid** `#2f4dc5` berisi pratinjau isi sistem (kartu KPI,
-  Tagihan Pembelian, susunan resep) dengan komponen yang sama dengan aplikasi.
-  Satu-satunya tekstur: pola titik 1 px — bukan gradasi warna; tanpa kaca.
-  Kartu masuk berurutan 420 ms ease-out, mati saat reduced-motion.
+- **Halaman masuk = portal korporat, bukan halaman produk SaaS** (revisi
+  9 Okt 2026). Ini sistem internal perusahaan: panel kiri biru brand gelap
+  `#1e3080` solid berisi identitas (3S ONE, W3S Catering, "Sistem internal
+  perusahaan", pemberitahuan akses terbatas); form di kanan (maks. 400 px,
+  field & tombol 44 px, lihat/sembunyikan password, Caps Lock, "Memproses…",
+  arahan reset lewat Owner). **Jangan menaruh angka, nama supplier, atau
+  kartu data contoh di halaman masuk** — pengguna bisa mengira itu data
+  perusahaan yang sebenarnya (versi pratinjau dashboard ditolak karena ini).
 - **Tagline merek "Business Control System" tetap kapital berspasi.** Itu
   bagian logo, bukan label UI.
 - **Detektor impeccable "gray-on-color"** pada `.row-action-*` dan
