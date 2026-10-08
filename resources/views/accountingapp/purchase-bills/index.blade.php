@@ -48,13 +48,13 @@
         </article>
     </section>
 
-    <nav class="bill-tabs mt-6" aria-label="Status tagihan">
+    <nav class="tab-pills mt-6" aria-label="Status tagihan">
         @foreach ($tabLabels as $key => $label)
             <a href="{{ route('accountingapp.purchase-bills.index', ['tab' => $key]) }}"
-               class="bill-tab {{ $tab === $key ? 'is-active' : '' }}" @if ($tab === $key) aria-current="page" @endif>
+               class="tab-pill {{ $tab === $key ? 'is-active' : '' }}" @if ($tab === $key) aria-current="page" @endif>
                 {{ $label }}
                 @if ($counts[$key] > 0)
-                    <span class="bill-tab-count">{{ $counts[$key] }}</span>
+                    <span class="tab-pill-count">{{ $counts[$key] }}</span>
                 @endif
             </a>
         @endforeach

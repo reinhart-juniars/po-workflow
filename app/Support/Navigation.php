@@ -75,18 +75,21 @@ class Navigation
                     ['label' => 'Audit Logs', 'route' => 'ownerapp.audit.index', 'match' => 'ownerapp.audit.*', 'icon' => 'heroicon-o-document-magnifying-glass'],
                 ],
             ],
+            // Admin = mini CRM: customer, pesanan, menu & harga jual, laporan.
             'admin' => [
                 'Ringkasan' => [
                     ['label' => 'Dashboard', 'route' => 'adminapp.dashboard', 'icon' => 'heroicon-o-home'],
                 ],
-                'Master Data' => [
-                    ['label' => 'Master Menu', 'route' => 'adminapp.products.index', 'match' => 'adminapp.products.*', 'icon' => 'heroicon-o-squares-2x2'],
-                    ['label' => 'Master Customer', 'route' => 'adminapp.customers.index', 'match' => 'adminapp.customers.*', 'icon' => 'heroicon-o-user-group'],
+                'Customer' => [
+                    ['label' => 'Customer', 'route' => 'adminapp.customers.index', 'match' => 'adminapp.customers.*', 'icon' => 'heroicon-o-user-group'],
                 ],
-                'Operasional' => [
+                'Pesanan' => [
                     ['label' => 'Purchase Orders', 'route' => 'adminapp.orders.index', 'match' => 'adminapp.orders.*', 'icon' => 'heroicon-o-clipboard-document-list'],
                     ['label' => 'SPK', 'route' => 'adminapp.spk.index', 'match' => 'adminapp.spk.*', 'icon' => 'heroicon-o-calendar-days'],
                     ['label' => 'Delivery', 'route' => 'adminapp.delivery.index', 'match' => 'adminapp.delivery.*', 'icon' => 'heroicon-o-truck'],
+                ],
+                'Menu & Harga' => [
+                    ['label' => 'Master Menu', 'route' => 'adminapp.products.index', 'match' => 'adminapp.products.*', 'icon' => 'heroicon-o-squares-2x2'],
                     ['label' => 'Menu Tanpa HPP/OHC', 'route' => 'adminapp.reports.missing-costs', 'match' => 'adminapp.reports.missing-costs*', 'icon' => 'heroicon-o-exclamation-triangle'],
                 ],
                 'Laporan' => [

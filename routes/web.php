@@ -168,6 +168,7 @@ Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:admin|ow
         Route::get('/customers', [AdminCustomerController::class, 'index'])->name('customers.index');
         Route::get('/customers/create', [AdminCustomerController::class, 'create'])->name('customers.create');
         Route::post('/customers', [AdminCustomerController::class, 'store'])->name('customers.store');
+        Route::get('/customers/{customer}', [AdminCustomerController::class, 'show'])->name('customers.show')->whereNumber('customer');
         Route::get('/customers/{customer}/edit', [AdminCustomerController::class, 'edit'])->name('customers.edit');
         Route::put('/customers/{customer}', [AdminCustomerController::class, 'update'])->name('customers.update');
 
