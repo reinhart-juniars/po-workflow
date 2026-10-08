@@ -275,10 +275,7 @@ class FinalReportController extends Controller
             ->with('category:id,name,expense_mode,include_hpp')
             ->whereDate('expense_date', '>=', $dateFrom->toDateString())
             ->whereDate('expense_date', '<=', $dateTo->toDateString())
-            ->whereHas('category', function ($query) {
-                $query->where('expense_mode', ExpenseCategory::MODE_DIRECT_EXPENSE)
-                    ->where('include_hpp', false);
-            })
+            ->inProfitAndLoss(fn ($query) => $query->where('include_hpp', false))
             ->get(['expense_category_id', 'amount'])
             ->reject(fn (CashOut $expense) => $this->isAdjustmentExpenseCategory($expense))
             ->groupBy(fn (CashOut $expense) => $expense->category?->name ?: 'Tanpa Kategori')

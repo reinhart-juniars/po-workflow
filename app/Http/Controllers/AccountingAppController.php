@@ -1691,11 +1691,7 @@ class AccountingAppController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100', 'unique:expense_categories,name'],
             'description' => ['nullable', 'string'],
-            'expense_mode' => ['required', Rule::in([
-                ExpenseCategory::MODE_DIRECT_EXPENSE,
-                ExpenseCategory::MODE_INVENTORY_PURCHASE,
-                ExpenseCategory::MODE_FIXED_ASSET,
-            ])],
+            'expense_mode' => ['required', Rule::in(array_keys(ExpenseCategory::modeOptions()))],
         ]);
 
         if ($this->isReservedExpenseCategoryName($data['name'])) {
@@ -1735,11 +1731,7 @@ class AccountingAppController extends Controller
                 Rule::unique('expense_categories', 'name')->ignore($category->id),
             ],
             'description' => ['nullable', 'string'],
-            'expense_mode' => ['required', Rule::in([
-                ExpenseCategory::MODE_DIRECT_EXPENSE,
-                ExpenseCategory::MODE_INVENTORY_PURCHASE,
-                ExpenseCategory::MODE_FIXED_ASSET,
-            ])],
+            'expense_mode' => ['required', Rule::in(array_keys(ExpenseCategory::modeOptions()))],
         ]);
 
         if ($this->isReservedExpenseCategoryName($data['name'])) {

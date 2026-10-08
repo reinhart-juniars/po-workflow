@@ -33,6 +33,9 @@
           <option value="fixed_asset" @selected(old('expense_mode') === 'fixed_asset')>
             Aktiva Tetap
           </option>
+          <option value="wealth_reduction" @selected(old('expense_mode') === 'wealth_reduction')>
+            Mengurangi Kekayaan (di luar Laba Rugi)
+          </option>
         </select>
       </div>
 
@@ -94,6 +97,9 @@
                   </option>
                   <option value="fixed_asset" @selected($category->expense_mode === 'fixed_asset')>
                     Aktiva Tetap
+                  </option>
+                  <option value="wealth_reduction" @selected($category->expense_mode === 'wealth_reduction')>
+                    Mengurangi Kekayaan (di luar Laba Rugi)
                   </option>
                 </select>
               </td>

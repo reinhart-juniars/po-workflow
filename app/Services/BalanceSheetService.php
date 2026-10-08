@@ -53,6 +53,7 @@ class BalanceSheetService
         $payableAdjustmentRows = $this->buildAdjustmentRows($reportDate, BalanceSheetAdjustment::GROUP_PAYABLE);
         $equityAdjustmentRows = $this->buildAdjustmentRows($reportDate, BalanceSheetAdjustment::GROUP_EQUITY);
         $wealthAdjustmentRows = $this->buildAdjustmentRows($reportDate, BalanceSheetAdjustment::GROUP_WEALTH);
+        $wealthReductionRows = $this->buildWealthReductionRows($reportDate);
         $openingCapital = $this->calculateOpeningCapital($reportDate);
         [$retainedEarnings, $retainedWarnings] = $this->calculateProfitForRange(
             $this->profitComputationStartDate(),
@@ -122,7 +123,7 @@ class BalanceSheetService
                 'meta' => 'Akumulasi laba/rugi '.$currentPeriodStart->format('d-m-Y').' - '.$reportDate->format('d-m-Y'),
                 'amount' => $currentPeriodProfit,
             ],
-        ])->merge($wealthAdjustmentRows)->values();
+        ])->merge($wealthReductionRows)->merge($wealthAdjustmentRows)->values();
         $calculatedEquity = round((float) $capitalRows->sum('amount') + (float) $wealthRows->sum('amount'), 2);
         $equityAdjustment = round($equityAmount - $calculatedEquity, 2);
 
@@ -610,6 +611,29 @@ class BalanceSheetService
         return round($openingCash + $openingReceivable + $openingInventory - $openingPayable, 2);
     }
 
+    /**
+     * Pengeluaran kategori "Mengurangi Kekayaan" (mis. Biaya Marketing): tidak masuk laba rugi,
+     * tapi kasnya sudah keluar tanpa aset pengganti. Dicatat kumulatif s/d tanggal laporan
+     * sebagai baris negatif di Kekayaan, supaya tidak jatuh ke "Penyesuaian Neraca".
+     * Hanya yang sejak tanggal mulai (CashOut::wealthReduction); sebelumnya sudah ada di laba.
+     */
+    protected function buildWealthReductionRows(Carbon $reportDate): Collection
+    {
+        return CashOut::query()
+            ->wealthReduction()
+            ->with('category:id,name,expense_mode')
+            ->whereDate('expense_date', '<=', $reportDate->toDateString())
+            ->get(['expense_category_id', 'amount'])
+            ->groupBy(fn (CashOut $expense) => $expense->category?->name ?: 'Pengurang Kekayaan')
+            ->map(fn (Collection $group, string $label) => [
+                'label' => $label,
+                'meta' => 'Pengeluaran di luar laba rugi s/d '.$reportDate->format('d-m-Y'),
+                'amount' => round(-1 * (float) $group->sum('amount'), 2),
+            ])
+            ->filter(fn (array $row) => abs((float) $row['amount']) >= 0.005)
+            ->values();
+    }
+
     protected function profitComputationStartDate(): ?Carbon
     {
         $dates = collect([
@@ -674,10 +698,7 @@ class BalanceSheetService
             ->with('category:id,name')
             ->whereDate('expense_date', '>=', $dateFrom->toDateString())
             ->whereDate('expense_date', '<=', $dateTo->toDateString())
-            ->whereHas('category', function ($query) {
-                $query->where('expense_mode', ExpenseCategory::MODE_DIRECT_EXPENSE)
-                    ->where('name', '!=', self::PAYABLE_SETTLEMENT_CATEGORY_NAME);
-            })
+            ->inProfitAndLoss(fn ($query) => $query->where('name', '!=', self::PAYABLE_SETTLEMENT_CATEGORY_NAME))
             ->get(['expense_category_id', 'amount'])
             ->reject(fn (CashOut $expense) => $this->isAdjustmentExpenseCategory($expense))
             ->sum('amount'), 2);

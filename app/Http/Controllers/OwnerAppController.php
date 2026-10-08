@@ -748,9 +748,13 @@ class OwnerAppController extends Controller
                 'COALESCE(SUM(CASE WHEN LOWER(expense_categories.name) IN (?, ?) THEN cash_outs.amount ELSE 0 END), 0) as hpp_real',
                 $hppNames
             )
+            // Biaya "Mengurangi Kekayaan" (mis. Marketing) sejak tanggal mulai tidak
+            // ikut OHC Real, sama dengan Laba Rugi (lihat CashOut::inProfitAndLoss).
             ->selectRaw(
-                "COALESCE(SUM(CASE WHEN LOWER(COALESCE(expense_categories.name, '')) NOT IN (?, ?, ?) THEN cash_outs.amount ELSE 0 END), 0) as ohc_real",
-                $excludedFromOhcNames
+                "COALESCE(SUM(CASE WHEN LOWER(COALESCE(expense_categories.name, '')) NOT IN (?, ?, ?)"
+                    ." AND NOT (COALESCE(expense_categories.expense_mode, '') = ? AND cash_outs.expense_date >= ?)"
+                    .' THEN cash_outs.amount ELSE 0 END), 0) as ohc_real',
+                [...$excludedFromOhcNames, ExpenseCategory::MODE_WEALTH_REDUCTION, ExpenseCategory::wealthReductionStart()]
             )
             ->first();
 
@@ -799,8 +803,10 @@ class OwnerAppController extends Controller
                 $hppNames
             )
             ->selectRaw(
-                "COALESCE(SUM(CASE WHEN LOWER(COALESCE(expense_categories.name, '')) NOT IN (?, ?, ?) THEN cash_outs.amount ELSE 0 END), 0) as ohc_real",
-                $excludedFromOhcNames
+                "COALESCE(SUM(CASE WHEN LOWER(COALESCE(expense_categories.name, '')) NOT IN (?, ?, ?)"
+                    ." AND NOT (COALESCE(expense_categories.expense_mode, '') = ? AND cash_outs.expense_date >= ?)"
+                    .' THEN cash_outs.amount ELSE 0 END), 0) as ohc_real',
+                [...$excludedFromOhcNames, ExpenseCategory::MODE_WEALTH_REDUCTION, ExpenseCategory::wealthReductionStart()]
             )
             ->groupBy('period')
             ->get()
