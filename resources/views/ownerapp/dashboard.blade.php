@@ -166,10 +166,10 @@
     </section>
 
     <section class="mt-4">
-        @include('ownerapp.partials.donut-chart', [
-            'title' => 'Pie Chart Kategori Pengeluaran',
-            'subtitle' => 'Komposisi pengeluaran berdasarkan seluruh kategori pada periode aktif.',
-            'chart' => $expenseCategoryChart,
+        @include('ownerapp.partials.category-bars', [
+            'title' => 'Pengeluaran per Kategori',
+            'subtitle' => 'Seluruh kas keluar pada periode aktif, terbesar di atas.',
+            'chart' => $expenseCategoryBars,
         ])
     </section>
 

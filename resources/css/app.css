@@ -1158,3 +1158,34 @@ input.is-locked { background: #f8fafc; color: #475569; cursor: default; }
 .crm-fav:first-of-type { border-top: 0; }
 .crm-fav-rank { display: grid; width: 26px; height: 26px; flex: none; place-items: center; border-radius: 8px; background: #ebeefb; color: #2740a4; font-size: 12px; font-weight: 700; }
 @media (prefers-reduced-motion: reduce) { .crm-bar, .crm-tip { transition: none; } }
+
+/* ---------- Pengeluaran per kategori (ownerapp/partials/category-bars) ----------
+   Batang horizontal berurutan, satu warna brand. Batang 10 px berujung bulat
+   4 px (alas rata di kiri), lintasan slate-100, label/nilai pakai warna teks. */
+.cat-bars { display: grid; padding: 8px 24px 16px; }
+.cat-bar-row {
+  position: relative; display: grid; grid-template-columns: minmax(110px, 200px) minmax(0, 1fr) 136px 56px; align-items: center; gap: 0 14px;
+  padding: 9px 0; border-top: 1px solid #f1f5f9; outline: none;
+}
+.cat-bar-row:first-child { border-top: 0; }
+.cat-bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 500; color: #020617; }
+.cat-bar-track { display: block; height: 10px; border-radius: 0 4px 4px 0; background: #f1f5f9; }
+.cat-bar-fill { display: block; height: 100%; border-radius: 0 4px 4px 0; background: #2f4dc5; transition: opacity 120ms ease; }
+.cat-bars:hover .cat-bar-fill { opacity: 0.55; }
+.cat-bars .cat-bar-row:hover .cat-bar-fill, .cat-bar-row:focus-visible .cat-bar-fill { opacity: 1; }
+.cat-bar-value { font-size: 14px; font-weight: 600; color: #020617; white-space: nowrap; font-variant-numeric: tabular-nums; text-align: right; }
+.cat-bar-pct { font-size: 13px; color: #64748b; text-align: right; font-variant-numeric: tabular-nums; }
+.cat-bar-tip {
+  position: absolute; bottom: calc(100% - 2px); left: 214px; z-index: 5; padding: 6px 8px; border-radius: 8px;
+  background: #020617; color: #fff; font-size: 12px; line-height: 16px; white-space: nowrap; font-variant-numeric: tabular-nums;
+  opacity: 0; pointer-events: none; transform: translateY(4px); transition: opacity 120ms ease, transform 120ms ease;
+}
+.cat-bar-row:hover .cat-bar-tip, .cat-bar-row:focus-visible .cat-bar-tip { opacity: 1; transform: none; }
+@media (max-width: 640px) {
+  .cat-bars { padding: 8px 16px 12px; }
+  .cat-bar-row { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; }
+  .cat-bar-track { grid-column: 1 / -1; grid-row: 2; }
+  .cat-bar-pct { display: none; }
+  .cat-bar-tip { left: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .cat-bar-fill, .cat-bar-tip { transition: none; } }

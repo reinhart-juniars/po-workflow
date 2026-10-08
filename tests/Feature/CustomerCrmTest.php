@@ -154,3 +154,26 @@ it('membatasi profil customer untuk aplikasi Admin', function () {
 it('menyusun sidebar Admin sebagai CRM', function () {
     expect(array_keys(App\Support\Navigation::menus()['admin']))->toBe(['Ringkasan', 'Customer', 'Pesanan', 'Menu & Harga', 'Laporan']);
 });
+
+it('menampilkan pengeluaran per kategori sebagai batang berurutan, bukan pie chart', function () {
+    $owner = adminCrm('owner');
+    $kas = App\Models\CashAccount::query()->create(['name' => 'Kas', 'type' => 'cash', 'is_active' => true]);
+    $lokasi = App\Models\ExpenseLocation::query()->firstOrCreate(['name' => 'Pusat'], ['type' => 'center', 'is_active' => true]);
+    foreach ([['Gaji', 300_000], ['Bahan Baku', 700_000], ['Pajak', 0.0]] as [$nama, $nilai]) {
+        $kategori = App\Models\ExpenseCategory::query()->create(['name' => $nama, 'expense_mode' => 'direct_expense', 'is_active' => true]);
+        if ($nilai > 0) {
+            App\Models\CashOut::query()->create(['expense_category_id' => $kategori->id, 'expense_location_id' => $lokasi->id, 'cash_account_id' => $kas->id, 'amount' => $nilai, 'expense_date' => '2026-10-05']);
+        }
+    }
+
+    $response = $this->actingAs($owner)->get(route('ownerapp.dashboard', ['date_from' => '2026-10-01', 'date_to' => '2026-10-31']))->assertOk()
+        ->assertSee('Pengeluaran per Kategori')
+        ->assertDontSee('Pie Chart')
+        ->assertSeeInOrder(['Bahan Baku', 'Rp 700.000', '70,0%', 'Gaji', 'Rp 300.000', '30,0%']);
+
+    $bars = $response->viewData('expenseCategoryBars');
+    expect($bars['total'])->toBe(1_000_000.0)
+        ->and(collect($bars['rows'])->pluck('label')->all())->toBe(['Bahan Baku', 'Gaji']) // kategori nol tidak tampil
+        ->and($bars['rows'][0]['width'])->toBe(100.0)
+        ->and($bars['rows'][1]['width'])->toBe(round(300 / 700 * 100, 2));
+});

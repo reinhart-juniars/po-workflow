@@ -14,7 +14,6 @@ use App\Support\UiLabel;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class OwnerAppController extends Controller
@@ -220,35 +219,26 @@ class OwnerAppController extends Controller
             ])
             ->values();
 
+        // Pengeluaran per kategori, terbesar dulu. Dulu donat: 11 irisan yang
+        // labelnya bertumpuk dan irisan < 1% tidak terbaca. Batang horizontal
+        // berurutan membuat besaran antar kategori bisa dibandingkan langsung.
         $totalExpenseByCategory = round((float) $expenseCategoryBreakdown->sum('value'), 2);
-        $largestExpenseCategory = $expenseCategoryBreakdown->first();
-        $topExpenseCategories = $expenseCategoryBreakdown
-            ->take(3)
-            ->map(function (array $category) use ($totalExpenseByCategory) {
-                $value = (float) $category['value'];
-
-                return [
+        $largestExpenseValue = (float) ($expenseCategoryBreakdown->max('value') ?? 0);
+        $expenseCategoryBars = [
+            'total' => $totalExpenseByCategory,
+            'rows' => $expenseCategoryBreakdown
+                ->filter(fn (array $category) => $category['value'] > 0)
+                ->map(fn (array $category) => [
                     'label' => $category['label'],
-                    'value' => round($value, 2),
-                    'percentage' => $totalExpenseByCategory > 0
-                        ? round(($value / $totalExpenseByCategory) * 100, 2)
-                        : 0,
-                ];
-            })
-            ->values();
-
-        if ($largestExpenseCategory) {
-            $largestExpenseCategory['percentage'] = $totalExpenseByCategory > 0
-                ? round((((float) $largestExpenseCategory['value']) / $totalExpenseByCategory) * 100, 2)
-                : 0;
-        }
-
-        $expenseCategoryChart = $this->buildDonutChartPayload(
-            $expenseCategoryBreakdown->all(),
-            (int) $expenseCategoryBreakdown->count(),
-            $largestExpenseCategory,
-            $topExpenseCategories->all()
-        );
+                    'value' => $category['value'],
+                    'percentage' => $totalExpenseByCategory > 0 ? round($category['value'] / $totalExpenseByCategory * 100, 1) : 0.0,
+                    // Panjang batang relatif terhadap kategori terbesar (bukan total),
+                    // supaya perbedaan antar kategori kecil tetap terlihat.
+                    'width' => $largestExpenseValue > 0 ? round($category['value'] / $largestExpenseValue * 100, 2) : 0.0,
+                ])
+                ->values()
+                ->all(),
+        ];
 
         $today = now()->startOfDay();
         $receivableAging = collect([
@@ -378,7 +368,7 @@ class OwnerAppController extends Controller
             'growthVsPreviousMonth' => $growthVsPreviousMonth,
             'cashHealth' => $cashHealth,
             'profitSignal' => $profitSignal,
-            'expenseCategoryChart' => $expenseCategoryChart,
+            'expenseCategoryBars' => $expenseCategoryBars,
             'salesVsExpenseChart' => $salesVsExpenseChart,
             'salesDeliveryActualChart' => $salesDeliveryActualChart,
             'receivableAging' => $receivableAging,
@@ -1156,218 +1146,6 @@ class OwnerAppController extends Controller
             'x_ticks' => $xTicks,
             'max_label' => $this->abbreviateCurrency($chartMax),
         ];
-    }
-
-    protected function buildDonutChartPayload(
-        array $items,
-        int $categoryCount = 0,
-        ?array $largestCategory = null,
-        array $topCategories = []
-    ): array {
-        $size = 460;
-        $center = $size / 2;
-        $radius = 112;
-        $strokeWidth = 34;
-        $circumference = 2 * pi() * $radius;
-        $palette = [
-            '#1d4ed8',
-            '#0f766e',
-            '#f97316',
-            '#e11d48',
-            '#7c3aed',
-            '#0ea5e9',
-            '#14b8a6',
-            '#f59e0b',
-            '#475569',
-            '#84cc16',
-            '#ef4444',
-            '#6366f1',
-        ];
-
-        $normalizedItems = collect($items)
-            ->map(function (array $item) {
-                return [
-                    'label' => $item['label'] ?? 'Tanpa Kategori',
-                    'value' => round((float) ($item['value'] ?? 0), 2),
-                ];
-            })
-            ->filter(fn (array $item) => $item['value'] > 0)
-            ->values();
-
-        $total = round((float) $normalizedItems->sum('value'), 2);
-
-        if ($total <= 0) {
-            return [
-                'has_data' => false,
-                'size' => $size,
-                'center' => $center,
-                'radius' => $radius,
-                'stroke_width' => $strokeWidth,
-                'total' => 0,
-                'total_label' => 'Rp 0',
-                'category_count' => $categoryCount,
-                'largest_category' => null,
-                'top_categories' => [],
-                'slices' => [],
-            ];
-        }
-
-        $offset = 0.0;
-        $accumulatedAngle = 0.0;
-        $slices = $normalizedItems->values()->map(function (array $item, int $index) use (
-            &$offset,
-            &$accumulatedAngle,
-            $palette,
-            $circumference,
-            $total,
-            $center,
-            $radius,
-            $strokeWidth
-        ) {
-            $value = (float) $item['value'];
-            $ratio = $value / $total;
-            $dash = round($circumference * $ratio, 2);
-            $sweepAngle = $ratio * 360;
-            $midAngle = -90 + $accumulatedAngle + ($sweepAngle / 2);
-            $midAngleRadians = deg2rad($midAngle);
-            $lineStartRadius = $radius + ($strokeWidth / 2) + 8;
-            $lineBreakRadius = $lineStartRadius + 20;
-            $lineStartX = $center + (cos($midAngleRadians) * $lineStartRadius);
-            $lineStartY = $center + (sin($midAngleRadians) * $lineStartRadius);
-            $lineBreakX = $center + (cos($midAngleRadians) * $lineBreakRadius);
-            $lineBreakY = $center + (sin($midAngleRadians) * $lineBreakRadius);
-            $labelSide = cos($midAngleRadians) >= 0 ? 'right' : 'left';
-            $slice = [
-                'index' => $index,
-                'label' => $item['label'],
-                'label_short' => Str::limit($item['label'], 18, '...'),
-                'value' => round($value, 2),
-                'value_label' => 'Rp '.number_format($value, 0, ',', '.'),
-                'percentage' => round($ratio * 100, 2),
-                'percentage_label' => number_format($ratio * 100, 2, ',', '.').'%',
-                'color' => $palette[$index % count($palette)],
-                'dasharray' => $dash.' '.round(max($circumference - $dash, 0), 2),
-                'dashoffset' => round(-$offset, 2),
-                'label_side' => $labelSide,
-                'label_anchor' => $labelSide === 'right' ? 'start' : 'end',
-                'line_start_x' => round($lineStartX, 2),
-                'line_start_y' => round($lineStartY, 2),
-                'line_break_x' => round($lineBreakX, 2),
-                'line_break_y' => round($lineBreakY, 2),
-                'label_y' => round((float) $lineBreakY, 2),
-            ];
-
-            $offset += $dash;
-            $accumulatedAngle += $sweepAngle;
-
-            return $slice;
-        })->values();
-
-        $leftSlices = $this->normalizeDonutLabelPositions(
-            $slices->where('label_side', 'left')->values()->all(),
-            56,
-            $size - 56,
-            18,
-            82,
-            'left'
-        );
-
-        $rightSlices = $this->normalizeDonutLabelPositions(
-            $slices->where('label_side', 'right')->values()->all(),
-            56,
-            $size - 56,
-            18,
-            $size - 82,
-            'right'
-        );
-
-        $positionedSlices = collect(array_merge($leftSlices, $rightSlices))
-            ->sortBy('index')
-            ->values()
-            ->all();
-
-        return [
-            'has_data' => true,
-            'size' => $size,
-            'center' => $center,
-            'radius' => $radius,
-            'stroke_width' => $strokeWidth,
-            'total' => $total,
-            'total_label' => 'Rp '.number_format($total, 0, ',', '.'),
-            'category_count' => max($categoryCount, count($slices)),
-            'largest_category' => $largestCategory ? [
-                'label' => $largestCategory['label'] ?? 'Tanpa Kategori',
-                'value' => round((float) ($largestCategory['value'] ?? 0), 2),
-                'value_label' => 'Rp '.number_format((float) ($largestCategory['value'] ?? 0), 0, ',', '.'),
-                'percentage' => round((float) ($largestCategory['percentage'] ?? 0), 2),
-                'percentage_label' => number_format((float) ($largestCategory['percentage'] ?? 0), 2, ',', '.').'%',
-            ] : null,
-            'top_categories' => collect($topCategories)->map(function (array $category, int $index) use ($palette) {
-                $value = (float) ($category['value'] ?? 0);
-                $percentage = (float) ($category['percentage'] ?? 0);
-
-                return [
-                    'rank' => $index + 1,
-                    'label' => $category['label'] ?? 'Tanpa Kategori',
-                    'value' => round($value, 2),
-                    'value_label' => 'Rp '.number_format($value, 0, ',', '.'),
-                    'percentage' => round($percentage, 2),
-                    'percentage_label' => number_format($percentage, 2, ',', '.').'%',
-                    'color' => $palette[$index % count($palette)],
-                ];
-            })->values()->all(),
-            'slices' => $positionedSlices,
-        ];
-    }
-
-    protected function normalizeDonutLabelPositions(
-        array $slices,
-        float $minY,
-        float $maxY,
-        float $gap,
-        float $labelX,
-        string $side
-    ): array {
-        if (empty($slices)) {
-            return [];
-        }
-
-        $sorted = collect($slices)->sortBy('label_y')->values()->all();
-        $currentY = $minY - $gap;
-
-        foreach ($sorted as &$slice) {
-            $slice['label_y'] = max((float) $slice['label_y'], $currentY + $gap);
-            $currentY = (float) $slice['label_y'];
-        }
-        unset($slice);
-
-        $overflow = (float) $sorted[count($sorted) - 1]['label_y'] - $maxY;
-
-        if ($overflow > 0) {
-            for ($index = count($sorted) - 1; $index >= 0; $index--) {
-                $sorted[$index]['label_y'] = max($minY, (float) $sorted[$index]['label_y'] - $overflow);
-
-                if ($index < count($sorted) - 1) {
-                    $sorted[$index]['label_y'] = min(
-                        (float) $sorted[$index]['label_y'],
-                        (float) $sorted[$index + 1]['label_y'] - $gap
-                    );
-                }
-            }
-        }
-
-        $currentY = $minY - $gap;
-
-        foreach ($sorted as &$slice) {
-            $slice['label_y'] = max((float) $slice['label_y'], $currentY + $gap);
-            $slice['label_x'] = $labelX;
-            $slice['label_anchor'] = $side === 'right' ? 'start' : 'end';
-            $slice['line_end_x'] = $side === 'right' ? $labelX - 8 : $labelX + 8;
-            $currentY = (float) $slice['label_y'];
-        }
-        unset($slice);
-
-        return $sorted;
     }
 
     protected function chartCeiling(float $value): float
