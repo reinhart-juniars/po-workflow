@@ -266,7 +266,14 @@
     }
 
     .data-table thead th {
-        @apply bg-slate-50 px-3 py-3.5 text-left text-sm font-semibold text-slate-950 first:pl-6 last:pr-6;
+        @apply bg-slate-50 px-3 py-3.5 text-sm font-semibold text-slate-950 first:pl-6 last:pr-6;
+    }
+
+    /* Rata kiri bawaan dengan spesifisitas rendah (:where), supaya kolom
+       angka ber-.text-right benar-benar rata kanan. Dulu `.data-table thead th`
+       (0,1,2) mengalahkan .text-right (0,1,0) di semua tabel Blade. */
+    :where(.data-table thead th) {
+        text-align: left;
     }
 
     .data-table tbody td {
@@ -300,7 +307,7 @@
     }
 
     .status-badge {
-        @apply inline-flex items-center gap-x-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ring-slate-950/5;
+        @apply inline-flex items-center gap-x-1 whitespace-nowrap rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ring-slate-950/5;
     }
 
     .page-toolbar {
@@ -587,7 +594,7 @@
     }
 
     .badge-soft {
-        @apply inline-flex items-center gap-x-1 rounded-md border-0 px-2 py-1 text-xs font-medium ring-1 ring-inset;
+        @apply inline-flex items-center gap-x-1 whitespace-nowrap rounded-md border-0 px-2 py-1 text-xs font-medium ring-1 ring-inset;
     }
 
     .badge-soft-amber {
@@ -1054,3 +1061,23 @@ input.is-locked { background: #f8fafc; color: #475569; cursor: default; }
 @media (min-width: 640px) {
   .login-card { padding: 40px; }
 }
+
+/* ---------- Tagihan Pembelian (accountingapp/purchase-bills) ----------
+   Tab status = pil seperti bilah aplikasi; detail = kolom utama + samping 360 px. */
+.bill-tabs { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 12px; background: #f1f4f9; }
+.bill-tab { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; line-height: 20px; color: #64748b; transition: background-color 140ms ease, color 140ms ease; }
+.bill-tab:hover { color: #020617; }
+.bill-tab.is-active { background: #fff; color: #2740a4; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05), 0 0 0 1px rgb(2 6 23 / 0.05); }
+.bill-tab-count { min-width: 20px; padding: 0 6px; border-radius: 6px; background: #ebeefb; color: #2f4dc5; font-size: 12px; line-height: 18px; text-align: center; }
+.bill-layout { display: grid; gap: 16px; }
+.bill-main, .bill-side { min-width: 0; }
+@media (min-width: 1024px) {
+  .bill-layout { grid-template-columns: minmax(0, 1fr) 360px; align-items: start; }
+}
+.bill-meta { display: grid; gap: 10px; font-size: 14px; }
+.bill-meta dt { color: #64748b; }
+.bill-meta dd { margin: 2px 0 0; color: #020617; }
+.bill-more > summary { cursor: pointer; font-size: 14px; font-weight: 600; color: #020617; list-style: none; }
+.bill-more > summary::-webkit-details-marker { display: none; }
+.bill-more > summary::after { content: ' ▸'; color: #94a3b8; }
+.bill-more[open] > summary::after { content: ' ▾'; }

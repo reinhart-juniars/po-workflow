@@ -65,8 +65,12 @@
         @endforeach
         <tr class="total">
             @php
-                $bayar = $requisition->paymentTypeLabel();
-                $bayar = $bayar ? ' ('.$bayar.($requisition->supplier_name ? ' · '.$requisition->supplier_name : '').')' : '';
+                // Belanja ditagihkan ke accounting lewat Tagihan Pembelian
+                // (revisi 7 Okt 2026), bukan dibayar gudang.
+                $tagihan = $requisition->purchaseBill;
+                $bayar = $tagihan
+                    ? ' (ditagihkan '.$tagihan->number.($requisition->supplier_name ? ' · '.$requisition->supplier_name : '').')'
+                    : ($requisition->supplier_name ? ' ('.$requisition->supplier_name.')' : '');
             @endphp
             <td colspan="9" class="right">{{ $sudahDiterima ? 'Total pembelian' : 'Perkiraan total pembelian' }}{{ $bayar }}</td>
             <td class="right">{{ $rupiah($sudahDiterima ? $totalAktual : $totalBeli) }}</td>

@@ -46,7 +46,7 @@ class InventoryPurchaseController extends Controller
             ->when($itemId, fn ($query) => $query->where('inventory_item_id', $itemId))
             ->whereDate('transaction_date', '>=', $dateFrom)
             ->whereDate('transaction_date', '<=', $dateTo)
-            ->when(in_array($paymentType, ['cash', 'payable'], true), fn ($query) => $query->where('payment_type', $paymentType))
+            ->when(in_array($paymentType, ['cash', 'payable', 'bill'], true), fn ($query) => $query->where('payment_type', $paymentType))
             ->orderByDesc('transaction_date')
             ->orderByDesc('id')
             ->paginate(20)
@@ -62,7 +62,7 @@ class InventoryPurchaseController extends Controller
             ->whereDate('inventory_purchases.transaction_date', '>=', $dateFrom)
             ->whereDate('inventory_purchases.transaction_date', '<=', $dateTo)
             ->when($itemId, fn ($query) => $query->where('inventory_purchases.inventory_item_id', $itemId))
-            ->when(in_array($paymentType, ['cash', 'payable'], true), fn ($query) => $query->where('inventory_purchases.payment_type', $paymentType))
+            ->when(in_array($paymentType, ['cash', 'payable', 'bill'], true), fn ($query) => $query->where('inventory_purchases.payment_type', $paymentType))
             ->groupBy('inventory_items.category')
             ->selectRaw('inventory_items.category as category, SUM(inventory_purchases.total_value) as total')
             ->pluck('total', 'category');

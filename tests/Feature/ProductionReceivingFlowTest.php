@@ -6,6 +6,7 @@ use App\Models\InventoryItemPriceHistory;
 use App\Models\InventoryMovement;
 use App\Models\InventoryPurchase;
 use App\Models\Payable;
+use App\Models\PurchaseBill;
 use App\Models\RequisitionLine;
 use App\Models\User;
 use App\Services\InventoryLedgerService;
@@ -17,10 +18,11 @@ use Spatie\Permission\Models\Role;
 
 /**
  * Penerimaan barang di Form Kebutuhan: karyawan yang menerima barang mengisi
- * Diterima, alasan & perlakuan yang ditolak, harga beli dari nota, dan cara
- * pembayaran -- lalu Periksa mencatat stok (kartu stok), pembelian bahan baku,
- * dan kas keluar / hutang sekaligus. Sebelum ini nota harus diinput dua kali
- * dan barang ditolak tidak berjejak.
+ * Diterima, alasan & perlakuan yang ditolak, dan harga beli dari nota -- lalu
+ * Periksa mencatat stok (kartu stok), pembelian bahan baku, dan satu Tagihan
+ * Pembelian berikut hutangnya. Sejak revisi 7 Okt 2026 gudang tidak memilih
+ * akun kas: tagihan diajukan ke accounting yang membayar
+ * (tests/Feature/PurchaseBillTest.php).
  */
 function formDisetujui(): array
 {
@@ -38,13 +40,13 @@ function formDisetujui(): array
     return $d + ['order' => $order, 'requisition' => $requisition->fresh(), 'service' => $service];
 }
 
-it('mencatat penerimaan: diterima masuk stok dengan harga beli, ditolak-retur tidak dibayar, pembelian & kas keluar dibuat otomatis', function () {
+it('mencatat penerimaan: diterima masuk stok dengan harga beli, ditolak-retur tidak dibayar, pembelian & tagihan dibuat otomatis', function () {
     $d = formDisetujui();
     $tepung = $d['requisition']->lines->firstWhere('inventory_item_id', $d['tepung']->id);
 
     // Beli 2 kg, datang 1,8 kg layak; 0,2 kg busuk dikembalikan. Nota Rp 12.500/kg (master 12.000).
     $d['service']->recordReceipt($tepung, 1.8, 'busuk', RequisitionLine::REJECT_RETURN, 12500);
-    $bayar = bayarTunai($d['requisition']->fresh(), 'Pak Udin');
+    bayarTunai($d['requisition']->fresh(), 'Pak Udin');
     $d['service']->check($d['requisition']->fresh());
 
     $tepung = $tepung->fresh();
@@ -52,7 +54,7 @@ it('mencatat penerimaan: diterima masuk stok dengan harga beli, ditolak-retur ti
         ->and(app(InventoryLedgerService::class)->balance($d['tepung']->id))->toBe(1.8)
         ->and((float) InventoryMovement::query()->ofType(InventoryMovement::TYPE_PURCHASE)->where('inventory_item_id', $d['tepung']->id)->value('unit_price'))->toBe(12500.0);
 
-    // Satu pembelian Baik 1,8 kg x 12.500 = 22.500, tunai dari Kas Tes, tertaut ke form; tidak ada pembelian rusak.
+    // Satu pembelian Baik 1,8 kg x 12.500 = 22.500, tertaut ke form & tagihannya; tidak ada pembelian rusak.
     $purchases = InventoryPurchase::query()->get();
     expect($purchases)->toHaveCount(1);
     $beli = $purchases->first();
@@ -64,11 +66,21 @@ it('mencatat penerimaan: diterima masuk stok dengan harga beli, ditolak-retur ti
         ->and($tepung->inventory_purchase_id)->toBe($beli->id)
         ->and($tepung->damaged_purchase_id)->toBeNull();
 
-    // Uang keluar = pembelian, dari akun kas yang dipilih.
-    expect(CashOut::query()->count())->toBe(1)
-        ->and((float) CashOut::query()->sum('amount'))->toBe((float) InventoryPurchase::query()->sum('total_value'))
-        ->and(CashOut::query()->first()->cash_account_id)->toBe($bayar['cash_account']->id)
-        ->and(Payable::query()->count())->toBe(0);
+    // Gudang tidak membayar: belum ada kas keluar. Yang lahir satu tagihan
+    // draft + satu hutang sebesar pembelian (Neraca: persediaan = hutang).
+    $tagihan = PurchaseBill::query()->sole();
+    expect(CashOut::query()->count())->toBe(0)
+        ->and($beli->payment_type)->toBe(InventoryPurchase::PAYMENT_BILL)
+        ->and($beli->purchase_bill_id)->toBe($tagihan->id)
+        ->and($beli->cash_out_id)->toBeNull()
+        ->and($beli->payable_id)->toBeNull()
+        ->and($tagihan->status)->toBe(PurchaseBill::STATUS_DRAFT)
+        ->and($tagihan->requisition_id)->toBe($d['requisition']->id)
+        ->and($tagihan->supplier_name)->toBe('Pak Udin')
+        ->and((float) $tagihan->total)->toBe(22500.0)
+        ->and(Payable::query()->count())->toBe(1)
+        ->and((float) $tagihan->payable->amount)->toBe((float) InventoryPurchase::query()->sum('total_value'))
+        ->and($tagihan->payable->status)->toBe('unpaid');
 
     // Harga master ikut nota dan berjejak di histori harga dengan sumber nomor form.
     expect((float) $d['tepung']->fresh()->unit_price)->toBe(12500.0)
@@ -99,16 +111,18 @@ it('barang ditolak yang tetap dibayar menjadi pembelian Tidak Baik (kerugian) ta
         ->and((float) $rusak->qty)->toBe(0.5)
         ->and((float) $rusak->total_value)->toBe(5000.0)
         ->and($rusak->condition_notes)->toBe('kemasan pecah')
-        // Stok hanya bertambah sebesar yang layak; uang keluar untuk keduanya.
+        // Stok hanya bertambah sebesar yang layak; yang ditagih keduanya.
         ->and(app(InventoryLedgerService::class)->balance($d['tepung']->id))->toBe(1.5)
-        ->and((float) CashOut::query()->sum('amount'))->toBe(20000.0)
+        ->and((float) PurchaseBill::query()->sole()->total)->toBe(20000.0)
+        ->and((float) PurchaseBill::query()->sole()->payable->amount)->toBe(20000.0)
         ->and((float) InventoryPurchase::query()->addsToStock()->sum('total_value'))->toBe(15000.0)
         ->and((float) InventoryPurchase::query()->damaged()->sum('total_value'))->toBe(5000.0);
 
     // Cetak Form setelah penerimaan: PDF memuat ditolak + alasannya + total aktual.
     // (Pernah gagal ParseError karena @endif menempel di tag; view dirender di sini.)
     $html = view('pdf.requisition', ['requisition' => $d['requisition']->fresh(['lines', 'productionOrder'])])->render();
-    expect($html)->toContain('kemasan pecah')->toContain('dibayar')->toContain('Total pembelian')->toContain('Tunai');
+    expect($html)->toContain('kemasan pecah')->toContain('dibayar')->toContain('Total pembelian')
+        ->toContain('ditagihkan '.PurchaseBill::query()->sole()->number);
 
     $this->actingAs(User::factory()->create(['is_active' => true, 'force_password_change' => false])->assignRole('owner'));
     Livewire::test(RequisitionForm::class, ['record' => $d['order']->id])
@@ -116,27 +130,41 @@ it('barang ditolak yang tetap dibayar menjadi pembelian Tidak Baik (kerugian) ta
         ->assertFileDownloaded($d['requisition']->number.'.pdf');
 });
 
-it('pembelian kredit membentuk hutang ke supplier, bukan kas keluar', function () {
+it('tidak lagi meminta cara pembayaran: supplier dari form ikut ke tagihan dan hutangnya', function () {
+    $d = formDisetujui();
+    $tepung = $d['requisition']->lines->firstWhere('inventory_item_id', $d['tepung']->id);
+    $toko = App\Models\Supplier::query()->create(['name' => 'Toko Sembako', 'is_active' => true]);
+
+    $d['service']->recordReceipt($tepung, 2, null, null, 12000);
+    $d['service']->recordPaymentHeader($d['requisition']->fresh(), ['supplier_id' => $toko->id]);
+
+    // Tanpa jenis bayar & akun kas pun Periksa lolos.
+    expect($d['service']->checkBlockers($d['requisition']->fresh()))->toBe([]);
+    $d['service']->check($d['requisition']->fresh());
+
+    $tagihan = PurchaseBill::query()->sole();
+    expect(CashOut::query()->count())->toBe(0)
+        ->and(Payable::query()->count())->toBe(1)
+        ->and($tagihan->supplier_id)->toBe($toko->id)
+        ->and((float) $tagihan->payable->amount)->toBe(24000.0)
+        ->and($tagihan->payable->supplier_name)->toBe('Toko Sembako')
+        ->and($tagihan->payable->description)->toContain($tagihan->number);
+});
+
+it('tidak membuka tagihan bila tidak ada yang dibeli', function () {
     $d = formDisetujui();
     $tepung = $d['requisition']->lines->firstWhere('inventory_item_id', $d['tepung']->id);
 
-    $d['service']->recordReceipt($tepung, 2, null, null, 12000);
-    $d['service']->recordPaymentHeader($d['requisition']->fresh(), [
-        'payment_type' => 'payable', 'supplier_name' => 'Toko Sembako', 'due_date' => '2026-10-15',
-    ]);
+    // Semua ditolak & diretur: tidak ada yang dibayar.
+    $d['service']->recordReceipt($tepung, 0, 'stok toko kosong', RequisitionLine::REJECT_RETURN, 12000);
     $d['service']->check($d['requisition']->fresh());
 
-    $payable = Payable::query()->first();
-    expect(CashOut::query()->count())->toBe(0)
-        ->and(Payable::query()->count())->toBe(1)
-        ->and((float) $payable->amount)->toBe(24000.0)
-        ->and($payable->supplier_name)->toBe('Toko Sembako')
-        ->and($payable->due_date->toDateString())->toBe('2026-10-15')
-        ->and($payable->status)->toBe('unpaid')
-        ->and(InventoryPurchase::query()->first()->payable_id)->toBe($payable->id);
+    expect(PurchaseBill::query()->count())->toBe(0)
+        ->and(Payable::query()->count())->toBe(0)
+        ->and(InventoryPurchase::query()->count())->toBe(0);
 });
 
-it('menolak Periksa bila alasan tolak, harga beli, atau cara pembayaran belum lengkap, lalu lolos setelah dilengkapi', function () {
+it('menolak Periksa bila alasan tolak atau harga beli belum lengkap, lalu lolos setelah dilengkapi', function () {
     $d = formDisetujui();
     $tepung = $d['requisition']->lines->firstWhere('inventory_item_id', $d['tepung']->id);
     $service = $d['service'];
@@ -148,14 +176,13 @@ it('menolak Periksa bila alasan tolak, harga beli, atau cara pembayaran belum le
 
     $service->recordReceipt($tepung, 1.0);
     $blockers = $service->checkBlockers($d['requisition']->fresh());
-    expect(implode(' ', $blockers))->toContain('ditolak tanpa alasan')->toContain('cara pembayaran');
+    expect(implode(' ', $blockers))->toContain('ditolak tanpa alasan')->not->toContain('pembayaran');
     expect(fn () => $service->check($d['requisition']->fresh()))->toThrow(RuntimeException::class, 'Belum bisa diperiksa');
     expect(InventoryMovement::query()->count())->toBe(0)->and(InventoryPurchase::query()->count())->toBe(0);
 
     // Bahan yang belum punya harga master saat form disusun -> harga beli wajib.
     $tepung->update(['unit_price' => null]);
     $service->recordReceipt($tepung->fresh(), 1.0, 'busuk');
-    bayarTunai($d['requisition']->fresh());
     expect(implode(' ', $service->checkBlockers($d['requisition']->fresh())))->toContain('harga beli belum diisi');
 
     // Kontrol positif: dilengkapi -> lolos, perlakuan mengikuti pengaturan bawaan (retur).
@@ -169,8 +196,6 @@ it('menolak Periksa bila alasan tolak, harga beli, atau cara pembayaran belum le
 it('membiarkan pemegang izin Periksa (inventory) mengisi penerimaan lewat halaman, dan menolak yang tidak berhak', function () {
     $d = formDisetujui();
     $line = $d['requisition']->lines->firstWhere('inventory_item_id', $d['tepung']->id);
-    $bayar = bayarTunai($d['requisition']->fresh());
-
     $buat = function (string $role): User {
         Role::findOrCreate($role, 'web');
         $u = User::factory()->create(['is_active' => true, 'force_password_change' => false]);
@@ -187,19 +212,18 @@ it('membiarkan pemegang izin Periksa (inventory) mengisi penerimaan lewat halama
         ->assertForbidden();
     expect($line->fresh()->received_qty)->toBeNull();
 
-    // Staf inventory boleh: isian tersimpan, termasuk harga beli & cara pembayaran.
+    // Staf inventory boleh: isian tersimpan, termasuk harga beli & supplier.
+    // Akun kas tidak lagi ada di form (ditagihkan ke accounting).
     $pasar = App\Models\Supplier::query()->create(['name' => 'Pasar Induk', 'is_active' => true]);
     $this->actingAs($buat('inventory'));
     Livewire::test(RequisitionForm::class, ['record' => $d['order']->id])
-        ->assertSee('Pembayaran belanja')
+        ->assertSee('Tagihan Pembelian')
+        ->assertDontSee('Akun Kas')
         // Baris bahan = satu tabel (satu baris per bahan), bukan Repeater kartu.
         ->assertSeeHtml('class="sh-grid"')
         ->assertSeeHtml('wire:model="data.lines.0.received_qty"')
         ->assertDontSeeHtml('fi-fo-repeater')
         ->fillForm([
-            'payment_type' => 'cash',
-            'expense_category_id' => $bayar['category']->id,
-            'cash_account_id' => $bayar['cash_account']->id,
             'supplier_id' => $pasar->id,
             'lines' => [['id' => $line->id, 'received_qty' => 1.75, 'rejected_reason' => 'basah', 'rejected_treatment' => RequisitionLine::REJECT_RETURN, 'purchase_price' => 12800]],
         ])

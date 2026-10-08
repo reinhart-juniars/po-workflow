@@ -44,6 +44,7 @@ class ModuleAccess
         'settings.manage' => 'Ubah pengaturan modul',
         'notification.price' => 'Terima notifikasi perubahan harga bahan & harga jual menu',
         'notification.profit' => 'Terima notifikasi profit menu keluar dari batas',
+        'purchase.pay' => 'Bayar / jadikan hutang / kembalikan Tagihan Pembelian dari gudang (Accounting)',
     ];
 
     /**
@@ -62,6 +63,7 @@ class ModuleAccess
             'ledger.view',
             'settings.manage',
             'notification.price', 'notification.profit',
+            'purchase.pay',
         ],
         // Admin mengurus customer & harga jual (Admin › Master Menu); resep dan
         // biayanya hanya dibaca -- dipegang tim menu (revisi 7 Okt 2026).
@@ -80,6 +82,7 @@ class ModuleAccess
             'requisition.check',
             'ledger.view',
             'notification.price',
+            'purchase.pay',
         ],
         // Staf inventory/gudang: kelola bahan, pembelian, opname, saldo awal,
         // dan periksa form kebutuhan saat barang dibeli. Resep hanya dibaca.

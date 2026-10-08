@@ -164,7 +164,7 @@ it('menyaring tab dan menu menurut peran', function () {
     // (dari definisi menu, karena navigasi Filament dipasang sekali per proses).
     $owner = penggunaShell('owner');
     expect(collect(Navigation::tabs($owner))->pluck('key')->all())->toBe(['owner', 'admin', 'accounting', 'inventory', 'menu', 'sales', 'marketing', 'production', 'delivery']);
-    expect(collect(Navigation::sidebar('inventory', $owner))->pluck('label')->all())->toBe(['Ringkasan', 'Inventory', 'Produksi']);
+    expect(collect(Navigation::sidebar('inventory', $owner))->pluck('label')->all())->toBe(['Ringkasan', 'Inventory', 'Pembelian', 'Produksi']);
     expect(collect(Navigation::sidebar('menu', $owner))->pluck('label')->all())->toBe(['Ringkasan', 'Menu & Resep', 'HPP & OHC']);
     expect(collect(collect(Navigation::sidebar('inventory', $owner))->firstWhere('label', 'Inventory')['items'])->pluck('label')->all())->toContain('Pengaturan Inventory');
 

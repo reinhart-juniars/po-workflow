@@ -114,6 +114,7 @@ class Navigation
                     ['label' => 'Pemasukan Lain', 'route' => 'accountingapp.other-incomes.index', 'match' => 'accountingapp.other-incomes.*', 'icon' => 'heroicon-o-arrow-down-tray'],
                     ['label' => 'Closing Penjualan', 'route' => 'accountingapp.sales-closings.index', 'match' => 'accountingapp.sales-closings.*', 'icon' => 'heroicon-o-lock-closed'],
                     ['label' => 'Pengeluaran', 'route' => 'accountingapp.expenses.index', 'match' => 'accountingapp.expenses.*', 'icon' => 'heroicon-o-arrow-up-tray'],
+                    ['label' => 'Tagihan Pembelian', 'route' => 'accountingapp.purchase-bills.index', 'match' => 'accountingapp.purchase-bills.*', 'icon' => 'heroicon-o-receipt-percent'],
                     ['label' => 'Transfer Antar Akun', 'route' => 'accountingapp.cash-account-transfers.index', 'match' => 'accountingapp.cash-account-transfers.*', 'icon' => 'heroicon-o-arrows-right-left'],
                 ],
                 'Monitoring' => [
@@ -141,13 +142,18 @@ class Navigation
                 ],
                 'Inventory' => [
                     ['label' => 'Item Inventaris', 'route' => 'filament.admin.resources.inventory-items.index', 'can' => 'inventory.view'],
-                    ['label' => 'Master Supplier', 'route' => 'filament.admin.resources.suppliers.index', 'can' => 'inventory.view'],
-                    ['label' => 'Pembelian Bahan Baku', 'route' => 'filament.admin.resources.inventory-purchases.index', 'can' => 'inventory.view'],
                     ['label' => 'Stock Opname', 'route' => 'filament.admin.resources.stock-opnames.index', 'can' => 'inventory.view'],
                     ['label' => 'Opname Bahan', 'route' => 'filament.admin.pages.opname-bahan', 'can' => 'inventory.manage'],
                     ['label' => 'Susut Bahan', 'route' => 'filament.admin.pages.susut-bahan', 'can' => 'ledger.view'],
                     ['label' => 'Saldo Awal Stok', 'route' => 'filament.admin.resources.inventory-openings.index', 'can' => 'inventory.view'],
                     ['label' => 'Pengaturan Inventory', 'route' => 'filament.admin.pages.pengaturan-inventory', 'can' => 'settings.manage'],
+                ],
+                // Modul Pembelian (revisi 7 Okt 2026): gudang belanja lalu
+                // menagih ke accounting lewat Tagihan Pembelian.
+                'Pembelian' => [
+                    ['label' => 'Tagihan Pembelian', 'route' => 'filament.admin.resources.purchase-bills.index', 'can' => 'inventory.view'],
+                    ['label' => 'Pembelian Bahan Baku', 'route' => 'filament.admin.resources.inventory-purchases.index', 'can' => 'inventory.view'],
+                    ['label' => 'Master Supplier', 'route' => 'filament.admin.resources.suppliers.index', 'can' => 'inventory.view'],
                 ],
                 'Produksi' => [
                     ['label' => 'SPK Produksi', 'route' => 'filament.admin.resources.production-orders.index', 'can' => 'production.view'],

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountingAppController;
+use App\Http\Controllers\AccountingPurchaseBillController;
 use App\Http\Controllers\AdminAppController;
 use App\Http\Controllers\AdminCustomerController;
 use App\Http\Controllers\AdminProductController;
@@ -29,6 +30,7 @@ use App\Http\Controllers\OwnerAppController;
 use App\Http\Controllers\OwnerUserController;
 use App\Http\Controllers\ProductionAppController;
 use App\Http\Controllers\ProfitLossReportController;
+use App\Http\Controllers\PurchaseBillReceiptController;
 use App\Http\Controllers\SalesActualExtraPortionController;
 use App\Http\Controllers\SalesAppController;
 use App\Http\Controllers\SuperadminBackupController;
@@ -468,6 +470,14 @@ Route::middleware(['web', 'auth', 'ensure.role:accounting|owner|superadmin'])
         Route::get('/periods/export/pdf', [AccountingAppController::class, 'exportReceivablesPdf'])->name('periods.export.pdf');
         Route::post('/periods/{po}/complete', [AccountingAppController::class, 'periodsComplete'])->name('periods.complete');
         Route::get('/payables', [AccountingAppController::class, 'payablesIndex'])->name('payables.index');
+
+        // Tagihan Pembelian dari gudang (revisi 7 Okt 2026): accounting
+        // membayar, menjadikan hutang supplier, atau mengembalikan.
+        Route::get('/purchase-bills', [AccountingPurchaseBillController::class, 'index'])->name('purchase-bills.index');
+        Route::get('/purchase-bills/{purchaseBill}', [AccountingPurchaseBillController::class, 'show'])->name('purchase-bills.show');
+        Route::post('/purchase-bills/{purchaseBill}/pay', [AccountingPurchaseBillController::class, 'pay'])->name('purchase-bills.pay');
+        Route::post('/purchase-bills/{purchaseBill}/credit', [AccountingPurchaseBillController::class, 'credit'])->name('purchase-bills.credit');
+        Route::post('/purchase-bills/{purchaseBill}/return', [AccountingPurchaseBillController::class, 'returnToInventory'])->name('purchase-bills.return');
         Route::get('/master-categories', [AccountingAppController::class, 'categoriesIndex'])->name('categories.index');
         Route::post('/master-categories', [AccountingAppController::class, 'categoriesStore'])->name('categories.store');
         Route::put('/master-categories/{category}', [AccountingAppController::class, 'categoriesUpdate'])->name('categories.update');
@@ -518,6 +528,11 @@ Route::middleware(['web', 'auth', 'ensure.role:accounting|owner|superadmin'])
         Route::get('/reports/inventory-usage/export/excel', [InventoryUsageReportController::class, 'exportExcel'])->name('reports.inventory-usage.export.excel');
         Route::get('/reports/inventory-usage/export/pdf', [InventoryUsageReportController::class, 'exportPdf'])->name('reports.inventory-usage.export.pdf');
     });
+
+// Foto nota Tagihan Pembelian (disk privat): gudang & accounting, lewat policy.
+Route::middleware(['web', 'auth', 'force.password.change'])
+    ->get('/purchase-bills/{purchaseBill}/nota', [PurchaseBillReceiptController::class, 'show'])
+    ->name('purchase-bills.receipt');
 
 Route::middleware(['web', 'auth'])->prefix('financial')->name('financial.')->group(function () {
     Route::get('/dashboard', [FinancialController::class, 'dashboard'])->name('dashboard');

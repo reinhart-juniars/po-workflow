@@ -48,7 +48,7 @@
         ['type' => 'select', 'name' => 'inventory_item_id', 'label' => 'Item', 'placeholder' => 'Semua item',
          'options' => $items->mapWithKeys(fn ($i) => [$i->id => $i->name.' - '.$i->categoryLabel()]), 'value' => $itemId ?? null],
         ['type' => 'select', 'name' => 'payment_type', 'label' => 'Pembayaran', 'placeholder' => 'Semua',
-         'options' => ['cash' => 'Tunai', 'payable' => 'Kredit'], 'value' => $paymentType ?? null],
+         'options' => \App\Models\InventoryPurchase::paymentTypeOptions(), 'value' => $paymentType ?? null],
       ]" />
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
@@ -74,7 +74,7 @@
                 @endif
               </td>
               <td class="px-4 py-2 text-right">Rp {{ number_format((float) $purchase->total_value, 0, ',', '.') }}</td>
-              <td class="px-4 py-2">{{ $purchase->payment_type === 'cash' ? 'Tunai' : 'Kredit' }}</td>
+              <td class="px-4 py-2">{{ $purchase->paymentTypeLabel() }}</td>
               <td class="px-4 py-2">{{ $purchase->supplier_name ?: '-' }}</td>
               <td class="px-4 py-2">
                 <div>{{ $purchase->notes ?: '-' }}</div>

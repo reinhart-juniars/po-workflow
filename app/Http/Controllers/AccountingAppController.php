@@ -373,7 +373,8 @@ class AccountingAppController extends Controller
             ->where('is_active', '=', true, 'and')
             ->orderBy('name', 'asc')
             ->get();
-        $openPayables = Payable::whereIn('status', ['unpaid', 'partial'])
+        // Hutang milik Tagihan Pembelian dibayar dari halaman Tagihan saja.
+        $openPayables = Payable::settleableByCredit()->whereIn('status', ['unpaid', 'partial'])
             ->orderBy('transaction_date')
             ->orderBy('supplier_name')
             ->get();
@@ -544,6 +545,7 @@ class AccountingAppController extends Controller
             ->get();
         $cashOut->loadMissing('inventoryPurchase.item');
         $openPayables = Payable::query()
+            ->settleableByCredit()
             ->where(function ($query) use ($cashOut) {
                 $query->whereIn('status', ['unpaid', 'partial']);
 
@@ -3162,6 +3164,13 @@ class AccountingAppController extends Controller
         if ($payable->status === 'paid') {
             throw ValidationException::withMessages([
                 'payable_id' => 'Hutang yang dipilih sudah berstatus lunas.',
+            ]);
+        }
+
+        // Satu pintu: dropdown sudah menyembunyikannya, request rakitan pun ditolak.
+        if ($payable->purchaseBill()->exists()) {
+            throw ValidationException::withMessages([
+                'payable_id' => 'Hutang ini milik Tagihan Pembelian; bayar dari menu Tagihan Pembelian.',
             ]);
         }
 

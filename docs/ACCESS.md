@@ -20,7 +20,8 @@ policy membuat build merah).
 | `production.view` / `production.manage` | SPK Produksi (buat dari slot, segarkan, siap, batalkan), Form Kebutuhan (susun, isi, simpan), Lembar Kerja, Plating, Pelaksana |
 | `production.complete` | Tutup SPK (posting pemakaian & penyesuaian ke kartu stok) |
 | `requisition.approve` | Setujui Form Kebutuhan |
-| `requisition.check` | Penerimaan barang di Form Kebutuhan (Diterima/Ditolak/Harga Beli/cara pembayaran) dan Periksa (posting saldo awal & pembelian ke kartu stok, membuat Pembelian Bahan Baku + kas keluar / hutang) |
+| `requisition.check` | Penerimaan barang di Form Kebutuhan (Diterima/Ditolak/Harga Beli/supplier) dan Periksa (posting saldo awal & pembelian ke kartu stok, membuat Pembelian Bahan Baku + satu Tagihan Pembelian berikut hutangnya). Juga melengkapi & mengajukan Tagihan Pembelian dan mencatat Belanja Lepas |
+| `purchase.pay` | Accounting › Tagihan Pembelian: bayar (kas keluar sebagai pelunasan hutang), jadikan hutang supplier, atau kembalikan ke gudang; menerima lonceng tagihan baru |
 | `ledger.view` | Kartu Stok (di UI; kunci izinnya tetap `ledger`), Perbandingan HPP |
 | `settings.manage` | Pengaturan modul |
 | `notification.price` | Menerima lonceng perubahan harga bahan & harga jual menu (Bagian B.1) |
@@ -46,6 +47,7 @@ policy membuat build merah).
 | settings.manage | ✓ | – | – | – | – | – | – |
 | notification.price | ✓ | ✓ | ✓ | – | ✓ | ✓ | – |
 | notification.profit | ✓ | ✓ | – | – | – | ✓ | – |
+| purchase.pay | ✓ | – | ✓ | – | – | – | – |
 
 **Revisi 7 Okt 2026 — aplikasi Menu.** Resep, menu utama, sub menu, HPP, dan OHC dipegang
 peran baru **`menu`** (tim menu/dapur pusat) di aplikasi Menu (`/menu`). `recipe.manage`
@@ -78,6 +80,14 @@ menggantikan form kertas yang diisi tim produksi.
 Pemisahan tahap Form Kebutuhan: yang menyusun/mengisi (produksi) bukan yang menyetujui
 (owner/admin), dan yang memeriksa saat barang dibeli (accounting/admin) bukan yang menutup
 SPK (produksi/admin).
+
+**Revisi 7 Okt 2026 — Tagihan Pembelian.** Gudang tidak lagi memilih akun kas saat Periksa
+Form Kebutuhan. Belanja satu form menjadi satu Tagihan Pembelian (draft); hutangnya lahir saat
+barang diterima supaya Neraca seimbang. Gudang melampirkan nota lalu *Ajukan*; accounting
+(`purchase.pay`) *Bayar* / *Jadikan hutang supplier* / *Kembalikan*. Hutang milik tagihan tidak
+muncul di Pengeluaran › Pembayaran Kredit dan ditolak bila dikirim lewat sana (satu pintu).
+Pembelian milik tagihan tidak bisa diubah/dihapus satuan. Server perlu `access:sync` (menambah
+`purchase.pay`; `--reset` sudah diperlukan untuk revisi aplikasi Menu di atas).
 
 ## Mengubah hak
 

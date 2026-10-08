@@ -36,7 +36,7 @@ class InventoryPurchaseResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
 
-    protected static ?string $navigationGroup = 'Inventory';
+    protected static ?string $navigationGroup = 'Pembelian';
 
     protected static ?string $navigationLabel = 'Pembelian Bahan Baku';
 
@@ -198,8 +198,13 @@ class InventoryPurchaseResource extends Resource
                 TextColumn::make('payment_type')
                     ->label('Pembayaran')
                     ->badge()
-                    ->formatStateUsing(fn (string $state) => $state === 'cash' ? 'Tunai' : 'Kredit')
-                    ->color(fn (string $state) => $state === 'cash' ? 'success' : 'warning'),
+                    ->formatStateUsing(fn (string $state) => InventoryPurchase::paymentTypeOptions()[$state] ?? $state)
+                    ->color(fn (string $state) => match ($state) {
+                        InventoryPurchase::PAYMENT_CASH => 'success',
+                        InventoryPurchase::PAYMENT_BILL => 'info',
+                        default => 'warning',
+                    })
+                    ->description(fn (InventoryPurchase $record) => $record->purchaseBill?->number),
 
                 TextColumn::make('condition')
                     ->label('Kondisi')
@@ -222,7 +227,7 @@ class InventoryPurchaseResource extends Resource
 
                 Tables\Filters\SelectFilter::make('payment_type')
                     ->label('Pembayaran')
-                    ->options(['cash' => 'Tunai', 'payable' => 'Kredit']),
+                    ->options(InventoryPurchase::paymentTypeOptions()),
 
                 Tables\Filters\SelectFilter::make('condition')
                     ->label('Kondisi')
@@ -278,13 +283,15 @@ class InventoryPurchaseResource extends Resource
                             ->send();
                     }),
 
-                Tables\Actions\EditAction::make()->label('Edit'),
+                // Pembelian milik Tagihan Pembelian diurus lewat tagihannya.
+                Tables\Actions\EditAction::make()->label('Edit')
+                    ->visible(fn (InventoryPurchase $record) => $record->purchase_bill_id === null),
 
                 Tables\Actions\DeleteAction::make()
                     ->label('Hapus')
                     // Penghapusan ikut membuang CashOut/Payable-nya, jadi hanya
                     // owner dan superadmin -- sama dengan aturan modul Blade.
-                    ->visible(fn () => Auth::user()?->hasAnyRole(['owner', 'superadmin']) ?? false),
+                    ->visible(fn (InventoryPurchase $record) => $record->purchase_bill_id === null && (Auth::user()?->hasAnyRole(['owner', 'superadmin']) ?? false)),
             ])
             ->defaultSort('transaction_date', 'desc');
     }

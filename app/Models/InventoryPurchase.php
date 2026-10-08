@@ -17,6 +17,16 @@ class InventoryPurchase extends Model
     /** Barang datang rusak/tidak layak: uangnya sudah keluar, tapi stok tidak bertambah. */
     public const CONDITION_DAMAGED = 'damaged';
 
+    /**
+     * Jenis bayar: tunai (kas keluar sendiri), kredit (hutang sendiri), atau
+     * tagihan -- kas/hutangnya dipegang Tagihan Pembelian (satu per nota).
+     */
+    public const PAYMENT_CASH = 'cash';
+
+    public const PAYMENT_PAYABLE = 'payable';
+
+    public const PAYMENT_BILL = 'bill';
+
     protected static function booted(): void
     {
         static::saving(function (self $inventoryPurchase) {
@@ -44,6 +54,7 @@ class InventoryPurchase extends Model
     protected $fillable = [
         'inventory_item_id',
         'requisition_id',
+        'purchase_bill_id',
         'transaction_date',
         'qty',
         'unit_cost',
@@ -76,12 +87,33 @@ class InventoryPurchase extends Model
         return $this->belongsTo(Requisition::class);
     }
 
+    /** Tagihan Pembelian yang menagihkan pembelian ini ke accounting. */
+    public function purchaseBill(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseBill::class);
+    }
+
     public static function conditionOptions(): array
     {
         return [
             self::CONDITION_GOOD => 'Baik',
             self::CONDITION_DAMAGED => 'Tidak Baik',
         ];
+    }
+
+    /** @return array<string, string> */
+    public static function paymentTypeOptions(): array
+    {
+        return [
+            self::PAYMENT_CASH => 'Tunai',
+            self::PAYMENT_PAYABLE => 'Kredit',
+            self::PAYMENT_BILL => 'Tagihan',
+        ];
+    }
+
+    public function paymentTypeLabel(): string
+    {
+        return self::paymentTypeOptions()[$this->payment_type] ?? (string) $this->payment_type;
     }
 
     public function conditionLabel(): string

@@ -33,11 +33,11 @@ class SupplierResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-building-storefront';
 
-    protected static ?string $navigationGroup = 'Inventory';
+    protected static ?string $navigationGroup = 'Pembelian';
 
     protected static ?string $navigationLabel = 'Master Supplier';
 
-    protected static ?int $navigationSort = 15;
+    protected static ?int $navigationSort = 30;
 
     protected static ?string $modelLabel = 'Supplier';
 
