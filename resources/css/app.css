@@ -1043,23 +1043,94 @@
 input.is-locked { background: #f8fafc; color: #475569; cursor: default; }
 
 /* ---------- Halaman masuk (auth/login) ----------
-   Mengikuti halaman masuk panel Filament: kartu 448 px di tengah kanvas
-   slate-50, radius 12, ring 5%, padding 32/40. Deretan aplikasi di bawahnya
-   memakai pil .sh-tab dan lintasan #f1f4f9 dari bilah aplikasi (shell.css). */
-.login-page { display: grid; min-height: 100dvh; place-items: center; padding: 40px 16px; }
-.login-column { display: flex; width: 100%; max-width: 448px; flex-direction: column; align-items: center; gap: 24px; }
-.login-brand { display: flex; align-items: center; gap: 12px; }
-.login-wordmark { font-size: 20px; font-weight: 700; letter-spacing: -0.025em; color: #020617; }
-.login-tagline { margin-top: 2px; font-size: 10px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: #64748b; }
-.login-card { width: 100%; padding: 32px 24px; border-radius: 12px; background: #fff; box-shadow: 0 0 0 1px rgb(2 6 23 / 0.05), 0 1px 2px 0 rgb(0 0 0 / 0.05); }
-.login-title { font-size: 24px; line-height: 32px; font-weight: 700; letter-spacing: -0.025em; color: #020617; text-align: center; }
-.login-subtitle { margin-top: 8px; font-size: 14px; line-height: 20px; color: #64748b; text-align: center; }
-.login-apps { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; padding: 4px; border-radius: 20px; background: #f1f4f9; }
-.login-apps .sh-tab { cursor: default; padding: 6px 11px; font-size: 12.5px; }
-.login-apps .sh-tab:active { transform: none; }
-.login-foot { font-size: 12px; color: #94a3b8; }
-@media (min-width: 640px) {
-  .login-card { padding: 40px; }
+   Dua bidang datar: form di kiri (maks. 400 px, field 44 px untuk jari),
+   panel brand solid #2f4dc5 di kanan berisi pratinjau isi sistem. Tanpa
+   gradasi/kaca: tekstur hanya pola titik 1 px (radial, bukan gradasi warna).
+   Kartu masuk berurutan 240-420 ms ease-out; dimatikan untuk reduced-motion. */
+.lg-page { display: grid; min-height: 100dvh; background: #fff; }
+/* Panel pratinjau hanya bila kartunya muat utuh (>= 1180 px); di bawah itu form saja. */
+@media (min-width: 1180px) {
+  .lg-page { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); }
+}
+.lg-form-side { display: flex; min-width: 0; flex-direction: column; padding: 28px 20px; }
+@media (min-width: 640px) { .lg-form-side { padding: 36px 48px; } }
+.lg-brand { display: flex; align-items: center; gap: 12px; }
+.lg-wordmark { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; color: #020617; }
+.lg-tagline { margin-top: 2px; font-size: 9.5px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: #64748b; }
+.lg-form-wrap { width: 100%; max-width: 400px; margin: auto; padding: 48px 0; animation: lg-rise 420ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.lg-title { font-size: 30px; line-height: 36px; font-weight: 700; letter-spacing: -0.025em; color: #020617; }
+.lg-subtitle { margin-top: 10px; font-size: 15px; line-height: 24px; color: #64748b; }
+.lg-input { min-height: 44px; font-size: 15px; }
+.lg-password { position: relative; }
+.lg-password .lg-input { padding-right: 44px; }
+.lg-reveal {
+  position: absolute; top: 50%; right: 4px; display: grid; width: 36px; height: 36px; place-items: center;
+  border-radius: 8px; color: #94a3b8; transform: translateY(-50%); transition: color 140ms ease, background-color 140ms ease;
+}
+.lg-reveal:hover { color: #334155; background: #f1f5f9; }
+.lg-reveal:focus-visible { outline: 2px solid #2f4dc5; outline-offset: 0; }
+.lg-reveal svg { width: 18px; height: 18px; }
+.lg-caps { margin-top: 6px; font-size: 12.5px; font-weight: 500; color: #b45309; }
+.lg-submit { width: 100%; min-height: 44px; font-size: 15px; }
+.lg-submit .lg-spinner { display: none; width: 16px; height: 16px; border: 2px solid rgb(255 255 255 / 0.35); border-top-color: #fff; border-radius: 9999px; animation: lg-spin 700ms linear infinite; }
+.lg-submit.is-loading { cursor: progress; opacity: 0.85; }
+.lg-submit.is-loading .lg-spinner { display: inline-block; }
+.lg-foot { font-size: 12px; color: #94a3b8; }
+
+.lg-showcase { display: none; }
+@media (min-width: 1180px) {
+  .lg-showcase {
+    position: relative; display: flex; overflow: hidden; align-items: center; padding: 56px;
+    background-color: #2f4dc5;
+    background-image: radial-gradient(rgb(255 255 255 / 0.10) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+}
+.lg-showcase-inner { width: 100%; max-width: 560px; margin: 0 auto; }
+.lg-eyebrow { font-size: 13px; font-weight: 600; color: #ccd5f6; }
+.lg-headline { margin-top: 12px; max-width: 30ch; font-size: 30px; line-height: 38px; font-weight: 700; letter-spacing: -0.025em; color: #fff; }
+.lg-stack { position: relative; display: grid; gap: 14px; margin-top: 40px; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.lg-card {
+  min-width: 0; border-radius: 12px; background: #fff; padding: 18px 20px; color: #020617;
+  box-shadow: 0 0 0 1px rgb(2 6 23 / 0.06), 0 12px 32px -12px rgb(2 6 23 / 0.45);
+  animation: lg-rise 420ms cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: calc(120ms + var(--i, 0) * 90ms);
+}
+.lg-card-kpi { grid-column: 1 / span 3; }
+.lg-card-bills { grid-column: 4 / span 3; grid-row: span 2; display: flex; flex-direction: column; }
+.lg-card-foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin-top: auto; padding-top: 14px; border-top: 1px solid #e2e8f0; }
+.lg-card-total { white-space: nowrap; margin-top: 2px; font-size: 18px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.lg-fake-btn { padding: 6px 12px; border-radius: 8px; background: #2f4dc5; color: #fff; font-size: 13px; font-weight: 600; line-height: 20px; }
+.lg-card-tree { grid-column: 1 / span 3; }
+.lg-card-label, .lg-card-title { font-size: 13px; font-weight: 600; color: #020617; }
+.lg-card-label { font-weight: 500; color: #64748b; }
+.lg-card-value { white-space: nowrap; margin-top: 6px; font-size: 22px; line-height: 28px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.lg-card-trend { display: flex; align-items: center; gap: 4px; margin-top: 4px; font-size: 12px; font-weight: 500; color: #059669; }
+.lg-card-trend svg { width: 14px; height: 14px; }
+.lg-spark { display: block; width: 100%; height: 32px; margin-top: 10px; }
+.lg-spark polyline { fill: none; stroke: #2f4dc5; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.lg-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.lg-pill { padding: 1px 7px; border-radius: 6px; font-size: 11px; font-weight: 600; line-height: 18px; white-space: nowrap; }
+.lg-pill.is-warn { background: #fffbeb; color: #b45309; box-shadow: inset 0 0 0 1px rgb(217 119 6 / 0.2); }
+.lg-rows { min-width: 0; margin-top: 12px; display: grid; grid-template-columns: minmax(0, 1fr); }
+.lg-rows li { display: flex; justify-content: space-between; gap: 10px; padding: 10px 0; border-top: 1px solid #e2e8f0; font-size: 12.5px; color: #334155; }
+.lg-rows li span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lg-rows li b { font-weight: 600; color: #020617; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lg-tree { margin-top: 10px; display: grid; gap: 6px; font-size: 12.5px; color: #334155; }
+.lg-tree li { display: flex; align-items: center; gap: 6px; }
+.lg-tree li.is-child { padding-left: 22px; color: #64748b; }
+.lg-tree em { margin-left: auto; padding: 0 6px; border-radius: 6px; background: #ebeefb; color: #2740a4; font-size: 10.5px; font-style: normal; font-weight: 500; line-height: 17px; }
+.lg-caret { width: 16px; height: 16px; flex: none; background: currentColor; color: #94a3b8;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M7.21 14.77a.75.75 0 01.02-1.06L11.17 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M7.21 14.77a.75.75 0 01.02-1.06L11.17 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z'/%3E%3C/svg%3E") center / contain no-repeat; }
+.lg-caret.is-open { transform: rotate(90deg); color: #334155; }
+.lg-apps { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 32px; }
+.lg-apps span { padding: 4px 10px; border-radius: 9999px; background: rgb(255 255 255 / 0.12); color: #ebeefb; font-size: 12px; font-weight: 600; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.16); }
+
+@keyframes lg-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes lg-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .lg-form-wrap, .lg-card { animation: none; }
+  .lg-submit .lg-spinner { animation-duration: 1.6s; }
 }
 
 /* ---------- Tagihan Pembelian (accountingapp/purchase-bills) ----------

@@ -104,11 +104,13 @@ Di Filament, Edit/Hapus sebagai ikon diatur global di
   `*/exports/`, `*_pdf`) tidak disentuh: dompdf punya gayanya sendiri.
 - **Master Menu sedikit lebih rapat** (13 px, padding 12×10) dari tabel
   standar karena 9 kolom; tetap kalimat biasa.
-- **Halaman masuk mengikuti halaman masuk Filament** (kartu 448 px di
-  tengah kanvas), bukan dua panel gelap/terang. Panel gelap adalah satu-
-  satunya permukaan gelap di sistem dan membuat login terasa produk lain.
-  Di bawah kartu: deretan aplikasi dengan pil `.sh-tab` bilah aplikasi
-  (bukan tautan) supaya layar pertama sudah memperlihatkan isi sistem.
+- **Halaman masuk: dua bidang** (revisi 9 Okt 2026, permintaan "gaya modern").
+  Kiri form lega (maks. 400 px, field & tombol 44 px, lihat/sembunyikan
+  password, peringatan Caps Lock, tombol "Memproses…"). Kanan, mulai 1180 px,
+  panel brand **solid** `#2f4dc5` berisi pratinjau isi sistem (kartu KPI,
+  Tagihan Pembelian, susunan resep) dengan komponen yang sama dengan aplikasi.
+  Satu-satunya tekstur: pola titik 1 px — bukan gradasi warna; tanpa kaca.
+  Kartu masuk berurutan 420 ms ease-out, mati saat reduced-motion.
 - **Tagline merek "Business Control System" tetap kapital berspasi.** Itu
   bagian logo, bukan label UI.
 - **Detektor impeccable "gray-on-color"** pada `.row-action-*` dan
