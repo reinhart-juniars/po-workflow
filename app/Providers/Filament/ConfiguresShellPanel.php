@@ -67,8 +67,9 @@ trait ConfiguresShellPanel
             // dengan layout Blade, disuntik ke topbar & head panel.
             ->renderHook(PanelsRenderHook::HEAD_END, fn () => Vite::withEntryPoints(['resources/css/shell.css'])->toHtml())
             ->renderHook(PanelsRenderHook::TOPBAR_START, fn () => view('partials.app-bar', ['currentApp' => $appKey]))
-            // Pencarian global di atas sidebar, sama dengan layout Blade.
-            ->renderHook(PanelsRenderHook::SIDEBAR_NAV_START, fn () => view('partials.global-search'))
+            // Pencarian global dirender oleh override view sidebar
+            // (resources/views/vendor/filament-panels/components/sidebar),
+            // di luar area menu yang bergulir -- sama dengan layout Blade.
             ->renderHook(PanelsRenderHook::SIDEBAR_NAV_START, fn () => '<p class="sh-app-name">'.e(Navigation::appLabel($appKey)).'</p>')
             // Menu pengguna yang sama dengan header Blade.
             ->renderHook(PanelsRenderHook::USER_MENU_BEFORE, fn () => view('partials.user-menu'))

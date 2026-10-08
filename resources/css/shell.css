@@ -508,6 +508,23 @@
   transition: background-color var(--sh-fast) var(--sh-ease), color var(--sh-fast) var(--sh-ease);
 }
 
+/* Jarak atas konten halaman panel = layouts/shell (main pt-6, 24px).
+   Filament bawaannya py-8 (32px), jadi judul 8px lebih rendah dari Blade. */
+.fi-page > section { padding-top: 24px; }
+
+/* Kotak cari di sidebar panel (override view sidebar): diam di atas menu,
+   jarak sama dengan layouts/shell (px-6 pt-5). */
+.sh-fi-search { flex: none; padding: 20px 24px 0; }
+
+/* Sidebar panel = sidebar layouts/shell: putih dengan garis kanan slate-200
+   (Filament bawaannya transparan di atas kanvas slate-50, tanpa garis). */
+@media (min-width: 1024px) {
+  .fi-sidebar.fi-sidebar {
+    background: var(--sh-surface);
+    border-right: 1px solid var(--sh-line);
+  }
+}
+
 /* Menu pengguna bawaan Filament diganti partial user-menu (hook USER_MENU_BEFORE). */
 .fi-topbar .fi-user-menu { display: none; }
 .fi-topbar .sh-user { margin-left: 4px; }
@@ -516,6 +533,15 @@
 .fi-topbar nav > .sh-appbar {
   flex: 1 1 auto;
   margin-inline: 8px;
+}
+
+/* Desktop: tombol buka-sidebar tersembunyi, jadi jarak 8px tadi tidak perlu.
+   Posisi & jarak disamakan dengan header Blade (mulai x=352, celah 12px ke
+   menu pengguna; gap-x-4 Filament 16px - 4px). */
+@media (min-width: 1024px) {
+  .fi-topbar nav > .sh-appbar {
+    margin-inline: 0 -4px;
+  }
 }
 
 /* Kontainer konten Filament adalah item flex dengan min-width:auto, sehingga

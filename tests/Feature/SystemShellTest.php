@@ -197,3 +197,25 @@ it('tidak lagi punya dua halaman untuk satu domain', function () {
     $this->actingAs($akunting)->get(route('accountingapp.stock-opnames.index'))->assertRedirect(route('filament.admin.resources.stock-opnames.index'));
     $this->actingAs($akunting)->get(route('accountingapp.inventory-openings.index'))->assertRedirect(route('filament.admin.resources.inventory-openings.index'));
 });
+
+it('menaruh kotak cari panel di luar area menu yang bergulir, sama dengan layout Blade', function () {
+    $owner = penggunaShell('owner');
+
+    foreach (['/inventory/dashboard', '/menu/dashboard'] as $url) {
+        $html = $this->actingAs($owner)->get($url)->assertOk()->getContent();
+
+        // Override view sidebar: <div class="sh-fi-search"> berada sebelum <nav class="fi-sidebar-nav">,
+        // dan nav tidak lagi memakai scrollbar-gutter: stable.
+        $search = strpos($html, 'class="sh-fi-search"');
+        $nav = strpos($html, 'class="fi-sidebar-nav');
+        expect($search)->not->toBeFalse("{$url}: kotak cari panel hilang")
+            ->and($nav)->not->toBeFalse()
+            ->and($search)->toBeLessThan($nav)
+            ->and(substr_count($html, 'data-global-search') + substr_count($html, 'sh-search'))->toBeGreaterThan(0)
+            ->and($html)->not->toContain('scrollbar-gutter: stable');
+    }
+
+    // Kontrol: layout Blade memang menaruh kotak cari di luar <nav> juga.
+    $blade = $this->actingAs($owner)->get(route('accountingapp.dashboard'))->assertOk()->getContent();
+    expect(strpos($blade, 'sh-search'))->toBeLessThan(strpos($blade, 'aria-label="Menu Accounting"'));
+});
