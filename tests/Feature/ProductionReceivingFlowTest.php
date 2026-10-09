@@ -162,6 +162,42 @@ it('memandu meja gudang ke Tagihan Pembelian, bukan meminta cara pembayaran', fu
         ->assertDontSee('kas/hutang tercatat sekaligus', false);
 });
 
+it('membiarkan satu orang inventory (Supervisor Gudang) menyetujui, memeriksa, dan mengajukan tagihan sendiri', function () {
+    // Klien: bagian inventory dipegang satu orang; staf gudang yang menghitung fisik tidak memakai sistem.
+    App\Support\Access\ModuleAccess::sync();
+    $d = siapkanProduksi();
+    $order = app(ProductionOrderService::class)->generateFromSpk($d['spk']);
+    $service = app(RequisitionService::class);
+    $requisition = $service->build($order)['requisition'];
+    $tepung = $requisition->lines->firstWhere('inventory_item_id', $d['tepung']->id);
+    $service->fillOpeningStock($tepung, 0);
+    $service->fillOpeningStock($requisition->lines->firstWhere('inventory_item_id', $d['minyak']->id), 5);
+    $service->submit($requisition->fresh());
+
+    $orang = User::factory()->create(['is_active' => true, 'force_password_change' => false])->assignRole('inventory-supervisor');
+    $staf = User::factory()->create(['is_active' => true, 'force_password_change' => false])->assignRole('inventory');
+
+    // Kontrol: staf inventory biasa tidak punya tombol Setujui.
+    $this->actingAs($staf);
+    Livewire::test(RequisitionForm::class, ['record' => $order->id])->assertActionHidden('setujui');
+
+    $this->actingAs($orang);
+    Livewire::test(RequisitionForm::class, ['record' => $order->id])->callAction('setujui');
+    expect($requisition->fresh()->isApproved())->toBeTrue()
+        ->and($requisition->fresh()->approved_by)->toBe($orang->id);
+
+    $service->recordReceipt($tepung->fresh(), 2, null, null, 12000);
+    Livewire::test(RequisitionForm::class, ['record' => $order->id])->callAction('periksa');
+    expect($requisition->fresh()->isChecked())->toBeTrue()
+        ->and($requisition->fresh()->checked_by)->toBe($orang->id);
+
+    $tagihan = PurchaseBill::query()->sole();
+    Livewire::test(App\Filament\Resources\PurchaseBillResource\Pages\EditPurchaseBill::class, ['record' => $tagihan->getRouteKey()])
+        ->callAction('ajukan');
+    expect($tagihan->fresh()->status)->toBe(PurchaseBill::STATUS_SUBMITTED)
+        ->and($tagihan->fresh()->submitted_by)->toBe($orang->id);
+});
+
 it('tidak membuka tagihan bila tidak ada yang dibeli', function () {
     $d = formDisetujui();
     $tepung = $d['requisition']->lines->firstWhere('inventory_item_id', $d['tepung']->id);

@@ -15,6 +15,13 @@ test('login screen can be rendered', function () {
     $response->assertStatus(200);
 });
 
+test('login screen speaks to the team in a friendly tone, without stiff corporate wording', function () {
+    get('/login')->assertOk()
+        ->assertSee('Kerja tim, satu tempat.')
+        ->assertSee('Minta Owner untuk reset')
+        ->assertDontSee('Sistem internal perusahaan');
+});
+
 test('users can authenticate using the login screen', function () {
     /** @var User $user */
     $user = User::factory()->create();
