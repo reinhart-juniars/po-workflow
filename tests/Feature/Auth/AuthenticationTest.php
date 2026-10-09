@@ -15,11 +15,13 @@ test('login screen can be rendered', function () {
     $response->assertStatus(200);
 });
 
-test('login screen speaks to the team in a friendly tone, without stiff corporate wording', function () {
+test('login screen reads like a short system notice, without corporate or chatty wording', function () {
     get('/login')->assertOk()
-        ->assertSee('Kerja tim, satu tempat.')
-        ->assertSee('Minta Owner untuk reset')
-        ->assertDontSee('Sistem internal perusahaan');
+        ->assertSee('Masukkan username atau email dan password.')
+        ->assertSee('Jangan bagikan password Anda.')
+        ->assertSee('Lupa password? Hubungi Owner untuk reset.')
+        ->assertDontSee('Sistem internal perusahaan')
+        ->assertDontSee('Selamat datang!');
 });
 
 test('users can authenticate using the login screen', function () {

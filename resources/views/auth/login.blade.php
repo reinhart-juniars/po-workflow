@@ -28,15 +28,15 @@
 
             <div class="lg-identity-body">
                 <p class="lg-identity-company">W3S Catering</p>
-                <h2 class="lg-identity-title">Kerja tim, satu tempat.</h2>
+                <h2 class="lg-identity-title">3S ONE</h2>
                 <p class="lg-identity-text">
-                    Dari pesanan, dapur, dan gudang sampai keuangan — semuanya nyambung di 3S ONE, jadi tidak perlu input dua kali.
+                    Pesanan, produksi, persediaan, pembelian, dan keuangan tercatat di satu tempat.
                 </p>
             </div>
 
             <div class="lg-identity-notice">
                 <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clip-rule="evenodd"/></svg>
-                <p>Akun dibuat oleh Owner. Jaga password Anda dan jangan dipinjamkan, ya.</p>
+                <p>Akun diberikan oleh Owner. Jangan bagikan password Anda.</p>
             </div>
         </aside>
 
@@ -51,7 +51,7 @@
 
             <div class="lg-form-wrap">
                 <h1 class="lg-title">Masuk</h1>
-                <p class="lg-subtitle">Selamat datang! Masuk pakai username atau email Anda.</p>
+                <p class="lg-subtitle">Masukkan username atau email dan password.</p>
 
                 @if ($errors->any())
                     <div class="flash-error mb-0 mt-6" role="alert">{{ $errors->first() }}</div>
@@ -90,7 +90,7 @@
                     </button>
                 </form>
 
-                <p class="lg-help">Lupa password atau tidak bisa masuk? Minta Owner untuk reset, nanti Anda dapat password sementara.</p>
+                <p class="lg-help">Lupa password? Hubungi Owner untuk reset.</p>
             </div>
 
             <footer class="lg-foot">3S ONE {{ \App\Support\AppVersion::label() }} · W3S Catering</footer>
