@@ -151,6 +151,17 @@ it('tidak lagi meminta cara pembayaran: supplier dari form ikut ke tagihan dan h
         ->and($tagihan->payable->description)->toContain($tagihan->number);
 });
 
+it('memandu meja gudang ke Tagihan Pembelian, bukan meminta cara pembayaran', function () {
+    $d = formDisetujui();
+    $this->actingAs(User::factory()->create(['is_active' => true, 'force_password_change' => false])->assignRole('owner'));
+
+    $this->get(route('filament.admin.resources.production-orders.kebutuhan', $d['order']))
+        ->assertOk()
+        ->assertSee('menjadi satu Tagihan Pembelian untuk diajukan ke accounting', false)
+        ->assertDontSee('dan cara pembayaran', false)
+        ->assertDontSee('kas/hutang tercatat sekaligus', false);
+});
+
 it('tidak membuka tagihan bila tidak ada yang dibeli', function () {
     $d = formDisetujui();
     $tepung = $d['requisition']->lines->firstWhere('inventory_item_id', $d['tepung']->id);

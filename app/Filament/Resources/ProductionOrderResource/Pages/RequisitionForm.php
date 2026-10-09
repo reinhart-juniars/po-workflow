@@ -161,7 +161,7 @@ class RequisitionForm extends Page implements HasForms
 
         if ($requisition->isApproved()) {
             return $user?->can('requisition.check')
-                ? ['color' => 'info', 'text' => 'Meja gudang: saat barang datang isi Diterima (ditolak = Beli − Diterima, beri alasannya), Harga Beli dari nota, dan cara pembayaran. Simpan, lalu Periksa — stok, pembelian, dan kas/hutang tercatat sekaligus.']
+                ? ['color' => 'info', 'text' => 'Meja gudang: saat barang datang isi Diterima (ditolak = Beli − Diterima, beri alasannya), Harga Beli dari nota, dan supplier. Simpan, lalu Periksa — stok dan pembelian tercatat, lalu belanjanya menjadi satu Tagihan Pembelian untuk diajukan ke accounting.']
                 : ['color' => 'gray', 'text' => 'Disetujui '.($requisition->approvedBy?->name ?? '').'; gudang sedang belanja / menerima barang. Isian terkunci sampai diperiksa.'];
         }
 
@@ -437,7 +437,7 @@ class RequisitionForm extends Page implements HasForms
                 ->color('success')
                 ->visible(fn () => $this->getRequisition()?->isApproved() ?? false)
                 ->requiresConfirmation()
-                ->modalDescription('Menandai barang sudah diterima & diperiksa. Jumlah Diterima (= Beli bila kosong) dicatat ke kartu stok dengan harga beli, pembelian bahan baku beserta kas keluar / hutangnya dibuat otomatis, dan barang ditolak yang tetap dibayar masuk Kerugian Barang Rusak. Langkah ini tidak bisa diulang.')
+                ->modalDescription('Menandai barang sudah diterima & diperiksa. Jumlah Diterima (= Beli bila kosong) dicatat ke kartu stok dengan harga beli, pembelian bahan baku dibuat otomatis dan dikumpulkan menjadi satu Tagihan Pembelian (hutang sampai accounting membayar), dan barang ditolak yang tetap dibayar masuk Kerugian Barang Rusak. Langkah ini tidak bisa diulang.')
                 ->action(function () {
                     // Isian "Diterima" yang belum disimpan ikut dibawa.
                     $this->save();
