@@ -38,7 +38,20 @@
         const item = active.getBoundingClientRect();
 
         if (item.top < box.top) {
-          nav.scrollTop -= box.top - item.top + 16;
+          // Gulir ke atas sampai judul seksinya ikut terlihat. Seksi pertama
+          // (mis. Ringkasan › Dashboard) berarti kembali ke paling atas, jadi
+          // nama aplikasi di atas menu tidak terpotong.
+          const groupSelector = 'details.shell-group, .fi-sidebar-group';
+          const group = active.closest(groupSelector);
+          const isFirst = group && group === nav.querySelector(groupSelector);
+          const top = group ? group.getBoundingClientRect().top : item.top;
+
+          nav.scrollTop = isFirst ? 0 : Math.max(0, nav.scrollTop - (box.top - top) - 16);
+
+          // Seksi yang lebih tinggi dari sidebar: cukup menu aktifnya yang terlihat.
+          if (active.getBoundingClientRect().bottom > box.bottom) {
+            nav.scrollTop += active.getBoundingClientRect().bottom - box.bottom + 16;
+          }
         } else if (item.bottom > box.bottom) {
           nav.scrollTop += item.bottom - box.bottom + 16;
         }

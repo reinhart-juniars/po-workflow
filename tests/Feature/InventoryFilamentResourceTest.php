@@ -200,6 +200,15 @@ it('menjaga posisi sidebar dan prefetch menu di panel maupun layout Blade', func
         ->assertSee('<script type="speculationrules">', false)
         ->assertSeeInOrder(['@view-transition', '</head>', 'id="sh-page-end"'], false)
         ->assertSeeInOrder(['sh-sidebar-scroll:admin', '</nav>'], false);
+
+    // Kembali ke menu di seksi pertama menggulir sidebar ke paling atas, jadi
+    // nama aplikasi tidak terpotong -- untuk sidebar Blade maupun panel.
+    // (Perilakunya diperiksa di browser; di sini dijaga pemilih seksinya ada
+    // dan cocok dengan kelas yang benar-benar dirender kedua sidebar.)
+    $blade = $this->get(route('adminapp.dashboard'))->assertOk()->getContent();
+    $panel = $this->get(InventoryItemResource::getUrl('index'))->assertOk()->getContent();
+    expect($blade)->toContain("'details.shell-group, .fi-sidebar-group'")->toContain('<details class="shell-group')
+        ->and($panel)->toContain("'details.shell-group, .fi-sidebar-group'")->toMatch('/class="[^"]*\bfi-sidebar-group\b/');
 });
 
 it('menggambar panel utuh sejak frame pertama, tanpa menunggu Alpine atau muatan susulan', function () {
