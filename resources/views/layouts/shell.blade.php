@@ -93,7 +93,7 @@
         </div>
       </div>
 
-      @include('partials.sidebar-scroll-memory', ['app' => $shellApp])
+      @include('partials.sidebar-scroll-top', ['app' => $shellApp])
     </nav>
   </aside>
 

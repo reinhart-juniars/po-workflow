@@ -73,8 +73,8 @@ trait ConfiguresShellPanel
             ->renderHook(PanelsRenderHook::SIDEBAR_NAV_START, fn () => '<p class="sh-app-name">'.e(Navigation::appLabel($appKey)).'</p>')
             // Menu pengguna yang sama dengan header Blade.
             ->renderHook(PanelsRenderHook::USER_MENU_BEFORE, fn () => view('partials.user-menu'))
-            // Posisi gulir sidebar diingat, halaman menu di-prefetch.
-            ->renderHook(PanelsRenderHook::SIDEBAR_NAV_END, fn () => view('partials.sidebar-scroll-memory', ['app' => $appKey]))
+            // Sidebar selalu mulai dari atas, halaman menu di-prefetch.
+            ->renderHook(PanelsRenderHook::SIDEBAR_NAV_END, fn () => view('partials.sidebar-scroll-top', ['app' => $appKey]))
             ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('partials.nav-prefetch'))
             // Animasi geser antar menu, sama dengan layout Blade.
             ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('partials.page-transition'))
