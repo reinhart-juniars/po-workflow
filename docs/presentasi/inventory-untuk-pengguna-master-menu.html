@@ -26,7 +26,7 @@
   --mark-accent: #7dd3fc;
   --font: "Public Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
 }
-@media (prefers-color-scheme: dark) {
+@media screen and (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #070b14; --slide: #0f1626; --ink: #e6eaf2; --muted: #9aa6bb; --line: #223049; --soft: #152036;
     --brand: #7d95f2; --brand-ink: #aebdf8; --brand-soft: #18234a; --on-brand: #0b1020;
@@ -211,25 +211,93 @@ table.t { width: 100%; border-collapse: collapse; font-size: var(--fs-body); }
 .big-url { font-size: calc(var(--u) * 22); font-weight: 800; color: var(--brand-ink); letter-spacing: -.01em; word-break: break-all; }
 .center-v { justify-content: center; }
 
+/* Nomor halaman dihitung sendiri, jadi slide boleh disisipkan tanpa menomori ulang. */
+.deck { counter-reset: pg; }
+.slide { counter-increment: pg; }
+.pg::before { content: counter(pg); }
+
+/* Alur dulu vs sekarang: dua baris enam langkah yang sejajar per kolom. */
+.rowlab { font-size: var(--fs-label); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.rowlab.now { color: var(--brand); }
+.flowrow, .downs { display: grid; grid-template-columns: repeat(6, 1fr); gap: calc(var(--u) * 16); }
+.st {
+  position: relative; display: flex; flex-direction: column; gap: calc(var(--u) * 3);
+  border-radius: var(--r); padding: calc(var(--u) * 8) calc(var(--u) * 10); font-size: var(--fs-small); line-height: 1.35;
+}
+.st.old { background: var(--soft); color: var(--muted); border: 1px dashed var(--muted); }
+.st.new { background: var(--slide); border: 1px solid var(--brand); }
+.st.auto { background: var(--ok-soft); border-color: var(--ok); }
+.st .tag { align-self: flex-start; font-size: var(--fs-label); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 0 calc(var(--u) * 5); border-radius: calc(var(--u) * 4); background: var(--ok); color: var(--slide); }
+.st + .st::before { content: "→"; position: absolute; left: calc(var(--u) * -8); top: 50%; transform: translate(-50%, -50%); color: var(--muted); font-weight: 800; }
+.flowrow.now .st + .st::before { color: var(--brand); }
+.downs { text-align: center; color: var(--brand); font-weight: 800; line-height: 1; }
+.formula { text-align: center; font-weight: 700; padding: calc(var(--u) * 8) calc(var(--u) * 12); border-radius: var(--r); background: var(--soft); font-variant-numeric: tabular-nums; }
+.formula .plus { color: var(--ok); } .formula .min { color: var(--bad); }
+
+/* Diagram alur (SVG). Lebar viewBox 864 = lebar isi slide, jadi 1 satuan ≈ 1 --u. */
+.fig { display: flex; min-height: 0; }
+.fl { display: block; width: 100%; height: 100%; overflow: visible; font-family: var(--font); }
+.fl text { fill: var(--ink); font-size: 11px; }
+.fl .t { font-size: 12px; font-weight: 700; }
+.fl .t.sm { font-size: 11px; }
+.fl .t.big { font-size: 16px; font-weight: 800; }
+.fl .s { font-size: 10.5px; fill: var(--muted); }
+.fl .s.sm { font-size: 10px; }
+.fl .lab { font-size: 9px; font-weight: 700; letter-spacing: .08em; fill: var(--muted); }
+.fl .lab.br { fill: var(--brand); }
+.fl .yes { fill: var(--ok); font-weight: 700; font-size: 10.5px; }
+.fl .no { fill: var(--bad); font-weight: 700; font-size: 10.5px; }
+.fl .bad-t { fill: var(--bad); font-size: 10.5px; }
+.fl .act { fill: var(--brand-ink); font-weight: 700; font-size: 10.5px; }
+.fl .on { fill: var(--on-brand); }
+.fl .bx { fill: var(--slide); stroke: var(--line); stroke-width: 1.2; }
+.fl .bx.br { fill: var(--brand-soft); stroke: var(--brand); }
+.fl .bx.solid { fill: var(--brand); stroke: var(--brand); }
+.fl .bx.ok { fill: var(--ok-soft); stroke: var(--ok); }
+.fl .bx.okw { fill: var(--slide); stroke: var(--ok); }
+.fl .bx.wa { fill: var(--warn-soft); stroke: var(--warn); }
+.fl .bx.bad { fill: var(--bad-soft); stroke: var(--bad); }
+.fl .band { fill: var(--soft); }
+.fl .band.ok { fill: var(--ok-soft); }
+.fl .sep { stroke: var(--line); stroke-width: 1; fill: none; }
+.fl .ln { fill: none; stroke: var(--muted); stroke-width: 1.5; marker-end: url(#ah); }
+.fl .ln.br { stroke: var(--brand); marker-end: url(#ah-br); }
+.fl .ln.ok { stroke: var(--ok); marker-end: url(#ah-ok); }
+.fl .ln.bad { stroke: var(--bad); marker-end: url(#ah-bad); }
+.fl .ln.dash { stroke-dasharray: 5 4; }
+.fl .ln.nm { marker-end: none; }
+.fl .ln.dot { stroke-dasharray: 2 3; marker-end: none; }
+.fl .num { fill: var(--brand); }
+.fl .numt { fill: var(--on-brand); font-size: 9.5px; font-weight: 800; }
+
+/* Kamus */
+.gl { align-self: start; }
+.gl td:first-child { white-space: nowrap; padding-right: calc(var(--u) * 14); }
+
 /* ---------- Layar sempit: slide menjadi kartu yang memanjang ---------- */
 @media (max-width: 720px) {
-  body:not(.present) .slide { aspect-ratio: auto; }
-  body:not(.present) .slide > .in, body:not(.present) .slide > .foot {
+  body:not(.present):not(.portrait) .slide { aspect-ratio: auto; }
+  body:not(.present):not(.portrait) .slide > .in, body:not(.present):not(.portrait) .slide > .foot {
     --u: 0.8px; --fs-hero: 30px; --fs-title: 22px; --fs-lead: 15px; --fs-body: 14px; --fs-small: 13px; --fs-label: 11px;
   }
-  body:not(.present) .in { position: static; padding: 24px 18px 44px; }
-  body:not(.present) .foot { left: 18px; right: 18px; bottom: 14px; }
-  body:not(.present) .cols, body:not(.present) .agenda, body:not(.present) .desks, body:not(.present) .qa,
-  body:not(.present) .cheat, body:not(.present) .timeline { grid-template-columns: 1fr; }
-  body:not(.present) .desk + .desk::before { content: "↓"; left: 50%; top: -9px; }
-  body:not(.present) .timeline::before { display: none; }
-  body:not(.present) .shot img { height: auto; }
-  body:not(.present) .shot { max-height: 280px; }
-  body:not(.present) .scroll-x { overflow-x: auto; }
-  body:not(.present) .vs { grid-template-columns: 1fr; }
-  body:not(.present) .vs .ar { transform: rotate(90deg); }
-  body:not(.present) .vs .h { display: none; }
-  body:not(.present) .oldnav .row { grid-template-columns: 1fr 16px 1.2fr; }
+  body:not(.present):not(.portrait) .in { position: static; padding: 24px 18px 44px; }
+  body:not(.present):not(.portrait) .foot { left: 18px; right: 18px; bottom: 14px; }
+  body:not(.present):not(.portrait) .cols, body:not(.present):not(.portrait) .agenda, body:not(.present):not(.portrait) .desks, body:not(.present):not(.portrait) .qa,
+  body:not(.present):not(.portrait) .cheat, body:not(.present):not(.portrait) .timeline { grid-template-columns: 1fr; }
+  body:not(.present):not(.portrait) .desk + .desk::before { content: "↓"; left: 50%; top: -9px; }
+  body:not(.present):not(.portrait) .timeline::before { display: none; }
+  body:not(.present):not(.portrait) .shot img { height: auto; }
+  body:not(.present):not(.portrait) .shot { max-height: 280px; }
+  body:not(.present):not(.portrait) .scroll-x { overflow-x: auto; }
+  body:not(.present):not(.portrait) .vs { grid-template-columns: 1fr; }
+  body:not(.present):not(.portrait) .vs .ar { transform: rotate(90deg); }
+  body:not(.present):not(.portrait) .vs .h { display: none; }
+  body:not(.present):not(.portrait) .oldnav .row { grid-template-columns: 1fr 16px 1.2fr; }
+  body:not(.present):not(.portrait) .flowrow { grid-template-columns: 1fr; }
+  body:not(.present):not(.portrait) .st + .st::before { content: "↓"; left: 50%; top: calc(var(--u) * -10); }
+  body:not(.present):not(.portrait) .downs { display: none; }
+  body:not(.present):not(.portrait) .fig { overflow-x: auto; }
+  body:not(.present):not(.portrait) .fl { min-width: 640px; height: auto; }
 }
 
 /* ---------- Mode presentasi ---------- */
@@ -256,6 +324,26 @@ body.present .counter { display: block; }
   .deck { display: block; padding: 0; }
   .slide { width: 960px; height: 540px; max-width: none; aspect-ratio: auto; border-radius: 0; box-shadow: none; break-after: page; margin: 0; }
 }
+
+/* ---------- Cetak portrait A4 (?portrait): slide menjadi kartu yang mengalir ke bawah,
+   dua kartu sehalaman bila muat. Ukuran huruf tetap (--u tetap), bukan diperkecil mengikuti lebar kertas. ---------- */
+body.portrait { background: var(--slide); }
+body.portrait .bar, body.portrait .counter { display: none !important; }
+body.portrait .deck { display: block; padding: 0; }
+body.portrait .slide {
+  width: auto; height: auto; max-width: none; aspect-ratio: auto; margin: 0 0 5mm; overflow: visible;
+  border: 1px solid var(--line); border-radius: 8px; box-shadow: none; break-inside: avoid; break-after: auto;
+}
+body.portrait .slide > .in, body.portrait .slide > .foot { --u: 0.92px; }
+body.portrait .in { position: static; padding: calc(var(--u) * 26) calc(var(--u) * 30) calc(var(--u) * 40); }
+body.portrait .foot { left: calc(var(--u) * 30); right: calc(var(--u) * 30); }
+body.portrait .grow { flex: none; }
+body.portrait .shot { height: calc(var(--u) * 230); }
+body.portrait figure.grow > .shot { flex: none; }
+body.portrait .fig { margin-inline: calc(var(--u) * -18); }
+body.portrait .fl { height: auto; }
+body.portrait .cover { padding-block: calc(var(--u) * 10); }
+body.portrait .center-v .big-url { margin-bottom: calc(var(--u) * 10); }
 </style>
 
 <header class="bar">
@@ -265,6 +353,16 @@ body.present .counter { display: block; }
     <button class="btn" id="present-btn" type="button">Mode presentasi</button>
   </div>
 </header>
+
+<!-- Mata panah dipakai bersama oleh semua diagram alur. -->
+<svg width="0" height="0" style="position: absolute;" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill: var(--muted);"/></marker>
+    <marker id="ah-br" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill: var(--brand);"/></marker>
+    <marker id="ah-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill: var(--ok);"/></marker>
+    <marker id="ah-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill: var(--bad);"/></marker>
+  </defs>
+</svg>
 
 <main class="deck">
 
@@ -292,7 +390,7 @@ body.present .counter { display: block; }
       </div>
     </div>
   </div>
-  <footer class="foot"><span>W3S Catering · 3S ONE v3.1 · 3sone.w3scatering.com</span><span>1</span></footer>
+  <footer class="foot"><span>W3S Catering · 3S ONE v3.1 · 3sone.w3scatering.com</span><span class="pg"></span></footer>
 </section>
 
 <!-- 2. Agenda -->
@@ -302,13 +400,13 @@ body.present .counter { display: block; }
     <h2>Hari ini kita belajar empat hal</h2>
     <div class="agenda grow">
       <div class="panel"><div class="num">1</div><h3>Masuk dan berkeliling</h3><p class="small">Alamat baru, login, letak menu, lonceng, pencarian cepat.</p><div class="min">5 menit</div></div>
-      <div class="panel"><div class="num">2</div><h3>Menu lama pindah ke mana</h3><p class="small">Bahan Baku, resep, Pra SPK, Plating, Pekerjaan Menu, Produksi, Mismatch.</p><div class="min">15 menit</div></div>
-      <div class="panel"><div class="num">3</div><h3>Yang baru</h3><p class="small">Form Kebutuhan digital, barang datang, Kartu Stok, Opname Bahan, Susut Bahan.</p><div class="min">20 menit</div></div>
+      <div class="panel"><div class="num">2</div><h3>Menu lama pindah ke mana</h3><p class="small">Bahan Baku, resep, Pra SPK, Plating, Pekerjaan Menu, Produksi, Mismatch, dan alur HPP-nya.</p><div class="min">15 menit</div></div>
+      <div class="panel"><div class="num">3</div><h3>Yang baru</h3><p class="small">Perjalanan satu SPK, Form Kebutuhan, barang datang, Kartu Stok, Opname, Susut. Semua dengan gambar alur.</p><div class="min">25 menit</div></div>
       <div class="panel"><div class="num">4</div><h3>Oktober: latihan dan pemetaan</h3><p class="small">Apa yang dibawa ke November, siapa memetakan apa, lalu praktik langsung.</p><div class="min">20 menit</div></div>
     </div>
     <div class="note"><span class="k">Bawa laptop atau HP.</span> Sesi terakhir adalah latihan langsung di sistem dengan akun masing-masing.</div>
   </div>
-  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>2</span></footer>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
 </section>
 
 <!-- 3. Kenapa pindah -->
@@ -325,7 +423,38 @@ body.present .counter { display: block; }
       <div class="was">Stok tidak tercatat per bahan, hanya dari opname bulanan.</div><div class="ar">→</div><div class="is"><span class="k">Kartu Stok per bahan</span>, bisa ditelusuri sampai ke SPK mana.</div>
     </div>
   </div>
-  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>3</span></footer>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
+</section>
+
+<!-- 3b. Alur dulu vs sekarang -->
+<section class="slide" tabindex="-1">
+  <div class="in">
+    <div class="eyebrow">Gambaran besar</div>
+    <h2>Alur kerja dulu dan sekarang, langkah demi langkah</h2>
+    <div class="stack grow" style="gap: calc(var(--u) * 8); justify-content: center;">
+      <div class="rowlab">Dulu · Master Menu Revamp, kertas, dan v2</div>
+      <div class="flowrow">
+        <div class="st old"><span>Admin mengetik pesanan di v2</span></div>
+        <div class="st old"><span>Pesanan diketik ulang di menu <b>Order</b></span></div>
+        <div class="st old"><span><b>Pra SPK</b> menghitung rekap bahan</span></div>
+        <div class="st old"><span>Form kebutuhan ditulis di kertas, ditandatangani</span></div>
+        <div class="st old"><span>Nota belanja diketik ulang oleh Accounting</span></div>
+        <div class="st old"><span><b>Produksi</b> dan <b>Menu Plating</b>; stok baru ketahuan saat opname bulanan</span></div>
+      </div>
+      <div class="downs" aria-hidden="true"><span>↓</span><span>↓</span><span>↓</span><span>↓</span><span>↓</span><span>↓</span></div>
+      <div class="rowlab now">Sekarang · 3S ONE</div>
+      <div class="flowrow now">
+        <div class="st new"><span><b>Admin</b> membuat PO dan SPK</span><span class="small">sama seperti biasa</span></div>
+        <div class="st new auto"><span class="tag">otomatis</span><span><b>SPK Produksi</b> terbentuk sendiri</span></div>
+        <div class="st new auto"><span class="tag">otomatis</span><span><b>Breakdown Bahan</b> dan Perlu Beli</span><span class="small">sudah dikurangi stok</span></div>
+        <div class="st new"><span><b>Form Kebutuhan</b>: Ajukan, lalu Setujui</span><span class="small">lonceng ke orang berikutnya</span></div>
+        <div class="st new auto"><span class="tag">otomatis</span><span><b>Periksa</b>: stok, pembelian, dan kas tercatat</span></div>
+        <div class="st new"><span><b>Lembar Kerja</b>, <b>Plating</b>, lalu <b>Tutup SPK</b></span><span class="small">Kartu Stok dan Susut terisi</span></div>
+      </div>
+    </div>
+    <div class="note"><span class="k">Kotak hijau dikerjakan sistem.</span> Yang dulu diketik dua sampai tiga kali sekarang diketik sekali, oleh orang yang mengalaminya.</div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
 </section>
 
 <!-- 4. Data ikut pindah -->
@@ -355,7 +484,7 @@ body.present .counter { display: block; }
     </div>
     <div class="note warn"><span class="k">Selama Oktober</span> Master Menu Revamp masih dipakai untuk produksi, tetapi perbaikan resep dan bahan dikerjakan di 3S ONE. Master Menu Revamp dibekukan 31 Oktober.</div>
   </div>
-  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>4</span></footer>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
 </section>
 
 <!-- 5. Cara masuk -->
@@ -376,7 +505,7 @@ body.present .counter { display: block; }
       <figure class="grow"><div class="shot grow"><img src="../panduan/img/login.jpg" alt="Halaman Masuk ke 3S ONE dengan kolom username atau email dan password"></div></figure>
     </div>
   </div>
-  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>5</span></footer>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
 </section>
 
 <!-- 6. Tata letak -->
@@ -395,7 +524,7 @@ body.present .counter { display: block; }
       </ul>
     </div>
   </div>
-  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>6</span></footer>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
 </section>
 
 <!-- 7. Peta pindah -->
@@ -421,7 +550,33 @@ body.present .counter { display: block; }
       </table>
     </div>
   </div>
-  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>7</span></footer>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
+</section>
+
+<!-- 7b. Dulu klik apa, sekarang klik apa -->
+<section class="slide" tabindex="-1">
+  <div class="in tight">
+    <div class="eyebrow"><span class="chip">2</span> Pekerjaan sehari-hari</div>
+    <h2>"Dulu saya klik ini. Sekarang klik apa?"</h2>
+    <div class="grow scroll-x">
+      <table class="t">
+        <thead><tr><th>Saya mau</th><th>Dulu di Master Menu</th><th>Sekarang di 3S ONE</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Mengubah harga bahan</td><td class="old">Bahan Baku › ubah</td><td><span class="path">Item Inventaris</span> › ubah barisnya <span class="small">· Harga Beli dari nota juga memperbaruinya sendiri</span></td></tr>
+          <tr><td class="k">Menambah bahan baru</td><td class="old">Bahan Baku › tambah</td><td>Cari dulu dengan <kbd>Ctrl</kbd> + <kbd>K</kbd>, baru <span class="path">Item Inventaris › Tambah Item</span></td></tr>
+          <tr><td class="k">Mengubah banyak bahan</td><td class="old">Bahan Baku › import</td><td><span class="path">Item Inventaris › Import Excel</span> <span class="small">· mengubah dan menambah, tidak menghapus</span></td></tr>
+          <tr><td class="k">Membuat resep baru</td><td class="old">Menu Utama / Sub-Menu</td><td><span class="path">Resep &amp; Menu › Tambah Resep</span>, lalu tautkan di <span class="path">Pencocokan Menu</span></td></tr>
+          <tr><td class="k">Menghitung belanja besok</td><td class="old">Order, lalu Pra SPK</td><td><span class="path">SPK Produksi › Breakdown Bahan</span> <span class="small">· sudah jadi, lihat kolom Perlu Beli</span></td></tr>
+          <tr><td class="k">Membagi tugas dapur</td><td class="old">Produksi</td><td><span class="path">SPK Produksi › Lainnya › Lembar Kerja</span> › Salin dari Template Menu</td></tr>
+          <tr><td class="k">Mencetak plating</td><td class="old">Menu Plating</td><td><span class="path">SPK Produksi › Lainnya › Plating</span> › Cetak Plating</td></tr>
+          <tr><td class="k">Membereskan nama bahan</td><td class="old">Mismatch</td><td><span class="path">Bahan Belum Cocok</span> › Tautkan, Buat Bahan, atau Abaikan</td></tr>
+          <tr><td class="k">Melihat stok satu bahan</td><td class="old">tidak ada, tunggu opname</td><td><span class="path">Inventory › Kartu Stok</span>, saring nama bahannya</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note warn"><span class="k">Sengaja tidak ada lagi:</span> mengetik Order, Reset data, Hapus Semua Resep, dan import yang menghapus bahan lama. Bahan yang sudah punya catatan stok dan pembelian dijaga supaya laporan tidak bergeser.</div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
 </section>
 
 <!-- 8. Item Inventaris -->
@@ -442,7 +597,7 @@ body.present .counter { display: block; }
       <figure class="grow"><div class="shot grow"><img src="../panduan/img/inventory-items.jpg" alt="Daftar Item Inventaris dengan harga per satuan"></div><figcaption>Inventory › Item Inventaris</figcaption></figure>
     </div>
   </div>
-  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>8</span></footer>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
 </section>
 
 <!-- 9. Resep & Menu -->
@@ -463,7 +618,7 @@ body.present .counter { display: block; }
       </div>
     </div>
   </div>
-  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>9</span></footer>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
 </section>
 
 <!-- 10. Order + Pra SPK -->
@@ -484,7 +639,7 @@ body.present .counter { display: block; }
       <figure class="grow"><div class="shot grow"><img src="../panduan/img/breakdown-bahan.jpg" alt="Halaman Breakdown Bahan dengan rekap bahan dan kolom Perlu Beli"></div><figcaption>SPK Produksi › Breakdown Bahan (dulu Rekap Bahan di Pra SPK)</figcaption></figure>
     </div>
   </div>
-  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>10</span></footer>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
 </section>
 
 <!-- 11. Lembar kerja & plating -->
@@ -506,7 +661,88 @@ body.present .counter { display: block; }
     </div>
     <p class="small">Template pekerjaan diatur sekali per menu di <span class="path">Resep &amp; HPP › Pekerjaan Menu</span>, lalu disalin ke setiap SPK.</p>
   </div>
-  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>11</span></footer>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
+</section>
+
+<!-- 11b. Alur HPP -->
+<section class="slide" tabindex="-1">
+  <div class="in">
+    <div class="eyebrow"><span class="chip">2</span> Alur HPP</div>
+    <h2>Dari harga bahan sampai profit menu: tiga gerbang</h2>
+    <div class="fig grow">
+      <svg class="fl" viewBox="0 0 864 348" role="img" aria-label="Alur HPP: harga beli ke Item Inventaris, lewat gerbang nama bahan tertaut dan satuan bisa dikonversi, menjadi HPP resep dan Analisa HPP. Menu di PO lewat gerbang menu punya resep menjadi SPK Produksi dan profit di Dashboard.">
+        <text class="lab br" x="0" y="14">A · BIAYA SATU RESEP</text>
+        <rect class="bx" x="0" y="44" width="120" height="52" rx="7"/>
+        <text class="t" x="60" y="65" text-anchor="middle">Harga Beli</text>
+        <text class="s" x="60" y="81" text-anchor="middle">dari nota (Periksa)</text>
+        <path class="ln" d="M120,70 H139"/>
+        <rect class="bx br" x="140" y="44" width="132" height="52" rx="7"/>
+        <text class="t" x="206" y="65" text-anchor="middle">Item Inventaris</text>
+        <text class="s" x="206" y="81" text-anchor="middle">harga per satuan beli</text>
+        <path class="ln" d="M272,70 H291"/>
+        <polygon class="bx" points="350,36 408,70 350,104 292,70"/>
+        <text class="t sm" x="350" y="67" text-anchor="middle">Nama bahan</text>
+        <text class="t sm" x="350" y="80" text-anchor="middle">tertaut?</text>
+        <path class="ln ok" d="M408,70 H427"/>
+        <text class="yes" x="418" y="61" text-anchor="middle">Ya</text>
+        <polygon class="bx" points="486,36 544,70 486,104 428,70"/>
+        <text class="t sm" x="486" y="67" text-anchor="middle">Satuan bisa</text>
+        <text class="t sm" x="486" y="80" text-anchor="middle">dikonversi?</text>
+        <path class="ln ok" d="M544,70 H563"/>
+        <text class="yes" x="554" y="61" text-anchor="middle">Ya</text>
+        <rect class="bx br" x="564" y="44" width="140" height="52" rx="7"/>
+        <text class="t" x="634" y="65" text-anchor="middle">Resep × takaran</text>
+        <text class="s" x="634" y="81" text-anchor="middle">= HPP per porsi</text>
+        <path class="ln" d="M704,70 H723"/>
+        <rect class="bx ok" x="724" y="44" width="140" height="52" rx="7"/>
+        <text class="t" x="794" y="62" text-anchor="middle">Analisa HPP</text>
+        <text class="s" x="794" y="77" text-anchor="middle">+ OHC + profit</text>
+        <text class="s" x="794" y="90" text-anchor="middle">= harga jual hitungan</text>
+
+        <path class="ln bad" d="M350,104 V129"/>
+        <text class="no" x="356" y="120">Tidak</text>
+        <path class="ln bad" d="M486,104 V129"/>
+        <text class="no" x="492" y="120">Tidak</text>
+        <rect class="bx wa" x="286" y="130" width="128" height="44" rx="7"/>
+        <text class="t sm" x="350" y="149" text-anchor="middle">Bahan Belum Cocok</text>
+        <text class="s" x="350" y="165" text-anchor="middle">Tautkan / Buat Bahan</text>
+        <rect class="bx wa" x="422" y="130" width="128" height="44" rx="7"/>
+        <text class="t sm" x="486" y="149" text-anchor="middle">Konversi Satuan</text>
+        <text class="s" x="486" y="165" text-anchor="middle">› Belum Diatur</text>
+        <text class="bad-t" x="418" y="194" text-anchor="middle">Selama belum beres: biaya baris itu = 0, status Belum Lengkap</text>
+
+        <path class="ln br" d="M634,96 V243"/>
+        <text class="s" x="642" y="166">takaran</text>
+        <text class="s" x="642" y="179">resep</text>
+
+        <text class="lab br" x="0" y="228">B · MENU YANG DIJUAL ADMIN</text>
+        <rect class="bx" x="0" y="244" width="150" height="52" rx="7"/>
+        <text class="t" x="75" y="265" text-anchor="middle">Menu di PO</text>
+        <text class="s" x="75" y="281" text-anchor="middle">porsi yang dipesan</text>
+        <path class="ln" d="M150,270 H189"/>
+        <polygon class="bx" points="262,234 334,270 262,306 190,270"/>
+        <text class="t sm" x="262" y="267" text-anchor="middle">Menu punya</text>
+        <text class="t sm" x="262" y="280" text-anchor="middle">resep?</text>
+        <path class="ln ok" d="M334,270 H563"/>
+        <text class="yes" x="346" y="262">Ya</text>
+        <rect class="bx br" x="564" y="244" width="140" height="52" rx="7"/>
+        <text class="t" x="634" y="265" text-anchor="middle">SPK Produksi</text>
+        <text class="s" x="634" y="281" text-anchor="middle">Breakdown Bahan</text>
+        <path class="ln" d="M704,270 H723"/>
+        <rect class="bx ok" x="724" y="244" width="140" height="52" rx="7"/>
+        <text class="t" x="794" y="265" text-anchor="middle">Dashboard</text>
+        <text class="s" x="794" y="281" text-anchor="middle">Profit per menu</text>
+        <path class="ln bad" d="M262,306 V322 H349"/>
+        <text class="no" x="282" y="316">Tidak</text>
+        <rect class="bx wa" x="350" y="300" width="170" height="44" rx="7"/>
+        <text class="t sm" x="435" y="319" text-anchor="middle">Pencocokan Menu</text>
+        <text class="s" x="435" y="335" text-anchor="middle">Tautkan / Buat Resep</text>
+        <text class="bad-t" x="532" y="327">sementara: kotak kuning di Breakdown Bahan</text>
+      </svg>
+    </div>
+    <div class="note">Kotak kuning adalah <span class="k">antrean pekerjaan Oktober</span>. Begitu ketiganya kosong, HPP dan profit setiap menu terhitung sendiri.</div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
 </section>
 
 <!-- 12. Pekerjaan rumah HPP -->
@@ -524,7 +760,7 @@ body.present .counter { display: block; }
       <div class="panel stack">
         <span class="eyebrow">Dulu: Mismatch</span>
         <h3>Bahan Belum Cocok</h3>
-        <p>Nama bahan di resep yang belum terhubung ke Item Inventaris. Pilih: <span class="k">Tautkan</span>, <span class="k">Buat baru</span>, atau <span class="k">Abaikan</span>.</p>
+        <p>Nama bahan di resep yang belum terhubung ke Item Inventaris. Pilih: <span class="k">Tautkan</span>, <span class="k">Buat Bahan</span>, atau <span class="k">Abaikan</span>.</p>
         <p class="small">Resep baru sering menambah satu-dua baris. Cek tiap minggu.</p>
       </div>
       <div class="panel stack">
@@ -536,7 +772,97 @@ body.present .counter { display: block; }
     </div>
     <div class="note"><span class="k">Target sebelum 1 November:</span> Bahan Belum Cocok = 0, Konversi Belum Diatur = 0, dan kartu Profit menu di Dashboard Inventory menampilkan angka, bukan "–".</div>
   </div>
-  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>12</span></footer>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
+</section>
+
+<!-- 12b. Perjalanan satu SPK (swimlane) -->
+<section class="slide" tabindex="-1">
+  <div class="in">
+    <div class="eyebrow"><span class="chip">3</span> Gambaran besar</div>
+    <h2>Perjalanan satu SPK: siapa mengerjakan apa, berurutan</h2>
+    <div class="fig grow">
+      <svg class="fl" viewBox="0 0 864 320" role="img" aria-label="Alur satu SPK dalam lima jalur: Admin membuat PO dan SPK; sistem membentuk SPK Produksi dan Breakdown Bahan; dapur menyusun form dan mengajukan; supervisor gudang menyetujui atau menolak; staf gudang memeriksa barang datang; sistem mencatat stok masuk, pembelian, dan kas; dapur memasak dan menutup SPK; sistem mencatat stok keluar, susut, dan HPP.">
+        <rect class="band" x="0" y="0" width="90" height="320"/>
+        <rect class="band ok" x="90" y="64" width="774" height="64"/>
+        <path class="sep" d="M0,64 H864 M0,128 H864 M0,192 H864 M0,256 H864 M90,0 V320"/>
+        <rect x="0.5" y="0.5" width="863" height="319" rx="6" style="fill: none; stroke: var(--line);"/>
+
+        <text class="t" x="10" y="36">Admin</text>
+        <text class="t" x="10" y="93" style="fill: var(--ok);">Sistem</text>
+        <text class="s sm" x="10" y="107">otomatis</text>
+        <text class="t" x="10" y="157">Dapur</text>
+        <text class="s sm" x="10" y="171">Production</text>
+        <text class="t" x="10" y="221">Supervisor</text>
+        <text class="s sm" x="10" y="235">Gudang</text>
+        <text class="t" x="10" y="285">Staf Gudang</text>
+        <text class="s sm" x="10" y="299">Inventory</text>
+
+        <!-- panah antar langkah: keluar dari sisi kanan, masuk dari atas/bawah langkah berikutnya -->
+        <path class="ln br" d="M182,32 H221 V70"/>
+        <path class="ln br" d="M279,96 H318 V134"/>
+        <path class="ln br" d="M376,160 H415 V198"/>
+        <path class="ln br" d="M473,224 H512 V262"/>
+        <path class="ln br" d="M570,288 H608 V122"/>
+        <path class="ln br" d="M666,96 H705 V134"/>
+        <path class="ln br" d="M763,160 H802 V122"/>
+        <path class="ln bad dash" d="M385,236 H332 V186"/>
+        <text class="no" x="358" y="230" text-anchor="middle">Tolak</text>
+
+        <rect class="bx" x="94" y="7" width="88" height="50" rx="6"/>
+        <text class="t sm" x="138" y="27" text-anchor="middle">PO + SPK</text>
+        <text class="s sm" x="138" y="42" text-anchor="middle">seperti biasa</text>
+
+        <rect class="bx okw" x="191" y="71" width="88" height="50" rx="6"/>
+        <text class="t sm" x="235" y="89" text-anchor="middle">SPK Produksi</text>
+        <text class="s sm" x="235" y="103" text-anchor="middle">+ Breakdown</text>
+        <text class="s sm" x="235" y="115" text-anchor="middle">Bahan</text>
+
+        <rect class="bx br" x="288" y="135" width="88" height="50" rx="6"/>
+        <text class="t sm" x="332" y="153" text-anchor="middle">Susun Form</text>
+        <text class="s sm" x="332" y="167" text-anchor="middle">isi Stok Awal</text>
+        <text class="s sm" x="332" y="179" text-anchor="middle">→ Ajukan</text>
+
+        <rect class="bx br" x="385" y="199" width="88" height="50" rx="6"/>
+        <text class="t sm" x="429" y="217" text-anchor="middle">Setujui</text>
+        <text class="s sm" x="429" y="231" text-anchor="middle">atau Tolak</text>
+        <text class="s sm" x="429" y="243" text-anchor="middle">+ alasan</text>
+
+        <rect class="bx br" x="482" y="263" width="88" height="50" rx="6"/>
+        <text class="t sm" x="526" y="281" text-anchor="middle">Barang datang</text>
+        <text class="s sm" x="526" y="295" text-anchor="middle">isi Diterima &amp;</text>
+        <text class="s sm" x="526" y="307" text-anchor="middle">Harga → Periksa</text>
+
+        <rect class="bx okw" x="578" y="71" width="88" height="50" rx="6"/>
+        <text class="t sm" x="622" y="89" text-anchor="middle">Stok masuk</text>
+        <text class="s sm" x="622" y="103" text-anchor="middle">+ Pembelian</text>
+        <text class="s sm" x="622" y="115" text-anchor="middle">+ Kas / Hutang</text>
+
+        <rect class="bx br" x="675" y="135" width="88" height="50" rx="6"/>
+        <text class="t sm" x="719" y="153" text-anchor="middle">Masak</text>
+        <text class="s sm" x="719" y="167" text-anchor="middle">isi Sisa Stok</text>
+        <text class="s sm" x="719" y="179" text-anchor="middle">→ Tutup SPK</text>
+
+        <rect class="bx okw" x="772" y="71" width="88" height="50" rx="6"/>
+        <text class="t sm" x="816" y="89" text-anchor="middle">Stok keluar</text>
+        <text class="s sm" x="816" y="103" text-anchor="middle">Susut &amp; HPP</text>
+        <text class="s sm" x="816" y="115" text-anchor="middle">terhitung</text>
+
+        <!-- nomor langkah -->
+        <g>
+          <circle class="num" cx="94" cy="7" r="8"/><text class="numt" x="94" y="10.5" text-anchor="middle">1</text>
+          <circle class="num" cx="191" cy="71" r="8"/><text class="numt" x="191" y="74.5" text-anchor="middle">2</text>
+          <circle class="num" cx="288" cy="135" r="8"/><text class="numt" x="288" y="138.5" text-anchor="middle">3</text>
+          <circle class="num" cx="385" cy="199" r="8"/><text class="numt" x="385" y="202.5" text-anchor="middle">4</text>
+          <circle class="num" cx="482" cy="263" r="8"/><text class="numt" x="482" y="266.5" text-anchor="middle">5</text>
+          <circle class="num" cx="578" cy="71" r="8"/><text class="numt" x="578" y="74.5" text-anchor="middle">6</text>
+          <circle class="num" cx="675" cy="135" r="8"/><text class="numt" x="675" y="138.5" text-anchor="middle">7</text>
+          <circle class="num" cx="772" cy="71" r="8"/><text class="numt" x="772" y="74.5" text-anchor="middle">8</text>
+        </g>
+      </svg>
+    </div>
+    <div class="note"><span class="k">Setiap kali form pindah meja, orang berikutnya mendapat lonceng.</span> Jalur hijau dikerjakan sistem: dapur tidak menghitung bahan dengan tangan, Accounting tidak mengetik ulang nota.</div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
 </section>
 
 <!-- 13. Form Kebutuhan -->
@@ -558,7 +884,153 @@ body.present .counter { display: block; }
       </div>
     </div>
   </div>
-  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>13</span></footer>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
+</section>
+
+<!-- 13b. Status form -->
+<section class="slide" tabindex="-1">
+  <div class="in">
+    <div class="eyebrow"><span class="chip">3</span> Yang baru · status form</div>
+    <h2>Form Kebutuhan sedang di meja siapa?</h2>
+    <div class="fig grow">
+      <svg class="fl" viewBox="0 0 864 240" role="img" aria-label="Status Form Kebutuhan: Dibuat atau Diisi di dapur, Ajukan menjadi Diajukan di supervisor gudang, Setujui menjadi Disetujui di staf gudang, Periksa menjadi Diperiksa di dapur, Tutup SPK menjadi Selesai. Tolak mengembalikan form ke dapur dengan alasan.">
+        <text class="lab" x="61" y="20" text-anchor="middle">MULAI DARI</text>
+        <text class="s" x="61" y="36" text-anchor="middle">SPK Produksi › Form</text>
+        <text class="lab br" x="247" y="20" text-anchor="middle">LONCENG</text>
+        <text class="s" x="247" y="36" text-anchor="middle">menunggu persetujuan</text>
+        <text class="lab br" x="432" y="20" text-anchor="middle">LONCENG</text>
+        <text class="s" x="432" y="36" text-anchor="middle">siap dibelanjakan</text>
+        <text class="lab br" x="618" y="20" text-anchor="middle">LONCENG</text>
+        <text class="s" x="618" y="36" text-anchor="middle">barang sudah masuk</text>
+
+        <rect class="bx br" x="0" y="50" width="122" height="66" rx="8"/>
+        <text class="lab" x="61" y="68" text-anchor="middle">DAPUR</text>
+        <text class="t" x="61" y="89" text-anchor="middle">Dibuat / Diisi</text>
+        <text class="s" x="61" y="106" text-anchor="middle">susun, isi Stok Awal</text>
+
+        <rect class="bx br" x="186" y="50" width="122" height="66" rx="8"/>
+        <text class="lab" x="247" y="68" text-anchor="middle">SUPERVISOR GUDANG</text>
+        <text class="t" x="247" y="89" text-anchor="middle">Diajukan</text>
+        <text class="s" x="247" y="106" text-anchor="middle">isian terkunci</text>
+
+        <rect class="bx br" x="371" y="50" width="122" height="66" rx="8"/>
+        <text class="lab" x="432" y="68" text-anchor="middle">STAF GUDANG</text>
+        <text class="t" x="432" y="89" text-anchor="middle">Disetujui</text>
+        <text class="s" x="432" y="106" text-anchor="middle">gudang belanja</text>
+
+        <rect class="bx br" x="557" y="50" width="122" height="66" rx="8"/>
+        <text class="lab" x="618" y="68" text-anchor="middle">DAPUR</text>
+        <text class="t" x="618" y="89" text-anchor="middle">Diperiksa</text>
+        <text class="s" x="618" y="106" text-anchor="middle">stok sudah masuk</text>
+
+        <rect class="bx ok" x="742" y="50" width="122" height="66" rx="8"/>
+        <text class="lab" x="803" y="68" text-anchor="middle">SPK PRODUKSI</text>
+        <text class="t" x="803" y="89" text-anchor="middle">Selesai</text>
+        <text class="s" x="803" y="106" text-anchor="middle">SPK sudah ditutup</text>
+
+        <path class="ln br" d="M122,83 H185"/>
+        <text class="act" x="154" y="76" text-anchor="middle">Ajukan</text>
+        <path class="ln br" d="M308,83 H370"/>
+        <text class="act" x="339.5" y="76" text-anchor="middle">Setujui</text>
+        <path class="ln br" d="M493,83 H556"/>
+        <text class="act" x="525" y="76" text-anchor="middle">Periksa</text>
+        <path class="ln br" d="M679,83 H741"/>
+        <text class="act" x="710.5" y="76" text-anchor="middle">Tutup SPK</text>
+
+        <path class="ln bad dash" d="M247,116 C247,162 61,162 61,118"/>
+        <text class="no" x="154" y="172" text-anchor="middle">Tolak + alasan wajib</text>
+        <text class="s" x="154" y="187" text-anchor="middle">lonceng ke dapur, perbaiki lalu Ajukan lagi</text>
+
+        <path class="ln dot" d="M525,90 V150"/>
+        <path class="ln dot" d="M710.5,90 V150"/>
+        <rect class="bx ok" x="405" y="150" width="240" height="88" rx="8"/>
+        <text class="lab" x="417" y="167">SAAT PERIKSA</text>
+        <text x="417" y="185">+ Kartu Stok sebesar Diterima</text>
+        <text x="417" y="200">+ Pembelian Bahan Baku</text>
+        <text x="417" y="215">− Kas (tunai) atau + Hutang (kredit)</text>
+        <text x="417" y="230">Harga bahan diperbarui + histori</text>
+        <rect class="bx ok" x="660" y="150" width="204" height="88" rx="8"/>
+        <text class="lab" x="672" y="167">SAAT TUTUP SPK</text>
+        <text x="672" y="185">− Kartu Stok sebesar Pemakaian</text>
+        <text x="672" y="200">Sisa Stok → Hilang / Temuan</text>
+        <text x="672" y="215">Masuk hitungan Susut Bahan</text>
+        <text x="672" y="230">SPK Produksi jadi Selesai</text>
+      </svg>
+    </div>
+    <div class="note warn"><span class="k">Periksa dan Tutup SPK tidak bisa diulang.</span> Salah setelah itu diperbaiki lewat Accounting (koreksi pembelian) atau Opname Bahan, bukan dengan menekan tombolnya lagi.</div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
+</section>
+
+<!-- 13c. Alur keputusan barang datang -->
+<section class="slide" tabindex="-1">
+  <div class="in">
+    <div class="eyebrow"><span class="chip">3</span> Yang baru · Meja 3</div>
+    <h2>Barang datang: urutan isian sampai Periksa</h2>
+    <div class="fig grow">
+      <svg class="fl" viewBox="0 56 864 216" role="img" aria-label="Alur barang datang: pilih cara bayar sekali per form, lalu per baris bahan: bila semua layak, Diterima sama dengan Beli; bila tidak, isi jumlah Diterima dan alasan, lalu pilih Retur atau Dibayar. Isi Harga Beli, tekan Periksa, sistem mencatat Kartu Stok, Pembelian Bahan Baku, Kas atau Hutang, dan harga bahan.">
+        <rect class="bx br" x="0" y="62" width="150" height="116" rx="8"/>
+        <text class="lab" x="75" y="80" text-anchor="middle">ATAS TABEL · SEKALI</text>
+        <text class="t" x="75" y="100" text-anchor="middle">Pilih cara bayar</text>
+        <text class="s" x="75" y="122" text-anchor="middle">Tunai → kategori</text>
+        <text class="s" x="75" y="136" text-anchor="middle">+ akun kas</text>
+        <text class="s" x="75" y="156" text-anchor="middle">Kredit → supplier,</text>
+        <text class="s" x="75" y="170" text-anchor="middle">jatuh tempo ikut termin</text>
+        <path class="ln br" d="M150,120 H195"/>
+
+        <text class="lab" x="264" y="70" text-anchor="middle">PER BARIS BAHAN</text>
+        <polygon class="bx br" points="264,80 332,120 264,160 196,120"/>
+        <text class="t sm" x="264" y="117" text-anchor="middle">Semua bahan</text>
+        <text class="t sm" x="264" y="131" text-anchor="middle">layak?</text>
+
+        <path class="ln ok" d="M332,120 H381"/>
+        <text class="yes" x="357" y="113" text-anchor="middle">Ya</text>
+        <rect class="bx" x="382" y="98" width="136" height="44" rx="7"/>
+        <text class="t" x="450" y="116" text-anchor="middle">Diterima = Beli</text>
+        <text class="s" x="450" y="132" text-anchor="middle">kolom boleh dikosongkan</text>
+        <path class="ln br" d="M518,120 H563"/>
+
+        <text class="s" x="629" y="90" text-anchor="middle">kosong = harga master</text>
+        <rect class="bx" x="564" y="98" width="130" height="44" rx="7"/>
+        <text class="t" x="629" y="116" text-anchor="middle">Isi Harga Beli</text>
+        <text class="s" x="629" y="132" text-anchor="middle">per satuan, dari nota</text>
+        <path class="ln br" d="M694,120 H743"/>
+
+        <rect class="bx solid" x="744" y="95" width="120" height="50" rx="8"/>
+        <text class="t on" x="804" y="117" text-anchor="middle">Periksa</text>
+        <text class="s on" x="804" y="134" text-anchor="middle">satu kali</text>
+
+        <path class="ln bad" d="M264,160 V187"/>
+        <text class="no" x="272" y="178">Tidak</text>
+        <rect class="bx bad" x="189" y="188" width="150" height="56" rx="7"/>
+        <text class="t sm" x="264" y="206" text-anchor="middle">Isi jumlah Diterima</text>
+        <text class="s" x="264" y="221" text-anchor="middle">Ditolak dihitung sendiri</text>
+        <text class="s" x="264" y="236" text-anchor="middle">+ alasan wajib</text>
+
+        <text class="lab" x="382" y="168">PERLAKUAN YANG DITOLAK</text>
+        <path class="ln" d="M339,216 H360 V195 H381"/>
+        <path class="ln" d="M360,216 V249 H381"/>
+        <rect class="bx" x="382" y="176" width="156" height="38" rx="7"/>
+        <text class="t sm" x="460" y="192" text-anchor="middle">Retur (bawaan)</text>
+        <text class="s" x="460" y="207" text-anchor="middle">tidak dibayar, tanpa biaya</text>
+        <rect class="bx wa" x="382" y="230" width="156" height="38" rx="7"/>
+        <text class="t sm" x="460" y="246" text-anchor="middle">Dibayar</text>
+        <text class="s" x="460" y="261" text-anchor="middle">→ Kerugian Barang Rusak</text>
+        <path class="ln nm" d="M538,249 H629 V195"/>
+        <path class="ln" d="M538,195 H629 V143"/>
+
+        <path class="ln ok" d="M804,145 V177"/>
+        <rect class="bx ok" x="660" y="178" width="204" height="92" rx="8"/>
+        <text class="lab" x="672" y="196">OTOMATIS SAAT PERIKSA</text>
+        <text x="672" y="214">+ Kartu Stok sebesar Diterima</text>
+        <text x="672" y="229">+ Pembelian Bahan Baku</text>
+        <text x="672" y="244">− Kas, atau + Hutang supplier</text>
+        <text x="672" y="259">Harga bahan + Histori Harga</text>
+      </svg>
+    </div>
+    <div class="note warn"><span class="k">Sistem menolak Periksa</span> bila ada barang Ditolak tanpa alasan, Harga Beli belum ada, atau cara bayar belum lengkap. Pesannya menyebut persis apa yang kurang.</div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
 </section>
 
 <!-- 14. Barang datang -->
@@ -594,7 +1066,62 @@ body.present .counter { display: block; }
       </div>
     </div>
   </div>
-  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>14</span></footer>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
+</section>
+
+<!-- 14b. Aliran Kartu Stok -->
+<section class="slide" tabindex="-1">
+  <div class="in">
+    <div class="eyebrow"><span class="chip">3</span> Yang baru · stok</div>
+    <h2>Kartu Stok: dari mana stok bertambah dan berkurang</h2>
+    <div class="formula">Saldo = Stok Awal <span class="plus">+ Barang datang + Barang Temuan</span> <span class="min">− Pemakaian − Barang Hilang</span></div>
+    <div class="fig grow">
+      <svg class="fl" viewBox="0 0 864 270" role="img" aria-label="Kartu Stok bertambah dari Stok Awal, barang datang, dan Barang Temuan; berkurang karena Pemakaian dan Barang Hilang. Kartu Stok dipakai untuk Breakdown Bahan, Susut Bahan, dan peringatan stok minimum.">
+        <rect class="bx ok" x="0" y="10" width="250" height="44" rx="7"/>
+        <text class="t" x="14" y="29">+ Stok Awal</text>
+        <text class="s" x="14" y="45">hitungan pertama: Form atau Opname</text>
+        <rect class="bx ok" x="0" y="74" width="250" height="44" rx="7"/>
+        <text class="t" x="14" y="93">+ Barang datang</text>
+        <text class="s" x="14" y="109">jumlah Diterima saat Periksa (Meja 3)</text>
+        <rect class="bx ok" x="0" y="138" width="250" height="44" rx="7"/>
+        <text class="t" x="14" y="157">+ Barang Temuan</text>
+        <text class="s" x="14" y="173">hitung fisik lebih banyak dari catatan</text>
+        <path class="ln ok" d="M250,32 L331,85"/>
+        <path class="ln ok" d="M250,96 L331,105"/>
+        <path class="ln ok" d="M250,160 L331,125"/>
+
+        <rect class="bx solid" x="332" y="60" width="200" height="90" rx="10"/>
+        <text class="t big on" x="432" y="98" text-anchor="middle">Kartu Stok</text>
+        <text class="s on" x="432" y="117" text-anchor="middle">saldo berjalan per bahan</text>
+        <text class="s on" x="432" y="133" text-anchor="middle">hanya dibaca, tidak diketik</text>
+
+        <path class="ln bad" d="M532,90 L613,64"/>
+        <path class="ln bad" d="M532,120 L613,128"/>
+        <rect class="bx bad" x="614" y="42" width="250" height="44" rx="7"/>
+        <text class="t" x="628" y="61">− Pemakaian</text>
+        <text class="s" x="628" y="77">Tutup SPK (Meja 4); kosong = ikut resep</text>
+        <rect class="bx bad" x="614" y="106" width="250" height="44" rx="7"/>
+        <text class="t" x="628" y="125">− Barang Hilang</text>
+        <text class="s" x="628" y="141">hitung fisik lebih sedikit dari catatan</text>
+
+        <path class="ln br" d="M432,150 V211"/>
+        <path class="ln br" d="M432,196 H215 V211"/>
+        <path class="ln br" d="M432,196 H649 V211"/>
+        <text class="lab br" x="440" y="176">DIPAKAI UNTUK</text>
+        <rect class="bx" x="110" y="212" width="210" height="56" rx="7"/>
+        <text class="t" x="215" y="234" text-anchor="middle">Breakdown Bahan</text>
+        <text class="s" x="215" y="251" text-anchor="middle">Perlu Beli = Kebutuhan − stok</text>
+        <rect class="bx" x="332" y="212" width="200" height="56" rx="7"/>
+        <text class="t" x="432" y="234" text-anchor="middle">Susut Bahan</text>
+        <text class="s" x="432" y="251" text-anchor="middle">hijau · kuning · merah</text>
+        <rect class="bx" x="544" y="212" width="210" height="56" rx="7"/>
+        <text class="t" x="649" y="234" text-anchor="middle">Stok minimum</text>
+        <text class="s" x="649" y="251" text-anchor="middle">muncul di Dashboard + lonceng</text>
+      </svg>
+    </div>
+    <div class="note"><span class="k">Hitung fisik</span> = Opname Bahan (kapan saja, per bahan) atau Sisa Stok saat Tutup SPK. Tanpa hitung fisik, sistem tidak tahu ada barang yang hilang.</div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
 </section>
 
 <!-- 15. Kartu stok, opname, susut -->
@@ -624,7 +1151,7 @@ body.present .counter { display: block; }
       </div>
     </div>
   </div>
-  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>15</span></footer>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
 </section>
 
 <!-- 16. Peran -->
@@ -645,7 +1172,7 @@ body.present .counter { display: block; }
     </div>
     <div class="note">Yang menyusun form bukan yang menyetujuinya, dan yang memeriksa barang bukan yang menutup SPK. Satu orang boleh punya lebih dari satu peran; minta Owner lewat Master User.</div>
   </div>
-  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>16</span></footer>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
 </section>
 
 <!-- 17. Oktober latihan -->
@@ -682,7 +1209,7 @@ body.present .counter { display: block; }
     </div>
     <div class="note warn"><span class="k">Pekerjaan sehari-hari Oktober tetap di sistem lama</span>: v2 untuk PO, SPK, penjualan, kas; Master Menu Revamp dan form kertas untuk produksi.</div>
   </div>
-  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>17</span></footer>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
 </section>
 
 <!-- 17b. PR Oktober -->
@@ -707,7 +1234,7 @@ body.present .counter { display: block; }
     </div>
     <div class="note"><span class="k">Satu bahan = satu baris.</span> Sebelum membuat bahan baru, cari dulu dengan <kbd>Ctrl</kbd> + <kbd>K</kbd>. Data coba-coba diberi awalan <span class="k">[LATIHAN]</span> dan dihapus sebelum 27 Oktober.</div>
   </div>
-  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>18</span></footer>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
 </section>
 
 <!-- 18. Kebiasaan -->
@@ -743,7 +1270,7 @@ body.present .counter { display: block; }
     </div>
     <div class="note warn"><span class="k">Hindari:</span> belanja di luar Form Kebutuhan tanpa dicatat · membuat bahan dengan nama mirip bahan lama · mengganti satuan bahan yang sudah punya riwayat (buat aturan konversi saja).</div>
   </div>
-  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>19</span></footer>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
 </section>
 
 <!-- 19. FAQ -->
@@ -761,7 +1288,7 @@ body.present .counter { display: block; }
     </div>
     <p class="small">Jawaban lengkap: Panduan Pengguna 3S ONE, bab 16.</p>
   </div>
-  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>20</span></footer>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
 </section>
 
 <!-- 20. Latihan -->
@@ -783,7 +1310,38 @@ body.present .counter { display: block; }
     </div>
     <div class="note"><span class="k">Transaksi Oktober dibuang 1 November, jadi semua tombol boleh dicoba.</span> Tapi bahan, resep, dan konversi yang Anda ubah ikut dibawa: kerjakan dengan benar, dan beri awalan [LATIHAN] untuk data coba-coba.</div>
   </div>
-  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>21</span></footer>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
+</section>
+
+<!-- 20b. Kamus -->
+<section class="slide" tabindex="-1">
+  <div class="in tight">
+    <div class="eyebrow">Kamus singkat</div>
+    <h2>Kata-kata baru di 3S ONE</h2>
+    <div class="cols grow">
+      <table class="t gl">
+        <tbody>
+          <tr><td class="k">SPK Produksi</td><td>Daftar masak satu slot SPK. Dulu: Order dan Pra SPK.</td></tr>
+          <tr><td class="k">Breakdown Bahan</td><td>Semua menu di SPK diurai sampai bahan mentah, lalu direkap per bahan.</td></tr>
+          <tr><td class="k">Form Kebutuhan</td><td>Form "Kebutuhan, Stok &amp; Pembelian Barang" versi digital. Satu per SPK Produksi.</td></tr>
+          <tr><td class="k">Stok Awal · Beli</td><td>Hasil hitung fisik dapur · Kebutuhan dikurangi Stok Awal, terhitung sendiri.</td></tr>
+          <tr><td class="k">Diterima · Ditolak</td><td>Yang layak masuk gudang · Beli dikurangi Diterima, terhitung sendiri.</td></tr>
+          <tr><td class="k">Periksa</td><td>Tombol gudang setelah barang datang. Mencatat stok, pembelian, dan kas.</td></tr>
+        </tbody>
+      </table>
+      <table class="t gl">
+        <tbody>
+          <tr><td class="k">Tutup SPK</td><td>Tombol dapur setelah masak. Mencatat pemakaian dan sisa.</td></tr>
+          <tr><td class="k">Kartu Stok</td><td>Catatan keluar-masuk per bahan dengan saldo berjalan.</td></tr>
+          <tr><td class="k">Opname Bahan</td><td>Hitung fisik per bahan, kapan saja, boleh sebagian.</td></tr>
+          <tr><td class="k">Barang Hilang · Temuan</td><td>Hitung fisik kurang · lebih dari catatan Kartu Stok.</td></tr>
+          <tr><td class="k">Susut Bahan</td><td>(Lebih pakai + Hilang − Temuan) ÷ kebutuhan resep.</td></tr>
+          <tr><td class="k">Konversi Satuan</td><td>Aturan satuan resep ke satuan beli, misalnya 1 kg = 16 butir telur.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
 </section>
 
 <!-- 21. Contekan -->
@@ -835,7 +1393,7 @@ body.present .counter { display: block; }
       </div>
     </div>
   </div>
-  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span>22</span></footer>
+  <footer class="foot"><span>3S ONE · Inventory untuk pengguna Master Menu</span><span class="pg"></span></footer>
 </section>
 
 <!-- 22. Penutup -->
@@ -846,7 +1404,7 @@ body.present .counter { display: block; }
     <p class="lead">Panduan lengkap dengan gambar layar ada di <span class="k">Panduan Pengguna 3S ONE</span>: bab 8 (Aplikasi Inventory), 9–10 (Form Kebutuhan dan barang datang), 12 (susut dan barang sisa), 14 (memulai), dan 16 (pertanyaan).</p>
     <p class="big-url" style="margin-top: calc(var(--u) * 10);">3sone.w3scatering.com</p>
   </div>
-  <footer class="foot"><span>W3S Catering · 3S ONE v3.1</span><span>23</span></footer>
+  <footer class="foot"><span>W3S Catering · 3S ONE v3.1</span><span class="pg"></span></footer>
 </section>
 
 </main>
@@ -854,6 +1412,15 @@ body.present .counter { display: block; }
 
 <script>
 (function () {
+  // ?portrait = tata letak cetak A4 portrait.
+  // @page tidak bisa dibatasi dengan kelas, jadi ukuran kertasnya disisipkan di sini.
+  if (/[?&]portrait\b/.test(location.search)) {
+    document.body.classList.add('portrait');
+    var page = document.createElement('style');
+    page.textContent = '@page { size: A4 portrait; margin: 10mm 10mm 14mm; }';
+    document.head.appendChild(page);
+  }
+
   var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
   var counter = document.getElementById('counter');
   var btn = document.getElementById('present-btn');

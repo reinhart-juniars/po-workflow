@@ -113,6 +113,7 @@ Dokumen:
 
 - `version.txt` — riwayat rilis; **baris terakhirnya** jadi nomor versi yang tampil di halaman masuk (`App\Support\AppVersion`). Rilis baru = tambah satu baris `v.X.Y keterangan`.
 - [docs/PANDUAN-3S-ONE.pdf](docs/PANDUAN-3S-ONE.pdf) — **Panduan Pengguna** (bahasa awam, dengan diagram alur). Sumbernya `docs/panduan/panduan-3s-one.html`; bangun ulang dengan `php artisan panduan:pdf`.
+- [docs/PANDUAN-INVENTORY-MASTER-MENU.pdf](docs/PANDUAN-INVENTORY-MASTER-MENU.pdf) — **Panduan Inventory untuk pengguna Master Menu Revamp**: peta pindah menu lama ke 3S ONE, langkah per tugas, dan diagram alur (HPP, perjalanan SPK, status Form Kebutuhan, barang datang, Kartu Stok). Sumbernya `docs/panduan/panduan-inventory-master-menu.html`; bangun ulang dengan `php artisan panduan:pdf inventory-master-menu`. Diagramnya bersumber dari `docs/panduan/diagram/alur.html`; setelah disunting, render ulang gambarnya dengan `node scripts/docs/render-diagrams.mjs`.
 - [docs/ACCESS.md](docs/ACCESS.md) — izin & matriks peran, cara mengubahnya
 - [docs/DEPLOY-DIGITALOCEAN.md](docs/DEPLOY-DIGITALOCEAN.md) — deploy server baru DigitalOcean (3sone.w3scatering.com): latihan & pemetaan Oktober, resmi 1 November
 - [docs/CUTOVER.md](docs/CUTOVER.md) — runbook deploy, migrasi data, rollback

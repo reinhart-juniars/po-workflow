@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Rencana Pelatihan 3S ONE Oktober 2026</title>
+<!--
+  Versi ringkas untuk Owner (materi pertemuan + lembar progres & siap live), diturunkan dari
+  panduan-rencana-pelatihan.html; versi lengkap untuk pelatih tetap di sana.
+  Bangun PDF: php -d memory_limit=1G artisan panduan:pdf pelatihan-owner --output=docs/RENCANA-PELATIHAN-3S-ONE-OKTOBER-2026.pdf
+  Diagram img/alur-pelatihan.jpg bersumber dari diagram/alur.html: node scripts/docs/render-diagrams.mjs
+-->
+<style>
+  @page { margin: 18mm 16mm 18mm 16mm; }
+  body { font-family: "DejaVu Sans", sans-serif; font-size: 9.8pt; color: #0f172a; line-height: 1.38; }
+  h1 { font-size: 22pt; margin: 0 0 4pt; }
+  h2 { font-size: 14.5pt; margin: 0 0 8pt; padding-bottom: 4pt; border-bottom: 2px solid #3455db; color: #1e293b; page-break-after: avoid; }
+  h3 { font-size: 11pt; margin: 12pt 0 4pt; color: #1e293b; page-break-after: avoid; }
+  p { margin: 0 0 6pt; }
+  ul, ol { margin: 0 0 7pt 15pt; padding: 0; }
+  li { margin: 0 0 2pt; }
+  .muted { color: #64748b; }
+  .small { font-size: 8.6pt; }
+  .page { page-break-after: always; }
+  .keep { page-break-inside: avoid; }
+  .bab { margin-top: 12pt; }
+  .footer { position: fixed; bottom: -11mm; left: 0; right: 0; font-size: 7.5pt; color: #94a3b8; }
+  .footer .pg:after { content: counter(page); }
+  .cover { text-align: center; padding-top: 130pt; }
+  .cover .mark { display: inline-block; width: 64pt; height: 64pt; background: #020617; color: #fff; border-radius: 16pt; font-weight: bold; line-height: 1; padding-top: 16pt; }
+  .cover .mark .a { display: block; font-size: 8pt; letter-spacing: 3pt; color: #67e8f9; }
+  .cover .mark .b { display: block; font-size: 15pt; letter-spacing: 3pt; margin-top: 4pt; }
+  .cover h1 { font-size: 26pt; margin-top: 18pt; }
+  .cover .sub { font-size: 11pt; color: #64748b; letter-spacing: 2pt; text-transform: uppercase; }
+  .cover .meta { margin-top: 70pt; color: #64748b; }
+  table { border-collapse: collapse; width: 100%; }
+  table.grid th, table.grid td { border: 1px solid #cbd5e1; padding: 4pt 5pt; vertical-align: top; text-align: left; font-size: 9pt; }
+  table.grid th { background: #f1f5f9; }
+  table.grid tr { page-break-inside: avoid; }
+  table.grid td.wk { background: #eef1fd; font-weight: bold; color: #2740a4; width: 15%; }
+  table.grid td.wk span { display: block; font-weight: normal; color: #475569; font-size: 8pt; margin-top: 2pt; }
+  table.check td, table.check th { text-align: center; }
+  table.check td:first-child, table.check th:first-child { text-align: left; }
+  table.check td { height: 15pt; }
+  .tip { background: #eff6ff; border-left: 4px solid #3455db; padding: 5pt 8pt; margin: 7pt 0; font-size: 9pt; }
+  .warn { background: #fff7ed; border-left: 4px solid #f59e0b; padding: 5pt 8pt; margin: 7pt 0; font-size: 9pt; }
+  .diagram { margin: 4pt 0 10pt; text-align: center; page-break-inside: avoid; }
+  .diagram img { width: 96%; }
+  .role { font-size: 8pt; font-weight: bold; letter-spacing: 1pt; color: #fff; background: #3455db; border-radius: 3pt; padding: 1pt 5pt; }
+  .box { border: 1px solid #cbd5e1; width: 9pt; height: 9pt; display: inline-block; margin-right: 4pt; vertical-align: middle; }
+</style>
+</head>
+<body>
+<div class="footer"><span class="pg">Rencana Pelatihan 3S ONE v3.1 · Oktober 2026 · halaman </span></div>
+
+<!-- ============ SAMPUL ============ -->
+<div class="cover page">
+  <div class="mark"><span class="a">3S</span><span class="b">ONE</span></div>
+  <h1>Rencana Pelatihan</h1>
+  <div class="sub">3S ONE v3.1 · Oktober 2026</div>
+  <p style="margin-top: 22pt; font-size: 12.5pt;">Materi pertemuan dan target menuju live 1 November</p>
+  <p class="muted">Bagian Admin, Inventory, Menu, dan Accounting<br>Disiapkan untuk Owner W3S Catering</p>
+  <div class="meta">Pertemuan Rabu 7, 14, 21, dan 28 Oktober 2026</div>
+</div>
+
+
+<div class="bab">
+  <!-- ============ 3. MATERI PERTEMUAN ============ -->
+  <h2>1. Materi tiap pertemuan</h2>
+  <p>Pertemuan 2 sampai 4 masing-masing kira-kira <b>90 menit</b>, memakai proyektor ke server latihan; peserta membawa HP atau laptop yang sudah bisa masuk.</p>
+
+  <div>
+  <h3>Pertemuan 1 · Rabu 7 Oktober · Presentasi fitur dan pengenalan sistem baru <span class="muted small">(selesai)</span></h3>
+  <table class="grid">
+    <tr><th style="width: 30%">Materi</th><th>Isi</th></tr>
+    <tr><td>Apa itu 3S ONE</td><td>Satu login untuk semua bagian; setiap orang hanya melihat aplikasi dan tombol sesuai perannya. Pesanan diketik sekali dan mengalir ke dapur, gudang, dan keuangan.</td></tr>
+    <tr><td>Alur satu pesanan</td><td>PO dan SPK Admin → SPK Produksi terbentuk sendiri → Form Kebutuhan (ajukan, setujui) → barang datang dan Periksa → Kartu Stok, HPP, dan laporan.</td></tr>
+    <tr><td>Modul Inventory</td><td>Item Inventaris dan riwayat harga, Breakdown Bahan, Lembar Kerja dan Plating, Kartu Stok, Opname Bahan, Susut Bahan, Barang Sisa.</td></tr>
+    <tr><td>Dari Master Menu Revamp</td><td>Peta pindah menu lama ke menu baru; pekerjaan resep dan bahan tidak hilang; tiga antrean supaya HPP bisa dipercaya.</td></tr>
+    <tr><td>Rencana Oktober</td><td>Oktober latihan dan pemetaan data; 1 November resmi.</td></tr>
+    <tr><td>Masukan peserta</td><td>Modul pembelian bahan baku (Tagihan Pembelian), aplikasi Menu untuk resep, sub menu, HPP &amp; OHC, HPP di Master Menu mengikuti resep, dan rincian menu &amp; sub menu di SPK Produksi. Semuanya sudah dikerjakan dan dipasang di server latihan pada 12 Oktober.</td></tr>
+  </table>
+  </div>
+
+  <div>
+  <h3>Pertemuan 2 · Rabu 14 Oktober · Alur per bagian</h3>
+  <table class="grid">
+    <tr><th style="width: 12%">Menit</th><th>Isi</th></tr>
+    <tr><td>15</td><td>Cek akses: semua orang masuk ke server latihan, ganti password, tab yang tampil sesuai perannya. Yang belum benar dicatat untuk Owner.</td></tr>
+    <tr><td>10</td><td>Yang berubah sejak 7 Oktober (Panduan 3S ONE Bab 4): Tagihan Pembelian, aplikasi Menu, HPP ikut resep, breakdown bertingkat.</td></tr>
+    <tr><td>20</td><td>Demo diagram <i>Satu pesanan, empat aplikasi</i> dengan satu SPK latihan: Menu → Admin → Inventory → Accounting.</td></tr>
+    <tr><td>35</td><td>Praktik per bagian, masing-masing satu kali dari awal sampai akhir. <b>Menu</b>: satu baris konversi, satu bahan belum cocok, satu pencocokan menu. <b>Inventory</b>: satu Form Kebutuhan sampai Periksa, lampirkan nota, Ajukan. <b>Accounting</b>: proses tagihan itu. <b>Admin</b>: satu PO → SPK, lalu cek SPK Produksi-nya.</td></tr>
+    <tr><td>10</td><td>Bagikan target minggu ini dan isi kolom 14 Okt di lembar progres (Bab 2).</td></tr>
+  </table>
+  </div>
+
+  <div>
+  <h3>Pertemuan 3 · Rabu 21 Oktober · Alur lintas bagian</h3>
+  <table class="grid">
+    <tr><th style="width: 12%">Menit</th><th>Isi</th></tr>
+    <tr><td>15</td><td>Isi kolom 21 Okt di lembar progres. Target yang belum tercapai: apa penghambatnya, siapa membantu.</td></tr>
+    <tr><td>45</td><td>Satu pesanan dari PO sampai tagihannya dibayar, dikerjakan <b>orang aslinya</b> di perangkat masing-masing. Sisipkan skenario masalah: form <b>ditolak</b> inventory; barang datang rusak (retur dan tetap dibayar); <b>tagihan dikembalikan</b> karena nota tidak terbaca; supplier memberi <b>tempo</b>; menu tanpa resep muncul di kotak kuning Breakdown Bahan.</td></tr>
+    <tr><td>20</td><td>Tanya jawab dan kendala di lapangan. Kendala yang butuh perubahan sistem dicatat untuk tim IT.</td></tr>
+    <tr><td>10</td><td>Target minggu depan, termasuk paralel harian dan hapus data [LATIHAN] sebelum 27 Okt.</td></tr>
+  </table>
+  </div>
+</div>
+
+<div class="bab">
+  <div>
+  <h3>Pertemuan 4 · Rabu 28 Oktober · Gladi resik</h3>
+  <table class="grid">
+    <tr><th style="width: 12%">Menit</th><th>Isi</th></tr>
+    <tr><td>50</td><td>Satu hari kerja penuh di server latihan <b>tanpa bantuan pelatih</b>: pesanan Admin, Form Kebutuhan, persetujuan, barang datang, tagihan, pembayaran, Tutup SPK. Pelatih hanya mencatat di mana orang berhenti atau bertanya.</td></tr>
+    <tr><td>20</td><td>Isi kolom 28 Okt di lembar progres, lalu cek <b>siap live</b> per bagian (Bab 2). Owner memutuskan.</td></tr>
+    <tr><td>20</td><td>Briefing hari pertama: siapa mengerjakan apa pada 31 Okt dan 1 Nov, ke siapa melapor bila ada masalah, dan sebutkan versi sistem saat melapor.</td></tr>
+  </table>
+  </div>
+
+  <!-- ============ 4. PROGRES & SIAP LIVE ============ -->
+  <h2 style="margin-top: 16pt;">2. Lembar progres dan keputusan siap live</h2>
+  <p>Isi di setiap pertemuan. Angka diambil dari layar (badge menu kiri dan dashboard), bukan dari ingatan.</p>
+  <table class="grid check">
+    <tr><th style="width: 46%">Angka</th><th>14 Okt</th><th>21 Okt</th><th>28 Okt</th><th>Target 1 Nov</th></tr>
+    <tr><td>Menu › Konversi Satuan › Belum Diatur</td><td></td><td></td><td></td><td>0</td></tr>
+    <tr><td>Menu › Bahan Belum Cocok</td><td></td><td></td><td></td><td>0</td></tr>
+    <tr><td>Dari 60 menu terlaris: belum tertaut di Pencocokan Menu</td><td></td><td></td><td></td><td>0</td></tr>
+    <tr><td>Dari 60 menu terlaris: resep belum Lengkap</td><td></td><td></td><td></td><td>0</td></tr>
+    <tr><td>Kartu <i>Profit menu keseluruhan</i> (Dashboard Menu)</td><td>–</td><td></td><td></td><td>tampil angka</td></tr>
+    <tr><td>Bahan utama dengan satuan, harga, stok minimum benar (dari 50)</td><td></td><td></td><td></td><td>50</td></tr>
+    <tr><td>Supplier aktif yang datanya lengkap</td><td></td><td></td><td></td><td>semua</td></tr>
+    <tr><td>Form Kebutuhan latihan sampai Periksa (kumulatif)</td><td></td><td></td><td></td><td>≥ 15</td></tr>
+    <tr><td>Tagihan diajukan / sudah diproses accounting</td><td></td><td></td><td></td><td>semua diproses</td></tr>
+    <tr><td>Hari paralel harian tercatat (Admin / Gudang)</td><td></td><td></td><td></td><td>≥ 4 / ≥ 4</td></tr>
+    <tr><td>Orang yang belum pernah menjalankan pekerjaannya sendiri</td><td></td><td></td><td></td><td>0</td></tr>
+  </table>
+
+  <h3>Siap live: diperiksa 28 Oktober</h3>
+  <table class="grid">
+    <tr><th style="width: 18%">Bagian</th><th>Siap kalau</th><th style="width: 17%">Siap?</th></tr>
+    <tr><td><b>Tim Menu</b></td><td>Konversi = 0, Bahan Belum Cocok = 0, 60 menu terlaris tertaut dan Lengkap, kartu Profit menu keseluruhan tampil angka.</td><td><span class="box"></span>Ya <span class="box"></span>Belum</td></tr>
+    <tr><td><b>Inventory</b></td><td>Pemegang sistem inventory pernah Setujui, Tolak, Periksa, dan mengajukan tagihan sendiri; alur lembar terima barang dari staf gudang berjalan; supplier lengkap; lembar hitung fisik 31 Okt siap.</td><td><span class="box"></span>Ya <span class="box"></span>Belum</td></tr>
+    <tr><td><b>Admin</b></td><td>Setiap admin pernah input PO → SPK sendiri; tahu bahwa mulai 1 Nov tidak memakai v2.</td><td><span class="box"></span>Ya <span class="box"></span>Belum</td></tr>
+    <tr><td><b>Accounting</b></td><td>Setiap staf pernah Bayar, Jadikan hutang supplier, dan Kembalikan; tidak ada belanja gudang yang dicatat di Pengeluaran.</td><td><span class="box"></span>Ya <span class="box"></span>Belum</td></tr>
+  </table>
+  <div class="warn">Kalau pada 28 Oktober sebuah bagian belum siap, Owner memutuskan: <b>tetap pindah 1 November</b> (sisa pekerjaan dilanjutkan di sistem resmi, mulai dari menu terlaris) atau <b>mundur satu minggu</b>. Data master yang sudah dirapikan tidak hilang di kedua pilihan.</div>
+</div>
+
+
+</body>
+</html>
