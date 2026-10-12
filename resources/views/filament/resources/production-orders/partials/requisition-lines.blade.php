@@ -13,7 +13,7 @@
     $receivingVisible = in_array($stage, ['receiving', 'actuals', 'locked'], true) && ($requisition?->isApproved() || $requisition?->isChecked());
     $actualsVisible = $requisition?->isChecked() ?? false;
     $roundUp = app(\App\Support\Settings\Settings::class)->bool('requisition.round_purchase_up') ? 'true' : 'false';
-    // Meja supervisor: nilai perkiraan per bahan supaya keputusan setujui/tolak punya dasar.
+    // Meja gudang: nilai perkiraan per bahan supaya keputusan setujui/tolak punya dasar.
     $showEstimate = $stage === 'draft' || ($requisition?->isSubmitted() ?? false);
     $defaultTreatment = app(\App\Support\Settings\Settings::class)->get('requisition.reject_default_treatment');
 @endphp

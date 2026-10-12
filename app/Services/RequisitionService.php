@@ -23,7 +23,7 @@ use RuntimeException;
  *
  *   draft     (Dibuat/Diisi) -> angka kebutuhan dari resep; dapur mengisi
  *                               Stok Awal, Beli dihitung otomatis
- *   submitted (Diajukan)     -> produksi mengajukan; supervisor gudang
+ *   submitted (Diajukan)     -> produksi mengajukan; gudang
  *                               menyetujui, atau menolak kembali ke draft
  *   approved  (Disetujui)    -> isian dikunci; menunggu barang dibeli
  *   checked  (Diperiksa)     -> barang sudah dibeli & diperiksa; saldo awal
@@ -148,7 +148,7 @@ class RequisitionService
     }
 
     /**
-     * Produksi mengajukan form ke supervisor gudang. Seluruh Stok Awal harus
+     * Produksi mengajukan form ke gudang. Seluruh Stok Awal harus
      * sudah terisi -- form yang belum diisi bukan form yang bisa diajukan.
      */
     public function submit(Requisition $requisition, ?int $userId = null): Requisition
@@ -185,7 +185,7 @@ class RequisitionService
     }
 
     /**
-     * Supervisor gudang menyetujui form yang diajukan. Stok Awal & Beli
+     * Gudang menyetujui form yang diajukan. Stok Awal & Beli
      * terkunci sejak itu; gudang mulai belanja / menerima barang.
      */
     public function approve(Requisition $requisition, ?int $userId = null): Requisition
@@ -205,7 +205,7 @@ class RequisitionService
         $this->notify(
             'requisition.check',
             $requisition->number.' disetujui, siap dibelanjakan',
-            'Disetujui oleh '.($requisition->approvedBy?->name ?? 'supervisor').'. Catat penerimaan barang, lalu Periksa.',
+            'Disetujui oleh '.($requisition->approvedBy?->name ?? 'gudang').'. Catat penerimaan barang, lalu Periksa.',
             $requisition,
             $userId,
         );
@@ -382,7 +382,7 @@ class RequisitionService
     }
 
     /**
-     * Supervisor gudang menolak form yang diajukan: kembali ke draft supaya
+     * Gudang menolak form yang diajukan: kembali ke draft supaya
      * produksi memperbaiki lalu mengajukan ulang. Alasan wajib dan tercatat
      * (siapa, kapan, kenapa) sampai form diajukan lagi.
      */
@@ -407,7 +407,7 @@ class RequisitionService
 
         $this->notify(
             'production.manage',
-            $requisition->number.' ditolak supervisor gudang',
+            $requisition->number.' ditolak gudang',
             trim($reason).' — perbaiki lalu ajukan lagi.',
             $requisition,
             $userId,

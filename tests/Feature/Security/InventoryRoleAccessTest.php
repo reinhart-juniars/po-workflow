@@ -20,8 +20,10 @@ it('membiarkan owner memberi peran inventory dari master user, dan menolak peran
 
     get(route('ownerapp.users.index'))->assertOk()
         ->assertSee('value="inventory"', false)
-        ->assertSee('value="inventory-supervisor"', false)
-        ->assertSee('Supervisor Gudang');
+        ->assertSee('Inventory (gudang)')
+        // Supervisor Gudang digabung ke Inventory (12 Okt 2026).
+        ->assertDontSee('value="inventory-supervisor"', false)
+        ->assertDontSee('Supervisor Gudang');
 
     from(route('ownerapp.users.index'))->post(route('ownerapp.users.store'), [
         'name' => 'Staf Gudang', 'email' => 'gudang@example.com', 'roles' => ['inventory'], 'is_active' => '1',
@@ -60,14 +62,14 @@ it('membuka aplikasi inventory untuk peran inventory sesuai izin bawaannya, dan 
     get('/production-app')->assertForbidden();
 
     // Izin bawaan: kelola inventory, baca resep (diatur tim menu sejak
-    // 7 Okt 2026), periksa form kebutuhan, tanpa menyusun/menyetujui/menutup
-    // SPK produksi.
+    // 7 Okt 2026), setujui & periksa form kebutuhan (Supervisor Gudang digabung
+    // 12 Okt 2026), tanpa menyusun/menutup SPK produksi.
     expect($gudang->can('inventory.manage'))->toBeTrue()
         ->and($gudang->can('recipe.view'))->toBeTrue()
         ->and($gudang->can('recipe.manage'))->toBeFalse()
         ->and($gudang->can('requisition.check'))->toBeTrue()
         ->and($gudang->can('production.manage'))->toBeFalse()
-        ->and($gudang->can('requisition.approve'))->toBeFalse()
+        ->and($gudang->can('requisition.approve'))->toBeTrue()
         ->and($gudang->can('production.complete'))->toBeFalse();
 
     // Kontrol negatif: sales tetap tidak bisa membuka panel yang sama.

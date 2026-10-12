@@ -32,42 +32,45 @@ policy membuat build merah).
 
 ## Matriks bawaan
 
-| Izin | owner | admin | accounting | inventory | inventory-supervisor | menu | production |
-|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| inventory.view | ✓ | ✓ | ✓ | ✓ | ✓ | – | ✓ |
-| inventory.manage | ✓ | ✓ | ✓ | ✓ | ✓ | – | – |
-| recipe.view | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| recipe.manage | ✓ | – | – | – | – | ✓ | – |
-| production.view | ✓ | ✓ | ✓ | ✓ | ✓ | – | ✓ |
-| production.manage | ✓ | ✓ | – | – | – | – | ✓ |
-| production.complete | ✓ | ✓ | – | – | – | – | ✓ |
-| requisition.approve | ✓ | ✓ | – | – | ✓ | – | – |
-| requisition.check | ✓ | ✓ | ✓ | ✓ | ✓ | – | – |
-| ledger.view | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| settings.manage | ✓ | – | – | – | – | – | – |
-| notification.price | ✓ | ✓ | ✓ | – | ✓ | ✓ | – |
-| notification.profit | ✓ | ✓ | – | – | – | ✓ | – |
-| purchase.pay | ✓ | – | ✓ | – | – | – | – |
+| Izin | owner | admin | accounting | inventory | menu | production |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|
+| inventory.view | ✓ | ✓ | ✓ | ✓ | – | ✓ |
+| inventory.manage | ✓ | ✓ | ✓ | ✓ | – | – |
+| recipe.view | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| recipe.manage | ✓ | – | – | – | ✓ | – |
+| production.view | ✓ | ✓ | ✓ | ✓ | – | ✓ |
+| production.manage | ✓ | ✓ | – | – | – | ✓ |
+| production.complete | ✓ | ✓ | – | – | – | ✓ |
+| requisition.approve | ✓ | ✓ | – | ✓ | – | – |
+| requisition.check | ✓ | ✓ | ✓ | ✓ | – | – |
+| ledger.view | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| settings.manage | ✓ | – | – | – | – | – |
+| notification.price | ✓ | ✓ | ✓ | ✓ | ✓ | – |
+| notification.profit | ✓ | ✓ | – | – | ✓ | – |
+| purchase.pay | ✓ | – | ✓ | – | – | – |
 
 **Revisi 7 Okt 2026 — aplikasi Menu.** Resep, menu utama, sub menu, HPP, dan OHC dipegang
 peran baru **`menu`** (tim menu/dapur pusat) di aplikasi Menu (`/menu`). `recipe.manage`
-dicabut dari admin, inventory, dan inventory-supervisor: mereka tetap **membaca** resep di
+dicabut dari admin dan inventory: mereka tetap **membaca** resep di
 aplikasi Menu, tapi tidak mengubahnya. Admin mengurus harga jual & profit ke customer di
 Admin › Master Menu. Karena `access:sync` biasa tidak pernah mencabut izin, server yang sudah
 berjalan **wajib** `php artisan access:sync --reset` sekali saat deploy revisi ini (catat dulu
 izin yang digeser manual, karena `--reset` mengembalikannya ke matriks di atas).
 
-Peran **`inventory-supervisor`** (Supervisor Gudang) = staf inventory + `requisition.approve`:
-dialah yang menyetujui atau menolak Form Kebutuhan yang **diajukan** produksi (status
-`submitted`). Owner/admin tetap bisa menyetujui sebagai cadangan. Alur meja:
-produksi *Ajukan* → supervisor *Setujui* / *Tolak* (kembali ke produksi dengan alasan) →
+Peran **`inventory`** (gudang) dipilih Owner di Master User dan hanya membuka aplikasi
+Inventory (dan Menu, hanya baca) -- tidak punya aplikasi Blade manapun. Di W3S bagian ini
+dipegang satu orang: dia mengelola bahan, pembelian, opname, saldo awal, dan Tagihan
+Pembelian; **menyetujui atau menolak** Form Kebutuhan yang diajukan produksi (status
+`submitted`), lalu memeriksanya saat barang dibeli. Owner/admin tetap bisa menyetujui sebagai
+cadangan. Menyusun dan menutup SPK produksi tetap di produksi/admin/owner. Alur meja:
+produksi *Ajukan* → gudang *Setujui* / *Tolak* (kembali ke produksi dengan alasan) →
 gudang *Periksa* → produksi *Tutup SPK*; tiap perpindahan mengirim notifikasi lonceng.
 
-Peran **`inventory`** (staf inventory/gudang) dipilih Owner di Master User dan hanya
-membuka aplikasi Inventory (dan Menu, hanya baca) -- tidak punya aplikasi Blade manapun. Dia
-mengelola bahan, pembelian, opname, saldo awal, dan memeriksa Form
-Kebutuhan saat barang dibeli; menyusun/menyetujui/menutup SPK produksi tetap di
-produksi/admin/owner.
+**Revisi 12 Okt 2026 — Supervisor Gudang digabung ke Inventory.** Peran
+`inventory-supervisor` dihapus karena di lapangan tidak ada supervisor terpisah; hak
+`requisition.approve` dan `notification.price` pindah ke `inventory`. `access:sync` (jalan di
+setiap deploy) memindahkan pemegang peran lama ke `inventory` lalu menghapus perannya
+(`ModuleAccess::RETIRED_ROLES`). Izin baru untuk `inventory` ikut masuk tanpa `--reset`.
 
 Peran **`marketing`** hanya membuka aplikasi Blade Marketing (`/marketing-app`): Katalog Foto
 Menu dan centang menu yang tampil di website. Tanpa izin modul apa pun. Admin/sales yang juga

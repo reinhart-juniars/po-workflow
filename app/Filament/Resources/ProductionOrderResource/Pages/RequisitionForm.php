@@ -149,14 +149,14 @@ class RequisitionForm extends Page implements HasForms
 
         if ($requisition->isDraft()) {
             return $user?->can('production.manage')
-                ? ['color' => 'info', 'text' => 'Meja produksi: isi Stok Awal hasil hitungan fisik (Beli = Kebutuhan − Stok Awal, boleh dibulatkan ke kemasan), Simpan, lalu Ajukan ke supervisor gudang.']
-                : ['color' => 'gray', 'text' => 'Masih disusun produksi; belum diajukan ke supervisor gudang.'];
+                ? ['color' => 'info', 'text' => 'Meja produksi: isi Stok Awal hasil hitungan fisik (Beli = Kebutuhan − Stok Awal, boleh dibulatkan ke kemasan), Simpan, lalu Ajukan ke gudang.']
+                : ['color' => 'gray', 'text' => 'Masih disusun produksi; belum diajukan ke gudang.'];
         }
 
         if ($requisition->isSubmitted()) {
             return $user?->can('requisition.approve')
-                ? ['color' => 'warning', 'text' => 'Meja supervisor gudang: periksa angka Stok Awal & Beli, lalu Setujui — atau Tolak dengan alasan supaya produksi memperbaiki.']
-                : ['color' => 'gray', 'text' => 'Diajukan '.($requisition->submittedBy?->name ?? '').' '.$requisition->submitted_at?->format('d/m H:i').'; menunggu persetujuan supervisor gudang. Isian terkunci.'];
+                ? ['color' => 'warning', 'text' => 'Meja gudang: periksa angka Stok Awal & Beli, lalu Setujui — atau Tolak dengan alasan supaya produksi memperbaiki.']
+                : ['color' => 'gray', 'text' => 'Diajukan '.($requisition->submittedBy?->name ?? '').' '.$requisition->submitted_at?->format('d/m H:i').'; menunggu persetujuan gudang. Isian terkunci.'];
         }
 
         if ($requisition->isApproved()) {
@@ -293,7 +293,7 @@ class RequisitionForm extends Page implements HasForms
         }
 
         if ($requisition->isSubmitted()) {
-            return false; // menunggu keputusan supervisor gudang; tidak ada yang mengisi
+            return false; // menunggu keputusan gudang; tidak ada yang mengisi
         }
 
         return $requisition->isApproved()
@@ -357,16 +357,16 @@ class RequisitionForm extends Page implements HasForms
                 })
                 ->action(fn () => $this->save()),
 
-            // Meja produksi: mengajukan. Meja supervisor gudang: menyetujui /
+            // Meja produksi: mengajukan. Meja gudang: menyetujui /
             // menolak. Tombolnya tidak pernah tampil bersamaan.
             Actions\Action::make('ajukan')
-                ->label('Ajukan ke Supervisor Gudang')
+                ->label('Ajukan ke Gudang')
                 ->authorize('production.manage')
                 ->icon('heroicon-m-paper-airplane')
                 ->color('info')
                 ->visible(fn () => $this->getRequisition()?->isDraft() ?? false)
                 ->requiresConfirmation()
-                ->modalDescription('Setelah diajukan, Stok Awal dan Beli tidak bisa diubah sampai supervisor gudang menyetujui atau menolak.')
+                ->modalDescription('Setelah diajukan, Stok Awal dan Beli tidak bisa diubah sampai gudang menyetujui atau menolak.')
                 ->action(function () {
                     $this->save();
 
@@ -378,7 +378,7 @@ class RequisitionForm extends Page implements HasForms
                         return;
                     }
 
-                    Notification::make()->success()->title('Form diajukan ke supervisor gudang')->send();
+                    Notification::make()->success()->title('Form diajukan ke gudang')->send();
                     $this->fillFromRequisition();
                 }),
 

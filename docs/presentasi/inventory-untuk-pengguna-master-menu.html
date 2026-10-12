@@ -781,7 +781,7 @@ body.portrait .center-v .big-url { margin-bottom: calc(var(--u) * 10); }
     <div class="eyebrow"><span class="chip">3</span> Gambaran besar</div>
     <h2>Perjalanan satu SPK: siapa mengerjakan apa, berurutan</h2>
     <div class="fig grow">
-      <svg class="fl" viewBox="0 0 864 320" role="img" aria-label="Alur satu SPK dalam lima jalur: Admin membuat PO dan SPK; sistem membentuk SPK Produksi dan Breakdown Bahan; dapur menyusun form dan mengajukan; supervisor gudang menyetujui atau menolak; staf gudang memeriksa barang datang; sistem mencatat stok masuk, pembelian, dan kas; dapur memasak dan menutup SPK; sistem mencatat stok keluar, susut, dan HPP.">
+      <svg class="fl" viewBox="0 0 864 320" role="img" aria-label="Alur satu SPK dalam lima jalur: Admin membuat PO dan SPK; sistem membentuk SPK Produksi dan Breakdown Bahan; dapur menyusun form dan mengajukan; gudang menyetujui atau menolak, lalu memeriksa barang datang; sistem mencatat stok masuk, pembelian, dan kas; dapur memasak dan menutup SPK; sistem mencatat stok keluar, susut, dan HPP.">
         <rect class="band" x="0" y="0" width="90" height="320"/>
         <rect class="band ok" x="90" y="64" width="774" height="64"/>
         <path class="sep" d="M0,64 H864 M0,128 H864 M0,192 H864 M0,256 H864 M90,0 V320"/>
@@ -792,9 +792,9 @@ body.portrait .center-v .big-url { margin-bottom: calc(var(--u) * 10); }
         <text class="s sm" x="10" y="107">otomatis</text>
         <text class="t" x="10" y="157">Dapur</text>
         <text class="s sm" x="10" y="171">Production</text>
-        <text class="t" x="10" y="221">Supervisor</text>
+        <text class="t" x="10" y="221">Gudang</text>
         <text class="s sm" x="10" y="235">Gudang</text>
-        <text class="t" x="10" y="285">Staf Gudang</text>
+        <text class="t" x="10" y="285">Gudang</text>
         <text class="s sm" x="10" y="299">Inventory</text>
 
         <!-- panah antar langkah: keluar dari sisi kanan, masuk dari atas/bawah langkah berikutnya -->
@@ -872,8 +872,8 @@ body.portrait .center-v .big-url { margin-bottom: calc(var(--u) * 10); }
     <h2>Form Kebutuhan: dari dapur sampai barang datang</h2>
     <div class="desks">
       <div class="desk"><span class="who">Meja 1 · Produksi</span><span class="act">Susun form</span><span class="small">Kebutuhan dihitung dari resep × porsi. Isi Stok Awal hasil hitung fisik, Beli terhitung sendiri.</span><span class="bt">Ajukan</span></div>
-      <div class="desk"><span class="who">Meja 2 · Supervisor Gudang</span><span class="act">Periksa angkanya</span><span class="small">Dapat lonceng. Cek Stok Awal, Beli, perkiraan biaya. Tolak wajib dengan alasan.</span><span class="bt">Setujui / Tolak</span></div>
-      <div class="desk"><span class="who">Meja 3 · Staf Gudang</span><span class="act">Barang datang</span><span class="small">Isi Diterima, alasan Ditolak, Harga Beli dari nota, cara bayar.</span><span class="bt">Periksa</span></div>
+      <div class="desk"><span class="who">Meja 2 · Gudang</span><span class="act">Periksa angkanya</span><span class="small">Dapat lonceng. Cek Stok Awal, Beli, perkiraan biaya. Tolak wajib dengan alasan.</span><span class="bt">Setujui / Tolak</span></div>
+      <div class="desk"><span class="who">Meja 3 · Gudang</span><span class="act">Barang datang</span><span class="small">Isi Diterima, alasan Ditolak, Harga Beli dari nota, cara bayar.</span><span class="bt">Periksa</span></div>
       <div class="desk"><span class="who">Meja 4 · Produksi</span><span class="act">Setelah masak</span><span class="small">Isi Pemakaian Aktual dan Sisa Stok bila dihitung. Kosong = ikut resep.</span><span class="bt">Tutup SPK</span></div>
     </div>
     <div class="cols grow" style="--cols: 1.3fr .7fr;">
@@ -893,7 +893,7 @@ body.portrait .center-v .big-url { margin-bottom: calc(var(--u) * 10); }
     <div class="eyebrow"><span class="chip">3</span> Yang baru · status form</div>
     <h2>Form Kebutuhan sedang di meja siapa?</h2>
     <div class="fig grow">
-      <svg class="fl" viewBox="0 0 864 240" role="img" aria-label="Status Form Kebutuhan: Dibuat atau Diisi di dapur, Ajukan menjadi Diajukan di supervisor gudang, Setujui menjadi Disetujui di staf gudang, Periksa menjadi Diperiksa di dapur, Tutup SPK menjadi Selesai. Tolak mengembalikan form ke dapur dengan alasan.">
+      <svg class="fl" viewBox="0 0 864 240" role="img" aria-label="Status Form Kebutuhan: Dibuat atau Diisi di dapur, Ajukan menjadi Diajukan di gudang, Setujui menjadi Disetujui di gudang, Periksa menjadi Diperiksa di dapur, Tutup SPK menjadi Selesai. Tolak mengembalikan form ke dapur dengan alasan.">
         <text class="lab" x="61" y="20" text-anchor="middle">MULAI DARI</text>
         <text class="s" x="61" y="36" text-anchor="middle">SPK Produksi › Form</text>
         <text class="lab br" x="247" y="20" text-anchor="middle">LONCENG</text>
@@ -909,12 +909,12 @@ body.portrait .center-v .big-url { margin-bottom: calc(var(--u) * 10); }
         <text class="s" x="61" y="106" text-anchor="middle">susun, isi Stok Awal</text>
 
         <rect class="bx br" x="186" y="50" width="122" height="66" rx="8"/>
-        <text class="lab" x="247" y="68" text-anchor="middle">SUPERVISOR GUDANG</text>
+        <text class="lab" x="247" y="68" text-anchor="middle">GUDANG</text>
         <text class="t" x="247" y="89" text-anchor="middle">Diajukan</text>
         <text class="s" x="247" y="106" text-anchor="middle">isian terkunci</text>
 
         <rect class="bx br" x="371" y="50" width="122" height="66" rx="8"/>
-        <text class="lab" x="432" y="68" text-anchor="middle">STAF GUDANG</text>
+        <text class="lab" x="432" y="68" text-anchor="middle">GUDANG</text>
         <text class="t" x="432" y="89" text-anchor="middle">Disetujui</text>
         <text class="s" x="432" y="106" text-anchor="middle">gudang belanja</text>
 
@@ -1164,8 +1164,7 @@ body.portrait .center-v .big-url { margin-bottom: calc(var(--u) * 10); }
         <thead><tr><th>Peran</th><th>Biasanya</th><th>Mengerjakan</th><th>Tidak bisa</th></tr></thead>
         <tbody>
           <tr><td class="k">Production</td><td>tim dapur</td><td>menyusun dan mengajukan Form Kebutuhan, Lembar Kerja, Plating, Tutup SPK</td><td class="small">menyetujui form, memeriksa barang datang, mengubah resep</td></tr>
-          <tr><td class="k">Supervisor Gudang</td><td>kepala gudang</td><td><span class="k">Setujui / Tolak</span> Form Kebutuhan, ditambah semua pekerjaan staf gudang</td><td class="small">menyusun form, Tutup SPK</td></tr>
-          <tr><td class="k">Inventory</td><td>staf gudang</td><td>bahan, supplier, pembelian, opname, resep dan antreannya, Periksa barang datang</td><td class="small">menyetujui form, Tutup SPK</td></tr>
+          <tr><td class="k">Inventory</td><td>pemegang sistem gudang</td><td><span class="k">Setujui / Tolak</span> Form Kebutuhan, bahan, supplier, pembelian, opname, Periksa barang datang</td><td class="small">menyusun form, Tutup SPK</td></tr>
           <tr><td class="k">Owner / Admin</td><td>pemilik, admin</td><td>semua di atas sebagai cadangan; Pengaturan Inventory khusus Owner</td><td class="small">–</td></tr>
         </tbody>
       </table>
@@ -1247,7 +1246,7 @@ body.portrait .center-v .big-url { margin-bottom: calc(var(--u) * 10); }
         <h3>Setiap hari</h3>
         <ul class="list">
           <li><span class="k">Dapur:</span> Form Kebutuhan, isi Stok Awal, Ajukan.</li>
-          <li><span class="k">Supervisor:</span> buka lonceng, Setujui atau Tolak dengan alasan jelas.</li>
+          <li><span class="k">Gudang:</span> buka lonceng, Setujui atau Tolak dengan alasan jelas.</li>
           <li><span class="k">Gudang:</span> barang datang, isi Diterima, Ditolak, Harga Beli, lalu Periksa sekali.</li>
           <li><span class="k">Dapur:</span> setelah masak isi Sisa Stok, lalu Tutup SPK.</li>
         </ul>
@@ -1279,8 +1278,8 @@ body.portrait .center-v .big-url { margin-bottom: calc(var(--u) * 10); }
     <div class="eyebrow">Yang sering ditanyakan</div>
     <h2>Lima pertanyaan yang pasti muncul</h2>
     <div class="qa grow">
-      <div><p class="q">Tombol Setujui tidak ada, padahal formnya ada.</p><p class="a">Setujui hanya untuk Supervisor Gudang (atau Owner/Admin), dan baru muncul setelah dapur menekan Ajukan.</p></div>
-      <div><p class="q">Form saya ditolak supervisor.</p><p class="a">Baca alasannya di kotak merah di atas tabel, perbaiki isian, Simpan, lalu Ajukan lagi.</p></div>
+      <div><p class="q">Tombol Setujui tidak ada, padahal formnya ada.</p><p class="a">Setujui hanya untuk peran Inventory (atau Owner/Admin), dan baru muncul setelah dapur menekan Ajukan.</p></div>
+      <div><p class="q">Form saya ditolak gudang.</p><p class="a">Baca alasannya di kotak merah di atas tabel, perbaiki isian, Simpan, lalu Ajukan lagi.</p></div>
       <div><p class="q">Biaya resep dihitung nol atau ada tanda merah.</p><p class="a">Ada bahan yang belum tertaut (Bahan Belum Cocok) atau satuannya belum bisa dikonversi. Lengkapi, HPP langsung terhitung.</p></div>
       <div><p class="q">Salah isi harga beli dan sudah menekan Periksa.</p><p class="a">Periksa tidak bisa diulang. Minta Accounting mengoreksi di Pembelian Bahan Baku, dan perbaiki harga bahan di Item Inventaris.</p></div>
       <div><p class="q">Barang datang lebih banyak dari yang dibeli.</p><p class="a">Diterima tidak boleh melebihi Beli. Kelebihannya dicatat Accounting sebagai pembelian terpisah (Pembelian Stok).</p></div>
@@ -1370,7 +1369,7 @@ body.portrait .center-v .big-url { margin-bottom: calc(var(--u) * 10); }
         <table class="t">
           <tbody>
             <tr><td class="k">1 · Dapur</td><td>Stok Awal → Ajukan</td></tr>
-            <tr><td class="k">2 · Supervisor</td><td>Setujui / Tolak + alasan</td></tr>
+            <tr><td class="k">2 · Gudang</td><td>Setujui / Tolak + alasan</td></tr>
             <tr><td class="k">3 · Gudang</td><td>Diterima, Harga Beli → Periksa</td></tr>
             <tr><td class="k">4 · Dapur</td><td>Sisa Stok → Tutup SPK</td></tr>
           </tbody>

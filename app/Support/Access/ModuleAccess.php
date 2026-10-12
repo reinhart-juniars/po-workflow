@@ -28,6 +28,16 @@ class ModuleAccess
     public const SUPER_ROLES = ['superadmin'];
 
     /**
+     * Peran lama => peran pengganti. Supervisor Gudang digabung ke Inventory
+     * (12 Okt 2026): di W3S bagian inventory dipegang satu orang.
+     *
+     * @var array<string, string>
+     */
+    public const RETIRED_ROLES = [
+        'inventory-supervisor' => 'inventory',
+    ];
+
+    /**
      * @var array<string, string> izin => label (Bahasa Indonesia)
      */
     public const PERMISSIONS = [
@@ -84,19 +94,11 @@ class ModuleAccess
             'notification.price',
             'purchase.pay',
         ],
-        // Staf inventory/gudang: kelola bahan, pembelian, opname, saldo awal,
-        // dan periksa form kebutuhan saat barang dibeli. Resep hanya dibaca.
-        // Tidak menyusun/menyetujui/menutup SPK produksi.
+        // Inventory/gudang (dipegang satu orang): kelola bahan, pembelian,
+        // opname, saldo awal; menyetujui / menolak Form Kebutuhan yang
+        // diajukan produksi, lalu memeriksanya saat barang dibeli. Resep hanya
+        // dibaca. Tidak menyusun/menutup SPK produksi.
         'inventory' => [
-            'inventory.view', 'inventory.manage',
-            'recipe.view',
-            'production.view',
-            'requisition.check',
-            'ledger.view',
-        ],
-        // Supervisor gudang: seperti staf inventory, ditambah menyetujui /
-        // menolak Form Kebutuhan yang diajukan produksi.
-        'inventory-supervisor' => [
             'inventory.view', 'inventory.manage',
             'recipe.view',
             'production.view',
@@ -154,10 +156,48 @@ class ModuleAccess
                 }
             }
 
+            self::retireRoles();
+
             app(PermissionRegistrar::class)->forgetCachedPermissions();
 
             return ['permissions' => count(self::PERMISSIONS), 'roles' => count(self::DEFAULT_MATRIX) + count(self::SUPER_ROLES)];
         });
+    }
+
+    /**
+     * Peran yang dihapus: pemegangnya dipindah ke peran pengganti, lalu
+     * perannya dibuang. Ikut berjalan di setiap sync (idempoten), jadi
+     * database latihan maupun resmi beres lewat deploy biasa.
+     */
+    private static function retireRoles(): void
+    {
+        $modelKey = config('permission.column_names.model_morph_key', 'model_id');
+        $pivot = config('permission.table_names.model_has_roles');
+
+        foreach (self::RETIRED_ROLES as $oldName => $newName) {
+            $old = Role::query()->where('name', $oldName)->where('guard_name', 'web')->first();
+
+            if (! $old) {
+                continue;
+            }
+
+            $new = Role::findOrCreate($newName, 'web');
+
+            $holders = DB::table($pivot)->where('role_id', $old->id)->get();
+            $alreadyNew = DB::table($pivot)->where('role_id', $new->id)->get()
+                ->map(fn ($row) => $row->model_type.':'.$row->{$modelKey})->flip();
+
+            foreach ($holders as $row) {
+                if (! $alreadyNew->has($row->model_type.':'.$row->{$modelKey})) {
+                    DB::table($pivot)->insert([
+                        'role_id' => $new->id, 'model_type' => $row->model_type, $modelKey => $row->{$modelKey},
+                    ]);
+                }
+            }
+
+            // Spatie membersihkan pivot peran & izinnya saat peran dihapus.
+            $old->delete();
+        }
     }
 
     /** @return list<string> */

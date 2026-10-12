@@ -10,6 +10,7 @@ use App\Policies\ModulePolicy;
 use App\Support\Access\ModuleAccess;
 use Filament\Facades\Filament;
 use Filament\Pages\Page;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
@@ -144,15 +145,15 @@ it('memisahkan tahap form kebutuhan: menyusun, menyetujui, memeriksa, dan menutu
         ->assertActionHidden('ajukan')
         ->assertActionHidden('setujui');
 
-    // Belum diajukan: supervisor gudang pun belum bisa menyetujui.
-    $draftCase('inventory-supervisor')->assertActionHidden('setujui')->assertActionHidden('tolak');
+    // Belum diajukan: gudang pun belum bisa menyetujui.
+    $draftCase('inventory')->assertActionHidden('setujui')->assertActionHidden('tolak');
 
     $requisition->update(['status' => Requisition::STATUS_SUBMITTED]);
 
-    // Diajukan: supervisor gudang menyetujui / menolak; produksi & staf gudang tidak.
-    $draftCase('inventory-supervisor')->assertActionVisible('setujui')->assertActionVisible('tolak');
+    // Diajukan: gudang menyetujui / menolak; produksi & accounting tidak.
+    $draftCase('inventory')->assertActionVisible('setujui')->assertActionVisible('tolak');
     $draftCase('production')->assertActionHidden('setujui')->assertActionHidden('tolak')->assertActionHidden('simpan');
-    $draftCase('inventory')->assertActionHidden('setujui')->assertActionHidden('tolak');
+    $draftCase('accounting')->assertActionHidden('setujui')->assertActionHidden('tolak');
     // Admin tetap bisa (cadangan) -- positive control.
     $draftCase('admin')->assertActionVisible('setujui');
 
@@ -249,4 +250,29 @@ it('menyimpan bahan baru hanya lewat peran yang berizin kelola inventory', funct
         ->assertHasNoFormErrors();
 
     expect(InventoryItem::query()->where('name', 'Garam Uji Akses')->exists())->toBeTrue();
+});
+
+it('memindahkan pemegang peran Supervisor Gudang ke Inventory lalu membuang perannya', function () {
+    // Kondisi server sebelum penggabungan: peran lama masih ada dan dipegang.
+    $lama = Role::findOrCreate('inventory-supervisor', 'web');
+    $lama->givePermissionTo('requisition.approve');
+
+    $hanyaLama = User::factory()->create(['is_active' => true, 'force_password_change' => false])->assignRole('inventory-supervisor');
+    $keduanya = User::factory()->create(['is_active' => true, 'force_password_change' => false])->assignRole(['inventory-supervisor', 'inventory']);
+    $produksi = penggunaBerperan('production');
+
+    ModuleAccess::sync();
+    ModuleAccess::sync(); // idempoten: deploy berikutnya tidak menggandakan apa pun
+
+    $pivot = config('permission.table_names.model_has_roles');
+
+    expect(Role::query()->where('name', 'inventory-supervisor')->exists())->toBeFalse()
+        ->and($hanyaLama->fresh()->getRoleNames()->all())->toBe(['inventory'])
+        ->and($keduanya->fresh()->getRoleNames()->all())->toBe(['inventory'])
+        ->and(DB::table($pivot)->where('model_id', $keduanya->id)->count())->toBe(1)
+        // Hak menyetujui tidak hilang karena pindah peran.
+        ->and($hanyaLama->fresh()->can('requisition.approve'))->toBeTrue()
+        // Kontrol: pemegang peran lain tidak tersentuh.
+        ->and($produksi->fresh()->getRoleNames()->all())->toBe(['production'])
+        ->and($produksi->fresh()->can('requisition.approve'))->toBeFalse();
 });
