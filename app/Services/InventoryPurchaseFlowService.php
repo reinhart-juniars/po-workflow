@@ -34,6 +34,7 @@ class InventoryPurchaseFlowService
      */
     public function update(InventoryPurchase $purchase, array $data, ?int $actorId = null): InventoryPurchase
     {
+        $this->assertNotOnBill($purchase);
         $data = $this->normalize($data);
         $this->assertFlowRequirements($data);
 
@@ -74,7 +75,7 @@ class InventoryPurchaseFlowService
      * @param  array<string, mixed>  $data  inventory_item_id, transaction_date, qty, unit_cost,
      *                                      payment_type, expense_category_id/cash_account_id (tunai),
      *                                      supplier_id atau supplier_name, due_date (kredit), condition, condition_notes,
-     *                                      requisition_id, notes
+     *                                      requisition_id, purchase_bill_id, notes
      */
     public function create(array $data, ?int $actorId = null): InventoryPurchase
     {
@@ -90,6 +91,7 @@ class InventoryPurchaseFlowService
             $purchase = InventoryPurchase::query()->create([
                 'inventory_item_id' => $data['inventory_item_id'],
                 'requisition_id' => $data['requisition_id'] ?? null,
+                'purchase_bill_id' => $data['purchase_bill_id'] ?? null,
                 'transaction_date' => $data['transaction_date'],
                 'qty' => $qty,
                 'unit_cost' => $unitCost,
@@ -115,6 +117,8 @@ class InventoryPurchaseFlowService
     /** Hapus pembelian beserta jurnal yang menempel padanya. */
     public function delete(InventoryPurchase $purchase): void
     {
+        $this->assertNotOnBill($purchase);
+
         $purchase->load(['payable', 'cashOut']);
 
         DB::transaction(function () use ($purchase) {
@@ -128,6 +132,22 @@ class InventoryPurchaseFlowService
             $purchase->payable?->delete();
             $purchase->delete();
         });
+    }
+
+    /**
+     * Pembelian milik Tagihan Pembelian tidak diubah/dihapus satu per satu:
+     * total tagihan dan hutangnya akan tidak cocok lagi, dan mengganti jenis
+     * bayarnya menjadi tunai membuat uang keluar dua kali.
+     */
+    public function assertNotOnBill(InventoryPurchase $purchase): void
+    {
+        if ($purchase->purchase_bill_id) {
+            $number = $purchase->purchaseBill()->value('number');
+
+            throw ValidationException::withMessages([
+                'payment_type' => 'Pembelian ini bagian dari Tagihan Pembelian '.$number.'; tidak bisa diubah atau dihapus sendiri.',
+            ]);
+        }
     }
 
     /**
@@ -180,8 +200,9 @@ class InventoryPurchaseFlowService
             ?? (filled($data['supplier_name'] ?? null) ? trim((string) $data['supplier_name']) : null);
 
         // Jatuh tempo hanya bermakna untuk pembelian kredit. Bila kosong,
-        // termin bayar supplier dipakai sebagai bawaan.
-        if (($data['payment_type'] ?? null) === 'cash') {
+        // termin bayar supplier dipakai sebagai bawaan. Tagihan menyimpan
+        // jatuh temponya sendiri.
+        if (in_array($data['payment_type'] ?? null, ['cash', InventoryPurchase::PAYMENT_BILL], true)) {
             $data['due_date'] = null;
         } elseif (blank($data['due_date'] ?? null) && $supplier) {
             $data['due_date'] = $supplier->dueDateFor($data['transaction_date'] ?? null);
@@ -217,6 +238,15 @@ class InventoryPurchaseFlowService
     /** @param array<string, mixed> $data */
     protected function syncFinancialFlow(InventoryPurchase $purchase, array $data, ?int $actorId): void
     {
+        // Bagian dari Tagihan Pembelian: hutang & pembayarannya dipegang
+        // tagihan (PurchaseBillService), satu per nota -- bukan per baris.
+        if ($data['payment_type'] === InventoryPurchase::PAYMENT_BILL) {
+            $this->detachCashOut($purchase);
+            $this->detachPayable($purchase);
+
+            return;
+        }
+
         if ($data['payment_type'] === 'cash') {
             $this->syncCashOut($purchase, $data, $actorId);
             $this->detachPayable($purchase);

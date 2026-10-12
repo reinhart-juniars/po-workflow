@@ -106,6 +106,7 @@ class MaterialBreakdownService
                 'qty' => $line['qty'],
                 'unit' => $line['unit'],
                 'rows' => [],
+                'tree' => [],
                 'total_cost' => 0.0,
                 'issues' => [],
             ];
@@ -120,6 +121,9 @@ class MaterialBreakdownService
                 $menu['rows'] = $result['rows'];
                 $menu['total_cost'] = round(array_sum(array_column($result['rows'], 'total_cost')), 2);
                 $menu['issues'] = $result['issues'];
+                // Susunan resep apa adanya (menu -> sub-menu -> bahan) untuk
+                // tampilan bertingkat; rekap bahan tetap dari rows di atas.
+                $menu['tree'] = $this->costService->tree($recipe, $quantity)['nodes'];
 
                 foreach ($result['rows'] as $row) {
                     $key = $row['inventory_item_id'];

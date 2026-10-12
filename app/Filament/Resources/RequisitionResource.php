@@ -15,6 +15,8 @@ use Filament\Tables\Table;
  */
 class RequisitionResource extends Resource
 {
+    use \App\Filament\Concerns\InInventoryPanel;
+
     protected static ?string $model = Requisition::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';

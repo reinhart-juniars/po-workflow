@@ -57,6 +57,22 @@ class Payable extends Model
         return $this->hasMany(CashOut::class);
     }
 
+    /** Tagihan Pembelian pemilik hutang ini, bila lahir dari belanja gudang. */
+    public function purchaseBill(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(PurchaseBill::class);
+    }
+
+    /**
+     * Hutang yang boleh dilunasi lewat Pengeluaran › Pembayaran Kredit.
+     * Hutang milik Tagihan Pembelian hanya dibayar dari halaman Tagihan --
+     * satu pintu, supaya tidak terbayar dua kali dan status tagihannya ikut.
+     */
+    public function scopeSettleableByCredit(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->whereDoesntHave('purchaseBill');
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

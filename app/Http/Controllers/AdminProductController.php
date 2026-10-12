@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Exports\ProductsExport;
+use App\Filament\Menu\Resources\RecipeResource;
 use App\Imports\ProductsImport;
 use App\Models\Product;
+use App\Services\ProductRecipeCostSync;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -58,19 +60,32 @@ class AdminProductController extends Controller
             ->with('status', 'Menu berhasil ditambahkan.');
     }
 
-    public function edit(Product $product)
+    public function edit(Product $product, ProductRecipeCostSync $costs)
     {
-        $product->load(['priceHistories.changedBy']);
+        $product->load(['priceHistories.changedBy', 'recipe']);
 
         return view('adminapp.products.form', [
             'product' => $product,
             'mode' => 'edit',
+            // Asal HPP & OHC: dari resep (terkunci) atau manual, dengan alasan
+            // bila resepnya belum bisa dipakai.
+            'costStatus' => $costs->evaluate($product),
+            'recipeUrl' => $product->recipe_id && auth()->user()?->can('recipe.view')
+                ? RecipeResource::getUrl('hpp', ['record' => $product->recipe_id])
+                : null,
         ]);
     }
 
     public function update(Request $request, Product $product)
     {
         $data = $this->validatedPayload($request, $product);
+
+        // HPP & OHC menu yang mengikuti resep diatur tim menu di aplikasi
+        // Menu. Field-nya read-only di form; di sini dijaga juga supaya
+        // request yang dirakit sendiri tidak bisa menimpanya.
+        if ($product->costFollowsRecipe()) {
+            unset($data['raw_material_cost'], $data['overhead_cost']);
+        }
         $data['active'] = $request->boolean('active');
         $data['is_3s'] = $request->boolean('is_3s');
 

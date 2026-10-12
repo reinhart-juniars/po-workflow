@@ -38,3 +38,78 @@ it('membangun panduan pengguna pdf dari sumber html', function () {
 
     @unlink($output);
 });
+
+/**
+ * Panduan khusus pengguna Master Menu Revamp yang pindah ke aplikasi Inventory.
+ */
+it('membangun panduan inventory untuk pengguna master menu', function () {
+    $output = storage_path('app/panduan-inventory-uji.pdf');
+    @unlink($output);
+
+    $this->artisan('panduan:pdf', ['panduan' => 'inventory-master-menu', '--output' => $output])->assertSuccessful();
+
+    expect(is_file($output))->toBeTrue()
+        ->and(filesize($output))->toBeGreaterThan(50_000)
+        ->and(file_get_contents($output))->toStartWith('%PDF');
+
+    $html = file_get_contents(base_path('docs/panduan/panduan-inventory-master-menu.html'));
+
+    // Peta pindah: setiap menu Master Menu Revamp punya padanannya.
+    expect($html)->toContain('Bahan Baku')->toContain('Item Inventaris')
+        ->toContain('Pra SPK')->toContain('Breakdown Bahan')
+        ->toContain('Mismatch')->toContain('Bahan Belum Cocok')
+        ->toContain('Menu Plating')->toContain('Lembar Kerja');
+
+    // Diagram alur ikut, dan berkas gambarnya memang ada (kalau hilang,
+    // dompdf diam-diam mencetak kotak kosong).
+    preg_match_all('/src="(img\/alur-[^"]+)"/', $html, $diagrams);
+    // 5 diagram awal + alur Menu ke harga jual (revisi Okt 2026).
+    expect($diagrams[1])->toHaveCount(6);
+    foreach ($diagrams[1] as $diagram) {
+        expect(base_path('docs/panduan/'.$diagram))->toBeFile();
+    }
+
+    @unlink($output);
+});
+
+/**
+ * Rencana pelatihan Oktober 2026: tiga pertemuan menuju live 1 November.
+ */
+it('membangun rencana pelatihan dengan jadwal dan target tiap bagian', function () {
+    $output = storage_path('app/panduan-pelatihan-uji.pdf');
+    @unlink($output);
+
+    $this->artisan('panduan:pdf', ['panduan' => 'rencana-pelatihan', '--output' => $output])->assertSuccessful();
+
+    expect(is_file($output))->toBeTrue()
+        ->and(file_get_contents($output))->toStartWith('%PDF');
+
+    $html = file_get_contents(base_path('docs/panduan/panduan-rencana-pelatihan.html'));
+
+    expect($html)->toContain('14 Oktober')->toContain('21 Oktober')->toContain('28 Oktober')->toContain('1 November')
+        ->toContain('TIM MENU')->toContain('INVENTORY')->toContain('ADMIN')->toContain('ACCOUNTING');
+    expect(base_path('docs/panduan/img/alur-pelatihan.jpg'))->toBeFile();
+
+    // Versi ringkas untuk Owner: hanya materi pertemuan (termasuk 7 Okt) dan lembar progres.
+    $this->artisan('panduan:pdf', ['panduan' => 'pelatihan-owner', '--output' => $output])->assertSuccessful();
+    $owner = file_get_contents(base_path('docs/panduan/panduan-pelatihan-owner.html'));
+    expect($owner)->toContain('Pertemuan 1 · Rabu 7 Oktober')->toContain('Siap live: diperiksa 28 Oktober')
+        ->not->toContain('Target mingguan per bagian')->not->toContain('Sabtu 31 Oktober dan hari pertama');
+
+    @unlink($output);
+});
+
+it('menolak nama panduan yang bukan nama berkas sederhana', function (string $nama) {
+    $output = storage_path('app/panduan-tolak-uji.pdf');
+    @unlink($output);
+
+    $this->artisan('panduan:pdf', ['panduan' => $nama, '--output' => $output])->assertFailed();
+
+    expect(is_file($output))->toBeFalse();
+
+    // Kontrol positif: nama yang sah ke lokasi yang sama tetap berhasil.
+    $this->artisan('panduan:pdf', ['panduan' => '3s-one', '--output' => $output])->assertSuccessful();
+    expect(is_file($output))->toBeTrue();
+
+    @unlink($output);
+})->with(['../../.env', 'Inventory', 'tidak-ada']);

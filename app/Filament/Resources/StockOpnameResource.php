@@ -14,6 +14,8 @@ use Filament\Tables\Table;
 
 class StockOpnameResource extends Resource
 {
+    use \App\Filament\Concerns\InInventoryPanel;
+
     protected static ?string $model = StockOpname::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';

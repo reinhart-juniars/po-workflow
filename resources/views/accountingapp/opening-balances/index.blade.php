@@ -21,7 +21,7 @@
     $canEditOpeningBalance = auth()->user()?->hasAnyRole(['owner', 'superadmin']);
   @endphp
 
-  <h1 class="text-2xl font-bold mb-4">Saldo Awal</h1>
+  <h1 class="page-title mb-6">Saldo Awal</h1>
 
   <div class="tab-card-shell js-tab-card" data-active-tab="{{ $activeTab }}">
     <div class="panel-head">

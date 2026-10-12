@@ -7,6 +7,7 @@ use App\Models\InventoryItem;
 use App\Models\InventoryMovement;
 use App\Models\InventoryPurchase;
 use App\Models\ProductionOrder;
+use App\Models\PurchaseBill;
 use App\Models\Requisition;
 use App\Models\RequisitionLine;
 use App\Models\Supplier;
@@ -39,6 +40,7 @@ class RequisitionService
         protected ProductionOrderService $orders,
         protected InventoryLedgerService $ledger,
         protected InventoryPurchaseFlowService $purchases,
+        protected PurchaseBillService $bills,
     ) {}
 
     /**
@@ -361,7 +363,6 @@ class RequisitionService
     {
         $blockers = [];
         $lines = $requisition->lines()->get();
-        $adaPembelian = false;
 
         foreach ($lines as $line) {
             if ($line->rejectedQty() > 0 && blank($line->rejected_reason)) {
@@ -371,27 +372,11 @@ class RequisitionService
             if ($line->receivedQty() > 0 && ($line->purchasePrice() === null || $line->purchasePrice() <= 0)) {
                 $blockers[] = $line->name.': harga beli belum diisi.';
             }
-
-            if ($line->receivedQty() > 0 || $line->damagedValue() > 0) {
-                $adaPembelian = true;
-            }
         }
 
-        if ($adaPembelian) {
-            if ($requisition->payment_type === null) {
-                $blockers[] = 'Pilih cara pembayaran belanja (tunai / kredit).';
-            } elseif ($requisition->payment_type === 'cash') {
-                if (! $requisition->cash_account_id) {
-                    $blockers[] = 'Pilih akun kas untuk pembelian tunai.';
-                }
-
-                if (! $requisition->expense_category_id) {
-                    $blockers[] = 'Pilih kategori pengeluaran (Pembelian Stok) untuk pembelian tunai.';
-                }
-            } elseif (blank($requisition->supplier_name)) {
-                $blockers[] = 'Isi nama supplier untuk pembelian kredit.';
-            }
-        }
+        // Cara bayar tidak lagi dipilih gudang: belanja ditagihkan ke
+        // accounting lewat Tagihan Pembelian yang lahir saat Periksa
+        // (revisi 7 Okt 2026), jadi akun kas/supplier bukan syarat Periksa.
 
         return $blockers;
     }
@@ -467,6 +452,9 @@ class RequisitionService
             $lines = $requisition->lines()->get();
             $fresh = $this->ledger->withoutHistory($lines->pluck('inventory_item_id')->all());
             $updateMasterPrice = app(Settings::class)->bool('requisition.update_master_price');
+            // Satu Tagihan Pembelian untuk seluruh belanja form ini; dibuka
+            // hanya bila memang ada yang dibeli.
+            $bill = null;
 
             foreach ($lines as $line) {
                 $price = $line->unit_price === null ? null : (float) $line->unit_price;
@@ -510,11 +498,16 @@ class RequisitionService
                     );
                 }
 
-                $this->recordPurchases($requisition, $line, $date, $userId);
+                $bill = $this->recordPurchases($requisition, $line, $date, $userId, $bill);
 
                 if ($updateMasterPrice) {
                     $this->syncMasterPrice($requisition, $line);
                 }
+            }
+
+            if ($bill) {
+                // Hutang tagihan lahir bersama barangnya (Neraca seimbang).
+                $this->bills->syncPayable($bill);
             }
 
             $requisition->update([
@@ -539,29 +532,30 @@ class RequisitionService
     /**
      * Pembelian bahan baku dari satu baris: yang diterima (kondisi Baik) dan,
      * bila barang ditolak tetap dibayar, satu lagi berkondisi Tidak Baik yang
-     * nilainya masuk Kerugian Barang Rusak. Kas keluar / hutangnya ikut
-     * terbentuk lewat InventoryPurchaseFlowService, jalur yang sama dengan
-     * modul Pengeluaran.
+     * nilainya masuk Kerugian Barang Rusak.
+     *
+     * Keduanya ditagihkan lewat Tagihan Pembelian (dibuka di baris pertama
+     * yang dibeli): gudang tidak memilih akun kas; accounting yang membayar.
      */
-    protected function recordPurchases(Requisition $requisition, RequisitionLine $line, string $date, ?int $userId): void
+    protected function recordPurchases(Requisition $requisition, RequisitionLine $line, string $date, ?int $userId, ?PurchaseBill $bill): ?PurchaseBill
     {
         $price = $line->purchasePrice();
 
-        if ($price === null || $price <= 0) {
-            return;
+        if ($price === null || $price <= 0 || ($line->receivedQty() <= 0 && $line->damagedValue() <= 0)) {
+            return $bill;
         }
+
+        $bill ??= $this->bills->openForRequisition($requisition, $date, $userId);
 
         $base = [
             'inventory_item_id' => $line->inventory_item_id,
             'requisition_id' => $requisition->id,
+            'purchase_bill_id' => $bill->id,
             'transaction_date' => $date,
             'unit_cost' => $price,
-            'payment_type' => $requisition->payment_type,
-            'expense_category_id' => $requisition->expense_category_id,
-            'cash_account_id' => $requisition->cash_account_id,
+            'payment_type' => InventoryPurchase::PAYMENT_BILL,
             'supplier_id' => $requisition->supplier_id,
             'supplier_name' => $requisition->supplier_name,
-            'due_date' => $requisition->due_date?->toDateString(),
         ];
 
         if ($line->receivedQty() > 0) {
@@ -586,6 +580,8 @@ class RequisitionService
         }
 
         $line->save();
+
+        return $bill;
     }
 
     /**

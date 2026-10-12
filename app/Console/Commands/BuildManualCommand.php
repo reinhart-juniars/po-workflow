@@ -6,21 +6,34 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Console\Command;
 
 /**
- * Membangun Panduan Pengguna (PDF) dari docs/panduan/panduan-3s-one.html.
+ * Membangun panduan pengguna (PDF) dari docs/panduan/panduan-{nama}.html.
  *
  * Panduannya ditulis sebagai HTML sederhana supaya bisa disunting siapa pun
  * dan dirender dengan dompdf yang sudah dipakai laporan; tanpa alat tambahan.
+ * Bawaannya Panduan 3S ONE; panduan lain (mis. inventory-master-menu) dipilih
+ * lewat namanya dan ditulis ke docs/PANDUAN-{NAMA}.pdf.
  */
 class BuildManualCommand extends Command
 {
-    protected $signature = 'panduan:pdf {--output= : Lokasi PDF (bawaan docs/PANDUAN-3S-ONE.pdf)}';
+    protected $signature = 'panduan:pdf
+        {panduan=3s-one : Nama panduan, yaitu berkas docs/panduan/panduan-{nama}.html}
+        {--output= : Lokasi PDF (bawaan docs/PANDUAN-{NAMA}.pdf)}';
 
-    protected $description = 'Bangun Panduan Pengguna 3S ONE (PDF) dari docs/panduan/panduan-3s-one.html';
+    protected $description = 'Bangun panduan pengguna (PDF) dari docs/panduan/panduan-{nama}.html';
 
     public function handle(): int
     {
-        $source = base_path('docs/panduan/panduan-3s-one.html');
-        $output = $this->option('output') ?: base_path('docs/PANDUAN-3S-ONE.pdf');
+        $name = (string) $this->argument('panduan');
+
+        // Nama dipakai sebagai bagian path: huruf kecil, angka, dan tanda hubung saja.
+        if (! preg_match('/^[a-z0-9]+(-[a-z0-9]+)*$/', $name)) {
+            $this->error('Nama panduan tidak valid: '.$name.' (pakai huruf kecil, angka, dan tanda hubung).');
+
+            return self::FAILURE;
+        }
+
+        $source = base_path('docs/panduan/panduan-'.$name.'.html');
+        $output = $this->option('output') ?: base_path('docs/PANDUAN-'.strtoupper($name).'.pdf');
 
         if (! is_file($source)) {
             $this->error('Sumber panduan tidak ditemukan: '.$source);

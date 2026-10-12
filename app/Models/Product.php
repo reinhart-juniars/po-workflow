@@ -27,6 +27,8 @@ class Product extends Model
         'is_3s',
         'recipe_id',
         'needs_recipe',
+        'cost_source',
+        'cost_synced_at',
         'photo_path',
         'photo_updated_at',
         'show_on_website',
@@ -43,11 +45,24 @@ class Product extends Model
         'photo_updated_at' => 'datetime',
         'show_on_website' => 'boolean',
         'needs_recipe' => 'boolean',
+        'cost_synced_at' => 'datetime',
         'base_price' => 'decimal:2',
         'raw_material_cost' => 'decimal:2',
         'overhead_cost' => 'decimal:2',
         'profit' => 'decimal:2',
     ];
+
+    /** HPP & OHC diketik admin. */
+    public const COST_MANUAL = 'manual';
+
+    /** HPP & OHC diturunkan dari resep (ProductRecipeCostSync). */
+    public const COST_RECIPE = 'resep';
+
+    /**
+     * Alasan yang dicatat di riwayat harga untuk perubahan berikutnya, mis.
+     * "HPP & OHC dari resep ...". Dikosongkan lagi oleh pemasangnya.
+     */
+    public static ?string $historyReason = null;
 
     protected static function booted(): void
     {
@@ -67,12 +82,21 @@ class Product extends Model
             $product->recordPriceHistory('Harga awal saat produk dibuat.');
         });
 
+        // Ditautkan ke / dilepas dari resep: HPP & OHC-nya disinkronkan di
+        // akhir request. Ditunda, bukan langsung -- save() bersarang di event
+        // model yang sama melihat recipe_id masih "berubah" dan berulang.
+        static::saved(function (self $product) {
+            if ($product->wasChanged('recipe_id') || ($product->wasRecentlyCreated && $product->recipe_id !== null)) {
+                app(\App\Services\ProductRecipeCostSync::class)->queueProduct($product->id);
+            }
+        });
+
         static::updated(function (self $product) {
             $tracked = ['base_price', 'raw_material_cost', 'overhead_cost', 'profit'];
 
             foreach ($tracked as $column) {
                 if ($product->wasChanged($column)) {
-                    $product->recordPriceHistory();
+                    $product->recordPriceHistory(static::$historyReason);
 
                     break;
                 }
@@ -112,6 +136,12 @@ class Product extends Model
                 'sku.unique' => 'SKU ini sudah dipakai menu lain.',
             ],
         ];
+    }
+
+    /** HPP & OHC produk ini mengikuti resep, bukan ketikan admin. */
+    public function costFollowsRecipe(): bool
+    {
+        return $this->cost_source === self::COST_RECIPE;
     }
 
     public function recordPriceHistory(?string $reason = null): void

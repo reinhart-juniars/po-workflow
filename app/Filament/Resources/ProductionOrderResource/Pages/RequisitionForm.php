@@ -4,8 +4,6 @@ namespace App\Filament\Resources\ProductionOrderResource\Pages;
 
 use App\Filament\Resources\ProductionOrderResource;
 use App\Filament\Resources\SupplierResource;
-use App\Models\CashAccount;
-use App\Models\ExpenseCategory;
 use App\Models\ProductionOrder;
 use App\Models\Requisition;
 use App\Models\RequisitionLine;
@@ -14,14 +12,11 @@ use App\Services\ProductionDocumentService;
 use App\Services\ProductionOrderService;
 use App\Services\RequisitionService;
 use Filament\Actions;
-use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
-use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
 use Filament\Resources\Pages\Page;
@@ -89,11 +84,7 @@ class RequisitionForm extends Page implements HasForms
         $requisition = $this->getRequisition();
 
         $this->form->fill([
-            'payment_type' => $requisition?->payment_type,
-            'expense_category_id' => $requisition?->expense_category_id ?? app(RequisitionService::class)->defaultPurchaseCategoryId(),
-            'cash_account_id' => $requisition?->cash_account_id,
             'supplier_id' => $requisition?->supplier_id,
-            'due_date' => $requisition?->due_date?->toDateString(),
             'lines' => $requisition
                 ? $requisition->lines->map(fn (RequisitionLine $line) => [
                     'id' => $line->id,
@@ -170,7 +161,7 @@ class RequisitionForm extends Page implements HasForms
 
         if ($requisition->isApproved()) {
             return $user?->can('requisition.check')
-                ? ['color' => 'info', 'text' => 'Meja gudang: saat barang datang isi Diterima (ditolak = Beli − Diterima, beri alasannya), Harga Beli dari nota, dan cara pembayaran. Simpan, lalu Periksa — stok, pembelian, dan kas/hutang tercatat sekaligus.']
+                ? ['color' => 'info', 'text' => 'Meja gudang: saat barang datang isi Diterima (ditolak = Beli − Diterima, beri alasannya), Harga Beli dari nota, dan supplier. Simpan, lalu Periksa — stok dan pembelian tercatat, lalu belanjanya menjadi satu Tagihan Pembelian untuk diajukan ke accounting.']
                 : ['color' => 'gray', 'text' => 'Disetujui '.($requisition->approvedBy?->name ?? '').'; gudang sedang belanja / menerima barang. Isian terkunci sampai diperiksa.'];
         }
 
@@ -199,54 +190,21 @@ class RequisitionForm extends Page implements HasForms
 
         return $form
             ->schema([
-                Section::make('Pembayaran belanja')
-                    ->description('Saat Periksa, pembelian bahan baku beserta kas keluar / hutangnya dibuat otomatis per bahan sesuai jumlah diterima dan harga beli.')
+                // Gudang tidak memilih akun kas: saat Periksa, belanja form ini
+                // menjadi satu Tagihan Pembelian yang diajukan ke accounting
+                // (revisi 7 Okt 2026). Yang dicatat di sini hanya tokonya.
+                Section::make('Belanja')
+                    ->description(fn () => ($bill = $this->getRequisition()?->purchaseBill)
+                        ? 'Belanja form ini ditagihkan lewat '.$bill->number.' ('.$bill->statusLabel().').'
+                        : 'Saat Periksa, pembelian bahan baku dibuat per bahan sesuai jumlah diterima dan harga beli, lalu dikumpulkan menjadi satu Tagihan Pembelian untuk diajukan ke accounting.')
                     ->visible($receivingVisible)
                     ->columns(4)
                     ->schema([
-                        Select::make('payment_type')
-                            ->label('Jenis Pembayaran')
-                            ->options(Requisition::paymentTypeOptions())
-                            ->native(false)
-                            ->live()
-                            ->disabled(! $receivingOpen)
-                            ->dehydrated($receivingOpen),
-
-                        Select::make('expense_category_id')
-                            ->label('Kategori Pengeluaran')
-                            ->options(fn () => ExpenseCategory::query()
-                                ->where('expense_mode', ExpenseCategory::MODE_INVENTORY_PURCHASE)
-                                ->where('is_active', true)
-                                ->orderBy('name')
-                                ->pluck('name', 'id'))
-                            ->native(false)
-                            ->searchable()
-                            ->visible(fn (Get $get) => $get('payment_type') === 'cash')
-                            ->disabled(! $receivingOpen)
-                            ->dehydrated($receivingOpen),
-
-                        Select::make('cash_account_id')
-                            ->label('Akun Kas')
-                            ->options(fn () => CashAccount::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id'))
-                            ->native(false)
-                            ->searchable()
-                            ->visible(fn (Get $get) => $get('payment_type') === 'cash')
-                            ->disabled(! $receivingOpen)
-                            ->dehydrated($receivingOpen),
-
                         SupplierResource::picker()
-                            ->required(fn (Get $get) => $get('payment_type') === 'payable')
                             ->helperText(fn () => ($requisition = $this->getRequisition()) && ! $requisition->supplier_id && filled($requisition->supplier_name)
                                 ? 'Tercatat sebagai "'.$requisition->supplier_name.'" (belum ada di Master Supplier).'
-                                : null)
-                            ->visible(fn (Get $get) => $get('payment_type') !== null)
-                            ->disabled(! $receivingOpen)
-                            ->dehydrated($receivingOpen),
-
-                        DatePicker::make('due_date')
-                            ->label('Jatuh Tempo')
-                            ->native(false)
-                            ->visible(fn (Get $get) => $get('payment_type') === 'payable')
+                                : 'Toko / supplier tempat belanja. Boleh kosong bila belanja di beberapa tempat.')
+                            ->columnSpan(2)
                             ->disabled(! $receivingOpen)
                             ->dehydrated($receivingOpen),
                     ]),
@@ -278,11 +236,7 @@ class RequisitionForm extends Page implements HasForms
         try {
             if ($requisition->isApproved()) {
                 $service->recordPaymentHeader($requisition, [
-                    'payment_type' => $state['payment_type'] ?? null,
-                    'expense_category_id' => $state['expense_category_id'] ?? null,
-                    'cash_account_id' => $state['cash_account_id'] ?? null,
                     'supplier_id' => $state['supplier_id'] ?? null,
-                    'due_date' => $state['due_date'] ?? null,
                 ]);
             }
 
@@ -483,7 +437,7 @@ class RequisitionForm extends Page implements HasForms
                 ->color('success')
                 ->visible(fn () => $this->getRequisition()?->isApproved() ?? false)
                 ->requiresConfirmation()
-                ->modalDescription('Menandai barang sudah diterima & diperiksa. Jumlah Diterima (= Beli bila kosong) dicatat ke kartu stok dengan harga beli, pembelian bahan baku beserta kas keluar / hutangnya dibuat otomatis, dan barang ditolak yang tetap dibayar masuk Kerugian Barang Rusak. Langkah ini tidak bisa diulang.')
+                ->modalDescription('Menandai barang sudah diterima & diperiksa. Jumlah Diterima (= Beli bila kosong) dicatat ke kartu stok dengan harga beli, pembelian bahan baku dibuat otomatis dan dikumpulkan menjadi satu Tagihan Pembelian (hutang sampai accounting membayar), dan barang ditolak yang tetap dibayar masuk Kerugian Barang Rusak. Langkah ini tidak bisa diulang.')
                 ->action(function () {
                     // Isian "Diterima" yang belum disimpan ikut dibawa.
                     $this->save();

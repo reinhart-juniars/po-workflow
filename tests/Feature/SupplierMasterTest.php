@@ -261,7 +261,6 @@ it('memakai supplier dari master di form kebutuhan sampai ke pembelian dan hutan
     $service->recordReceipt($line, 2, null, null, 12000);
 
     Livewire::test(RequisitionForm::class, ['record' => $order->id])
-        ->set('data.payment_type', 'payable')
         ->set('data.supplier_id', $supplier->id)
         ->call('save');
 
@@ -271,11 +270,14 @@ it('memakai supplier dari master di form kebutuhan sampai ke pembelian dan hutan
 
     $service->check($requisition);
 
+    // Hutangnya milik Tagihan Pembelian (revisi 7 Okt 2026), jatuh tempo bawaan = termin supplier.
     $purchase = InventoryPurchase::query()->sole();
+    $hutang = $purchase->purchaseBill->payable;
     expect($purchase->supplier_id)->toBe($supplier->id)
-        ->and($purchase->payable->supplier_id)->toBe($supplier->id)
-        ->and($purchase->payable->due_date->toDateString())->toBe($purchase->transaction_date->addDays(7)->toDateString())
-        ->and((float) $purchase->payable->amount)->toBe((float) $purchase->total_value)
+        ->and($purchase->purchaseBill->supplier_id)->toBe($supplier->id)
+        ->and($hutang->supplier_id)->toBe($supplier->id)
+        ->and($hutang->due_date->toDateString())->toBe($purchase->transaction_date->addDays(7)->toDateString())
+        ->and((float) $hutang->amount)->toBe((float) $purchase->total_value)
         ->and($supplier->items()->pluck('inventory_items.id')->all())->toBe([$d['tepung']->id]);
 });
 

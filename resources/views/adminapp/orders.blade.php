@@ -232,7 +232,7 @@
           <div class="col-span-2 text-right">
             <button type="button"
                     id="btnAddItem"
-                    class="px-3 py-2 rounded bg-indigo-600 text-white text-xs">
+                    class="btn-primary">
               + Tambah Item
             </button>
           </div>
@@ -255,7 +255,7 @@
       </div>
 
       <div>
-        <button class="px-4 py-2 rounded bg-green-600 text-white text-sm">
+        <button class="btn-primary">
           Simpan (Draft)
         </button>
       </div>

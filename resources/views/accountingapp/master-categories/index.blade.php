@@ -1,7 +1,7 @@
 @extends('layouts.accountingapp', ['title' => 'Kategori Pengeluaran'])
 
 @section('content')
-  <h1 class="text-2xl font-bold mb-4">Kategori Pengeluaran</h1>
+  <h1 class="page-title mb-6">Kategori Pengeluaran</h1>
 
   <div class="section-card mb-6">
     <h2 class="panel-title mb-4">Tambah Kategori Pengeluaran</h2>
@@ -32,6 +32,9 @@
           </option>
           <option value="fixed_asset" @selected(old('expense_mode') === 'fixed_asset')>
             Aktiva Tetap
+          </option>
+          <option value="wealth_reduction" @selected(old('expense_mode') === 'wealth_reduction')>
+            Mengurangi Kekayaan (di luar Laba Rugi)
           </option>
         </select>
       </div>
@@ -94,6 +97,9 @@
                   </option>
                   <option value="fixed_asset" @selected($category->expense_mode === 'fixed_asset')>
                     Aktiva Tetap
+                  </option>
+                  <option value="wealth_reduction" @selected($category->expense_mode === 'wealth_reduction')>
+                    Mengurangi Kekayaan (di luar Laba Rugi)
                   </option>
                 </select>
               </td>

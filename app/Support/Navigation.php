@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
  *
  * Dua tingkat, seperti yang sudah dikenal pengguna: **aplikasi** di bilah
  * atas (Owner, Admin, Accounting, Inventory, Sales, Marketing, Production,
- * Delivery, Superadmin) dan **menu aplikasi** di sidebar, dikelompokkan per seksi.
+ * Menu, Delivery, Superadmin) dan **menu aplikasi** di sidebar, dikelompokkan per seksi.
  *
  * Dibaca oleh dua penyaji: layout Blade (`layouts.shell`) dan panel
  * Filament (modul inventory). Bilah aplikasinya sama persis di keduanya;
@@ -37,6 +37,7 @@ class Navigation
             'admin' => ['label' => 'Admin', 'icon' => 'heroicon-o-clipboard-document-list', 'dashboard' => 'adminapp.dashboard', 'pattern' => 'admin-app*', 'roles' => ['admin', 'owner', 'superadmin']],
             'accounting' => ['label' => 'Accounting', 'icon' => 'heroicon-o-banknotes', 'dashboard' => 'accountingapp.dashboard', 'pattern' => 'accounting-app*', 'roles' => ['accounting', 'owner', 'superadmin']],
             'inventory' => ['label' => 'Inventory', 'icon' => 'heroicon-o-cube', 'dashboard' => 'filament.admin.pages.dashboard', 'pattern' => 'inventory*', 'roles' => User::PANEL_ROLES],
+            'menu' => ['label' => 'Menu', 'icon' => 'heroicon-o-book-open', 'dashboard' => 'filament.menu.pages.dashboard', 'pattern' => 'menu*', 'roles' => User::MENU_ROLES],
             'sales' => ['label' => 'Sales', 'icon' => 'heroicon-o-shopping-bag', 'dashboard' => 'salesapp.dashboard', 'pattern' => 'sales-app*', 'roles' => ['sales', 'owner', 'superadmin']],
             'marketing' => ['label' => 'Marketing', 'icon' => 'heroicon-o-megaphone', 'dashboard' => 'marketingapp.dashboard', 'pattern' => 'marketing-app*', 'roles' => ['marketing', 'owner', 'superadmin']],
             'production' => ['label' => 'Production', 'icon' => 'heroicon-o-fire', 'dashboard' => 'productionapp.dashboard', 'pattern' => 'production-app*', 'roles' => ['production', 'owner', 'superadmin']],
@@ -74,18 +75,21 @@ class Navigation
                     ['label' => 'Audit Logs', 'route' => 'ownerapp.audit.index', 'match' => 'ownerapp.audit.*', 'icon' => 'heroicon-o-document-magnifying-glass'],
                 ],
             ],
+            // Admin = mini CRM: customer, pesanan, menu & harga jual, laporan.
             'admin' => [
                 'Ringkasan' => [
                     ['label' => 'Dashboard', 'route' => 'adminapp.dashboard', 'icon' => 'heroicon-o-home'],
                 ],
-                'Master Data' => [
-                    ['label' => 'Master Menu', 'route' => 'adminapp.products.index', 'match' => 'adminapp.products.*', 'icon' => 'heroicon-o-squares-2x2'],
-                    ['label' => 'Master Customer', 'route' => 'adminapp.customers.index', 'match' => 'adminapp.customers.*', 'icon' => 'heroicon-o-user-group'],
+                'Customer' => [
+                    ['label' => 'Customer', 'route' => 'adminapp.customers.index', 'match' => 'adminapp.customers.*', 'icon' => 'heroicon-o-user-group'],
                 ],
-                'Operasional' => [
+                'Pesanan' => [
                     ['label' => 'Purchase Orders', 'route' => 'adminapp.orders.index', 'match' => 'adminapp.orders.*', 'icon' => 'heroicon-o-clipboard-document-list'],
                     ['label' => 'SPK', 'route' => 'adminapp.spk.index', 'match' => 'adminapp.spk.*', 'icon' => 'heroicon-o-calendar-days'],
                     ['label' => 'Delivery', 'route' => 'adminapp.delivery.index', 'match' => 'adminapp.delivery.*', 'icon' => 'heroicon-o-truck'],
+                ],
+                'Menu & Harga' => [
+                    ['label' => 'Master Menu', 'route' => 'adminapp.products.index', 'match' => 'adminapp.products.*', 'icon' => 'heroicon-o-squares-2x2'],
                     ['label' => 'Menu Tanpa HPP/OHC', 'route' => 'adminapp.reports.missing-costs', 'match' => 'adminapp.reports.missing-costs*', 'icon' => 'heroicon-o-exclamation-triangle'],
                 ],
                 'Laporan' => [
@@ -113,6 +117,7 @@ class Navigation
                     ['label' => 'Pemasukan Lain', 'route' => 'accountingapp.other-incomes.index', 'match' => 'accountingapp.other-incomes.*', 'icon' => 'heroicon-o-arrow-down-tray'],
                     ['label' => 'Closing Penjualan', 'route' => 'accountingapp.sales-closings.index', 'match' => 'accountingapp.sales-closings.*', 'icon' => 'heroicon-o-lock-closed'],
                     ['label' => 'Pengeluaran', 'route' => 'accountingapp.expenses.index', 'match' => 'accountingapp.expenses.*', 'icon' => 'heroicon-o-arrow-up-tray'],
+                    ['label' => 'Tagihan Pembelian', 'route' => 'accountingapp.purchase-bills.index', 'match' => 'accountingapp.purchase-bills.*', 'icon' => 'heroicon-o-receipt-percent'],
                     ['label' => 'Transfer Antar Akun', 'route' => 'accountingapp.cash-account-transfers.index', 'match' => 'accountingapp.cash-account-transfers.*', 'icon' => 'heroicon-o-arrows-right-left'],
                 ],
                 'Monitoring' => [
@@ -140,28 +145,42 @@ class Navigation
                 ],
                 'Inventory' => [
                     ['label' => 'Item Inventaris', 'route' => 'filament.admin.resources.inventory-items.index', 'can' => 'inventory.view'],
-                    ['label' => 'Master Supplier', 'route' => 'filament.admin.resources.suppliers.index', 'can' => 'inventory.view'],
-                    ['label' => 'Pembelian Bahan Baku', 'route' => 'filament.admin.resources.inventory-purchases.index', 'can' => 'inventory.view'],
                     ['label' => 'Stock Opname', 'route' => 'filament.admin.resources.stock-opnames.index', 'can' => 'inventory.view'],
                     ['label' => 'Opname Bahan', 'route' => 'filament.admin.pages.opname-bahan', 'can' => 'inventory.manage'],
+                    ['label' => 'Susut Bahan', 'route' => 'filament.admin.pages.susut-bahan', 'can' => 'ledger.view'],
                     ['label' => 'Saldo Awal Stok', 'route' => 'filament.admin.resources.inventory-openings.index', 'can' => 'inventory.view'],
                     ['label' => 'Pengaturan Inventory', 'route' => 'filament.admin.pages.pengaturan-inventory', 'can' => 'settings.manage'],
                 ],
-                'Resep & HPP' => [
-                    ['label' => 'Resep & Menu', 'route' => 'filament.admin.resources.recipes.index', 'can' => 'recipe.view'],
-                    ['label' => 'Pencocokan Menu', 'route' => 'filament.admin.pages.pencocokan-menu', 'can' => 'recipe.view'],
-                    ['label' => 'Pekerjaan Menu', 'route' => 'filament.admin.pages.pekerjaan-menu', 'can' => 'recipe.view'],
-                    ['label' => 'Konversi Satuan', 'route' => 'filament.admin.resources.inventory-unit-conversions.index', 'can' => 'inventory.view'],
-                    ['label' => 'Bahan Belum Cocok', 'route' => 'filament.admin.resources.recipe-mismatches.index', 'can' => 'recipe.view'],
-                    ['label' => 'Perbandingan HPP', 'route' => 'filament.admin.pages.hpp-comparison-report', 'can' => 'ledger.view'],
-                    ['label' => 'Susut Bahan', 'route' => 'filament.admin.pages.susut-bahan', 'can' => 'ledger.view'],
-                    ['label' => 'Menu Tidak Diproduksi', 'route' => 'filament.admin.pages.menu-tidak-diproduksi', 'can' => 'recipe.view'],
+                // Modul Pembelian (revisi 7 Okt 2026): gudang belanja lalu
+                // menagih ke accounting lewat Tagihan Pembelian.
+                'Pembelian' => [
+                    ['label' => 'Tagihan Pembelian', 'route' => 'filament.admin.resources.purchase-bills.index', 'can' => 'inventory.view'],
+                    ['label' => 'Pembelian Bahan Baku', 'route' => 'filament.admin.resources.inventory-purchases.index', 'can' => 'inventory.view'],
+                    ['label' => 'Master Supplier', 'route' => 'filament.admin.resources.suppliers.index', 'can' => 'inventory.view'],
                 ],
                 'Produksi' => [
                     ['label' => 'SPK Produksi', 'route' => 'filament.admin.resources.production-orders.index', 'can' => 'production.view'],
                     ['label' => 'Form Kebutuhan', 'route' => 'filament.admin.resources.requisitions.index', 'can' => 'production.view'],
                     ['label' => 'Kartu Stok', 'route' => 'filament.admin.resources.inventory-movements.index', 'can' => 'ledger.view'],
                     ['label' => 'Pelaksana', 'route' => 'filament.admin.resources.production-workers.index', 'can' => 'production.view'],
+                ],
+            ],
+            // Aplikasi Menu (panel Filament /menu): resep & biaya menu. Harga
+            // jual dan profit ke customer tetap di Admin › Master Menu.
+            'menu' => [
+                'Ringkasan' => [
+                    ['label' => 'Dashboard', 'route' => 'filament.menu.pages.dashboard', 'can' => 'recipe.view'],
+                ],
+                'Menu & Resep' => [
+                    ['label' => 'Menu Utama & Sub Menu', 'route' => 'filament.menu.resources.recipes.index', 'can' => 'recipe.view'],
+                    ['label' => 'Pencocokan Menu', 'route' => 'filament.menu.pages.pencocokan-menu', 'can' => 'recipe.view'],
+                    ['label' => 'Pekerjaan Menu', 'route' => 'filament.menu.pages.pekerjaan-menu', 'can' => 'recipe.view'],
+                ],
+                'HPP & OHC' => [
+                    ['label' => 'Konversi Satuan', 'route' => 'filament.menu.resources.inventory-unit-conversions.index', 'can' => 'recipe.view'],
+                    ['label' => 'Bahan Belum Cocok', 'route' => 'filament.menu.resources.recipe-mismatches.index', 'can' => 'recipe.view'],
+                    ['label' => 'Perbandingan HPP', 'route' => 'filament.menu.pages.hpp-comparison-report', 'can' => 'ledger.view'],
+                    ['label' => 'Menu Tidak Diproduksi', 'route' => 'filament.menu.pages.menu-tidak-diproduksi', 'can' => 'recipe.view'],
                 ],
             ],
             'sales' => [

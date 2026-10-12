@@ -29,6 +29,10 @@ use InvalidArgumentException;
  */
 class IngredientStockCount extends Page implements HasForms
 {
+    use \App\Filament\Concerns\PageInPanel;
+
+    protected static string $ownerPanel = 'admin';
+
     use InteractsWithForms;
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';

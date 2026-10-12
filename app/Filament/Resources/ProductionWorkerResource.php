@@ -15,6 +15,8 @@ use Filament\Tables\Table;
 /** Pelaksana dapur untuk lembar kerja; bukan pengguna sistem. */
 class ProductionWorkerResource extends Resource
 {
+    use \App\Filament\Concerns\InInventoryPanel;
+
     protected static ?string $model = ProductionWorker::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-user-group';

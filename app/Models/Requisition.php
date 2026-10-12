@@ -143,6 +143,12 @@ class Requisition extends Model
         return $this->hasMany(InventoryPurchase::class);
     }
 
+    /** Tagihan Pembelian yang lahir saat form ini diperiksa. */
+    public function purchaseBill(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(PurchaseBill::class);
+    }
+
     public function cashAccount(): BelongsTo
     {
         return $this->belongsTo(CashAccount::class);

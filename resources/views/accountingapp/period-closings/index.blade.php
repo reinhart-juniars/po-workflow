@@ -28,7 +28,7 @@
         ];
     @endphp
 
-    <h1 class="text-2xl font-bold mb-4">Status Periode</h1>
+    <h1 class="page-title mb-6">Status Periode</h1>
 
     @if ($previousOpenPeriodWarning)
         <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">

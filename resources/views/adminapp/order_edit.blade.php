@@ -147,7 +147,7 @@
             </div>
         </div>
 
-        <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+        <div class="rounded-xl bg-slate-50 p-4 ring-1 ring-inset ring-slate-950/5">
             <div class="mb-3 flex items-center justify-between">
                 <h2 class="text-base font-semibold text-slate-900">Item PO</h2>
                 <button type="button" id="btnAddItem" class="btn-primary py-2 text-xs">+ Tambah Item</button>

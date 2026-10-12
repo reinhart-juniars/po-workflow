@@ -41,25 +41,25 @@
 
     <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
-            <div class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Telepon</div>
+            <div class="text-xs font-medium text-slate-500">Telepon</div>
             <div class="mt-1 text-sm font-medium text-slate-800">{{ $firstPo?->customer?->phone ?? '-' }}</div>
         </div>
         <div>
-            <div class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Area</div>
+            <div class="text-xs font-medium text-slate-500">Area</div>
             <div class="mt-1 text-sm font-medium text-slate-800">{{ $do->area->name ?? '-' }}</div>
         </div>
         <div class="sm:col-span-2">
-            <div class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Alamat Kirim</div>
+            <div class="text-xs font-medium text-slate-500">Alamat Kirim</div>
             <div class="mt-1 text-sm font-medium text-slate-800">{{ $firstPo?->shipping_address ?? '-' }}</div>
         </div>
         <div>
-            <div class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Jadwal Kirim</div>
+            <div class="text-xs font-medium text-slate-500">Jadwal Kirim</div>
             <div class="mt-1 text-sm font-medium text-slate-800">
                 {{ $do->scheduled_at ? \Carbon\Carbon::parse($do->scheduled_at)->format('d/m/Y H:i') : '-' }}
             </div>
         </div>
         <div>
-            <div class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Jumlah PO</div>
+            <div class="text-xs font-medium text-slate-500">Jumlah PO</div>
             <div class="mt-1 text-sm font-medium text-slate-800">{{ $do->purchaseOrders->count() }}</div>
         </div>
     </div>
@@ -74,7 +74,7 @@
                 <button
                     type="button"
                     id="btnStart"
-                    class="w-full rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-600"
+                    class="btn-warning w-full"
                 >
                     Mulai Pengiriman
                 </button>
@@ -87,7 +87,7 @@
                 <button
                     type="button"
                     id="btnDone"
-                    class="btn-primary w-full !bg-emerald-600 hover:!bg-emerald-700"
+                    class="btn-success w-full"
                 >
                     Selesaikan Pengiriman
                 </button>
@@ -124,11 +124,11 @@
                 <div class="mt-1 text-sm font-semibold text-slate-900">{{ $po->customer->name ?? '-' }}</div>
                 <div class="mt-2 grid grid-cols-2 gap-2 text-sm text-slate-600">
                     <div>
-                        <div class="text-[11px] uppercase tracking-[0.08em] text-slate-400">Tanggal</div>
+                        <div class="text-xs text-slate-400">Tanggal</div>
                         <div>{{ $po->delivery_date ? \Carbon\Carbon::parse($po->delivery_date)->format('d/m/Y') : '-' }}</div>
                     </div>
                     <div>
-                        <div class="text-[11px] uppercase tracking-[0.08em] text-slate-400">Jam</div>
+                        <div class="text-xs text-slate-400">Jam</div>
                         <div>{{ $po->delivery_time ?? '-' }}</div>
                     </div>
                 </div>

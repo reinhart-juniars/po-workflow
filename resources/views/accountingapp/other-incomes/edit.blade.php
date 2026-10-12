@@ -1,7 +1,7 @@
 @extends('layouts.accountingapp', ['title' => 'Edit Pemasukan Lain'])
 
 @section('content')
-  <h1 class="text-2xl font-bold mb-4">Edit Pemasukan Lain</h1>
+  <h1 class="page-title mb-6">Edit Pemasukan Lain</h1>
 
   <div class="mb-4 rounded-lg border px-4 py-3 text-sm {{ $isClosedPeriod ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800' }}">
     <strong>Status periode transaksi:</strong>

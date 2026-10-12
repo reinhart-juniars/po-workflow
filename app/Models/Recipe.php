@@ -57,6 +57,11 @@ class Recipe extends Model
                 $recipe->yield_unit = Unit::canonical($recipe->yield_unit);
             }
         });
+
+        // Hasil, OHC %, aktif/nonaktif ikut menentukan HPP produk.
+        $queue = fn (self $recipe) => app(\App\Services\ProductRecipeCostSync::class)->queueRecipe($recipe->id);
+        static::saved($queue);
+        static::deleted($queue);
     }
 
     public static function normalizeName(?string $name): string

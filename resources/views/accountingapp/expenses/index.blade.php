@@ -27,7 +27,7 @@
         ->all();
   @endphp
 
-  <h1 class="text-2xl font-bold mb-4">Pengeluaran</h1>
+  <h1 class="page-title mb-6">Pengeluaran</h1>
 
   <div class="mb-4 {{ $rangePeriodStatus['has_closed_periods'] ? 'notice-soft-amber' : 'notice-soft-emerald' }}">
     <strong>Status periode:</strong> {{ $rangePeriodStatus['message'] }}

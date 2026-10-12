@@ -1,8 +1,8 @@
 <?php
 
-use App\Filament\Pages\MenuMatching;
-use App\Filament\Resources\RecipeResource\Pages\CreateRecipe;
-use App\Filament\Resources\RecipeResource\Pages\EditRecipe;
+use App\Filament\Menu\Pages\MenuMatching;
+use App\Filament\Menu\Resources\RecipeResource\Pages\CreateRecipe;
+use App\Filament\Menu\Resources\RecipeResource\Pages\EditRecipe;
 use App\Models\Area;
 use App\Models\Customer;
 use App\Models\Product;
@@ -100,7 +100,7 @@ it('mengurutkan produk yang belum dicocokkan dari yang paling laku dan menampilk
 });
 
 it('menautkan, menandai tanpa resep, dan melepas produk dari halaman', function () {
-    $this->actingAs(penggunaPencocokan('admin'));
+    $this->actingAs(penggunaPencocokan('menu'));
 
     $resep = resepUji('Nasi Goreng Ala Solaria');
     $a = produkUji('NASI GORENG SOLARIA 10K');
@@ -154,20 +154,20 @@ it('membuka daftar untuk pemegang izin lihat tetapi menolak perubahan tanpa izin
         ->call('callMountedTableAction');
     expect($produk->fresh()->recipe_id)->toBeNull();
 
-    // Kontrol positif: peran tanpa recipe.view tidak bisa membuka; admin bisa mengubah.
+    // Kontrol positif: peran tanpa recipe.view tidak bisa membuka; tim menu bisa mengubah.
     $this->actingAs(penggunaPencocokan('sales'));
     Livewire::test(MenuMatching::class)->assertForbidden();
 
-    $this->actingAs(penggunaPencocokan('admin'));
+    $this->actingAs(penggunaPencocokan('menu'));
     Livewire::test(MenuMatching::class)->callTableAction('tautkan', $produk, ['recipe_id' => $resep->id]);
     expect($produk->fresh()->recipe_id)->toBe($resep->id);
 });
 
 it('membuat resep baru dari produk dengan nama terusul dan produk langsung tertaut', function () {
-    $this->actingAs(penggunaPencocokan('admin'));
+    $this->actingAs(penggunaPencocokan('menu'));
     $produk = produkUji('PAKET BOX BENTO ITS 25K');
 
-    $this->get(\App\Filament\Resources\RecipeResource::getUrl('create', ['produk' => $produk->id]))->assertOk();
+    $this->get(\App\Filament\Menu\Resources\RecipeResource::getUrl('create', ['produk' => $produk->id]))->assertOk();
 
     $page = Livewire::withQueryParams(['produk' => $produk->id])->test(CreateRecipe::class)
         ->assertFormSet(['name' => 'Paket Box Bento Its', 'product_ids' => [$produk->id]])
@@ -184,7 +184,7 @@ it('membuat resep baru dari produk dengan nama terusul dan produk langsung terta
 });
 
 it('mengganti daftar produk sebuah resep dari form resep', function () {
-    $this->actingAs(penggunaPencocokan('admin'));
+    $this->actingAs(penggunaPencocokan('menu'));
 
     $resep = resepUji('Nasi Capjay');
     $p10 = produkUji('NASI CAPJAY 10K', ['recipe_id' => $resep->id]);
@@ -217,5 +217,5 @@ it('menampilkan status resep tiap produk di master menu Admin App', function () 
         ->assertSee('Nasi Capjay')
         ->assertSee('Tanpa resep')
         ->assertSee('Belum ada resep')
-        ->assertSee(route('filament.admin.pages.pencocokan-menu'), false);
+        ->assertSee(route('filament.menu.pages.pencocokan-menu'), false);
 });

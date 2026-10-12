@@ -8,7 +8,6 @@ use App\Http\Controllers\Concerns\ChecksPeriodClosing;
 use App\Http\Controllers\Concerns\ReportsDamagedInventoryLoss;
 use App\Http\Controllers\Concerns\ReportsHppDetails;
 use App\Models\CashOut;
-use App\Models\ExpenseCategory;
 use App\Models\InventoryItem;
 use App\Models\OtherIncome;
 use App\Models\ProfitLossAdjustment;
@@ -253,10 +252,7 @@ class ProfitLossReportController extends Controller
             ->with('category:id,name,expense_mode,include_hpp')
             ->whereDate('expense_date', '>=', $dateFrom->toDateString())
             ->whereDate('expense_date', '<=', $dateTo->toDateString())
-            ->whereHas('category', function ($query) {
-                $query->where('expense_mode', ExpenseCategory::MODE_DIRECT_EXPENSE)
-                    ->where('include_hpp', false);
-            })
+            ->inProfitAndLoss(fn ($query) => $query->where('include_hpp', false))
             ->get(['expense_category_id', 'amount'])
             ->reject(fn (CashOut $expense) => strcasecmp(trim((string) ($expense->category?->name ?? '')), 'Adjustment') === 0)
             ->groupBy(fn (CashOut $expense) => $expense->category?->name ?: 'Tanpa Kategori')
@@ -448,10 +444,7 @@ class ProfitLossReportController extends Controller
             ->with('category:id,name,expense_mode')
             ->whereDate('expense_date', '>=', $dateFrom->toDateString())
             ->whereDate('expense_date', '<=', $dateTo->toDateString())
-            ->whereHas('category', function ($query) {
-                $query->where('expense_mode', ExpenseCategory::MODE_DIRECT_EXPENSE)
-                    ->where('name', '!=', self::PAYABLE_SETTLEMENT_CATEGORY_NAME);
-            })
+            ->inProfitAndLoss(fn ($query) => $query->where('name', '!=', self::PAYABLE_SETTLEMENT_CATEGORY_NAME))
             ->get(['expense_category_id', 'amount'])
             ->reject(fn (CashOut $expense) => $this->isAdjustmentExpenseCategory($expense))
             ->groupBy(fn (CashOut $expense) => $expense->category?->name ?: 'Tanpa Kategori')

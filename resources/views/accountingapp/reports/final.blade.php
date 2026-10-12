@@ -27,7 +27,7 @@
 
         .final-card-title {
             font-size: 13.5px;
-            font-weight: 800;
+            font-weight: 600;
             letter-spacing: -0.01em;
             color: rgb(15 23 42);
         }
@@ -110,13 +110,13 @@
         .final-line.total {
             background: rgb(220 252 231);
             border-color: rgb(134 239 172);
-            font-weight: 800;
+            font-weight: 600;
         }
 
         .final-line.total .label,
         .final-line.total .amount {
             color: rgb(20 83 45);
-            font-weight: 800;
+            font-weight: 600;
         }
 
         .final-pl-table {
@@ -149,10 +149,8 @@
 
         .final-pl-table tr.section-row td {
             background: rgb(241 245 249);
-            font-weight: 800;
+            font-weight: 600;
             font-size: 12px;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
             color: rgb(15 23 42);
         }
 
@@ -164,7 +162,7 @@
 
         .final-pl-table tr.major-row td {
             background: rgb(219 234 254);
-            font-weight: 800;
+            font-weight: 600;
             color: rgb(15 23 42);
             font-size: 13.5px;
         }
@@ -172,7 +170,7 @@
         .final-pl-table tr.profit-row td {
             background: rgb(220 252 231);
             color: rgb(20 83 45);
-            font-weight: 800;
+            font-weight: 600;
         }
 
         .final-pl-table tr.profit-row.negative td {
@@ -183,7 +181,7 @@
         .final-pl-table tr.total-check-row td {
             background: rgb(254 252 232);
             color: rgb(120 53 15);
-            font-weight: 800;
+            font-weight: 600;
         }
 
         .final-pl-table .indent {
@@ -205,7 +203,7 @@
         .final-pl-table tr.grand-total-row td {
             background: rgb(254 252 232);
             color: rgb(120 53 15);
-            font-weight: 800;
+            font-weight: 600;
         }
 
         .final-pl-table .extra-tag {
@@ -217,8 +215,6 @@
             font-size: 10px;
             font-weight: 700;
             color: rgb(71 85 105);
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
         }
     </style>
 @endpush

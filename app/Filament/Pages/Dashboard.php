@@ -16,6 +16,10 @@ use Filament\Pages\Dashboard as BaseDashboard;
  */
 class Dashboard extends BaseDashboard
 {
+    use \App\Filament\Concerns\PageInPanel;
+
+    protected static string $ownerPanel = 'admin';
+
     protected const ALERT_SESSION_KEY = 'inventory_stock_alert_notified_on';
 
     protected static ?string $navigationIcon = 'heroicon-o-home';

@@ -1,8 +1,8 @@
 <?php
 
-use App\Filament\Pages\HppComparisonReport;
+use App\Filament\Menu\Pages\HppComparisonReport;
+use App\Filament\Menu\Resources\RecipeResource\Pages\CreateRecipe;
 use App\Filament\Pages\ModuleSettings;
-use App\Filament\Resources\RecipeResource\Pages\CreateRecipe;
 use App\Models\AppSetting;
 use App\Models\AuditLog;
 use App\Models\InventoryItem;
@@ -101,7 +101,7 @@ it('hanya membuka halaman pengaturan untuk peran berizin settings.manage', funct
 it('memakai OHC dan profit bawaan dari pengaturan saat membuat resep baru', function () {
     app(Settings::class)->setMany(['recipe.default_ohc_pct' => 30, 'recipe.default_profit_pct' => 15]);
 
-    $this->actingAs(penggunaPengaturan('admin'));
+    $this->actingAs(penggunaPengaturan('menu'));
 
     Livewire::test(CreateRecipe::class)
         ->assertFormSet(['ohc_pct' => 30.0, 'profit_pct' => 15.0]);

@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -14,17 +14,18 @@
         --ink-900: #0f172a;
     }
 
-    /* Latar halaman = slate-50, sama dengan panel Filament. */
+    /* Latar halaman = slate-50 dan teks slate-950, sama dengan panel Filament. */
     body {
-        @apply min-h-screen font-body text-slate-800;
+        @apply min-h-screen font-body text-slate-950;
         background: #f8fafc;
     }
 
+    /* Satu font untuk seluruh sistem (Blade, Filament, halaman masuk): Public Sans. */
     h1,
     h2,
     h3,
     h4 {
-        @apply font-display tracking-tight text-slate-900;
+        @apply font-body tracking-tight text-slate-950;
     }
 }
 
@@ -38,7 +39,7 @@
     }
 
     .app-card {
-        @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+        @apply rounded-xl border-0 bg-white shadow-sm ring-1 ring-slate-950/5;
     }
 
     .app-sidebar {
@@ -61,52 +62,57 @@
         @apply px-3 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400;
     }
 
+    /* Tombol mengikuti fi-btn panel Filament: tinggi 36, radius 8, 14/600.
+       Aksi utama = brand; aksi lain = abu (putih + ring 10%). Ekspor bukan
+       aksi utama, jadi Excel/PDF memakai gaya abu, bukan hijau/merah. */
+    .btn-base {
+        @apply inline-flex min-h-[36px] items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold leading-5 shadow-sm outline-none focus-visible:ring-2;
+    }
+
     .btn-primary {
-        @apply inline-flex min-h-[42px] items-center justify-center rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500/40;
+        @apply btn-base bg-brand-600 text-white hover:bg-brand-500 focus-visible:ring-brand-500/50;
+    }
+
+    .btn-gray {
+        @apply btn-base bg-white text-slate-950 ring-1 ring-slate-950/10 hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-brand-600;
     }
 
     .btn-ghost {
-        @apply inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50;
+        @apply btn-gray;
     }
 
     .btn-secondary {
-        @apply inline-flex min-h-[42px] items-center justify-center rounded-xl bg-slate-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400/40;
+        @apply btn-gray;
     }
 
     .btn-outline {
-        @apply inline-flex min-h-[42px] items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300/40;
+        @apply btn-gray;
     }
 
     .btn-success {
-        @apply inline-flex min-h-[42px] items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/40;
+        @apply btn-base bg-emerald-600 text-white hover:bg-emerald-500 focus-visible:ring-emerald-500/50;
     }
 
-    .btn-export {
-        @apply inline-flex min-h-[42px] items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition focus:outline-none focus:ring-2;
-    }
-
-    .btn-export-excel {
-        @apply btn-export bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500/40;
-    }
-
+    .btn-export,
+    .btn-export-excel,
     .btn-export-pdf {
-        @apply btn-export bg-rose-600 hover:bg-rose-700 focus:ring-rose-500/40;
+        @apply btn-gray;
     }
 
     .btn-warning {
-        @apply inline-flex min-h-[38px] items-center justify-center rounded-xl bg-amber-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-400/40;
+        @apply btn-base bg-amber-500 text-white hover:bg-amber-400 focus-visible:ring-amber-500/50;
     }
 
     .btn-danger {
-        @apply inline-flex min-h-[38px] items-center justify-center rounded-xl bg-rose-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-400/40;
+        @apply btn-base bg-rose-600 text-white hover:bg-rose-500 focus-visible:ring-rose-500/50;
     }
 
     .btn-link {
-        @apply inline-flex min-h-[38px] items-center justify-center rounded-lg px-2 py-2 text-sm font-semibold text-brand-600 transition hover:bg-brand-50 hover:text-brand-700;
+        @apply inline-flex min-h-[36px] items-center justify-center gap-1 rounded-lg px-2 py-2 text-sm font-semibold text-brand-600 transition hover:text-brand-500 hover:underline;
     }
 
     .btn-link-danger {
-        @apply inline-flex min-h-[38px] items-center justify-center rounded-lg px-2 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 hover:text-rose-700;
+        @apply inline-flex min-h-[36px] items-center justify-center gap-1 rounded-lg px-2 py-2 text-sm font-semibold text-rose-600 transition hover:text-rose-500 hover:underline;
     }
 
     /* Aksi baris tabel berupa ikon (components/row-action), setara tombol
@@ -167,23 +173,23 @@
     }
 
     .form-control {
-        @apply w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:border-brand-500 focus:ring-brand-500/30;
+        @apply w-full rounded-lg border border-slate-950/10 px-3 py-1.5 text-sm leading-6 text-slate-950 shadow-sm placeholder:text-slate-400 focus:border-brand-600 focus:ring-1 focus:ring-brand-600;
     }
 
     .flash-success {
-        @apply mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900;
+        @apply mb-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 ring-1 ring-inset ring-emerald-600/20;
     }
 
     .flash-error {
-        @apply mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-900;
+        @apply mb-4 rounded-xl bg-rose-50 px-4 py-3 text-sm font-medium text-rose-800 ring-1 ring-inset ring-rose-600/20;
     }
 
     label {
-        @apply text-sm font-medium text-slate-700;
+        @apply text-sm font-medium text-slate-950;
     }
 
     .form-label {
-        @apply mb-1 block text-[13px] font-semibold tracking-[0.01em] text-slate-600;
+        @apply mb-2 block text-sm font-medium leading-6 text-slate-950;
     }
 
     .field-help {
@@ -193,19 +199,30 @@
     input:not([type="checkbox"]):not([type="radio"]),
     select,
     textarea {
-        @apply w-full rounded-xl border-slate-300 px-3 py-2.5 text-sm focus:border-brand-500 focus:ring-brand-500/30;
+        @apply w-full rounded-lg border-slate-950/10 px-3 py-1.5 text-sm leading-6 text-slate-950 shadow-sm placeholder:text-slate-400 focus:border-brand-600 focus:ring-1 focus:ring-brand-600;
     }
 
+    input[type="checkbox"],
+    input[type="radio"] {
+        @apply border-slate-950/20 text-brand-600 shadow-sm focus:ring-2 focus:ring-brand-600 focus:ring-offset-0;
+    }
+
+    input[type="checkbox"] {
+        @apply rounded;
+    }
+
+    /* Kepala halaman ala fi-header: judul di kanvas, tanpa kartu. Isi lain
+       di dalamnya (filter, chip periode) tetap mengalir di bawah judul. */
     .dashboard-hero {
-        @apply app-card p-5;
+        @apply px-0 pb-2 pt-0;
     }
 
     .dashboard-hero-title {
-        @apply text-xl sm:text-2xl;
+        @apply text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl;
     }
 
     .dashboard-hero-subtitle {
-        @apply mt-1.5 max-w-2xl text-xs leading-relaxed text-slate-600 sm:text-sm;
+        @apply mt-2 max-w-3xl text-sm leading-6 text-slate-500 sm:text-base;
     }
 
     .stats-grid {
@@ -213,23 +230,23 @@
     }
 
     .stat-card {
-        @apply app-card p-4;
+        @apply app-card p-5;
     }
 
     .stat-label {
-        @apply text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500;
+        @apply text-sm font-medium text-slate-500;
     }
 
     .stat-value {
-        @apply mt-1.5 font-display text-xl text-slate-900 sm:text-2xl;
+        @apply mt-2 text-2xl font-semibold tracking-tight text-slate-950 tabular-nums sm:text-[1.75rem] sm:leading-9;
     }
 
     .stat-value-compact {
-        @apply mt-1.5 font-display text-lg leading-tight text-slate-900 sm:text-xl;
+        @apply mt-2 text-xl font-semibold leading-tight tracking-tight text-slate-950 tabular-nums sm:text-2xl;
     }
 
     .stat-meta {
-        @apply mt-1 text-xs text-slate-500;
+        @apply mt-1 text-sm text-slate-500;
     }
 
     .table-shell {
@@ -237,7 +254,7 @@
     }
 
     .table-head {
-        @apply border-b border-slate-200/80 bg-slate-50 px-5 py-3 text-sm font-semibold tracking-[0.01em] text-slate-800;
+        @apply border-b border-slate-200 bg-white px-6 py-4 text-base font-semibold text-slate-950;
     }
 
     .data-table-wrap {
@@ -245,19 +262,26 @@
     }
 
     .data-table {
-        @apply min-w-full divide-y divide-slate-200 text-sm;
+        @apply min-w-full divide-y divide-slate-200 text-sm tabular-nums;
     }
 
     .data-table thead th {
-        @apply bg-slate-50/90 px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-[0.08em] text-slate-500;
+        @apply bg-slate-50 px-3 py-3.5 text-sm font-semibold text-slate-950 first:pl-6 last:pr-6;
+    }
+
+    /* Rata kiri bawaan dengan spesifisitas rendah (:where), supaya kolom
+       angka ber-.text-right benar-benar rata kanan. Dulu `.data-table thead th`
+       (0,1,2) mengalahkan .text-right (0,1,0) di semua tabel Blade. */
+    :where(.data-table thead th) {
+        text-align: left;
     }
 
     .data-table tbody td {
-        @apply px-4 py-3 text-slate-700;
+        @apply px-3 py-4 text-sm text-slate-950 first:pl-6 last:pr-6;
     }
 
     .data-table tbody tr {
-        @apply border-t border-slate-100;
+        @apply border-t border-slate-200 transition-colors duration-75 hover:bg-slate-50/60;
     }
 
     /* Worksheet dua sisi (Debet | Kredit): tiap sisi tepat setengah lebar
@@ -283,11 +307,22 @@
     }
 
     .status-badge {
-        @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold;
+        @apply inline-flex items-center gap-x-1 whitespace-nowrap rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ring-slate-950/5;
     }
 
     .page-toolbar {
-        @apply flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between;
+        @apply flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between;
+    }
+
+    /* Judul halaman ala fi-header-heading: 30/36 bold, -0.025em. Berlaku
+       untuk h1 di .page-toolbar (pola daftar) dan .page-title (pola form). */
+    .page-title,
+    .page-toolbar h1 {
+        @apply text-2xl font-bold leading-8 tracking-tight text-slate-950 sm:text-3xl sm:leading-9;
+    }
+
+    .page-toolbar h1 + .section-subtitle {
+        @apply mt-2 max-w-3xl text-sm leading-6 text-slate-500 sm:text-base;
     }
 
     .toolbar-actions {
@@ -299,7 +334,7 @@
     }
 
     .file-input {
-        @apply w-full rounded-xl border border-dashed border-slate-300 bg-white/90 px-3 py-2.5 text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-slate-700 hover:border-slate-400;
+        @apply w-full rounded-lg border border-slate-950/10 bg-white px-1.5 py-1 text-sm text-slate-500 shadow-sm file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-1 file:text-sm file:font-semibold file:text-slate-950 hover:file:bg-slate-200;
     }
 
     /* Tombol unggah foto di kartu Katalog: label untuk input file tersembunyi. */
@@ -320,11 +355,11 @@
     }
 
     .panel-head {
-        @apply border-b border-slate-200/80 px-5 py-4;
+        @apply border-b border-slate-200 px-6 py-4;
     }
 
     .section-card {
-        @apply app-card p-5;
+        @apply app-card p-6;
     }
 
     .sales-page {
@@ -360,11 +395,11 @@
     }
 
     .sales-stat-value {
-        @apply mt-2 font-display text-xl leading-none text-slate-900 sm:text-[1.75rem];
+        @apply mt-2 text-xl font-semibold leading-none tracking-tight text-slate-950 tabular-nums sm:text-[1.75rem];
     }
 
     .sales-stat-value-money {
-        @apply mt-2 font-display text-base leading-tight text-slate-900 min-[420px]:text-lg sm:text-2xl;
+        @apply mt-2 text-base font-semibold leading-tight tracking-tight text-slate-950 tabular-nums min-[420px]:text-lg sm:text-2xl;
     }
 
     .sales-table .data-table {
@@ -522,7 +557,7 @@
     }
 
     .section-title {
-        @apply text-lg font-semibold tracking-[-0.01em] text-slate-900;
+        @apply text-base font-semibold leading-6 text-slate-950;
     }
 
     .section-subtitle {
@@ -530,7 +565,7 @@
     }
 
     .report-action-bar {
-        @apply mt-5 flex flex-col gap-3 rounded-2xl border border-slate-200/90 bg-slate-50/90 px-4 py-3 sm:flex-row sm:items-center sm:justify-between;
+        @apply mt-5 flex flex-col gap-3 rounded-xl bg-white px-4 py-3 ring-1 ring-slate-950/5 sm:flex-row sm:items-center sm:justify-between;
     }
 
     .report-action-text {
@@ -538,63 +573,68 @@
     }
 
     .panel-title {
-        @apply text-base font-semibold tracking-[-0.01em] text-slate-900;
+        @apply text-base font-semibold leading-6 text-slate-950;
     }
 
     .metric-label {
-        @apply mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500;
+        @apply mb-1 text-sm font-medium text-slate-500;
     }
 
     .metric-value {
-        @apply text-2xl font-display text-slate-900;
+        @apply text-2xl font-semibold tracking-tight text-slate-950 tabular-nums sm:text-[1.75rem] sm:leading-9;
     }
 
     .metric-value-compact {
-        @apply text-xl font-display leading-tight text-slate-900 sm:text-[1.35rem];
+        @apply text-xl font-semibold leading-tight tracking-tight text-slate-950 tabular-nums sm:text-2xl;
     }
 
+    /* Chip & badge mengikuti fi-badge: radius 6, 12/500, ring inset. */
     .chip {
-        @apply inline-flex items-center rounded-full px-3 py-1.5 text-[11px] font-semibold tracking-[0.03em];
+        @apply inline-flex items-center gap-x-1 rounded-md px-2 py-1 text-xs font-medium;
     }
 
     .badge-soft {
-        @apply inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-[0.03em];
+        @apply inline-flex items-center gap-x-1 whitespace-nowrap rounded-md border-0 px-2 py-1 text-xs font-medium ring-1 ring-inset;
     }
 
     .badge-soft-amber {
-        @apply badge-soft border-amber-200 bg-amber-50 text-amber-800;
+        @apply badge-soft bg-amber-50 text-amber-700 ring-amber-600/20;
     }
 
     .badge-soft-slate {
-        @apply badge-soft border-slate-200 bg-slate-100 text-slate-700;
+        @apply badge-soft bg-slate-50 text-slate-600 ring-slate-600/10;
     }
 
     .badge-soft-emerald {
-        @apply badge-soft border-emerald-200 bg-emerald-50 text-emerald-700;
+        @apply badge-soft bg-emerald-50 text-emerald-700 ring-emerald-600/20;
     }
 
     .badge-soft-rose {
-        @apply badge-soft border-rose-200 bg-rose-50 text-rose-700;
+        @apply badge-soft bg-rose-50 text-rose-700 ring-rose-600/20;
+    }
+
+    .badge-soft-brand {
+        @apply badge-soft bg-brand-50 text-brand-600 ring-brand-600/10;
     }
 
     .notice-soft {
-        @apply rounded-2xl border px-4 py-3 text-sm leading-relaxed shadow-[0_10px_24px_-18px_rgba(15,23,42,0.28)];
+        @apply rounded-xl px-4 py-3 text-sm leading-relaxed ring-1 ring-inset;
     }
 
     .notice-soft-amber {
-        @apply notice-soft border-amber-200/80 bg-amber-50 text-amber-900;
+        @apply notice-soft bg-amber-50 text-amber-900 ring-amber-600/20;
     }
 
     .notice-soft-emerald {
-        @apply notice-soft border-emerald-200/80 bg-emerald-50 text-emerald-900;
+        @apply notice-soft bg-emerald-50 text-emerald-900 ring-emerald-600/20;
     }
 
     .chip-filter {
-        @apply chip bg-white text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50;
+        @apply chip bg-white text-slate-700 ring-1 ring-inset ring-slate-950/10 transition hover:bg-slate-50;
     }
 
     .chip-link {
-        @apply chip bg-white text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50;
+        @apply chip bg-white text-slate-700 ring-1 ring-inset ring-slate-950/10 transition hover:bg-slate-50;
     }
 
     .role-builder {
@@ -650,9 +690,11 @@
         @apply app-card p-5;
     }
 
-    .metric-panel-accent,
-    .shell-body .app-card.metric-panel-accent {
-        @apply border-slate-900 bg-slate-950 text-white shadow-sm;
+    /* Kartu sorotan (mis. Total Penjualan): dulu hitam pekat, satu-satunya
+       permukaan gelap di sistem. Kini kartu biasa; urutannya (pertama) sudah
+       cukup menonjolkan. */
+    .metric-panel-accent {
+        @apply bg-white text-slate-950;
     }
 
     .signal-card {
@@ -724,7 +766,7 @@
     }
 
     .owner-line-chart {
-        @apply h-72 w-full overflow-visible rounded-2xl bg-slate-50 p-2;
+        @apply h-72 w-full overflow-visible rounded-xl bg-slate-50 p-2;
     }
 
     .chart-dot {
@@ -820,10 +862,9 @@
         @apply text-brand-600;
     }
 
-    /* Tombol aplikasi lama ikut merasakan tekanan */
-    .btn-primary,
-    .btn-ghost {
-        @apply transition-[background-color,color,transform,border-color] duration-150 ease-out active:scale-[0.97];
+    /* Tekanan tombol: sama untuk semua varian, bukan hanya dua. */
+    .btn-base {
+        @apply transition-[background-color,color,transform,box-shadow] duration-150 ease-out active:scale-[0.97] motion-reduce:transform-none motion-reduce:transition-none;
     }
 }
 
@@ -987,3 +1028,164 @@
         @apply relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600;
     }
 }
+
+/* ---------- Asal HPP & OHC menu (Admin › Master Menu) ----------
+   'resep' = diturunkan dari aplikasi Menu, terkunci; 'tertahan' = resep
+   tertaut tapi hitungannya belum lengkap, masih angka manual. */
+.cost-source { padding: 10px 14px; border: 1px solid #ccd5f6; border-radius: 12px; background: #ebeefb; font-size: 13px; line-height: 19px; color: #2740a4; }
+.cost-source.is-held { border-color: #fde68a; background: #fffbeb; color: #92400e; }
+.cost-source-title { margin: 0; font-weight: 500; }
+.cost-source-note { margin: 2px 0 0; font-size: 12px; opacity: .85; }
+.cost-source a { font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.cost-tag { display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 6px; font-size: 10px; line-height: 16px; font-weight: 600; vertical-align: 1px; }
+.cost-tag.is-recipe { background: #ebeefb; color: #2740a4; }
+.cost-tag.is-manual { background: #f1f5f9; color: #64748b; }
+input.is-locked { background: #f8fafc; color: #475569; cursor: default; }
+
+/* ---------- Halaman masuk (auth/login) ----------
+   Portal korporat untuk sistem internal: panel identitas di kiri (biru brand
+   gelap #1e3080 solid, mulai 1024 px) dan form di kanan (maks. 400 px, field
+   & tombol 44 px). Tanpa angka/data contoh, tanpa gradasi atau kaca. Satu
+   gerak saja: form muncul 320 ms ease-out, mati saat reduced-motion. */
+.lg-page { display: grid; min-height: 100dvh; background: #fff; }
+@media (min-width: 1024px) {
+  .lg-page { grid-template-columns: minmax(380px, 5fr) minmax(0, 7fr); }
+}
+
+.lg-identity { display: none; }
+@media (min-width: 1024px) {
+  .lg-identity {
+    display: flex; flex-direction: column; justify-content: space-between; gap: 48px;
+    padding: 48px 56px; background: #1e3080; color: #fff;
+    border-right: 1px solid rgb(2 6 23 / 0.08);
+  }
+}
+.lg-identity-top { display: flex; align-items: center; gap: 14px; }
+.lg-identity-name { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+.lg-identity-tag { margin-top: 3px; font-size: 10px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: #b7c3f2; }
+.lg-identity-body { max-width: 420px; }
+.lg-identity-company { font-size: 14px; font-weight: 600; color: #b7c3f2; }
+.lg-identity-title { margin-top: 10px; font-size: 34px; line-height: 42px; font-weight: 700; letter-spacing: -0.025em; color: #fff; }
+.lg-identity-text { margin-top: 16px; font-size: 16px; line-height: 26px; color: #dbe2fa; }
+.lg-identity-notice {
+  display: flex; align-items: flex-start; gap: 10px; max-width: 420px;
+  padding-top: 20px; border-top: 1px solid rgb(255 255 255 / 0.16);
+  font-size: 13px; line-height: 20px; color: #dbe2fa;
+}
+.lg-identity-notice svg { width: 16px; height: 16px; flex: none; margin-top: 2px; color: #b7c3f2; }
+
+.lg-form-side { display: flex; min-width: 0; flex-direction: column; padding: 28px 20px; }
+@media (min-width: 640px) { .lg-form-side { padding: 40px 56px; } }
+.lg-brand { display: flex; align-items: center; gap: 12px; }
+@media (min-width: 1024px) { .lg-brand { display: none; } }
+.lg-wordmark { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; color: #020617; }
+.lg-tagline { margin-top: 2px; font-size: 12px; font-weight: 500; color: #64748b; }
+.lg-form-wrap { width: 100%; max-width: 400px; margin: auto; padding: 48px 0; animation: lg-rise 320ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.lg-title { font-size: 30px; line-height: 36px; font-weight: 700; letter-spacing: -0.025em; color: #020617; }
+.lg-subtitle { margin-top: 8px; font-size: 15px; line-height: 24px; color: #64748b; }
+.lg-input { min-height: 44px; font-size: 15px; }
+.lg-password { position: relative; }
+.lg-password .lg-input { padding-right: 44px; }
+.lg-reveal {
+  position: absolute; top: 50%; right: 4px; display: grid; width: 36px; height: 36px; place-items: center;
+  border-radius: 8px; color: #94a3b8; transform: translateY(-50%); transition: color 140ms ease, background-color 140ms ease;
+}
+.lg-reveal:hover { color: #334155; background: #f1f5f9; }
+.lg-reveal:focus-visible { outline: 2px solid #2f4dc5; outline-offset: 0; }
+.lg-reveal svg { width: 18px; height: 18px; }
+.lg-caps { margin-top: 6px; font-size: 12.5px; font-weight: 500; color: #b45309; }
+.lg-submit { width: 100%; min-height: 44px; font-size: 15px; }
+.lg-submit .lg-spinner { display: none; width: 16px; height: 16px; border: 2px solid rgb(255 255 255 / 0.35); border-top-color: #fff; border-radius: 9999px; animation: lg-spin 700ms linear infinite; }
+.lg-submit.is-loading { cursor: progress; opacity: 0.85; }
+.lg-submit.is-loading .lg-spinner { display: inline-block; }
+.lg-help { margin-top: 24px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 13px; line-height: 20px; color: #64748b; }
+.lg-foot { font-size: 12px; color: #94a3b8; }
+
+@keyframes lg-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes lg-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .lg-form-wrap { animation: none; }
+  .lg-submit .lg-spinner { animation-duration: 1.6s; }
+}
+
+/* ---------- Tagihan Pembelian (accountingapp/purchase-bills) ----------
+   Tab status = .tab-pills (pola umum, juga dipakai daftar customer); detail = kolom utama + samping 360 px. */
+.tab-pills { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 12px; background: #f1f4f9; }
+.tab-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; line-height: 20px; color: #64748b; transition: background-color 140ms ease, color 140ms ease; }
+.tab-pill:hover { color: #020617; }
+.tab-pill.is-active { background: #fff; color: #2740a4; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05), 0 0 0 1px rgb(2 6 23 / 0.05); }
+.tab-pill-count { min-width: 20px; padding: 0 6px; border-radius: 6px; background: #ebeefb; color: #2f4dc5; font-size: 12px; line-height: 18px; text-align: center; }
+.bill-layout { display: grid; gap: 16px; }
+.bill-main, .bill-side { min-width: 0; }
+@media (min-width: 1024px) {
+  .bill-layout { grid-template-columns: minmax(0, 1fr) 360px; align-items: start; }
+}
+.bill-meta { display: grid; gap: 10px; font-size: 14px; }
+.bill-meta dt { color: #64748b; }
+.bill-meta dd { margin: 2px 0 0; color: #020617; }
+.bill-more > summary { cursor: pointer; font-size: 14px; font-weight: 600; color: #020617; list-style: none; }
+.bill-more > summary::-webkit-details-marker { display: none; }
+.bill-more > summary::after { content: ' ▸'; color: #94a3b8; }
+.bill-more[open] > summary::after { content: ' ▾'; }
+
+/* ---------- Profil customer (adminapp/customers/show) ----------
+   Grafik omzet: satu seri brand #2f4dc5 (lolos validator dataviz), batang
+   <= 24 px, ujung atas bulat 4 px & alas rata, garis dasar slate-200, label
+   langsung hanya di puncak, tooltip saat hover/fokus, tabel di <details>. */
+.crm-grid { display: grid; gap: 16px; }
+@media (min-width: 1024px) { .crm-grid { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); } }
+.crm-chart { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); align-items: end; height: 200px; padding-top: 22px; border-bottom: 1px solid #e2e8f0; }
+.crm-bar-col { position: relative; display: flex; height: 100%; flex-direction: column; justify-content: flex-end; align-items: center; outline: none; cursor: default; }
+.crm-bar { display: block; width: min(24px, 70%); border-radius: 4px 4px 0 0; background: #2f4dc5; transition: opacity 120ms ease; }
+.crm-chart:hover .crm-bar { opacity: 0.55; }
+.crm-chart .crm-bar-col:hover .crm-bar, .crm-bar-col:focus-visible .crm-bar { opacity: 1; }
+.crm-bar-value { position: absolute; top: -20px; font-size: 11.5px; font-weight: 600; color: #020617; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.crm-bar-label { position: absolute; bottom: -22px; font-size: 11px; color: #64748b; white-space: nowrap; }
+.crm-tip {
+  position: absolute; bottom: calc(100% + 6px); left: 50%; z-index: 5; padding: 6px 8px; border-radius: 8px;
+  background: #020617; color: #fff; font-size: 12px; line-height: 16px; white-space: nowrap; font-variant-numeric: tabular-nums;
+  transform: translate(-50%, 4px); opacity: 0; pointer-events: none; transition: opacity 120ms ease, transform 120ms ease;
+}
+.crm-bar-col:hover .crm-tip, .crm-bar-col:focus-visible .crm-tip { opacity: 1; transform: translate(-50%, 0); }
+.crm-bar-col:first-child .crm-tip { left: 0; transform: translate(0, 4px); }
+.crm-bar-col:last-child .crm-tip { left: auto; right: 0; transform: translate(0, 4px); }
+.crm-bar-col:first-child:hover .crm-tip, .crm-bar-col:last-child:hover .crm-tip { transform: none; }
+.crm-chart + .crm-table { margin-top: 36px; }
+@media (max-width: 640px) { .crm-bar-label { font-size: 9.5px; } .crm-bar-col:nth-child(even) .crm-bar-label { display: none; } }
+.crm-table > summary { cursor: pointer; font-size: 13px; font-weight: 600; color: #2f4dc5; list-style: none; }
+.crm-table > summary::-webkit-details-marker { display: none; }
+.crm-fav { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #e2e8f0; }
+.crm-fav:first-of-type { border-top: 0; }
+.crm-fav-rank { display: grid; width: 26px; height: 26px; flex: none; place-items: center; border-radius: 8px; background: #ebeefb; color: #2740a4; font-size: 12px; font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { .crm-bar, .crm-tip { transition: none; } }
+
+/* ---------- Pengeluaran per kategori (ownerapp/partials/category-bars) ----------
+   Batang horizontal berurutan, satu warna brand. Batang 10 px berujung bulat
+   4 px (alas rata di kiri), lintasan slate-100, label/nilai pakai warna teks. */
+.cat-bars { display: grid; padding: 8px 24px 16px; }
+.cat-bar-row {
+  position: relative; display: grid; grid-template-columns: minmax(110px, 200px) minmax(0, 1fr) 136px 56px; align-items: center; gap: 0 14px;
+  padding: 9px 0; border-top: 1px solid #f1f5f9; outline: none;
+}
+.cat-bar-row:first-child { border-top: 0; }
+.cat-bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 500; color: #020617; }
+.cat-bar-track { display: block; height: 10px; border-radius: 0 4px 4px 0; background: #f1f5f9; }
+.cat-bar-fill { display: block; height: 100%; border-radius: 0 4px 4px 0; background: #2f4dc5; transition: opacity 120ms ease; }
+.cat-bars:hover .cat-bar-fill { opacity: 0.55; }
+.cat-bars .cat-bar-row:hover .cat-bar-fill, .cat-bar-row:focus-visible .cat-bar-fill { opacity: 1; }
+.cat-bar-value { font-size: 14px; font-weight: 600; color: #020617; white-space: nowrap; font-variant-numeric: tabular-nums; text-align: right; }
+.cat-bar-pct { font-size: 13px; color: #64748b; text-align: right; font-variant-numeric: tabular-nums; }
+.cat-bar-tip {
+  position: absolute; bottom: calc(100% - 2px); left: 214px; z-index: 5; padding: 6px 8px; border-radius: 8px;
+  background: #020617; color: #fff; font-size: 12px; line-height: 16px; white-space: nowrap; font-variant-numeric: tabular-nums;
+  opacity: 0; pointer-events: none; transform: translateY(4px); transition: opacity 120ms ease, transform 120ms ease;
+}
+.cat-bar-row:hover .cat-bar-tip, .cat-bar-row:focus-visible .cat-bar-tip { opacity: 1; transform: none; }
+@media (max-width: 640px) {
+  .cat-bars { padding: 8px 16px 12px; }
+  .cat-bar-row { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; }
+  .cat-bar-track { grid-column: 1 / -1; grid-row: 2; }
+  .cat-bar-pct { display: none; }
+  .cat-bar-tip { left: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .cat-bar-fill, .cat-bar-tip { transition: none; } }

@@ -2,7 +2,7 @@
 
 use App\Exports\MenuMatchingExport;
 use App\Exports\RecipesExport;
-use App\Filament\Pages\MenuMatching;
+use App\Filament\Menu\Pages\MenuMatching;
 use App\Imports\MenuMatchingImport;
 use App\Imports\RecipesImport;
 use App\Models\Product;
@@ -128,7 +128,7 @@ it('membatalkan seluruh berkas bila ada baris yang salah', function () {
 
 it('menyediakan tombol export dan import di halaman, import hanya untuk pemegang izin kelola', function () {
     Role::findOrCreate('accounting', 'web');
-    Role::findOrCreate('admin', 'web');
+    Role::findOrCreate('menu', 'web');
 
     $accounting = User::factory()->create(['is_active' => true, 'force_password_change' => false]);
     $accounting->assignRole('accounting');
@@ -139,7 +139,7 @@ it('menyediakan tombol export dan import di halaman, import hanya untuk pemegang
         ->assertActionHidden('import');
 
     $admin = User::factory()->create(['is_active' => true, 'force_password_change' => false]);
-    $admin->assignRole('admin');
+    $admin->assignRole('menu');
     $this->actingAs($admin);
 
     produkCocok('NASI CAPJAY 12K');

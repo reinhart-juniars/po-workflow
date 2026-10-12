@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
 
 // Bagian B.2: pemeriksaan profit menu harian (butuh cron `schedule:run`, lihat docs/CUTOVER.md).
+// HPP & OHC produk dari resep: jaring pengaman harian sebelum cek profit.
+Schedule::command('menu:sync-product-costs')->dailyAt('06:15');
 Schedule::command('profit:check')->dailyAt('06:30');
 
 Artisan::command('inspire', function () {

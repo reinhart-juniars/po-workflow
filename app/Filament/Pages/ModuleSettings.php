@@ -25,6 +25,10 @@ use InvalidArgumentException;
  */
 class ModuleSettings extends Page implements HasForms
 {
+    use \App\Filament\Concerns\PageInPanel;
+
+    protected static string $ownerPanel = 'admin';
+
     use InteractsWithForms;
 
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';

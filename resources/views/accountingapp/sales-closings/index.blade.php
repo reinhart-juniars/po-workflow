@@ -72,7 +72,7 @@
     <section class="mt-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div class="flex items-start justify-between gap-3">
             <div>
-                <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Rekonsiliasi dengan Laporan
+                <div class="text-xs font-medium text-slate-500">Rekonsiliasi dengan Laporan
                     Penjualan</div>
                 <p class="mt-1 text-xs text-slate-500">
                     Yang akan diposting ke Cash In hanya bagian <strong>Tunai</strong>. Bagian <strong>Piutang</strong>
@@ -83,14 +83,14 @@
         </div>
         <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div class="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-                <div class="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Penjualan Tunai (Akan
+                <div class="text-xs font-medium text-emerald-700">Penjualan Tunai (Akan
                     Diposting)</div>
                 <div class="mt-1 text-lg font-bold text-emerald-800">{{ $formatCurrency($grossAmount) }}</div>
                 <div class="text-[11px] text-emerald-700/80">{{ number_format($preview['itemCount'], 0, ',', '.') }} item ·
                     {{ number_format($preview['salesActualCount'], 0, ',', '.') }} sales actual</div>
             </div>
             <div class="rounded-lg border border-amber-200 bg-amber-50 p-3">
-                <div class="text-[11px] font-semibold uppercase tracking-wide text-amber-700">Penjualan Piutang (Info Only)
+                <div class="text-xs font-medium text-amber-700">Penjualan Piutang (Info Only)
                 </div>
                 <div class="mt-1 text-lg font-bold text-amber-800">{{ $formatCurrency($receivableAmount) }}</div>
                 <div class="text-[11px] text-amber-700/80">
@@ -99,7 +99,7 @@
                 </div>
             </div>
             <div class="rounded-lg border border-slate-300 bg-slate-50 p-3">
-                <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-600">Total Penjualan (Klop dengan
+                <div class="text-xs font-medium text-slate-600">Total Penjualan (Klop dengan
                     Laporan)</div>
                 <div class="mt-1 text-lg font-bold text-slate-900">{{ $formatCurrency($grandTotalAmount) }}</div>
                 <div class="text-[11px] text-slate-500">Tunai + Piutang</div>
@@ -108,7 +108,7 @@
         <div class="mt-3 rounded-lg border border-slate-200 bg-white p-3">
             <div class="flex items-center justify-between">
                 <div>
-                    <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-600">Ongkos Kirim (Penjualan
+                    <div class="text-xs font-medium text-slate-600">Ongkos Kirim (Penjualan
                         Lain-Lain)</div>
                     <div class="text-[11px] text-slate-500">Diposting otomatis ke Cash In sebagai "Penjualan Lain-Lain"
                         per akun kas PO tunai. Untuk PO piutang, ongkir diposting saat pelunasan.</div>
@@ -294,7 +294,7 @@
 
                 <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
                     <div class="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm">
-                        <div class="text-xs uppercase tracking-wide text-amber-700">Tanggal Penjualan yang Diposting</div>
+                        <div class="text-xs text-amber-700">Tanggal Penjualan yang Diposting</div>
                         <div class="mt-0.5 text-base font-bold text-amber-900">
                             {{ $closingDate->format('d-m-Y') }}
                         </div>

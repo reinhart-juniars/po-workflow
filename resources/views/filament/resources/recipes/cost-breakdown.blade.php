@@ -3,7 +3,7 @@
     $cost = $this->getCost();
     $requirements = $this->getRequirements();
     $rupiah = fn ($value) => 'Rp ' . number_format((float) $value, 2, ',', '.');
-    $angka = fn ($value) => \App\Filament\Resources\RecipeResource::formatQty($value);
+    $angka = fn ($value) => \App\Filament\Menu\Resources\RecipeResource::formatQty($value);
 @endphp
 
 <x-filament-panels::page>

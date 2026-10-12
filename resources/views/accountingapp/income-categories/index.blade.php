@@ -1,7 +1,7 @@
 @extends('layouts.accountingapp', ['title' => 'Kategori Pemasukan'])
 
 @section('content')
-  <h1 class="text-2xl font-bold mb-4">Kategori Pemasukan</h1>
+  <h1 class="page-title mb-6">Kategori Pemasukan</h1>
 
   @if ($errors->any())
     <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-4">

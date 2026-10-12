@@ -35,10 +35,8 @@
         .production-report-table thead th {
             background: rgb(226 232 240 / 0.96);
             text-align: left;
-            font-weight: 800;
+            font-weight: 600;
             color: rgb(15 23 42);
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
         }
 
         .production-col-code {
@@ -108,7 +106,7 @@
             border-top: 1px solid rgb(203 213 225);
             padding-top: 0.45rem;
             text-align: right;
-            font-weight: 800;
+            font-weight: 600;
             color: rgb(15 23 42);
         }
 
@@ -139,10 +137,8 @@
         .production-summary-table thead th {
             background: rgb(226 232 240 / 0.96);
             text-align: left;
-            font-weight: 800;
+            font-weight: 600;
             color: rgb(15 23 42);
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
         }
 
         .production-summary-details {
@@ -157,10 +153,8 @@
 
         .production-summary-label {
             font-size: 11px;
-            font-weight: 800;
+            font-weight: 600;
             color: rgb(71 85 105);
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
         }
 
         .production-summary-value {

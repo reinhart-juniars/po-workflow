@@ -1,7 +1,7 @@
 @extends('layouts.accountingapp', ['title' => 'Edit Adjustment Neraca'])
 
 @section('content')
-    <h1 class="text-2xl font-bold mb-4">Edit Adjustment Neraca</h1>
+    <h1 class="page-title mb-6">Edit Adjustment Neraca</h1>
 
     <div class="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
         Hanya role <strong>owner</strong> dan <strong>superadmin</strong> yang dapat mengubah adjustment neraca.

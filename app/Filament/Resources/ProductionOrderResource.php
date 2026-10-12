@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Menu\Resources\RecipeResource;
 use App\Filament\Resources\ProductionOrderResource\Pages;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderLine;
@@ -28,6 +29,8 @@ use Throwable;
  */
 class ProductionOrderResource extends Resource
 {
+    use \App\Filament\Concerns\InInventoryPanel;
+
     protected static ?string $model = ProductionOrder::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-fire';

@@ -1,7 +1,7 @@
 @extends('layouts.adminapp', ['title' => 'Tambah Customer'])
 
 @section('content')
-<h1 class="text-2xl font-bold mb-4">Tambah Customer</h1>
+<h1 class="page-title mb-6">Tambah Customer</h1>
 
 @if ($errors->any())
   <div class="mb-4 p-3 rounded bg-red-50 border border-red-200 text-red-700 text-sm">
@@ -57,7 +57,7 @@
   </div>
 
   <div class="pt-2">
-    <button class="px-4 py-2 rounded bg-green-600 text-white text-sm">
+    <button class="btn-primary">
       Simpan
     </button>
   </div>

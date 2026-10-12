@@ -11,7 +11,7 @@
 </head>
 <body class="min-h-screen bg-gray-100 text-gray-900 antialiased">
     <div class="flex min-h-screen items-center justify-center px-4 py-10">
-        <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-sm">
+        <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-950/5">
             {{ $slot }}
         </div>
     </div>

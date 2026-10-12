@@ -181,25 +181,30 @@ it('menampilkan daftar item inventaris muat satu layar: kolom induk disembunyika
         ->and($actions['delete']->isIconButton())->toBeTrue();
 });
 
-it('menjaga posisi sidebar dan prefetch menu di panel maupun layout Blade', function () {
+it('memulai sidebar dari paling atas dan prefetch menu, di panel maupun layout Blade', function () {
     // Positive control: skrip bawaan Filament yang menggulir menu aktif ke
     // tengah memang ada, jadi penggantinya harus dirender sebelum ia berjalan
     // (di akhir <nav>, sedangkan skrip Filament menunggu DOMContentLoaded).
-    $this->get(InventoryItemResource::getUrl('index'))
+    $panel = $this->get(InventoryItemResource::getUrl('index'))
         ->assertOk()
         ->assertSee('<script type="speculationrules">', false)
         // Animasi geser antar menu: opt-in inline (bukan dari Vite) dan
         // penanda akhir halaman yang ditunggu transisinya.
         ->assertSeeInOrder(['@view-transition', '</head>', 'id="sh-page-end"'], false)
-        ->assertSee('sh-sidebar-scroll:inventory', false)
-        ->assertSeeInOrder(['sh-sidebar-scroll:inventory', '</nav>', 'sidebarWrapper.scrollTo'], false);
+        ->assertSeeInOrder(['data-sidebar-top="inventory"', 'nav.scrollTop = 0', '</nav>', 'sidebarWrapper.scrollTo'], false)
+        ->getContent();
 
-    // Layout Blade memakai partial yang sama, dengan kunci per aplikasi.
-    $this->get(route('adminapp.dashboard'))
+    // Layout Blade memakai partial yang sama.
+    $blade = $this->get(route('adminapp.dashboard'))
         ->assertOk()
         ->assertSee('<script type="speculationrules">', false)
         ->assertSeeInOrder(['@view-transition', '</head>', 'id="sh-page-end"'], false)
-        ->assertSeeInOrder(['sh-sidebar-scroll:admin', '</nav>'], false);
+        ->assertSeeInOrder(['data-sidebar-top="admin"', 'nav.scrollTop = 0', '</nav>'], false)
+        ->getContent();
+
+    // Posisi gulir tidak lagi disimpan antar halaman (dulu sessionStorage per tab).
+    expect($panel)->not->toContain('String(nav.scrollTop)')
+        ->and($blade)->not->toContain('String(nav.scrollTop)');
 });
 
 it('menggambar panel utuh sejak frame pertama, tanpa menunggu Alpine atau muatan susulan', function () {

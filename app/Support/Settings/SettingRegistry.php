@@ -148,6 +148,13 @@ class SettingRegistry
                 'default' => '2026-10-01',
                 'help' => 'Retur yang masuk Barang Sisa sejak tanggal ini dinilai sebesar HPP menunya dan tercatat sebagai persediaan di Neraca & Laba Rugi. Retur sebelumnya tidak diubah supaya laporan bulan yang sudah dilaporkan tidak bergeser.',
             ],
+            'wealth_reduction.accounting_start' => [
+                'group' => 'Laporan Keuangan',
+                'label' => 'Kategori "Mengurangi Kekayaan" berlaku mulai',
+                'type' => self::TYPE_DATE,
+                'default' => '2026-10-01',
+                'help' => 'Pengeluaran berkategori Mengurangi Kekayaan (mis. Biaya Marketing) sejak tanggal ini tidak masuk Laba Rugi dan menjadi pengurang Kekayaan di Neraca. Sebelumnya tetap dihitung beban supaya Laba Rugi yang sudah dilaporkan tidak bergeser.',
+            ],
             'document.production_prefix' => [
                 'group' => 'Penomoran Dokumen',
                 'label' => 'Awalan nomor SPK Produksi',

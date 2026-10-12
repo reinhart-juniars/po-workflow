@@ -1,7 +1,7 @@
 <?php
 
-use App\Filament\Pages\IdleMenuReport;
-use App\Filament\Widgets\InventoryOverviewWidget;
+use App\Filament\Menu\Pages\IdleMenuReport;
+use App\Filament\Menu\Widgets\MenuOverviewWidget;
 use App\Models\AppSetting;
 use App\Models\InventoryItem;
 use App\Models\Product;
@@ -155,11 +155,11 @@ it('menghitung profit menu keseluruhan dan mengirim lonceng hanya saat keadaan b
     $this->artisan('profit:check')->assertSuccessful()->expectsOutputToContain('above');
 });
 
-it('menampilkan profit keseluruhan dan batasnya di dashboard inventory', function () {
+it('menampilkan profit keseluruhan dan batasnya di dashboard menu', function () {
     menuDenganResep('Menu C', 15000, 10000);
 
     Livewire::actingAs(penggunaB('owner'))
-        ->test(InventoryOverviewWidget::class)
+        ->test(MenuOverviewWidget::class)
         ->assertSee('Profit menu keseluruhan')
         ->assertSee('50,0%')
         ->assertSee('batas 20–60%');
@@ -201,8 +201,8 @@ it('mendaftar menu aktif yang tidak diproduksi dalam rentang, dengan tanggal pro
         ->assertFileDownloaded();
 
     // Peran tanpa recipe.view (sales) tidak bisa membuka; owner bisa (kontrol positif).
-    $this->actingAs(penggunaB('sales'))->get('/inventory/menu-tidak-diproduksi')->assertForbidden();
-    $this->actingAs($owner)->get('/inventory/menu-tidak-diproduksi')->assertOk();
+    $this->actingAs(penggunaB('sales'))->get('/menu/menu-tidak-diproduksi')->assertForbidden();
+    $this->actingAs($owner)->get('/menu/menu-tidak-diproduksi')->assertOk();
 });
 
 // ---------------------------------------------------------------- B.4

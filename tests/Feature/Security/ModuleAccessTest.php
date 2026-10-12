@@ -215,7 +215,7 @@ it('meloloskan superadmin ke semua modul tanpa izin eksplisit', function () {
         $this->actingAs($super)->get($resource::getUrl('index'))->assertOk();
     }
 
-    $this->actingAs($super)->get('/inventory/hpp-comparison-report')->assertOk();
+    $this->actingAs($super)->get('/menu/hpp-comparison-report')->assertOk();
 });
 
 it('menyembunyikan menu navigasi modul yang izinnya dicabut dari peran', function () {
@@ -233,10 +233,10 @@ it('menyembunyikan menu navigasi modul yang izinnya dicabut dari peran', functio
         ->assertSee('SPK Produksi')
         ->assertDontSee('Bahan Belum Cocok');
 
-    $this->actingAs($produksi)->get('/inventory/recipe-mismatches')->assertForbidden();
+    $this->actingAs($produksi)->get('/menu/recipe-mismatches')->assertForbidden();
 
     // Positive control: peran yang izinnya utuh tetap bisa membuka halamannya.
-    $this->actingAs(penggunaBerperan('admin'))->get('/inventory/recipe-mismatches')->assertOk();
+    $this->actingAs(penggunaBerperan('admin'))->get('/menu/recipe-mismatches')->assertOk();
 });
 
 it('menyimpan bahan baru hanya lewat peran yang berizin kelola inventory', function () {

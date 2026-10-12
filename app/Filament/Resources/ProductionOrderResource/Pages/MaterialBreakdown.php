@@ -49,7 +49,7 @@ class MaterialBreakdown extends Page
 
     public function getMatchUrl(): ?string
     {
-        return auth()->user()?->can('recipe.view') ? route('filament.admin.pages.pencocokan-menu') : null;
+        return auth()->user()?->can('recipe.view') ? route('filament.menu.pages.pencocokan-menu') : null;
     }
 
     protected function getHeaderActions(): array

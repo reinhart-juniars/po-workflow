@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Panduan Inventory untuk Pengguna Master Menu Revamp</title>
+<!--
+  Panduan khusus pengguna Master Menu Revamp (tim Menu) yang pindah ke aplikasi Menu dan Inventory 3S ONE.
+  Bangun PDF: php artisan panduan:pdf inventory-master-menu
+  Diagram alur (img/alur-*.jpg) bersumber dari diagram/alur.html: node scripts/docs/render-diagrams.mjs
+-->
+<style>
+  @page { margin: 20mm 18mm 20mm 18mm; }
+  body { font-family: "DejaVu Sans", sans-serif; font-size: 10pt; color: #0f172a; line-height: 1.32; }
+  h1 { font-size: 22pt; margin: 0 0 4pt; }
+  h2 { font-size: 15pt; margin: 0 0 8pt; padding-bottom: 4pt; border-bottom: 2px solid #3455db; color: #1e293b; }
+  h3 { font-size: 11.5pt; margin: 14pt 0 4pt; color: #1e293b; page-break-after: avoid; }
+  p { margin: 0 0 6pt; }
+  ul, ol { margin: 0 0 8pt 16pt; padding: 0; }
+  li { margin: 0 0 3pt; }
+  .muted { color: #64748b; }
+  .small { font-size: 9pt; }
+  .page { page-break-after: always; }
+  .keep { page-break-inside: avoid; }
+  /* Bab mengalir (tidak dipaksa halaman baru) supaya tidak ada halaman yang hanya berisi sisa. */
+  .bab { margin-top: 16pt; }
+  h2 { page-break-after: avoid; }
+  table.was { page-break-inside: avoid; }
+  b.ui { color: #2740a4; }
+
+  .footer { position: fixed; bottom: -12mm; left: 0; right: 0; font-size: 8pt; color: #94a3b8; }
+  .footer .pg:after { content: counter(page); }
+
+  .cover { text-align: center; padding-top: 120pt; }
+  .cover .mark { display: inline-block; width: 64pt; height: 64pt; background: #020617; color: #fff; border-radius: 16pt; font-weight: bold; line-height: 1; padding-top: 16pt; }
+  .cover .mark .a { display: block; font-size: 8pt; letter-spacing: 3pt; color: #67e8f9; }
+  .cover .mark .b { display: block; font-size: 15pt; letter-spacing: 3pt; margin-top: 4pt; }
+  .cover h1 { font-size: 26pt; margin-top: 18pt; }
+  .cover .sub { font-size: 12pt; color: #64748b; letter-spacing: 2pt; text-transform: uppercase; }
+  .cover .meta { margin-top: 70pt; color: #64748b; }
+
+  table { border-collapse: collapse; width: 100%; }
+  table.grid th, table.grid td { border: 1px solid #cbd5e1; padding: 5pt 6pt; vertical-align: top; text-align: left; font-size: 9.5pt; }
+  table.grid th { background: #f1f5f9; }
+  table.grid tr { page-break-inside: avoid; }
+  td.old { color: #475569; }
+  table.kamus td, table.kamus th { padding: 3pt 6pt; font-size: 9pt; }
+  .toc td { padding: 3pt 0; border-bottom: 1px dotted #cbd5e1; }
+
+  .tip { background: #eff6ff; border-left: 4px solid #3455db; padding: 6pt 8pt; margin: 8pt 0; font-size: 9.5pt; }
+  .warn { background: #fff7ed; border-left: 4px solid #f59e0b; padding: 6pt 8pt; margin: 8pt 0; font-size: 9.5pt; }
+
+  /* Kotak pembuka tiap bab: dulu di Master Menu, sekarang di 3S ONE */
+  table.was { margin: 0 0 10pt; table-layout: fixed; }
+  table.was td { padding: 6pt 8pt; vertical-align: top; font-size: 9.5pt; }
+  table.was td.d { background: #f1f5f9; color: #475569; width: 42%; border: 1px dashed #94a3b8; }
+  table.was td.a { width: 6%; text-align: center; color: #3455db; font-weight: bold; font-size: 13pt; border: 0; }
+  table.was td.n { background: #eef1fd; border: 1px solid #3455db; }
+  table.was .h { display: block; font-size: 8pt; font-weight: bold; letter-spacing: 1pt; text-transform: uppercase; margin-bottom: 2pt; }
+  table.was td.d .h { color: #64748b; }
+  table.was td.n .h { color: #3455db; }
+
+  /* Alur dulu vs sekarang: satu baris = satu langkah yang sejajar */
+  table.cmp { table-layout: fixed; margin: 6pt 0 10pt; }
+  table.cmp th { font-size: 9pt; padding: 5pt; text-align: center; }
+  table.cmp th.old { background: #f1f5f9; color: #475569; }
+  table.cmp th.new { background: #3455db; color: #fff; }
+  table.cmp td { padding: 2pt 0; vertical-align: middle; }
+  table.cmp th.old, table.cmp td.l, table.cmp th.new, table.cmp td.r { width: 46%; }
+  table.cmp td.ar { text-align: center; color: #3455db; font-weight: bold; font-size: 13pt; width: 7%; }
+  .vbox { border: 1.5px solid #94a3b8; border-radius: 6pt; padding: 4pt 7pt; background: #fff; font-size: 9pt; line-height: 1.25; }
+  .vbox.paper { border-style: dashed; background: #f8fafc; color: #475569; }
+  .vbox.new { border-color: #3455db; }
+  .vbox.auto { border-color: #059669; background: #ecfdf5; }
+  .tag { display: inline-block; font-size: 7pt; font-weight: bold; letter-spacing: 1pt; color: #fff; background: #059669; border-radius: 3pt; padding: 0 3pt; margin-right: 3pt; }
+  .legend { font-size: 8.5pt; color: #64748b; margin-top: 2pt; }
+
+  /* Foto layar 80% lebar: tetap terbaca, dan satu halaman muat lebih banyak langkah. */
+  .fig { margin: 6pt 0 10pt; page-break-inside: avoid; text-align: center; }
+  .fig img { width: 80%; border: 1px solid #cbd5e1; border-radius: 4pt; }
+  .fig .cap { font-size: 8.5pt; color: #64748b; margin-top: 3pt; }
+  .diagram { margin: 6pt 0 10pt; page-break-inside: avoid; text-align: center; }
+  .diagram img { width: 100%; }
+  .diagram.narrow img { width: 82%; }
+  .formula { text-align: center; font-weight: bold; background: #f1f5f9; border-radius: 4pt; padding: 6pt; margin: 6pt 0; }
+  .formula .p { color: #047857; } .formula .m { color: #b91c1c; }
+
+  /* Contekan satu halaman */
+  .cheat h3 { margin-top: 8pt; font-size: 10.5pt; color: #3455db; }
+  .cheat table.grid td, .cheat table.grid th { font-size: 8.5pt; padding: 3pt 5pt; }
+</style>
+</head>
+<body>
+
+<div class="footer"><span class="pg">Panduan Inventory untuk pengguna Master Menu Revamp · 3S ONE v3.1 · halaman </span></div>
+
+<!-- ============ SAMPUL ============ -->
+<div class="cover page">
+  <div class="mark"><span class="a">3S</span><span class="b">ONE</span></div>
+  <h1>Dari Master Menu Revamp<br>ke Aplikasi Menu &amp; Inventory</h1>
+  <div class="sub">Panduan Pengguna</div>
+  <p style="margin-top: 24pt; font-size: 12pt;">Untuk staf inventory, gudang, dan dapur<br>yang terbiasa memakai Master Menu Revamp</p>
+  <p class="muted">Bahan, resep, HPP, SPK Produksi, Form Kebutuhan, dan stok di 3S ONE</p>
+  <div class="meta">W3S Catering · 3S ONE versi 3.1 · Oktober 2026<br>3sone.w3scatering.com</div>
+</div>
+
+<!-- ============ ISI + CARA MEMBACA ============ -->
+<div class="bab">
+  <h2>Isi Panduan</h2>
+  <table class="toc">
+    <tr><td>1. Apa yang berubah, dalam satu gambar</td></tr>
+    <tr><td>2. Peta pindah: menu lama ada di mana sekarang</td></tr>
+    <tr><td>3. Masuk dan berkeliling</td></tr>
+    <tr><td>4. Bahan: dulu Bahan Baku, sekarang Item Inventaris</td></tr>
+    <tr><td>5. Resep: dulu Menu Utama dan Sub-Menu, sekarang aplikasi Menu</td></tr>
+    <tr><td>6. Supaya HPP benar: tiga antrean (dulu Mismatch)</td></tr>
+    <tr><td>7. Dari pesanan ke dapur: dulu Order, Pra SPK, Produksi, Menu Plating</td></tr>
+    <tr><td>8. Form Kebutuhan: pengganti form kertas</td></tr>
+    <tr><td>9. Barang datang: diterima, ditolak, harganya</td></tr>
+    <tr><td>10. Stok: Kartu Stok, Opname Bahan, Susut Bahan</td></tr>
+    <tr><td>11. Bulan Oktober: latihan dan pemetaan</td></tr>
+    <tr><td>12. Kebiasaan mulai 1 November</td></tr>
+    <tr><td>13. Kalau ada masalah</td></tr>
+    <tr><td>14. Kamus singkat</td></tr>
+    <tr><td>Lampiran: contekan satu halaman (cetak dan tempel)</td></tr>
+  </table>
+
+  <h2 style="margin-top: 24pt;">Cara memakai panduan ini</h2>
+  <p>Panduan ini ditulis untuk Anda yang sudah lancar memakai <b>Master Menu Revamp</b>. Anda tidak perlu belajar dari nol: hampir semua pekerjaan Anda masih ada, hanya pindah tempat dan sebagian sekarang dikerjakan sistem.</p>
+  <ul>
+    <li>Setiap bab dibuka dengan kotak <b>Dulu di Master Menu → Sekarang di 3S ONE</b>. Baca kotak itu dulu; isi babnya menjelaskan caranya.</li>
+    <li>Langkah bernomor ditulis persis seperti tulisan di layar. Nama tombol dan menu dicetak <b class="ui">tebal biru</b>.</li>
+    <li>Tanda <b>›</b> berarti "lalu buka". Contoh: <b class="ui">Inventory › Item Inventaris</b> = buka tab Inventory di atas, lalu menu Item Inventaris di kiri.</li>
+    <li>Gambar alur (diagram) menunjukkan urutan kerja dan siapa yang mengerjakan. Kotak <b style="color:#059669;">hijau</b> selalu berarti dikerjakan sistem, tanpa diketik.</li>
+  </ul>
+  <div class="tip"><b>Paling penting diingat:</b> di 3S ONE setiap angka diketik <b>sekali</b>, oleh orang yang mengalaminya. Pesanan diketik Admin, barang datang diketik gudang, sisa bahan diketik dapur. Semua laporan membaca dari situ.</div>
+  <div class="warn"><b>Selama Oktober</b> pekerjaan produksi sehari-hari masih memakai Master Menu Revamp dan form kertas. 3S ONE dipakai untuk latihan dan untuk merapikan data bahan dan resep. Rinciannya di Bab 11.</div>
+</div>
+
+<!-- ============ 1. APA YANG BERUBAH ============ -->
+<div class="bab">
+  <h2>1. Apa yang berubah, dalam satu gambar</h2>
+  <p>Baris di kiri adalah cara kerja lama. Baris di kanan pada ketinggian yang sama adalah penggantinya di 3S ONE.</p>
+  <table class="cmp">
+    <tr><th class="old">Dulu: Master Menu Revamp, kertas, v2</th><th style="width: 8%;"></th><th class="new">Sekarang: 3S ONE</th></tr>
+    <tr><td class="l"><div class="vbox paper">Admin mengetik pesanan di v2</div></td><td class="ar">→</td><td class="r"><div class="vbox new"><b>Admin</b> membuat PO dan SPK, sama seperti biasa</div></td></tr>
+    <tr><td class="l"><div class="vbox paper">Pesanan diketik ulang di menu <b>Order</b></div></td><td class="ar">→</td><td class="r"><div class="vbox auto"><span class="tag">OTOMATIS</span><b>SPK Produksi</b> terbentuk sendiri dari SPK Admin</div></td></tr>
+    <tr><td class="l"><div class="vbox paper"><b>Pra SPK</b> menghitung rekap bahan</div></td><td class="ar">→</td><td class="r"><div class="vbox auto"><span class="tag">OTOMATIS</span><b>Breakdown Bahan</b> dan kolom Perlu Beli, sudah dikurangi stok</div></td></tr>
+    <tr><td class="l"><div class="vbox paper">Form kebutuhan ditulis di kertas, ditandatangani</div></td><td class="ar">→</td><td class="r"><div class="vbox new"><b>Form Kebutuhan</b> digital: Ajukan, Setujui. Lonceng ke orang berikutnya</div></td></tr>
+    <tr><td class="l"><div class="vbox paper">Nota belanja diketik ulang oleh Accounting</div></td><td class="ar">→</td><td class="r"><div class="vbox auto"><span class="tag">OTOMATIS</span><b>Periksa</b>: stok dan pembelian tercatat; belanjanya menjadi <b>Tagihan Pembelian</b> yang dibayar Accounting</div></td></tr>
+    <tr><td class="l"><div class="vbox paper"><b>Produksi</b> dan <b>Menu Plating</b>; stok baru ketahuan saat opname bulanan</div></td><td class="ar">→</td><td class="r"><div class="vbox new"><b>Lembar Kerja</b>, <b>Plating</b>, lalu <b>Tutup SPK</b>. Kartu Stok dan Susut langsung terisi</div></td></tr>
+  </table>
+  <p class="legend">Kotak putus-putus = cara lama. Kotak hijau = dikerjakan sistem. Kotak biru = dikerjakan orang di 3S ONE.</p>
+
+  <h3>Pekerjaan Anda di Master Menu tidak hilang</h3>
+  <p><b>Ikut dipindahkan ke 3S ONE:</b> semua bahan baku beserta <b>riwayat harganya</b>; resep Menu Utama dan Sub-Menu lengkap dengan takaran; Pekerjaan Menu; daftar Pelaksana; riwayat produksi lama sebagai arsip.</p>
+  <p><b>Berubah cara kerjanya:</b></p>
+  <ul>
+    <li><b>Order</b> tidak diketik lagi: pesanan datang dari PO dan SPK Admin.</li>
+    <li><b>Stok per bahan</b> mulai dari hitungan pertama (Opname Bahan, atau Stok Awal di Form Kebutuhan pertama).</li>
+    <li>Nama bahan di resep yang tidak cocok dengan daftar bahan masuk antrean <b>Bahan Belum Cocok</b>.</li>
+  </ul>
+
+  <h3>Yang sengaja tidak ada lagi</h3>
+  <p>Jangan mencari fitur ini di 3S ONE. Semuanya dihapus dengan sengaja supaya data stok dan laporan tidak bisa rusak tanpa sengaja:</p>
+  <ul>
+    <li><b>Mengetik Order</b> — pesanan sudah ada di PO Admin.</li>
+    <li><b>Reset data</b> dan <b>Hapus Semua Resep</b>.</li>
+    <li><b>Import bahan yang menghapus bahan lama</b>. Import Excel di 3S ONE hanya mengubah dan menambah. Bahan yang sudah punya catatan stok dan pembelian dijaga supaya laporan tidak bergeser.</li>
+  </ul>
+</div>
+
+<!-- ============ 2. PETA PINDAH ============ -->
+<div class="bab">
+  <h2>2. Peta pindah: menu lama ada di mana sekarang</h2>
+  <p>Sejak revisi Oktober 2026 pekerjaan Master Menu dibagi ke dua tab di bilah atas. <b class="ui">Menu</b> berisi resep dan biayanya: Menu Utama, Sub Menu, Pencocokan Menu, Pekerjaan Menu, Konversi Satuan, Bahan Belum Cocok, Perbandingan HPP, Menu Tidak Diproduksi. <b class="ui">Inventory</b> berisi bahan, stok, pembelian, dan SPK Produksi. Resep hanya bisa <b>diubah</b> oleh peran <b>Menu</b> (dan Owner); peran lain membaca.</p>
+  <table class="grid">
+    <tr><th style="width: 22%">Di Master Menu</th><th style="width: 40%">Di 3S ONE</th><th>Catatan</th></tr>
+    <tr><td class="old">Bahan Baku</td><td><b class="ui">Item Inventaris</b></td><td>Histori harga tercatat sendiri. Bab 4.</td></tr>
+    <tr><td class="old">Sub-Menu</td><td><b class="ui">Menu › Sub Menu</b></td><td>Bab 5.</td></tr>
+    <tr><td class="old">Menu Utama</td><td><b class="ui">Menu › Menu Utama</b></td><td>Ditambah Analisa HPP. Bab 5.</td></tr>
+    <tr><td class="old">Order</td><td>tidak perlu lagi</td><td>Pesanan datang dari PO Admin. Bab 7.</td></tr>
+    <tr><td class="old">Pra SPK</td><td><b class="ui">SPK Produksi › Breakdown Bahan</b></td><td>SPK Produksi terbentuk sendiri. Bab 7.</td></tr>
+    <tr><td class="old">Menu Plating</td><td><b class="ui">SPK Produksi › Lainnya › Plating</b></td><td>Cetak PDF atau Excel.</td></tr>
+    <tr><td class="old">Pekerjaan Menu</td><td><b class="ui">Menu › Pekerjaan Menu</b></td><td>Template, diatur sekali per menu.</td></tr>
+    <tr><td class="old">Produksi</td><td><b class="ui">SPK Produksi › Lainnya › Lembar Kerja</b></td><td>Pelaksana dan pekerjaan per SPK.</td></tr>
+    <tr><td class="old">Mismatch</td><td><b class="ui">Menu › Bahan Belum Cocok</b></td><td>Tautkan, Buat Bahan, atau Abaikan. Bab 6.</td></tr>
+    <tr><td class="old">Pengaturan</td><td><b class="ui">Pengaturan Inventory</b></td><td>Khusus Owner.</td></tr>
+    <tr><td class="old">(tidak ada)</td><td><b class="ui">Form Kebutuhan</b>, <b class="ui">Kartu Stok</b>, <b class="ui">Opname Bahan</b>, <b class="ui">Susut Bahan</b></td><td>Baru. Bab 8 sampai 10.</td></tr>
+  </table>
+
+  <h3>"Dulu saya klik ini. Sekarang klik apa?"</h3>
+  <table class="grid">
+    <tr><th style="width: 26%">Saya mau</th><th style="width: 22%">Dulu di Master Menu</th><th>Sekarang di 3S ONE</th></tr>
+    <tr><td><b>Mengubah harga bahan</b></td><td class="old">Bahan Baku › ubah</td><td><b class="ui">Item Inventaris</b> › ikon pensil di barisnya. Harga Beli dari nota juga memperbaruinya sendiri.</td></tr>
+    <tr><td><b>Menambah bahan baru</b></td><td class="old">Bahan Baku › tambah</td><td>Cari dulu dengan <b>Ctrl + K</b>. Kalau memang belum ada: <b class="ui">Item Inventaris › Tambah Item</b>.</td></tr>
+    <tr><td><b>Mengubah banyak bahan</b></td><td class="old">Bahan Baku › import</td><td><b class="ui">Item Inventaris › Import Excel</b> (mengubah dan menambah, tidak menghapus).</td></tr>
+    <tr><td><b>Membuat resep baru</b></td><td class="old">Menu Utama / Sub-Menu</td><td><b class="ui">Menu › Menu Utama › Tambah Resep</b>, lalu tautkan ke menu jual di <b class="ui">Menu › Pencocokan Menu</b>.</td></tr>
+    <tr><td><b>Menghitung belanja besok</b></td><td class="old">Order, lalu Pra SPK</td><td><b class="ui">SPK Produksi › Breakdown Bahan</b>. Sudah jadi; lihat kolom Perlu Beli.</td></tr>
+    <tr><td><b>Membagi tugas dapur</b></td><td class="old">Produksi</td><td><b class="ui">SPK Produksi › Lainnya › Lembar Kerja › Salin dari Template Menu</b>.</td></tr>
+    <tr><td><b>Mencetak plating</b></td><td class="old">Menu Plating</td><td><b class="ui">SPK Produksi › Lainnya › Plating › Cetak Plating</b>.</td></tr>
+    <tr><td><b>Membereskan nama bahan</b></td><td class="old">Mismatch</td><td><b class="ui">Menu › Bahan Belum Cocok</b> › Tautkan, Buat Bahan, atau Abaikan.</td></tr>
+    <tr><td><b>Melihat stok satu bahan</b></td><td class="old">tidak ada, tunggu opname</td><td><b class="ui">Kartu Stok</b>, saring nama bahannya.</td></tr>
+  </table>
+</div>
+
+<!-- ============ 3. MASUK DAN BERKELILING ============ -->
+<div class="bab">
+  <h2>3. Masuk dan berkeliling</h2>
+  <table class="was"><tr>
+    <td class="d"><span class="h">Dulu di Master Menu</span>Hanya bisa dibuka di satu laptop tempat aplikasinya dipasang.</td>
+    <td class="a">→</td>
+    <td class="n"><span class="h">Sekarang di 3S ONE</span>Dibuka dari laptop atau HP mana pun lewat browser. Satu login untuk semua bagian.</td>
+  </tr></table>
+
+  <h3>Masuk pertama kali</h3>
+  <ol>
+    <li>Buka Chrome, ketik <b>3sone.w3scatering.com</b>. Simpan sebagai bookmark.</li>
+    <li>Isi <b>username atau email</b> dan <b>password</b> yang diberikan Owner.</li>
+    <li>Akun baru wajib <b>mengganti password sementara</b> saat pertama masuk. Password jangan dibagi atau difoto.</li>
+    <li>Tekan tab <b class="ui">Inventory</b> di bilah atas.</li>
+  </ol>
+  <div class="fig"><img src="img/login.jpg" alt="Halaman masuk 3S ONE"><div class="cap">Halaman masuk. Versi sistem (v3.1) tertulis di kiri bawah; sebutkan saat melapor masalah.</div></div>
+
+  <h3>Lima hal di layar yang perlu dikenali</h3>
+  <table class="grid">
+    <tr><th style="width: 26%">Bagian</th><th>Fungsinya</th></tr>
+    <tr><td><b>Tab aplikasi</b> (atas)</td><td>Hanya aplikasi yang sesuai peran Anda yang muncul. Pekerjaan Anda ada di tab <b>Inventory</b>.</td></tr>
+    <tr><td><b>Menu kiri</b></td><td>Tiga kelompok: <b>Inventory</b> (bahan, supplier, pembelian, opname), <b>Resep &amp; HPP</b>, dan <b>Produksi</b> (SPK Produksi, Form Kebutuhan, Kartu Stok, Pelaksana).</td></tr>
+    <tr><td><b>Angka kecil di menu</b></td><td>Jumlah pekerjaan yang masih menunggu.</td></tr>
+    <tr><td><b>Lonceng</b> (kanan atas)</td><td>Giliran Anda: form menunggu persetujuan, barang siap dibelanjakan, form ditolak, harga bahan berubah. Tekan <b class="ui">Buka</b> untuk langsung ke halamannya.</td></tr>
+    <tr><td><b>Cari dokumen</b> (Ctrl + K)</td><td>Cari bahan, menu, atau SPK Produksi dari halaman mana pun. Ketik minimal 2 huruf, pilih dengan panah, buka dengan Enter.</td></tr>
+  </table>
+  <div class="fig"><img src="img/inventory-dashboard.jpg" alt="Dashboard Inventory"><div class="cap">Inventory › Dashboard: bahan di bawah stok minimum, antrean form yang menunggu Anda, SPK terdekat, perubahan harga terakhir.</div></div>
+
+  <h3>Tombol dan tanda yang sering ditemui</h3>
+  <ul>
+    <li><b>Ikon pensil</b> di ujung baris = ubah. <b>Ikon tempat sampah</b> (merah) = hapus, selalu minta konfirmasi dulu.</li>
+    <li><b>Ikon corong</b> di kanan atas tabel = saring. Saringan yang berlaku tampil sebagai chip biru; tanda × melepasnya.</li>
+    <li>Menu <b class="ui">Lainnya (⋯)</b> = cetak, Lembar Kerja, Plating, dan aksi tambahan lain.</li>
+    <li>Tombol tahap (<b>Ajukan</b>, <b>Setujui</b>, <b>Periksa</b>, <b>Tutup SPK</b>) memindahkan pekerjaan ke orang berikutnya. Sistem selalu meminta konfirmasi dulu.</li>
+    <li>Kolom yang <b>terkunci</b> (tidak bisa diketik) bukan rusak: artinya giliran bagian lain. Keterangan di atas tabel menyebut siapa yang sedang memegangnya.</li>
+  </ul>
+  <div class="fig"><img src="img/cari-dokumen.jpg" alt="Cari dokumen"><div class="cap">Cari dokumen (Ctrl + K): hasil muncul sambil mengetik, dikelompokkan per jenis.</div></div>
+</div>
+
+<!-- ============ 4. BAHAN ============ -->
+<div class="bab">
+  <h2>4. Bahan: dulu Bahan Baku, sekarang Item Inventaris</h2>
+  <table class="was"><tr>
+    <td class="d"><span class="h">Dulu di Master Menu</span>Menu <b>Bahan Baku</b>. Harga bahan sering berbeda dengan catatan belanja.</td>
+    <td class="a">→</td>
+    <td class="n"><span class="h">Sekarang di 3S ONE</span><b>Inventory › Item Inventaris</b>. Satu daftar harga; harga beli dari nota langsung memperbarui harga bahan dan HPP resep.</td>
+  </tr></table>
+  <p>Satu bahan = satu baris: <b>Nama Item</b>, <b>Satuan</b> (satuan beli: kg, liter, ikat, pak), <b>Harga Satuan</b>, <b>Kategori</b>, dan <b>Nilai Stok Minimum</b> (dalam rupiah).</p>
+  <div class="fig"><img src="img/inventory-items.jpg" alt="Item Inventaris"><div class="cap">Inventory › Item Inventaris: daftar bahan dengan harga per satuan; ikon pensil dan tempat sampah di ujung baris.</div></div>
+
+  <h3>Mencari bahan</h3>
+  <ol>
+    <li>Ketik nama bahan di kotak <b>Cari</b> di atas tabel, atau tekan <b>Ctrl + K</b> dari halaman mana pun.</li>
+    <li>Untuk melihat bahan satu kategori saja, tekan ikon corong, pilih <b>Kategori</b>, lalu <b class="ui">Terapkan filter</b>.</li>
+  </ol>
+
+  <h3>Menambah bahan baru</h3>
+  <ol>
+    <li><b>Cari dulu.</b> Jangan sampai ada "Minyak" dan "Minyak Goreng" berdampingan.</li>
+    <li>Kalau memang belum ada: tekan <b class="ui">Tambah Item</b>.</li>
+    <li>Isi Nama Item, Satuan, Kategori, dan Harga Satuan. Bila bahan dibeli per kemasan, isi <b>Isi Kemasan</b> dan <b>Harga Kemasan</b>.</li>
+    <li>Pilih <b>Supplier</b> yang biasa memasoknya (boleh lebih dari satu), lalu simpan.</li>
+  </ol>
+
+  <h3>Mengubah harga bahan, dan melihat riwayatnya</h3>
+  <ol>
+    <li>Tekan ikon pensil di baris bahan, ubah <b>Harga Satuan</b>, simpan.</li>
+    <li>Di bagian bawah halaman bahan ada <b>Histori Harga</b>: kapan harga berubah, dari berapa ke berapa, dan dari mana (diubah manual, import, atau Form Kebutuhan).</li>
+    <li>Untuk riwayat harga <b>semua</b> bahan sekaligus: tekan <b class="ui">Export Riwayat Harga</b> di daftar Item Inventaris.</li>
+  </ol>
+  <div class="tip">Biasanya Anda tidak perlu mengubah harga dengan tangan. Saat gudang mengisi <b>Harga Beli</b> dari nota dan menekan <b>Periksa</b> (Bab 9), harga bahan ikut diperbarui dan tercatat di Histori Harga. HPP semua resep yang memakai bahan itu ikut berubah.</div>
+
+  <h3>Mengubah banyak bahan sekaligus</h3>
+  <ol>
+    <li>Tekan <b class="ui">Export Excel</b> untuk mengunduh daftar bahan.</li>
+    <li>Ubah isinya di Excel. Jangan mengubah kolom id.</li>
+    <li>Tekan <b class="ui">Import Excel</b> dan pilih berkasnya. Baris yang punya id akan diubah, baris baru akan ditambahkan. Tidak ada bahan yang dihapus.</li>
+  </ol>
+
+  <h3>Stok minimum dan supplier</h3>
+  <ul>
+    <li>Isi <b>Nilai Stok Minimum</b> untuk bahan yang tidak boleh habis. Begitu nilainya di bawah batas, bahan itu muncul di Dashboard Inventory dan lonceng (sekali sehari).</li>
+    <li>Data pemasok ada di <b class="ui">Inventory › Master Supplier</b>: kontak, rekening, <b>termin bayar</b>, dan bahan yang dipasok. Termin bayar mengisi jatuh tempo pembelian kredit secara otomatis.</li>
+  </ul>
+  <div class="warn"><b>Jangan mengganti satuan bahan yang sudah punya riwayat</b> (misalnya dari kg ke gram). Buat aturan di Konversi Satuan (Bab 6). Mengganti satuan membuat stok dan harga lama terbaca salah.</div>
+</div>
+
+<!-- ============ 5. RESEP ============ -->
+<div class="bab">
+  <h2>5. Resep: dulu Menu Utama dan Sub-Menu, sekarang aplikasi Menu</h2>
+  <table class="was"><tr>
+    <td class="d"><span class="h">Dulu di Master Menu</span>Menu <b>Menu Utama</b> dan <b>Sub-Menu</b> terpisah. HPP dihitung di aplikasi, tidak tersambung ke penjualan.</td>
+    <td class="a">→</td>
+    <td class="n"><span class="h">Sekarang di 3S ONE</span>Tab <b>Menu</b> di bilah atas › <b>Menu Utama</b> atau <b>Sub Menu</b>. Satu daftar resep yang langsung menunjukkan HPP dan profit. Untuk menu yang resepnya <b>Lengkap</b>, HPP &amp; OHC di Admin › Master Menu ikut resep ini secara otomatis.</td>
+  </tr></table>
+  <div class="fig"><img src="img/resep-menu.jpg" alt="Resep dan Menu"><div class="cap">Menu › Menu Utama: HPP / Hasil, HPP + OHC, Harga Jual, Profit %, dan Status Hitungan per resep. Tab di atas memisahkan Menu Utama dan Sub-Menu.</div></div>
+
+  <h3>Membaca daftar resep</h3>
+  <table class="grid">
+    <tr><th style="width: 28%">Kolom</th><th>Artinya</th></tr>
+    <tr><td>HPP / Hasil</td><td>Biaya bahan per satuan hasil (biasanya per porsi).</td></tr>
+    <tr><td>HPP + OHC</td><td>HPP ditambah biaya di luar bahan (gas, listrik, tenaga) dalam persen.</td></tr>
+    <tr><td>Harga Jual, Profit %</td><td>Harga jual menu dan persen profitnya. Saringan <b>Profit di bawah target</b> menampilkan menu yang perlu dicek.</td></tr>
+    <tr><td>Status Hitungan</td><td><b>Lengkap</b>, atau <b>Belum Lengkap</b> bila ada baris bahan yang belum tertaut atau satuannya belum bisa dikonversi (Bab 6).</td></tr>
+  </table>
+
+  <h3>Membuat atau mengubah resep</h3>
+  <ol>
+    <li>Tekan <b class="ui">Tambah Resep</b>, atau ikon pensil pada resep yang ada.</li>
+    <li>Isi <b>Nama Menu</b> dan <b>Jenis</b>: Menu Utama, atau Sub-Menu (komponen yang dipakai resep lain, misalnya bumbu atau sambal).</li>
+    <li>Isi <b>Jumlah Hasil</b> dan <b>Satuan Hasil</b>, yaitu hasil satu kali produksi resep ini (misalnya 10 porsi).</li>
+    <li>Tekan <b class="ui">Tambah Baris</b> untuk setiap bahan. Isi <b>Jumlah</b> dan <b>Satuan</b>, lalu pilih <b>salah satu</b>: <b>Bahan</b> (dari Item Inventaris) atau <b>Sub-Menu</b> (resep lain).</li>
+    <li>Bila resepnya menu jual, pilih <b>Produk yang Dijual</b> (menu di Admin yang dimasak dengan resep ini). Bisa juga ditautkan belakangan di Pencocokan Menu.</li>
+    <li>Simpan. HPP langsung terhitung.</li>
+  </ol>
+  <div class="tip"><b>Baris yang belum bisa ditautkan</b> ke bahan mana pun boleh diberi <b>Harga Manual / Satuan</b> supaya biayanya tetap terhitung sementara. Lebih baik tetap tautkan ke bahan begitu bahannya ada.</div>
+
+  <h3>Analisa HPP</h3>
+  <p>Tekan <b class="ui">Analisa HPP</b> di baris resep untuk melihat rincian harga pokok, OHC, profit, dan harga jual per porsi. Baris yang menahan perhitungan (belum tertaut, satuan belum cocok) ditampilkan di bawahnya.</p>
+  <div class="fig"><img src="img/hpp.jpg" alt="Analisa HPP"><div class="cap">Menu › Analisa HPP: HPP per porsi, OHC, profit, harga jual; baris yang menahan perhitungan dilipat di bawahnya.</div></div>
+
+  <h3>Pekerjaan Menu (template pembagian kerja)</h3>
+  <p>Sama seperti di Master Menu: buka <b class="ui">Resep &amp; HPP › Pekerjaan Menu</b>, tekan ikon pensil pada menu, lalu <b class="ui">Tambah Pekerjaan</b> (misalnya "goreng · ayam · 25 gr", dengan PIC bawaan). Cukup diatur sekali per menu; template ini disalin ke Lembar Kerja setiap SPK Produksi (Bab 7). Bisa juga lewat Export Excel, isi, lalu Import Excel.</p>
+  <div class="fig"><img src="img/pekerjaan-menu.jpg" alt="Pekerjaan Menu"><div class="cap">Pekerjaan Menu: template pembagian kerja per menu.</div></div>
+</div>
+
+<!-- ============ 6. SUPAYA HPP BENAR ============ -->
+<div class="bab">
+  <h2>6. Supaya HPP benar: tiga antrean</h2>
+  <table class="was"><tr>
+    <td class="d"><span class="h">Dulu di Master Menu</span>Satu menu <b>Mismatch</b> untuk nama bahan yang tidak cocok.</td>
+    <td class="a">→</td>
+    <td class="n"><span class="h">Sekarang di 3S ONE</span>Tiga antrean: <b>Konversi Satuan</b>, <b>Bahan Belum Cocok</b>, dan <b>Pencocokan Menu</b>. Begitu ketiganya kosong, HPP dan profit setiap menu terhitung sendiri.</td>
+  </tr></table>
+  <div class="diagram narrow"><img src="img/alur-menu-harga.jpg" alt="Alur Menu ke harga jual dan SPK Produksi"></div>
+  <p>Gambar di bawah menunjukkan perjalanan angka dari nota belanja sampai profit menu. Kotak kuning adalah antrean pekerjaan: selama masih ada isinya, biaya sebagian baris resep dihitung nol dan HPP terlihat terlalu murah.</p>
+  <div class="diagram narrow"><img src="img/alur-hpp.jpg" alt="Alur HPP: harga beli, Item Inventaris, gerbang nama bahan dan satuan, resep, Analisa HPP; menu di PO, gerbang resep, SPK Produksi, Dashboard"></div>
+</div>
+
+<div class="bab">
+  <h3 style="margin-top: 0;">Antrean 1 · Konversi Satuan (kerjakan pertama)</h3>
+  <p>Resep menulis takaran dalam satuan dapur ("3 butir telur"), sedangkan bahan dibeli dalam satuan beli ("per kg"). Sistem perlu aturannya: <b>1 kg telur = 16 butir</b>. Antrean ini paling besar pengaruhnya ke HPP, karena satu aturan bisa membuka puluhan baris resep sekaligus.</p>
+  <ol>
+    <li>Buka <b class="ui">Resep &amp; HPP › Konversi Satuan</b>, lalu halaman <b>Konversi yang Belum Diatur</b>. Daftarnya diurutkan dari yang paling banyak menahan baris resep.</li>
+    <li>Pada baris paling atas, tekan <b class="ui">Buat aturan</b>. Bahan dan pasangan satuannya sudah terisi.</li>
+    <li>Isi <b>Faktor</b>. Contoh: bila 1 pcs ayam beratnya 250 gram, isi 250. Isi <b>Catatan</b> sumber angkanya (hasil timbang, kemasan pemasok, kesepakatan dapur).</li>
+    <li>Simpan, lalu kembali ke daftar. Ulangi sampai kosong.</li>
+  </ol>
+  <div class="tip">Kosongkan kolom <b>Bahan</b> untuk membuat aturan umum yang berlaku ke semua bahan (misalnya 1 kg = 1.000 gram). Aturan milik satu bahan selalu menang atas aturan umum.</div>
+  <div class="fig"><img src="img/konversi-belum.jpg" alt="Konversi yang Belum Diatur"><div class="cap">Konversi Satuan › Belum Diatur: pasangan satuan yang perlu aturan supaya biaya resep terhitung.</div></div>
+
+  <h3>Antrean 2 · Bahan Belum Cocok (dulu Mismatch)</h3>
+  <p>Nama bahan yang tertulis di resep tetapi belum terhubung ke Item Inventaris. Untuk setiap baris pilih satu:</p>
+  <table class="grid">
+    <tr><th style="width: 22%">Tombol</th><th>Kapan dipakai</th></tr>
+    <tr><td><b class="ui">Tautkan</b></td><td>Bahannya sudah ada dengan nama lain (misalnya "bawang putih kupas" → Bawang Putih). Paling sering.</td></tr>
+    <tr><td><b class="ui">Buat Bahan</b></td><td>Bahannya memang belum ada. Isi nama, satuan harga, kategori, dan harga per satuan.</td></tr>
+    <tr><td><b class="ui">Abaikan</b></td><td>Baris itu bukan bahan yang perlu dihitung (misalnya "air matang"). Isi alasannya.</td></tr>
+  </table>
+  <p>Salah pilih? Tekan <b class="ui">Buka Ulang</b> pada barisnya. Resep baru sering menambah satu-dua baris di sini; cek tiap minggu.</p>
+
+  <h3>Antrean 3 · Pencocokan Menu (baru)</h3>
+  <p>Menu yang dijual Admin tetapi belum tertaut ke resep, diurutkan dari yang paling laku 90 hari terakhir. Tanpa tautan ini, menu tersebut muncul di kotak kuning Breakdown Bahan dan bahannya tidak ikut terhitung.</p>
+  <ol>
+    <li>Buka <b class="ui">Resep &amp; HPP › Pencocokan Menu</b>. Mulai dari baris paling atas.</li>
+    <li>Bila usulan resepnya benar, tekan <b class="ui">Tautkan</b>. Bila belum ada resepnya, tekan <b class="ui">Buat Resep</b>. Untuk barang tanpa resep (misalnya minuman kemasan), pilih <b class="ui">Tanpa Resep</b>.</li>
+    <li>20 menu teratas biasanya sudah mencakup dua pertiga porsi yang terjual. Kerjakan itu dulu.</li>
+  </ol>
+  <div class="fig"><img src="img/pencocokan-menu.jpg" alt="Pencocokan Menu"><div class="cap">Pencocokan Menu: menu di Admin yang belum tertaut, diurutkan dari yang paling laku, dengan usulan resep dan skor kemiripannya.</div></div>
+  <div class="tip"><b>Tiga tanda sistem siap:</b> Konversi Belum Diatur = 0, Bahan Belum Cocok = 0, dan kartu <b>Profit menu</b> di Dashboard Inventory menampilkan angka, bukan "–".</div>
+</div>
+
+<!-- ============ 7. DARI PESANAN KE DAPUR ============ -->
+<div class="bab">
+  <h2>7. Dari pesanan ke dapur</h2>
+  <table class="was"><tr>
+    <td class="d"><span class="h">Dulu di Master Menu</span>Pesanan diketik ulang di <b>Order</b>, rekap bahan di <b>Pra SPK</b>, pembagian kerja di <b>Produksi</b>, isi piring di <b>Menu Plating</b>.</td>
+    <td class="a">→</td>
+    <td class="n"><span class="h">Sekarang di 3S ONE</span>Admin menyusun SPK, lalu <b>SPK Produksi</b> terbentuk sendiri. Breakdown Bahan, Lembar Kerja, dan Plating ada di halaman SPK Produksi itu.</td>
+  </tr></table>
+  <p>Gambar ini adalah perjalanan satu SPK dari awal sampai akhir. Kolom = siapa yang mengerjakan; nomor = urutannya. Setiap kali pekerjaan pindah kolom, orang berikutnya mendapat lonceng.</p>
+  <div class="diagram narrow"><img src="img/alur-perjalanan-spk.jpg" alt="Perjalanan satu SPK: Admin, Sistem, Dapur, Supervisor Gudang, Staf Gudang"></div>
+  <p class="small muted">Kolom hijau dikerjakan sistem: dapur tidak menghitung bahan dengan tangan, Accounting tidak mengetik ulang nota. Panah merah putus-putus: form yang ditolak kembali ke dapur.</p>
+</div>
+
+<div class="bab">
+  <h3 style="margin-top: 0;">SPK Produksi</h3>
+  <p>Begitu Admin menyusun SPK di aplikasi Admin, <b>SPK Produksi</b> terbentuk sendiri berisi menu dan jumlah porsinya. Bila Admin mengubah PO sebelum SPK Produksi ditutup, isinya ikut menyesuaikan.</p>
+  <ol>
+    <li>Buka <b class="ui">Produksi › SPK Produksi</b> dan pilih SPK-nya (atau cari nomornya dengan Ctrl + K).</li>
+    <li>Di atas halaman ada tombol <b class="ui">Form Kebutuhan</b>, <b class="ui">Breakdown Bahan</b>, dan menu <b class="ui">Lainnya</b> (Lembar Kerja, Plating, cetak).</li>
+  </ol>
+  <div class="fig"><img src="img/spk-produksi.jpg" alt="SPK Produksi"><div class="cap">SPK Produksi: data SPK di atas; tombol Form Kebutuhan, Breakdown Bahan, dan menu Lainnya.</div></div>
+
+  <h3>Breakdown Bahan (dulu Rekap Bahan di Pra SPK)</h3>
+  <p>Semua menu di SPK diurai sampai bahan mentah (sub-resep ikut diurai), lalu direkap per bahan dan dicocokkan dengan stok di Kartu Stok.</p>
+  <ul>
+    <li>Kolom <b>Perlu Beli</b> = kebutuhan dikurangi stok sistem.</li>
+    <li><b>Kotak kuning</b> menyebut menu yang belum punya resep. Tautkan resepnya di Pencocokan Menu (Bab 6), lalu buka Breakdown Bahan lagi.</li>
+    <li><b class="ui">Export Excel</b> untuk diolah atau dicetak.</li>
+  </ul>
+  <div class="fig"><img src="img/breakdown-bahan.jpg" alt="Breakdown Bahan"><div class="cap">Breakdown Bahan: porsi yang terhitung, bahan dibutuhkan, yang perlu dibeli, dan kotak kuning untuk menu tanpa resep.</div></div>
+
+  <h3>Lembar Kerja (dulu Produksi)</h3>
+  <ol>
+    <li>Di SPK Produksi, buka <b class="ui">Lainnya › Lembar Kerja</b>.</li>
+    <li>Tekan <b class="ui">Salin dari Template Menu</b>. Pekerjaan diambil dari Pekerjaan Menu (Bab 5).</li>
+    <li>Pilih pelaksana tiap pekerjaan. Daftar orangnya diatur di <b class="ui">Produksi › Pelaksana</b>.</li>
+    <li>Centang yang sudah selesai. <b class="ui">Export Excel</b> untuk ditempel di dapur.</li>
+  </ol>
+  <div class="fig"><img src="img/lembar-kerja.jpg" alt="Lembar Kerja"><div class="cap">Lembar Kerja: pembagian tugas dapur per SPK.</div></div>
+
+  <h3>Plating (dulu Menu Plating)</h3>
+  <p>Di SPK Produksi, buka <b class="ui">Lainnya › Plating</b>: komponen isi piring tiap menu (nasi, lauk, kuah, kemasan) dengan jumlah porsinya. <b class="ui">Cetak Plating</b> untuk PDF, <b class="ui">Export Excel</b> untuk diolah.</p>
+  <div class="fig"><img src="img/plating.jpg" alt="Plating"><div class="cap">Plating: komponen isi piring per menu beserta jumlah porsi.</div></div>
+</div>
+
+<!-- ============ 8. FORM KEBUTUHAN ============ -->
+<div class="bab">
+  <h2>8. Form Kebutuhan: pengganti form kertas</h2>
+  <table class="was"><tr>
+    <td class="d"><span class="h">Dulu</span>Form kertas "Kebutuhan, Stok &amp; Pembelian Barang", ditulis tangan dan ditandatangani.</td>
+    <td class="a">→</td>
+    <td class="n"><span class="h">Sekarang di 3S ONE</span>Form digital, satu per SPK Produksi. Pekerjaannya <b>berpindah meja</b>; tiap meja hanya melihat tombol untuk bagiannya, dan tercatat siapa mengerjakan kapan.</td>
+  </tr></table>
+  <p>Gambar di bawah adalah status form dan siapa yang memegangnya. Tombol di sebelah kiri panah memindahkan form ke status berikutnya; lonceng di kanan panah memberi tahu orang berikutnya.</p>
+  <div class="diagram narrow"><img src="img/alur-status-form.jpg" alt="Status Form Kebutuhan: Dibuat/Diisi, Diajukan, Disetujui, Diperiksa, Selesai"></div>
+  <div class="warn"><b>Periksa dan Tutup SPK tidak bisa diulang.</b> Keduanya menulis ke Kartu Stok dan buku kas. Kalau ada salah setelah itu, perbaikannya lewat Accounting (koreksi pembelian) atau Opname Bahan, bukan dengan menekan tombolnya lagi.</div>
+</div>
+
+<div class="bab">
+  <h3 style="margin-top: 0;">Meja 1 · Dapur menyusun form</h3>
+  <ol>
+    <li>Buka SPK Produksi, tekan <b class="ui">Form Kebutuhan</b>, lalu susun form. Kolom <b>Kebutuhan</b> dihitung dari resep × jumlah porsi.</li>
+    <li>Hitung fisik bahan yang ada di dapur, ketik di kolom <b>Stok Awal</b>. Kolom <b>Beli</b> terhitung sendiri.</li>
+    <li>Tekan <b class="ui">Simpan Isian</b>, periksa lagi, lalu <b class="ui">Ajukan</b> ke Supervisor Gudang.</li>
+  </ol>
+  <div class="fig"><img src="img/form-produksi.jpg" alt="Form Kebutuhan meja produksi"><div class="cap">Meja 1: isi Stok Awal, Beli terhitung sendiri, lalu Ajukan.</div></div>
+
+  <h3>Meja 2 · Supervisor Gudang memeriksa angkanya</h3>
+  <ol>
+    <li>Lonceng "menunggu persetujuan" muncul. Tekan <b class="ui">Buka</b>.</li>
+    <li>Periksa Stok Awal, Beli, dan perkiraan biaya (tabel memuat harga master per bahan).</li>
+    <li>Tekan <b class="ui">Setujui</b>, atau <b class="ui">Tolak</b> dengan alasan yang jelas. Form yang ditolak kembali ke Meja 1 dengan catatan merah di atas tabel.</li>
+  </ol>
+  <div class="fig"><img src="img/form-supervisor.jpg" alt="Form Kebutuhan meja supervisor"><div class="cap">Meja 2: hanya tombol Setujui / Tolak; tabel memuat harga master dan perkiraan biaya.</div></div>
+
+  <h3>Meja 3 · Staf Gudang saat barang datang</h3>
+  <p>Lonceng "siap dibelanjakan" muncul setelah form disetujui. Belanja sesuai kolom Beli. Saat barang datang, isi form seperti di Bab 9, lalu tekan <b class="ui">Periksa</b> sekali.</p>
+
+  <h3>Meja 4 · Dapur setelah masak</h3>
+  <ol>
+    <li>Lonceng "barang sudah masuk" muncul. Masak seperti biasa.</li>
+    <li>Setelah masak, kolom <b>Pemakaian</b> dan <b>Sisa Stok</b> terbuka di ujung kanan tabel. Isi bila dihitung.</li>
+    <li>Tekan <b class="ui">Tutup SPK</b>.</li>
+  </ol>
+  <table class="grid">
+    <tr><th style="width: 18%">Kolom</th><th style="width: 34%">Kalau dikosongkan</th><th>Kalau diisi</th></tr>
+    <tr><td>Pemakaian</td><td>Dianggap sama dengan Kebutuhan resep.</td><td>Angka ini yang keluar dari Kartu Stok. Lebih besar dari resep = <b>lebih pakai</b>, masuk hitungan Susut Bahan.</td></tr>
+    <tr><td>Sisa Stok</td><td>Tidak dihitung; stok mengikuti perhitungan sistem.</td><td>Hasil hitung fisik sisa bahan. Kurang dari Kartu Stok = <b>Barang Hilang</b>, lebih = <b>Barang Temuan</b>.</td></tr>
+  </table>
+  <div class="fig"><img src="img/tutup-spk.jpg" alt="Tutup SPK"><div class="cap">Meja 4: kolom Pemakaian dan Sisa Stok di ujung kanan tabel. Kosong = ikut resep / tidak dihitung.</div></div>
+
+  <h3>Siapa bisa menekan apa</h3>
+  <table class="grid">
+    <tr><th style="width: 24%">Peran</th><th style="width: 40%">Mengerjakan</th><th>Tidak bisa</th></tr>
+    <tr><td><b>Production</b> (dapur)</td><td>Menyusun dan mengajukan form, Lembar Kerja, Plating, Tutup SPK</td><td>Menyetujui form, memeriksa barang datang, mengubah resep</td></tr>
+    <tr><td><b>Supervisor Gudang</b></td><td>Setujui / Tolak, ditambah semua pekerjaan staf gudang</td><td>Menyusun form, Tutup SPK</td></tr>
+    <tr><td><b>Inventory</b> (staf gudang)</td><td>Bahan, supplier, pembelian, opname, resep dan antreannya, Periksa barang datang</td><td>Menyetujui form, Tutup SPK</td></tr>
+    <tr><td><b>Owner / Admin</b></td><td>Semua di atas sebagai cadangan; Pengaturan Inventory khusus Owner</td><td>–</td></tr>
+  </table>
+  <p class="small muted">Yang menyusun form bukan yang menyetujuinya, dan yang memeriksa barang bukan yang menutup SPK. Satu orang boleh punya lebih dari satu peran; minta Owner lewat Master User.</p>
+</div>
+
+<!-- ============ 9. BARANG DATANG ============ -->
+<div class="bab">
+  <h2>9. Barang datang: diterima, ditolak, harganya</h2>
+  <table class="was"><tr>
+    <td class="d"><span class="h">Dulu</span>Barang datang dicek di gudang, nota diserahkan ke Accounting untuk diketik ulang.</td>
+    <td class="a">→</td>
+    <td class="n"><span class="h">Sekarang di 3S ONE</span>Staf gudang mengisi Form Kebutuhan dan menekan <b>Periksa</b>. Stok, pembelian, dan harga bahan tercatat sekaligus, dan belanjanya menjadi <b>Tagihan Pembelian</b>. Gudang melampirkan foto nota lalu <b>Ajukan ke Accounting</b>; Accounting tinggal mencocokkan dan membayar, tidak mengetik ulang.</td>
+  </tr></table>
+  <p>Urutan isiannya seperti gambar ini: supplier sekali di atas tabel, lalu per baris bahan, lalu Periksa.</p>
+  <div class="diagram narrow"><img src="img/alur-barang-datang.jpg" alt="Alur barang datang sampai Periksa"></div>
+  <div class="tip"><b>Sistem menolak Periksa</b> bila ada barang Ditolak tanpa alasan atau Harga Beli belum ada. Pesannya menyebut persis apa yang kurang.</div>
+</div>
+
+<div class="bab">
+  <h3 style="margin-top: 0;">Isian per baris bahan</h3>
+  <table class="grid">
+    <tr><th style="width: 22%">Kolom</th><th>Isi dengan</th></tr>
+    <tr><td>Diterima</td><td>Jumlah yang layak masuk gudang. Kosong = sama dengan Beli.</td></tr>
+    <tr><td>Ditolak</td><td><b>Terhitung sendiri</b> = Beli − Diterima. Tidak bisa diketik, supaya tidak ada barang yang "hilang" di antara keduanya.</td></tr>
+    <tr><td>Alasan Ditolak</td><td>Wajib bila ada yang ditolak: busuk, kemasan rusak, salah kirim, dan sebagainya.</td></tr>
+    <tr><td>Perlakuan</td><td><b>Retur / tidak dibayar</b> (bawaan): barang dikembalikan, tanpa biaya. <b>Dibayar</b>: tetap dibayar; nilainya masuk Kerugian Barang Rusak.</td></tr>
+    <tr><td>Harga Beli</td><td>Harga per satuan dari nota. Kosong = memakai harga master bahan.</td></tr>
+    <tr><td>Supplier (atas tabel)</td><td>Toko / supplier tempat belanja dari Master Supplier; boleh kosong bila belanja di beberapa tempat. <b>Akun kas tidak dipilih gudang</b>: Accounting yang memilihnya saat membayar Tagihan Pembelian.</td></tr>
+  </table>
+  <div class="fig"><img src="img/form-gudang.jpg" alt="Form Kebutuhan meja gudang"><div class="cap">Meja 3: supplier di bagian Belanja, lalu per bahan Diterima, Ditolak (otomatis), alasan, perlakuan, dan harga beli.</div></div>
+
+  <h3>Contoh: beli 20 kg ayam</h3>
+  <p>Datang 18 kg bagus, 2 kg busuk dikembalikan ke supplier. Nota Rp 38.000/kg, bayar tunai dari Kas Kecil.</p>
+  <table class="grid">
+    <tr><th style="width: 30%">Isian</th><th>Nilai</th></tr>
+    <tr><td>Diterima</td><td><b>18</b></td></tr>
+    <tr><td>Ditolak</td><td>2 (terhitung sendiri)</td></tr>
+    <tr><td>Alasan · Perlakuan</td><td>busuk · <b>Retur</b></td></tr>
+    <tr><td>Harga Beli</td><td><b>Rp 38.000</b></td></tr>
+  </table>
+  <p>Setelah <b>Periksa</b>: stok ayam +18 kg; Pembelian Bahan Baku Rp 684.000 (kondisi Baik); Kas Kecil −Rp 684.000; harga master ayam menjadi Rp 38.000 dan tercatat di Histori Harga.</p>
+  <p>Kalau supplier tidak mau menerima retur dan tetap menagih 20 kg, pilih perlakuan <b>Dibayar</b>: Kas Kecil −Rp 760.000, dan Rp 76.000 tercatat sebagai Kerugian Barang Rusak.</p>
+  <div class="warn">Barang datang <b>lebih banyak</b> dari Beli? Diterima tidak boleh melebihi Beli. Kelebihannya dicatat Accounting sebagai pembelian terpisah (Pengeluaran, kategori Pembelian Stok).</div>
+</div>
+
+<!-- ============ 10. STOK ============ -->
+<div class="bab">
+  <h2>10. Stok: Kartu Stok, Opname Bahan, Susut Bahan</h2>
+  <table class="was"><tr>
+    <td class="d"><span class="h">Dulu</span>Stok tidak tercatat per bahan. Selisih baru ketahuan saat opname bulanan, dan tersembunyi di angka HPP.</td>
+    <td class="a">→</td>
+    <td class="n"><span class="h">Sekarang di 3S ONE</span><b>Kartu Stok</b> per bahan dengan saldo berjalan, bisa ditelusuri sampai ke SPK mana. Selisih hitung fisik punya nama: Barang Hilang dan Barang Temuan.</td>
+  </tr></table>
+  <div class="formula">Saldo = Stok Awal <span class="p">+ Barang datang + Barang Temuan</span> <span class="m">− Pemakaian − Barang Hilang</span></div>
+  <div class="diagram"><img src="img/alur-kartu-stok.jpg" alt="Kartu Stok: yang menambah, yang mengurangi, dan dipakai untuk apa"></div>
+  <p><b>Kartu Stok hanya dibaca.</b> Tidak ada tombol tambah; semua barisnya berasal dari tiga tempat: Form Kebutuhan (Stok Awal dan Periksa), Tutup SPK, dan Opname Bahan.</p>
+  <div class="fig"><img src="img/kartu-stok.jpg" alt="Kartu Stok"><div class="cap">Kartu Stok: keluar-masuk tiap bahan dengan saldo berjalan. Label oranye = Barang Hilang, biru = Barang Temuan.</div></div>
+</div>
+
+<div class="bab">
+  <h3 style="margin-top: 0;">Opname Bahan: hitung fisik per bahan</h3>
+  <p>Hitung fisik dalam kuantitas (kg, liter, butir), kapan saja, boleh sebagian. Tidak menggantikan Stock Opname bulanan dalam rupiah.</p>
+  <ol>
+    <li>Hitung fisik bahan di gudang. Tidak perlu semua sekaligus; boleh satu rak atau satu kategori.</li>
+    <li>Buka <b class="ui">Inventory › Opname Bahan</b>. Isi <b>Tanggal opname</b> (hari penghitungan) dan bila perlu <b>Catatan</b>.</li>
+    <li>Persempit daftar lewat <b>Kategori</b> atau <b>Cari bahan</b>.</li>
+    <li>Ketik hasil hitung di kolom <b>Hitung Fisik</b>. Kolom <b>Selisih</b> langsung menunjukkan <i>Hilang</i> (merah), <i>Temuan</i>, atau <i>Saldo awal</i> untuk bahan yang belum pernah tercatat. Bahan yang tidak dihitung biarkan kosong.</li>
+    <li>Tekan <b class="ui">Simpan</b> di bawah tabel. Hasilnya langsung tercatat di Kartu Stok.</li>
+  </ol>
+  <div class="tip"><b>Contoh:</b> Kartu Stok bawang merah 121 gram. Dihitung ternyata 160 gram → Temuan 39 gram. Kalau dihitung 100 gram → Hilang 21 gram. Setelah disimpan, saldo Kartu Stok menjadi angka hitungan itu.</div>
+  <div class="fig"><img src="img/opname-bahan.jpg" alt="Opname Bahan"><div class="cap">Opname Bahan: setelah hasil hitung diketik, kolom Selisih menunjukkan Temuan, Hilang, atau Saldo awal.</div></div>
+
+  <h3>Susut Bahan: hijau, kuning, merah</h3>
+  <p>Halaman <b class="ui">Resep &amp; HPP › Susut Bahan</b> merangkum per bahan, untuk SPK Produksi yang sudah ditutup:</p>
+  <div class="formula">Susut = (lebih pakai + Barang Hilang − Barang Temuan) ÷ kebutuhan resep</div>
+  <table class="grid">
+    <tr><th style="width: 18%">Warna</th><th style="width: 22%">Susut</th><th>Yang dilakukan</th></tr>
+    <tr><td style="color:#059669;"><b>Hijau</b></td><td>di bawah 1%</td><td>Wajar.</td></tr>
+    <tr><td style="color:#b45309;"><b>Kuning</b></td><td>1% – 10%</td><td>Perhatikan; bandingkan dengan bulan lalu.</td></tr>
+    <tr><td style="color:#e11d48;"><b>Merah</b></td><td>di atas 10%</td><td>Telusuri: klik bahannya untuk melihat SPK dan menu yang memakainya. Bahan merah selalu paling atas.</td></tr>
+  </table>
+  <div class="warn">Susut hanya bisa dilacak kalau dapur mengisi <b>Pemakaian</b> dan/atau <b>Sisa Stok</b> sebelum Tutup SPK, dan gudang melakukan Opname Bahan berkala. Tanpa hitung fisik, sistem tidak tahu ada barang yang hilang.</div>
+  <div class="fig"><img src="img/susut-bahan.jpg" alt="Susut Bahan"><div class="cap">Susut Bahan: ringkasan merah/kuning/hijau dan nilai susut, lalu rincian per bahan.</div></div>
+  <div class="fig"><img src="img/susut-bahan-lacak.jpg" alt="Susut Bahan dilacak per SPK"><div class="cap">Setelah bahan diklik: "Ke mana susut … pergi", per SPK dengan menu yang memakainya, lalu catatan dari Opname Bahan.</div></div>
+</div>
+
+<!-- ============ 11. OKTOBER ============ -->
+<div class="bab">
+  <h2>11. Bulan Oktober: latihan dan pemetaan</h2>
+  <p>Oktober adalah bulan latihan dan merapikan data. 3S ONE resmi dipakai mulai <b>1 November 2026</b>.</p>
+  <table class="grid">
+    <tr><th style="width: 24%">Kapan</th><th>Apa yang terjadi</th></tr>
+    <tr><td><b>7 Oktober</b></td><td>Pelatihan pengguna.</td></tr>
+    <tr><td>Setelah pelatihan</td><td>3S ONE dibuka. Akun dan peran dibagikan. Data awal = data v2 dan Master Menu Revamp.</td></tr>
+    <tr><td>Selama Oktober</td><td>Latihan dan pemetaan. Server latihan diperbarui <b>Senin 12 Oktober</b>; pelatihan dan pengecekan target setiap Rabu: <b>14, 21, 28 Oktober</b>. Target mingguan per bagian ada di <i>Rencana Pelatihan Oktober</i>.</td></tr>
+    <tr><td><b>1 November</b></td><td>3S ONE resmi. Data v2 sampai 31 Oktober dipindahkan. v2 dan Master Menu Revamp dibekukan.</td></tr>
+  </table>
+
+  <div class="warn"><b>Pekerjaan sehari-hari Oktober tetap di sistem lama:</b> v2 untuk PO, SPK, penjualan, kas; Master Menu Revamp dan form kertas untuk produksi. Tetapi <b>perbaikan bahan dan resep dikerjakan di 3S ONE</b>, karena itulah yang dibawa ke November.</div>
+
+  <h3>Apa yang dibawa ke November, apa yang dibuang</h3>
+  <table class="grid">
+    <tr><th style="width: 50%">Dibawa ke November: kerjakan dengan benar</th><th>Dibuang 1 November: latihan, semua tombol boleh dicoba</th></tr>
+    <tr>
+      <td>• Bahan: nama, satuan, harga, stok minimum, supplier<br>• Konversi Satuan dan keputusan Bahan Belum Cocok<br>• Resep, takaran, Pencocokan Menu, Pekerjaan Menu<br>• Pengaturan, akun dan peran</td>
+      <td>• SPK Produksi, Form Kebutuhan, Lembar Kerja<br>• Barang datang, pembelian, kas dari Periksa<br>• Kartu Stok, Opname Bahan</td>
+    </tr>
+  </table>
+  <div class="tip">Data coba-coba (bahan atau resep percobaan) diberi awalan <b>[LATIHAN]</b> pada namanya, dan dihapus sebelum 27 Oktober. Dengan begitu tidak ada yang ikut terbawa ke November.</div>
+
+  <h3>PR Oktober: siapa memetakan apa</h3>
+  <table class="grid">
+    <tr><th style="width: 18%">Pekerjaan</th><th style="width: 30%">Di menu</th><th style="width: 18%">Siapa</th><th>Selesai kalau</th></tr>
+    <tr><td><b>Aturan satuan</b></td><td>Menu › Konversi Satuan › Belum Diatur</td><td>tim Menu + gudang</td><td>angkanya 0 (kerjakan pertama)</td></tr>
+    <tr><td><b>Nama bahan</b></td><td>Menu › Bahan Belum Cocok</td><td>tim Menu</td><td>angkanya 0</td></tr>
+    <tr><td><b>Menu ke resep</b></td><td>Menu › Pencocokan Menu</td><td>tim Menu</td><td>60 menu terlaris tertaut atau Tanpa Resep</td></tr>
+    <tr><td><b>Data bahan</b></td><td>Item Inventaris</td><td>gudang</td><td>satuan dan harga benar, tanpa nama kembar</td></tr>
+    <tr><td><b>Pemasok</b></td><td>Master Supplier</td><td>gudang</td><td>kontak, termin, dan bahan yang dipasok terisi</td></tr>
+    <tr><td><b>Takaran resep</b></td><td>Menu › Menu Utama › Analisa HPP</td><td>tim Menu + dapur</td><td>HPP per porsi masuk akal, status Lengkap</td></tr>
+    <tr><td><b>Pembagian kerja</b></td><td>Pekerjaan Menu</td><td>dapur</td><td>menu yang sering dimasak punya template</td></tr>
+  </table>
+
+  <h3>Latihan pertama Anda (20 menit)</h3>
+  <ol>
+    <li>Masuk ke 3sone.w3scatering.com dan ganti password sementara.</li>
+    <li>Tekan Ctrl + K, ketik <b>ayam</b>, buka bahannya, lihat Histori Harga.</li>
+    <li>Buka tab Menu › Menu Utama, pilih satu menu terlaris, tekan Analisa HPP. Statusnya Lengkap?</li>
+    <li>Buka SPK Produksi untuk besok, lalu Breakdown Bahan. Bahan apa yang paling banyak Perlu Beli?</li>
+    <li>Di SPK yang sama, buka Lainnya › Lembar Kerja dan lihat isi Salin dari Template Menu.</li>
+    <li>Selesaikan satu baris di Konversi Satuan › Belum Diatur.</li>
+  </ol>
+</div>
+
+<!-- ============ 12. KEBIASAAN ============ -->
+<div class="bab">
+  <h2>12. Kebiasaan mulai 1 November</h2>
+  <p>Setelah data beres, pekerjaan harian ringan: tiap orang hanya menyentuh bagiannya, dan lonceng memberi tahu kapan gilirannya.</p>
+  <h3>Setiap hari</h3>
+  <table class="grid">
+    <tr><th style="width: 22%">Siapa</th><th>Apa yang dikerjakan</th></tr>
+    <tr><td>Dapur</td><td>Buka SPK Produksi › Form Kebutuhan. Isi Stok Awal, lalu Ajukan. Bila ditolak, baca alasannya, perbaiki, Ajukan lagi.</td></tr>
+    <tr><td>Supervisor Gudang</td><td>Buka lonceng. Setujui, atau Tolak dengan alasan yang jelas.</td></tr>
+    <tr><td>Staf Gudang</td><td>Belanja sesuai kolom Beli. Barang datang: isi Diterima, Ditolak, alasan, Harga Beli, supplier, lalu Periksa sekali. Buka Tagihan Pembelian-nya, lampirkan foto nota, Ajukan ke Accounting.</td></tr>
+    <tr><td>Dapur</td><td>Setelah masak, isi Sisa Stok (dan Pemakaian bila dihitung), lalu Tutup SPK.</td></tr>
+  </table>
+  <h3>Setiap minggu</h3>
+  <table class="grid">
+    <tr><th style="width: 22%">Siapa</th><th>Apa yang dikerjakan</th></tr>
+    <tr><td>Staf Gudang</td><td>Cek bahan di bawah stok minimum di Dashboard Inventory; sesuaikan batasnya bila terlalu sering atau jarang muncul.</td></tr>
+    <tr><td>Staf Gudang</td><td>Opname Bahan untuk bahan yang mahal atau sering susut: ayam, daging, minyak.</td></tr>
+    <tr><td>Staf Inventory</td><td>Jaga Bahan Belum Cocok dan Konversi Belum Diatur tetap 0. Resep baru sering menambah satu-dua baris.</td></tr>
+  </table>
+  <h3>Setiap bulan</h3>
+  <table class="grid">
+    <tr><th style="width: 22%">Siapa</th><th>Apa yang dikerjakan</th></tr>
+    <tr><td>Staf Gudang</td><td>Hitung fisik dan isi Stock Opname pada tanggal akhir periode.</td></tr>
+    <tr><td>Owner</td><td>Perbandingan HPP, Susut Bahan yang merah, dan Menu Tidak Diproduksi.</td></tr>
+  </table>
+  <h3>Yang sebaiknya tidak dilakukan</h3>
+  <ul>
+    <li><b>Belanja di luar Form Kebutuhan tanpa dicatat.</b> Kartu Stok jadi lebih kecil dari kenyataan. Kalau terpaksa, catat lewat Accounting › Pengeluaran (Pembelian Stok).</li>
+    <li><b>Menekan Periksa sebelum Harga Beli diisi.</b> Harga itu dasar nilai stok dan harga bahan.</li>
+    <li><b>Membuat bahan baru dengan nama mirip bahan lama.</b> Cari dulu, tautkan ke yang ada.</li>
+    <li><b>Mengganti satuan bahan yang sudah punya riwayat.</b> Buat aturan konversi saja.</li>
+  </ul>
+</div>
+
+<!-- ============ 13. KALAU ADA MASALAH ============ -->
+<div class="bab">
+  <h2>13. Kalau ada masalah</h2>
+  <h3>Menu yang dulu saya pakai di Master Menu tidak ada.</h3>
+  <p>Lihat peta pindah di Bab 2. Kalau menunya ada di peta tetapi tidak muncul di menu kiri Anda, peran Anda belum mencakupnya; minta Owner menyesuaikannya lewat Master User.</p>
+  <h3>Tombol Setujui tidak ada, padahal formnya ada.</h3>
+  <p>Setujui hanya untuk Supervisor Gudang (atau Owner/Admin), dan baru muncul setelah dapur menekan Ajukan. Kalau status masih "Dibuat / Diisi", giliran dapur dulu.</p>
+  <h3>Form saya ditolak supervisor.</h3>
+  <p>Baca alasannya di kotak merah di atas tabel, perbaiki isian, Simpan Isian, lalu Ajukan lagi. Kotak merah hilang begitu diajukan ulang.</p>
+  <h3>Biaya resep dihitung nol, atau statusnya Belum Lengkap.</h3>
+  <p>Ada bahan yang belum tertaut (Bahan Belum Cocok) atau satuannya belum bisa dikonversi (Konversi Satuan › Belum Diatur). Tekan Analisa HPP pada resepnya: baris yang menahan perhitungan ditampilkan di bawah. Lengkapi, HPP langsung terhitung.</p>
+  <h3>HPP sebuah menu berubah sendiri.</h3>
+  <p>Karena harga bahannya berubah, biasanya setelah gudang mencatat Harga Beli baru saat Periksa. Buka Item Inventaris › Histori Harga bahan itu untuk melihat kapan, dari berapa ke berapa, dan dari form mana. Kalau harganya keliru, perbaiki harga bahannya; HPP menu ikut.</p>
+  <h3>HPP per porsi tidak masuk akal (ratusan ribu untuk nasi box).</h3>
+  <p>Hampir pasti satuannya: aturan konversi yang salah faktor, atau takaran resep yang tertulis dalam satuan berbeda. Periksa aturannya di Konversi Satuan.</p>
+  <h3>Menu muncul di kotak kuning Breakdown Bahan.</h3>
+  <p>Menu itu belum punya resep. Tautkan di Pencocokan Menu (Tautkan atau Buat Resep), lalu buka Breakdown Bahan lagi.</p>
+  <h3>Saya salah isi Harga Beli dan sudah menekan Periksa.</h3>
+  <p>Periksa tidak bisa diulang. Minta Accounting mengoreksi catatan di Pembelian Bahan Baku (nilai dan kas ikut terkoreksi), dan perbaiki harga bahan di Item Inventaris bila harga master ikut salah.</p>
+  <h3>Opname Bahan menulis "Saldo awal", bukan Hilang atau Temuan.</h3>
+  <p>Bahan itu belum pernah tercatat di Kartu Stok, jadi hitungan pertama menjadi saldo awalnya. Hitungan berikutnya baru dibandingkan.</p>
+  <h3>Sebuah bahan merah di Susut Bahan.</h3>
+  <p>Klik bahannya. Lihat SPK mana yang susutnya besar dan menu apa yang memakainya: takaran resep yang tidak sesuai kenyataan (potongan, tulang, kulit), bahan dipakai di luar resep, atau hitungan sisa stok yang keliru. Perbaiki resepnya bila memang takarannya yang salah.</p>
+  <h3>Nama supplier tidak ada di pilihan.</h3>
+  <p>Pilihan hanya berisi supplier aktif di Master Supplier. Aktifkan lagi di sana, atau tambahkan supplier baru langsung dari pilihan itu.</p>
+  <h3>Lupa password.</h3>
+  <p>Minta Owner mereset lewat Master User. Anda mendapat password sementara dan diminta menggantinya saat masuk.</p>
+  <div class="tip">Saat melapor masalah, sebutkan: halaman yang dibuka, nama bahan / menu / nomor SPK, apa yang ditekan, dan versi sistem (di halaman masuk, saat ini v3.1). Tangkapan layar sangat membantu, asal tidak memuat password.</div>
+</div>
+
+<!-- ============ 14. KAMUS ============ -->
+<div class="bab">
+  <h2>14. Kamus singkat</h2>
+  <table class="grid kamus">
+    <tr><th style="width: 26%">Istilah</th><th>Artinya</th></tr>
+    <tr><td>SPK Produksi</td><td>Daftar masak satu slot SPK: menu dan jumlah porsi. Dulu: Order dan Pra SPK.</td></tr>
+    <tr><td>Breakdown Bahan</td><td>Semua menu di SPK diurai sampai bahan mentah, lalu direkap per bahan. Dulu: Rekap Bahan di Pra SPK.</td></tr>
+    <tr><td>Form Kebutuhan</td><td>Form "Kebutuhan, Stok &amp; Pembelian Barang" versi digital, satu per SPK Produksi.</td></tr>
+    <tr><td>Stok Awal · Beli</td><td>Hasil hitung fisik dapur · Kebutuhan dikurangi Stok Awal, terhitung sendiri.</td></tr>
+    <tr><td>Diterima · Ditolak</td><td>Yang layak masuk gudang · Beli dikurangi Diterima, terhitung sendiri.</td></tr>
+    <tr><td>Periksa</td><td>Tombol gudang setelah barang datang. Mencatat stok, pembelian, kas, dan harga bahan.</td></tr>
+    <tr><td>Tutup SPK</td><td>Tombol dapur setelah masak. Mencatat pemakaian dan sisa stok.</td></tr>
+    <tr><td>Kartu Stok</td><td>Catatan keluar-masuk per bahan dengan saldo berjalan. Hanya dibaca.</td></tr>
+    <tr><td>Opname Bahan</td><td>Hitung fisik per bahan dalam kuantitas, kapan saja, boleh sebagian.</td></tr>
+    <tr><td>Stock Opname</td><td>Hitung fisik bulanan dalam rupiah per kategori, untuk laporan keuangan.</td></tr>
+    <tr><td>Barang Hilang · Temuan</td><td>Hitung fisik kurang · lebih dari catatan Kartu Stok.</td></tr>
+    <tr><td>Susut</td><td>(Lebih pakai + Hilang − Temuan) ÷ kebutuhan resep, dalam persen.</td></tr>
+    <tr><td>Kerugian Barang Rusak</td><td>Barang datang rusak tetapi tetap dibayar (perlakuan Dibayar).</td></tr>
+    <tr><td>Konversi Satuan</td><td>Aturan satuan resep ke satuan beli, misalnya 1 kg telur = 16 butir.</td></tr>
+    <tr><td>Bahan Belum Cocok</td><td>Nama bahan di resep yang belum terhubung ke Item Inventaris. Dulu: Mismatch.</td></tr>
+    <tr><td>Pencocokan Menu</td><td>Menautkan menu yang dijual Admin ke resepnya.</td></tr>
+    <tr><td>HPP · OHC</td><td>Biaya bahan per porsi · biaya di luar bahan (gas, listrik, tenaga) dalam persen.</td></tr>
+    <tr><td>Lonceng</td><td>Pemberitahuan bahwa sekarang giliran Anda.</td></tr>
+    <tr><td>Peran</td><td>Jenis pengguna (Production, Inventory, Supervisor Gudang, ...) yang menentukan menu dan tombol yang tampil.</td></tr>
+  </table>
+</div>
+
+<!-- ============ LAMPIRAN: CONTEKAN ============ -->
+<div class="cheat" style="page-break-before: always;">
+  <h2>Lampiran · Contekan satu halaman</h2>
+  <p class="small muted">Cetak halaman ini dan tempel di dekat komputer gudang. Alamat: <b>3sone.w3scatering.com</b> · Cari cepat: <b>Ctrl + K</b> · Lonceng = giliran Anda · Angka di menu kiri = antrean.</p>
+
+  <h3>Menu lama → menu baru (tab Inventory)</h3>
+  <table class="grid">
+    <tr><th style="width: 30%">Master Menu</th><th>3S ONE</th></tr>
+    <tr><td>Bahan Baku</td><td>Item Inventaris</td></tr>
+    <tr><td>Menu Utama / Sub-Menu</td><td>Menu › Menu Utama / Sub Menu</td></tr>
+    <tr><td>Order</td><td>tidak perlu (dari PO Admin)</td></tr>
+    <tr><td>Pra SPK</td><td>SPK Produksi › Breakdown Bahan</td></tr>
+    <tr><td>Menu Plating</td><td>SPK Produksi › Lainnya › Plating</td></tr>
+    <tr><td>Pekerjaan Menu</td><td>Pekerjaan Menu</td></tr>
+    <tr><td>Produksi</td><td>SPK Produksi › Lainnya › Lembar Kerja</td></tr>
+    <tr><td>Mismatch</td><td>Bahan Belum Cocok</td></tr>
+  </table>
+
+  <h3>Form Kebutuhan, empat meja</h3>
+  <table class="grid">
+    <tr><th style="width: 30%">Meja</th><th>Isi, lalu tekan</th></tr>
+    <tr><td>1 · Dapur</td><td>Stok Awal → <b>Ajukan</b></td></tr>
+    <tr><td>2 · Supervisor Gudang</td><td><b>Setujui</b>, atau <b>Tolak</b> + alasan</td></tr>
+    <tr><td>3 · Staf Gudang</td><td>Cara bayar, Diterima, alasan Ditolak, Harga Beli → <b>Periksa</b> (sekali)</td></tr>
+    <tr><td>4 · Dapur</td><td>Sisa Stok (dan Pemakaian) → <b>Tutup SPK</b></td></tr>
+  </table>
+
+  <h3>Susut Bahan</h3>
+  <table class="grid">
+    <tr><td style="width: 30%; color:#059669;"><b>Hijau</b> &lt; 1%</td><td style="color:#b45309;"><b>Kuning</b> 1–10%</td><td style="color:#e11d48;"><b>Merah</b> &gt; 10%: klik, telusuri SPK dan menunya</td></tr>
+  </table>
+
+  <h3>Target sistem siap</h3>
+  <table class="grid">
+    <tr><td style="width: 33%">Konversi Belum Diatur = <b>0</b></td><td style="width: 33%">Bahan Belum Cocok = <b>0</b></td><td>Profit menu di Dashboard tampil angka</td></tr>
+  </table>
+
+  <h3>Jangan</h3>
+  <p class="small">Belanja di luar Form Kebutuhan tanpa dicatat · membuat bahan dengan nama mirip bahan lama · mengganti satuan bahan yang sudah punya riwayat · menekan Periksa sebelum Harga Beli diisi.</p>
+</div>
+
+</body>
+</html>

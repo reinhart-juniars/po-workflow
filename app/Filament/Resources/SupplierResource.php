@@ -27,15 +27,17 @@ use Illuminate\Support\Facades\Auth;
  */
 class SupplierResource extends Resource
 {
+    use \App\Filament\Concerns\InInventoryPanel;
+
     protected static ?string $model = Supplier::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-building-storefront';
 
-    protected static ?string $navigationGroup = 'Inventory';
+    protected static ?string $navigationGroup = 'Pembelian';
 
     protected static ?string $navigationLabel = 'Master Supplier';
 
-    protected static ?int $navigationSort = 15;
+    protected static ?int $navigationSort = 30;
 
     protected static ?string $modelLabel = 'Supplier';
 
