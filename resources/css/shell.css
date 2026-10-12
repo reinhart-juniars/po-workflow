@@ -525,6 +525,20 @@
   }
 }
 
+/* Garis bawah topbar & kepala sidebar panel = layouts/shell: garis 1px polos
+   (border-gray-200 / border-gray-950/5). Filament bawaannya ring-1 + shadow-sm,
+   yang tampak lebih tebal dan gelap dibanding halaman Blade. Ring Tailwind
+   ditulis lewat box-shadow, jadi box-shadow:none mematikan keduanya. */
+.fi-topbar > nav {
+  box-shadow: none;
+  border-bottom: 1px solid var(--sh-line);
+}
+
+.fi-sidebar .fi-sidebar-header {
+  box-shadow: none;
+  border-bottom: 1px solid rgba(2, 6, 23, 0.05);
+}
+
 /* Menu pengguna bawaan Filament diganti partial user-menu (hook USER_MENU_BEFORE). */
 .fi-topbar .fi-user-menu { display: none; }
 .fi-topbar .sh-user { margin-left: 4px; }

@@ -229,8 +229,22 @@
         @apply grid gap-3 sm:grid-cols-2 xl:grid-cols-4;
     }
 
+    /* Kartu jadi container: angka di dalamnya menyesuaikan lebar kartu
+       (5 kartu sejajar di 1280px hanya ~140px; "Rp 635.417.279" tidak muat). */
     .stat-card {
-        @apply app-card p-5;
+        @apply app-card min-w-0 p-5;
+        container-type: inline-size;
+    }
+
+    /* Ukuran huruf = min(ukuran bawaan, lebar kartu / ~9,5 karakter angka),
+       jadi kartu lebar tetap seperti biasa dan kartu sempit mengecil sendiri
+       alih-alih angkanya menimpa kartu sebelah. */
+    .stat-card .stat-value {
+        font-size: clamp(1rem, 10.5cqi, 1.75rem);
+    }
+
+    .stat-card .stat-value-compact {
+        font-size: clamp(1rem, 10.5cqi, 1.5rem);
     }
 
     .stat-label {
