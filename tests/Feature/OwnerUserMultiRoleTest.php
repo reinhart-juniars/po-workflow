@@ -6,8 +6,6 @@ use Spatie\Permission\Models\Role;
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\from;
 use function Pest\Laravel\get;
-use function Pest\Laravel\post;
-use function Pest\Laravel\put;
 
 beforeEach(function () {
     foreach (['owner', 'admin', 'accounting', 'sales', 'production', 'delivery'] as $role) {
@@ -116,4 +114,30 @@ it('redirects multi-role users to the highest-priority dashboard', function () {
 
     get('/dashboard')
         ->assertRedirect(route('adminapp.dashboard'));
+});
+
+it('sends role display labels to the role dropdown script', function () {
+    $owner = User::factory()->create([
+        'force_password_change' => false,
+        'is_active' => true,
+    ]);
+    $owner->assignRole('owner');
+
+    actingAs($owner);
+
+    $html = get(route('ownerapp.users.index'))->assertOk()->getContent();
+
+    // JS membangun ulang opsi dropdown dari atribut ini; tanpa label,
+    // peran tampil sebagai nama mentah ("Menu" alih-alih "Menu (resep & HPP)").
+    preg_match_all("/data-role-labels='([^']*)'/", $html, $matches);
+    expect($matches[1])->not->toBeEmpty();
+
+    foreach ($matches[1] as $raw) {
+        $labels = json_decode(html_entity_decode($raw, ENT_QUOTES), true);
+
+        expect($labels)
+            ->toHaveKeys(User::manageableRoles())
+            ->and($labels['inventory'])->toBe('Inventory (gudang)')
+            ->and($labels['menu'])->toBe('Menu (resep & HPP)');
+    }
 });

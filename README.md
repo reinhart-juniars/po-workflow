@@ -23,7 +23,7 @@ menggantikan HPP residual opname dengan pemakaian bahan riil dari resep × produ
 |---|---|---|
 | 1 | Item inventaris bertingkat (bucket → bahan), Master Supplier (kontak, rekening, termin bayar, bahan yang dipasok, riwayat pembelian; pembelian/form kebutuhan/hutang menyimpan `supplier_id` + salinan `supplier_name`, termin mengisi jatuh tempo kredit yang kosong), pembelian, opname, saldo awal, laporan mutasi, import/export Excel | Inventory |
 | 2 | Resep & sub-resep, Analisa HPP, aturan konversi satuan per bahan + pendeteksi pasangan yang belum diatur, Bahan Belum Cocok (pencocokan nama), Pencocokan Menu (master produk Admin App ↔ resep, berbasis porsi terjual 90 hari; satu resep boleh dipakai beberapa varian harga, tautan di `products.recipe_id`; export/import Excel sebagai lembar kerja staf: terima_usulan / resep_id / tanpa_resep per baris, baris kosong tidak diubah), import/export resep | Inventory |
-| 3 | SPK Produksi dari slot SPK/PO, Form Kebutuhan bertahap per meja (Dibuat oleh produksi → Diajukan → Disetujui/Ditolak oleh supervisor gudang, dengan notifikasi lonceng → Penerimaan barang: diterima/ditolak/harga beli → Diperiksa: kartu stok + Pembelian Bahan Baku + kas/hutang otomatis → Tutup SPK), kartu stok per bahan, lembar kerja, plating, PDF, Perbandingan HPP resep vs opname | Produksi |
+| 3 | SPK Produksi dari slot SPK/PO, Form Kebutuhan bertahap per meja (Dibuat oleh produksi → Diajukan → Disetujui/Ditolak oleh gudang, dengan notifikasi lonceng → Penerimaan barang: diterima/ditolak/harga beli → Diperiksa: kartu stok + Pembelian Bahan Baku + kas/hutang otomatis → Tutup SPK), kartu stok per bahan, lembar kerja, plating, PDF, Perbandingan HPP resep vs opname | Produksi |
 | 4 | Izin modul (spatie permission) per peran, Pengaturan modul, cangkang & menu 3S terpadu (satu sumber untuk Blade dan Filament), validasi & pembersihan pasca migrasi, runbook cutover & UAT | Sistem |
 | B | Notifikasi perubahan harga bahan & harga jual menu (lonceng di semua aplikasi), notifikasi profit menu keseluruhan keluar dari batas atas/bawah (Pengaturan Inventory; `profit:check` harian), laporan Menu Tidak Diproduksi (rentang bawaan di Pengaturan, export Excel), Katalog Foto Menu berbasis SKU di aplikasi **Marketing** (peran `marketing`; centang menu yang tampil di website, SKU diketik manual karena menjadi nama menu di website; foto dikompres otomatis ke JPG 1600 px) | Inventory / Admin / Marketing |
 | MM | Paritas Master Menu Revamp: **Breakdown Bahan** per PO (Admin › Detail PO) dan per SPK Produksi (menu → bahan mentah, rekap per bahan dicocokkan dengan Kartu Stok → Perlu Beli; `MaterialBreakdownService`), daftar Resep & Menu dengan Harga Jual/Profit %/Margin % + filter *Profit di bawah target* + export Daftar Menu, harga manual per baris resep, export riwayat harga bahan, Plating *Komponen per Menu* + Excel 2 sheet, Excel Breakdown & Lembar Kerja, halaman **Pekerjaan Menu** (template per menu + import/export Excel, membaca berkas Master Menu), migrasi dokumen produksi tanpa Pra SPK | Inventory / Admin |
@@ -31,9 +31,11 @@ menggantikan HPP residual opname dengan pemakaian bahan riil dari resep × produ
 ## Revisi pasca presentasi Inventory (Okt 2026)
 
 - **Aplikasi Menu** (`/menu`, peran baru `menu`): Menu Utama & Sub Menu, Pencocokan Menu, Pekerjaan
-  Menu, Konversi Satuan, Bahan Belum Cocok, Perbandingan HPP, Menu Tidak Diproduksi. Admin, inventory,
-  dan inventory-supervisor hanya **membaca** resep (`recipe.manage` dicabut; server: `access:sync --reset`).
+  Menu, Konversi Satuan, Bahan Belum Cocok, Perbandingan HPP, Menu Tidak Diproduksi. Admin dan inventory
+  hanya **membaca** resep (`recipe.manage` dicabut; server: `access:sync --reset`).
   Tautan lama `/inventory/<resep...>` dialihkan 301.
+- **Supervisor Gudang digabung ke Inventory** (12 Okt): peran `inventory` kini juga menyetujui / menolak
+  Form Kebutuhan; `access:sync` memindahkan pemegang peran lama otomatis.
 - **HPP & OHC di Admin › Master Menu ikut resep** bila hitungan resepnya bersih (`ProductRecipeCostSync`,
   `products.cost_source`); field terkunci, import Excel mengabaikannya. Resep belum lengkap tetap manual
   dengan alasan di form. `menu:sync-product-costs` dijadwalkan 06:15.

@@ -385,7 +385,7 @@
     <td class="n"><span class="h">Sekarang di 3S ONE</span>Admin menyusun SPK, lalu <b>SPK Produksi</b> terbentuk sendiri. Breakdown Bahan, Lembar Kerja, dan Plating ada di halaman SPK Produksi itu.</td>
   </tr></table>
   <p>Gambar ini adalah perjalanan satu SPK dari awal sampai akhir. Kolom = siapa yang mengerjakan; nomor = urutannya. Setiap kali pekerjaan pindah kolom, orang berikutnya mendapat lonceng.</p>
-  <div class="diagram narrow"><img src="img/alur-perjalanan-spk.jpg" alt="Perjalanan satu SPK: Admin, Sistem, Dapur, Supervisor Gudang, Staf Gudang"></div>
+  <div class="diagram narrow"><img src="img/alur-perjalanan-spk.jpg" alt="Perjalanan satu SPK: Admin, Sistem, Dapur, Gudang"></div>
   <p class="small muted">Kolom hijau dikerjakan sistem: dapur tidak menghitung bahan dengan tangan, Accounting tidak mengetik ulang nota. Panah merah putus-putus: form yang ditolak kembali ke dapur.</p>
 </div>
 
@@ -439,19 +439,19 @@
   <ol>
     <li>Buka SPK Produksi, tekan <b class="ui">Form Kebutuhan</b>, lalu susun form. Kolom <b>Kebutuhan</b> dihitung dari resep × jumlah porsi.</li>
     <li>Hitung fisik bahan yang ada di dapur, ketik di kolom <b>Stok Awal</b>. Kolom <b>Beli</b> terhitung sendiri.</li>
-    <li>Tekan <b class="ui">Simpan Isian</b>, periksa lagi, lalu <b class="ui">Ajukan</b> ke Supervisor Gudang.</li>
+    <li>Tekan <b class="ui">Simpan Isian</b>, periksa lagi, lalu <b class="ui">Ajukan</b> ke Gudang.</li>
   </ol>
   <div class="fig"><img src="img/form-produksi.jpg" alt="Form Kebutuhan meja produksi"><div class="cap">Meja 1: isi Stok Awal, Beli terhitung sendiri, lalu Ajukan.</div></div>
 
-  <h3>Meja 2 · Supervisor Gudang memeriksa angkanya</h3>
+  <h3>Meja 2 · Gudang memeriksa angkanya</h3>
   <ol>
     <li>Lonceng "menunggu persetujuan" muncul. Tekan <b class="ui">Buka</b>.</li>
     <li>Periksa Stok Awal, Beli, dan perkiraan biaya (tabel memuat harga master per bahan).</li>
     <li>Tekan <b class="ui">Setujui</b>, atau <b class="ui">Tolak</b> dengan alasan yang jelas. Form yang ditolak kembali ke Meja 1 dengan catatan merah di atas tabel.</li>
   </ol>
-  <div class="fig"><img src="img/form-supervisor.jpg" alt="Form Kebutuhan meja supervisor"><div class="cap">Meja 2: hanya tombol Setujui / Tolak; tabel memuat harga master dan perkiraan biaya.</div></div>
+  <div class="fig"><img src="img/form-supervisor.jpg" alt="Form Kebutuhan meja gudang"><div class="cap">Meja 2: hanya tombol Setujui / Tolak; tabel memuat harga master dan perkiraan biaya.</div></div>
 
-  <h3>Meja 3 · Staf Gudang saat barang datang</h3>
+  <h3>Meja 3 · Gudang saat barang datang</h3>
   <p>Lonceng "siap dibelanjakan" muncul setelah form disetujui. Belanja sesuai kolom Beli. Saat barang datang, isi form seperti di Bab 9, lalu tekan <b class="ui">Periksa</b> sekali.</p>
 
   <h3>Meja 4 · Dapur setelah masak</h3>
@@ -471,8 +471,7 @@
   <table class="grid">
     <tr><th style="width: 24%">Peran</th><th style="width: 40%">Mengerjakan</th><th>Tidak bisa</th></tr>
     <tr><td><b>Production</b> (dapur)</td><td>Menyusun dan mengajukan form, Lembar Kerja, Plating, Tutup SPK</td><td>Menyetujui form, memeriksa barang datang, mengubah resep</td></tr>
-    <tr><td><b>Supervisor Gudang</b></td><td>Setujui / Tolak, ditambah semua pekerjaan staf gudang</td><td>Menyusun form, Tutup SPK</td></tr>
-    <tr><td><b>Inventory</b> (staf gudang)</td><td>Bahan, supplier, pembelian, opname, resep dan antreannya, Periksa barang datang</td><td>Menyetujui form, Tutup SPK</td></tr>
+    <tr><td><b>Inventory</b> (gudang)</td><td>Setujui / Tolak Form Kebutuhan, bahan, supplier, pembelian, opname, Periksa barang datang, Tagihan Pembelian</td><td>Menyusun form, Tutup SPK</td></tr>
     <tr><td><b>Owner / Admin</b></td><td>Semua di atas sebagai cadangan; Pengaturan Inventory khusus Owner</td><td>–</td></tr>
   </table>
   <p class="small muted">Yang menyusun form bukan yang menyetujuinya, dan yang memeriksa barang bukan yang menutup SPK. Satu orang boleh punya lebih dari satu peran; minta Owner lewat Master User.</p>
@@ -614,8 +613,8 @@
   <table class="grid">
     <tr><th style="width: 22%">Siapa</th><th>Apa yang dikerjakan</th></tr>
     <tr><td>Dapur</td><td>Buka SPK Produksi › Form Kebutuhan. Isi Stok Awal, lalu Ajukan. Bila ditolak, baca alasannya, perbaiki, Ajukan lagi.</td></tr>
-    <tr><td>Supervisor Gudang</td><td>Buka lonceng. Setujui, atau Tolak dengan alasan yang jelas.</td></tr>
-    <tr><td>Staf Gudang</td><td>Belanja sesuai kolom Beli. Barang datang: isi Diterima, Ditolak, alasan, Harga Beli, supplier, lalu Periksa sekali. Buka Tagihan Pembelian-nya, lampirkan foto nota, Ajukan ke Accounting.</td></tr>
+    <tr><td>Inventory (gudang)</td><td>Buka lonceng. Setujui, atau Tolak dengan alasan yang jelas.</td></tr>
+    <tr><td>Inventory (gudang)</td><td>Belanja sesuai kolom Beli. Barang datang: isi Diterima, Ditolak, alasan, Harga Beli, supplier, lalu Periksa sekali. Buka Tagihan Pembelian-nya, lampirkan foto nota, Ajukan ke Accounting.</td></tr>
     <tr><td>Dapur</td><td>Setelah masak, isi Sisa Stok (dan Pemakaian bila dihitung), lalu Tutup SPK.</td></tr>
   </table>
   <h3>Setiap minggu</h3>
@@ -646,8 +645,8 @@
   <h3>Menu yang dulu saya pakai di Master Menu tidak ada.</h3>
   <p>Lihat peta pindah di Bab 2. Kalau menunya ada di peta tetapi tidak muncul di menu kiri Anda, peran Anda belum mencakupnya; minta Owner menyesuaikannya lewat Master User.</p>
   <h3>Tombol Setujui tidak ada, padahal formnya ada.</h3>
-  <p>Setujui hanya untuk Supervisor Gudang (atau Owner/Admin), dan baru muncul setelah dapur menekan Ajukan. Kalau status masih "Dibuat / Diisi", giliran dapur dulu.</p>
-  <h3>Form saya ditolak supervisor.</h3>
+  <p>Setujui hanya untuk peran Inventory (atau Owner/Admin), dan baru muncul setelah dapur menekan Ajukan. Kalau status masih "Dibuat / Diisi", giliran dapur dulu.</p>
+  <h3>Form saya ditolak gudang.</h3>
   <p>Baca alasannya di kotak merah di atas tabel, perbaiki isian, Simpan Isian, lalu Ajukan lagi. Kotak merah hilang begitu diajukan ulang.</p>
   <h3>Biaya resep dihitung nol, atau statusnya Belum Lengkap.</h3>
   <p>Ada bahan yang belum tertaut (Bahan Belum Cocok) atau satuannya belum bisa dikonversi (Konversi Satuan › Belum Diatur). Tekan Analisa HPP pada resepnya: baris yang menahan perhitungan ditampilkan di bawah. Lengkapi, HPP langsung terhitung.</p>
@@ -693,7 +692,7 @@
     <tr><td>Pencocokan Menu</td><td>Menautkan menu yang dijual Admin ke resepnya.</td></tr>
     <tr><td>HPP · OHC</td><td>Biaya bahan per porsi · biaya di luar bahan (gas, listrik, tenaga) dalam persen.</td></tr>
     <tr><td>Lonceng</td><td>Pemberitahuan bahwa sekarang giliran Anda.</td></tr>
-    <tr><td>Peran</td><td>Jenis pengguna (Production, Inventory, Supervisor Gudang, ...) yang menentukan menu dan tombol yang tampil.</td></tr>
+    <tr><td>Peran</td><td>Jenis pengguna (Production, Inventory, Menu, ...) yang menentukan menu dan tombol yang tampil.</td></tr>
   </table>
 </div>
 
@@ -719,8 +718,8 @@
   <table class="grid">
     <tr><th style="width: 30%">Meja</th><th>Isi, lalu tekan</th></tr>
     <tr><td>1 · Dapur</td><td>Stok Awal → <b>Ajukan</b></td></tr>
-    <tr><td>2 · Supervisor Gudang</td><td><b>Setujui</b>, atau <b>Tolak</b> + alasan</td></tr>
-    <tr><td>3 · Staf Gudang</td><td>Cara bayar, Diterima, alasan Ditolak, Harga Beli → <b>Periksa</b> (sekali)</td></tr>
+    <tr><td>2 · Gudang</td><td><b>Setujui</b>, atau <b>Tolak</b> + alasan</td></tr>
+    <tr><td>3 · Gudang</td><td>Cara bayar, Diterima, alasan Ditolak, Harga Beli → <b>Periksa</b> (sekali)</td></tr>
     <tr><td>4 · Dapur</td><td>Sisa Stok (dan Pemakaian) → <b>Tutup SPK</b></td></tr>
   </table>
 

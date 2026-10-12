@@ -16,7 +16,7 @@ it('membangun panduan pengguna pdf dari sumber html', function () {
 
     // Isi sumbernya memang panduan sistem ini, bukan berkas kosong.
     $html = file_get_contents(base_path('docs/panduan/panduan-3s-one.html'));
-    expect($html)->toContain('Form Kebutuhan')->toContain('Supervisor Gudang')->toContain('Kartu Stok');
+    expect($html)->toContain('Form Kebutuhan')->toContain('Kartu Stok');
 
     // Pencarian global ikut terdokumentasi -- termasuk peringatan bahwa
     // hasilnya disaring per peran, yang kalau hilang akan memancing laporan
@@ -31,10 +31,11 @@ it('membangun panduan pengguna pdf dari sumber html', function () {
         ->toContain('Menyaring daftar dan laporan')
         ->toContain('img/filter-popover.jpg')
         ->toContain('img/master-supplier.jpg')
-        // Hak akses per peran tertulis untuk pengguna, termasuk beda
-        // staf gudang vs supervisor gudang yang sering ditanyakan.
+        // Hak akses per peran tertulis untuk pengguna; gudang satu peran
+        // (Supervisor Gudang digabung ke Inventory, 12 Okt 2026).
         ->toContain('Hak akses rinci per peran')
-        ->toContain('Staf Gudang dan Supervisor Gudang: apa bedanya?');
+        ->toContain('Satu peran untuk gudang: Inventory')
+        ->not->toContain('Staf Gudang dan Supervisor Gudang: apa bedanya?');
 
     @unlink($output);
 });

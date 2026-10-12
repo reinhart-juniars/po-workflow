@@ -52,8 +52,8 @@ class InventoryOverviewWidget extends BaseWidget
                 ->url(ProductionOrderResource::getUrl('index'));
         }
 
-        // Antrean per meja: supervisor gudang melihat yang menunggu persetujuan,
-        // gudang melihat yang menunggu penerimaan barang.
+        // Antrean per meja: yang menunggu persetujuan dan yang menunggu
+        // penerimaan barang, masing-masing untuk pemegang izinnya.
         if ($user?->can('requisition.approve')) {
             $menungguSetuju = Requisition::query()->where('status', Requisition::STATUS_SUBMITTED)->count();
 

@@ -60,7 +60,7 @@ it('memisahkan Menu Utama dan Sub Menu di sidebar, menyala sesuai jenis resep', 
 it('membuat admin dan gudang hanya bisa membaca resep, tim menu bisa mengubah', function () {
     $resep = Recipe::query()->create(['name' => 'Ayam Bakar', 'jenis' => Recipe::JENIS_UTAMA, 'yield_qty' => 1, 'yield_unit' => 'porsi', 'ohc_pct' => 0, 'profit_pct' => 0]);
 
-    foreach (['admin', 'inventory', 'inventory-supervisor'] as $role) {
+    foreach (['admin', 'inventory'] as $role) {
         $user = penggunaMenuApp($role);
         $this->actingAs($user)->get(RecipeResource::getUrl('index'))->assertOk()->assertSee('Ayam Bakar');
         $this->actingAs($user)->get(RecipeResource::getUrl('create'))->assertForbidden();

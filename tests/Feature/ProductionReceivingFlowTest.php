@@ -162,7 +162,7 @@ it('memandu meja gudang ke Tagihan Pembelian, bukan meminta cara pembayaran', fu
         ->assertDontSee('kas/hutang tercatat sekaligus', false);
 });
 
-it('membiarkan satu orang inventory (Supervisor Gudang) menyetujui, memeriksa, dan mengajukan tagihan sendiri', function () {
+it('membiarkan satu orang inventory menyetujui, memeriksa, dan mengajukan tagihan sendiri', function () {
     // Klien: bagian inventory dipegang satu orang; staf gudang yang menghitung fisik tidak memakai sistem.
     App\Support\Access\ModuleAccess::sync();
     $d = siapkanProduksi();
@@ -174,11 +174,11 @@ it('membiarkan satu orang inventory (Supervisor Gudang) menyetujui, memeriksa, d
     $service->fillOpeningStock($requisition->lines->firstWhere('inventory_item_id', $d['minyak']->id), 5);
     $service->submit($requisition->fresh());
 
-    $orang = User::factory()->create(['is_active' => true, 'force_password_change' => false])->assignRole('inventory-supervisor');
-    $staf = User::factory()->create(['is_active' => true, 'force_password_change' => false])->assignRole('inventory');
+    $orang = User::factory()->create(['is_active' => true, 'force_password_change' => false])->assignRole('inventory');
+    $produksi = User::factory()->create(['is_active' => true, 'force_password_change' => false])->assignRole('production');
 
-    // Kontrol: staf inventory biasa tidak punya tombol Setujui.
-    $this->actingAs($staf);
+    // Kontrol: produksi yang mengajukan tidak punya tombol Setujui.
+    $this->actingAs($produksi);
     Livewire::test(RequisitionForm::class, ['record' => $order->id])->assertActionHidden('setujui');
 
     $this->actingAs($orang);
@@ -284,7 +284,8 @@ it('membiarkan pemegang izin Periksa (inventory) mengisi penerimaan lewat halama
         ->and($d['requisition']->fresh()->supplier_id)->toBe($pasar->id)
         ->and($d['requisition']->fresh()->supplier_name)->toBe('Pasar Induk');
 
-    // Tetapi tidak boleh menyetujui form (bukan haknya) -- kontrol negatif tombol tahap.
-    expect(auth()->user()->can('requisition.approve'))->toBeFalse()
-        ->and(auth()->user()->can('requisition.check'))->toBeTrue();
+    // Gudang juga menyetujui form (satu orang memegang inventory), tapi tidak menutup SPK produksi.
+    expect(auth()->user()->can('requisition.approve'))->toBeTrue()
+        ->and(auth()->user()->can('requisition.check'))->toBeTrue()
+        ->and(auth()->user()->can('production.complete'))->toBeFalse();
 });

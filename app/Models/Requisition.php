@@ -21,7 +21,7 @@ class Requisition extends Model
 
     public const STATUS_DRAFT = 'draft';
 
-    /** Diajukan produksi; menunggu supervisor gudang menyetujui atau menolak. */
+    /** Diajukan produksi; menunggu gudang menyetujui atau menolak. */
     public const STATUS_SUBMITTED = 'submitted';
 
     public const STATUS_APPROVED = 'approved';
@@ -116,7 +116,7 @@ class Requisition extends Model
         return $this->status === self::STATUS_APPROVED;
     }
 
-    /** Pernah ditolak supervisor dan belum diajukan ulang. */
+    /** Pernah ditolak gudang dan belum diajukan ulang. */
     public function wasRejected(): bool
     {
         return $this->isDraft() && $this->rejected_at !== null;

@@ -30,7 +30,6 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'admin',
         'accounting',
         'inventory',
-        'inventory-supervisor',
         'production',
     ];
 
@@ -47,7 +46,6 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'admin',
         'accounting',
         'inventory',
-        'inventory-supervisor',
     ];
 
     /** Nama peran untuk ditampilkan. */
@@ -61,8 +59,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'owner' => 'Owner',
         'admin' => 'Admin',
         'accounting' => 'Accounting',
-        'inventory' => 'Inventory (staf gudang)',
-        'inventory-supervisor' => 'Supervisor Gudang',
+        'inventory' => 'Inventory (gudang)',
         'menu' => 'Menu (resep & HPP)',
         'sales' => 'Sales',
         'marketing' => 'Marketing',
@@ -80,7 +77,6 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'admin',
         'accounting',
         'inventory',
-        'inventory-supervisor',
         'menu',
         'sales',
         'marketing',
@@ -94,7 +90,6 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'admin' => 'adminapp.dashboard',
         'accounting' => 'accountingapp.dashboard',
         'inventory' => 'filament.admin.pages.dashboard',
-        'inventory-supervisor' => 'filament.admin.pages.dashboard',
         'menu' => 'filament.menu.pages.dashboard',
         'sales' => 'salesapp.dashboard',
         'marketing' => 'marketingapp.dashboard',

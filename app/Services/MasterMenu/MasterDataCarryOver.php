@@ -198,7 +198,7 @@ class MasterDataCarryOver
 
     /**
      * Peran dan izin hanya ditambahkan, tidak dicabut: peran baru yang dibagi
-     * di latihan (Production, Inventory, Supervisor Gudang, Marketing) ikut,
+     * di latihan (Production, Inventory, Menu, Marketing) ikut,
      * peran dari v2 tetap.
      */
     private function carryRoles(): void

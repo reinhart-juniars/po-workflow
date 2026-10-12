@@ -91,10 +91,10 @@
     @else
         @php $notice = $this->stageNotice(); @endphp
 
-        {{-- Penolakan supervisor tetap tampil sampai form diajukan ulang. --}}
+        {{-- Penolakan gudang tetap tampil sampai form diajukan ulang. --}}
         @if ($requisition->wasRejected())
             <x-filament::section icon="heroicon-m-hand-thumb-down" icon-color="danger"
-                :heading="'Ditolak supervisor gudang' . ($requisition->rejectedBy ? ' — ' . $requisition->rejectedBy->name : '') . ' · ' . $requisition->rejected_at?->format('d/m/Y H:i')">
+                :heading="'Ditolak gudang' . ($requisition->rejectedBy ? ' — ' . $requisition->rejectedBy->name : '') . ' · ' . $requisition->rejected_at?->format('d/m/Y H:i')">
                 <p class="text-sm text-danger-600 dark:text-danger-400">{{ $requisition->rejection_reason }}</p>
                 <p class="mt-1 text-sm text-gray-500">Perbaiki isian, Simpan, lalu Ajukan lagi.</p>
             </x-filament::section>

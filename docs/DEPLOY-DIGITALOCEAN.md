@@ -56,7 +56,7 @@ SERVER LAMA                DROPLET BARU          DROPLET BARU
 - [ ] Akses SSH ke server lama v2 (untuk `mysqldump`).
 - [ ] Akses repo GitHub `reinhart-juniars/po-workflow` (untuk menambah deploy key).
 - [ ] `app.db` Master Menu Revamp terbaru dari laptop klien.
-- [ ] Daftar orang yang akan memakai v3.1 beserta bagiannya (dapur, gudang, supervisor gudang).
+- [ ] Daftar orang yang akan memakai v3.1 beserta bagiannya (dapur, gudang, tim menu).
 - [ ] Password manager untuk menyimpan password DB dan server. **Jangan** simpan di chat,
       catatan HP, atau screenshot.
 
@@ -657,7 +657,7 @@ mysql -e "DROP DATABASE po_workflow_latihan; CREATE DATABASE po_workflow_latihan
 
 zcat ~/cutover/v2-*.sql.gz | mysql po_workflow_latihan
 php artisan migrate --force          # menambah tabel & kolom v3.0 dan v3.1 di atas data v2
-php artisan access:sync              # peran & izin modul (production, inventory, inventory-supervisor, marketing)
+php artisan access:sync              # peran & izin modul (production, inventory, menu, marketing)
 php artisan storage:link             # foto Katalog Menu
 ```
 
@@ -947,8 +947,8 @@ Setelah presentasi pengguna (Rabu, 7 Oktober), di luar jam sibuk.
    - Angka lain (% OHC, % profit, batas profit, batas susut) diisi sungguhan; pengaturan dibawa.
 3. **Akun pengguna** (Owner › Master User), sesuai [ACCESS.md](ACCESS.md):
    - pengguna v2 sudah ikut terbawa dengan password lamanya;
-   - tim dapur → tambahkan peran **Production**; staf gudang → **Inventory**; yang menyetujui Form
-     Kebutuhan → **Supervisor Gudang**;
+   - tim dapur → tambahkan peran **Production**; pemegang sistem gudang (yang juga
+     menyetujui Form Kebutuhan) → **Inventory**;
    - pengguna Master Menu yang belum punya akun → buat baru dengan password sementara (wajib ganti
      saat masuk pertama); sampaikan langsung ke orangnya, bukan di grup.
 4. **Lepas `app.db`**: hapus baris `MASTER_MENU_DB_PATH` dari `.env`, lalu `php artisan optimize`.
@@ -971,7 +971,7 @@ Catat jam dan hasil tiap langkah di checklist §17.
 |---|---|---|
 | Admin | PO, SPK, dan **menu jual** (nama, harga, menu baru) tetap di v2 | coba alur PO → SPK → SPK Produksi; bantu Pencocokan Menu. Jangan mengubah menu jual di v3.1: perubahan itu tidak dibawa |
 | Dapur | produksi Oktober tetap memakai Master Menu Revamp dan form kertas | latihan Form Kebutuhan, Lembar Kerja, Tutup SPK dengan SPK yang ada; memperbaiki resep dan takaran |
-| Gudang / Supervisor | belanja seperti biasa | latihan Setujui / Periksa; merapikan Item Inventaris, Master Supplier, Konversi Satuan, Bahan Belum Cocok |
+| Gudang | belanja seperti biasa | latihan Setujui / Periksa; merapikan Item Inventaris, Master Supplier, Konversi Satuan, Bahan Belum Cocok |
 | Accounting, Sales | semua di v2 | boleh mencoba; tidak ada yang dibawa |
 | Owner | laporan dan tutup buku di v2 | Pengaturan Inventory, memeriksa HPP resep, Pencocokan Menu |
 | Marketing | — | foto Katalog Menu, centang tampil di website, SKU (dibawa) |
@@ -999,7 +999,7 @@ adanya.
 | Master Supplier dan bahan yang dipasoknya | | |
 | Pengaturan Inventory | | |
 | Foto Katalog, centang website, SKU | | |
-| Akun yang dibuat di v3.1 dan peran baru (Production, Inventory, Supervisor Gudang, Marketing) | | |
+| Akun yang dibuat di v3.1 dan peran baru (Production, Inventory, Menu, Marketing) | | |
 
 ### 13.3 Progres pemetaan tiap Senin (15 menit, Owner + admin dapur)
 

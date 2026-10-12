@@ -4,6 +4,9 @@
     @php
         $newUserRoles = collect(old('roles', []))->map(fn($role) => (string) $role)->all();
         $newUserRoleRows = count($newUserRoles) > 0 ? $newUserRoles : [''];
+        // JS membangun ulang opsi dropdown peran; labelnya ikut dikirim agar
+        // tidak jatuh ke nama mentah (mis. "Menu" alih-alih "Menu (resep & HPP)").
+        $roleLabels = collect($availableRoles)->mapWithKeys(fn($r) => [$r => \App\Models\User::roleLabel($r)])->all();
     @endphp
 
     <div class="page-toolbar">
@@ -32,7 +35,8 @@
             <div class="md:col-span-2">
                 <label class="mb-1.5 block">Role</label>
                 <div class="role-builder max-w-md" data-role-select-group
-                    data-available-roles='@json(array_values($availableRoles))'>
+                    data-available-roles='@json(array_values($availableRoles))'
+                    data-role-labels='@json($roleLabels)'>
                     <div data-role-select-list class="role-builder-list">
                         @foreach ($newUserRoleRows as $selectedRole)
                             <div class="role-builder-row" data-role-select-row>
@@ -105,7 +109,8 @@
 
                                     <div class="user-role-editor">
                                         <div class="role-builder" data-role-select-group
-                                            data-available-roles='@json(array_values($availableRoles))'>
+                                            data-available-roles='@json(array_values($availableRoles))'
+                                            data-role-labels='@json($roleLabels)'>
                                             <div data-role-select-list class="role-builder-list">
                                                 @foreach ($roles as $selectedRole)
                                                     <div class="role-builder-row" data-role-select-row>
@@ -194,6 +199,7 @@
 
         roleGroups.forEach((group) => {
             const availableRoles = JSON.parse(group.dataset.availableRoles || '[]');
+            const roleLabels = JSON.parse(group.dataset.roleLabels || '{}');
             const list = group.querySelector('[data-role-select-list]');
             const addButton = group.querySelector('[data-role-add]');
 
@@ -203,7 +209,7 @@
 
             const createOptionMarkup = (role, selectedRole) => {
                 const selectedAttr = role === selectedRole ? ' selected' : '';
-                const label = role.charAt(0).toUpperCase() + role.slice(1);
+                const label = roleLabels[role] ?? role.charAt(0).toUpperCase() + role.slice(1);
 
                 return `<option value="${role}"${selectedAttr}>${label}</option>`;
             };
