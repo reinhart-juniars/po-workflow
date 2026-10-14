@@ -1,0 +1,1212 @@
+/* ==========================================================================
+   W3S Catering — Design System v2 "Warm Table"
+   --------------------------------------------------------------------------
+   Referensi  : Limón (styles.refero.design) — "evening brasserie, warm
+                overhead light, food photographed as editorial still-life".
+                Dipilih karena itu persis foto katalog 3S: lilin, kayu gelap,
+                piring putih, latar marun.
+   Pendukung  : Amrit Palace — nada krem hangat untuk section jeda.
+   --------------------------------------------------------------------------
+   Tiga perbaikan utama dari v1 (yang terasa "generik"):
+     1. Kanvas warm near-black, bukan #000 netral. Abu dingin menekan selera.
+     2. Foto full-bleed / tile besar. Tidak ada thumbnail kecil.
+     3. Tracking display POSITIF lebar, bukan negatif ketat.
+   Dokumentasi + daftar penyimpangan: docs/DESIGN.md
+   ========================================================================== */
+
+@font-face {
+  font-family: 'Petrona';
+  src: url('../fonts/petrona-var.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Karla';
+  src: url('../fonts/karla-var.woff2') format('woff2-variations');
+  font-weight: 200 800;
+  font-display: swap;
+}
+
+/* ==========================================================================
+   Token
+   ========================================================================== */
+:root {
+  /* Permukaan gelap — semuanya HANGAT (ada merah/coklat di dalamnya) */
+  --ink:      #1A0E0A;   /* kanvas utama */
+  --ink-2:    #241310;   /* band selang-seling */
+  --ink-3:    #2F1A15;   /* kartu */
+  --ink-4:    #3B231C;   /* kartu terangkat */
+
+  /* Permukaan terang — section jeda, agar halaman tidak gelap terus */
+  --cream:    #F7F0E4;
+  --cream-2:  #EBE0CE;
+
+  /* Teks */
+  --paper:    #FDF8F0;   /* putih hangat, bukan #fff dingin */
+  --muted:    rgba(253,248,240,.66);
+  /* .42 sempat dipakai dan GAGAL kontras: 3.83-3.92:1 di keempat permukaan
+     gelap, padahal token ini dipakai untuk label mikro ~10px yang menuntut
+     4.5:1. .50 adalah nilai terkecil yang lolos di semuanya — termasuk kartu
+     terangkat --ink-4 (4.57:1) — dan tetap menyisakan jenjang yang terbaca
+     di bawah --muted (8.1:1). Jangan diturunkan lagi. */
+  --muted-2:  rgba(253,248,240,.50);
+  --on-cream:     #241310;
+  --on-cream-mut: rgba(36,19,16,.66);
+
+  /* Garis */
+  --hair:     rgba(253,248,240,.16);
+  --hair-2:   rgba(253,248,240,.32);
+  --hair-cream: rgba(36,19,16,.18);
+
+  /* Aksen — hijau merek klien dipakai sebagai "zest" tunggal ala Limón */
+  --zest:     #8DC63F;
+  --zest-dp:  #16300B;   /* hijau tua untuk permukaan */
+  /* Merah merek: HANYA promo & penanda masalah.
+
+     Dipecah tiga karena satu nilai tidak bisa mengerjakan tiga pekerjaan
+     sekaligus. #E32219 adalah merah jenuh setengah-terang: sebagai PERMUKAAN
+     ia hanya memberi 4.40:1 pada teks --paper, dan sebagai TEKS ia gagal di
+     dua-duanya — 3.84:1 di atas --ink-2, 4.11:1 di atas --cream. Semuanya di
+     bawah ambang 4.5:1, dan semuanya terpakai pada teks ~10px.
+
+     Hue-nya dipertahankan; hanya terangnya yang digeser sesuai ground. */
+  --ember:     #E32219;  /* identitas merek — jangan dipakai untuk teks kecil */
+  --ember-srf: #BE1C13;  /* PERMUKAAN promo: teks --paper di atasnya = 5.90:1  */
+  --ember-dk:  #EF5B50;  /* TEKS di atas permukaan gelap = 5.34-5.65:1         */
+  --ember-lt:  #C81C13;  /* TEKS di atas --cream = 5.11:1                      */
+  --gold:     #C8A46A;   /* penanda 3S premium */
+  --wa:       #25D366;
+
+  /* Radius nyaris nol — signature Limón, sengaja tidak dilembutkan.
+     Hanya SATU nilai di seluruh sistem; tidak ada varian pil. */
+  --r:        2px;
+
+  --maxw:     1320px;
+  --gutter:   clamp(20px, 5vw, 72px);
+  --section:  clamp(76px, 9vw, 128px);
+
+  --serif:    'Petrona', 'Iowan Old Style', Georgia, serif;
+  --sans:     'Karla', 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+  --ease:     cubic-bezier(.22,.61,.36,1);
+  /* Kurva keluar yang lebih tegas. HANYA untuk gerak berjarak panjang: tirai
+     foto galeri menempuh tinggi penuh satu tile, dan dengan --ease sepertiga
+     terakhirnya terbaca menggantung. Jangan pakai ini untuk hover/tombol —
+     di jarak pendek ia terasa patah. */
+  --ease-out: cubic-bezier(.23,1,.32,1);
+
+  /* Bagian yang TIDAK kita gambar sendiri tetap ikut menentukan kesan halaman:
+     scrollbar, daftar <option>, dan pemilih tanggal digambar oleh browser, dan
+     defaultnya terang. Di halaman segelap ini ketiganya muncul sebagai kotak
+     putih. Satu baris ini menyerahkan ketiganya ke palet gelap secara native —
+     jauh lebih benar daripada menambal ::-webkit-scrollbar satu per satu. */
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; scroll-padding-top: 84px; -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--sans);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+img { max-width: 100%; height: auto; display: block; }
+a { color: inherit; text-decoration: none; }
+::selection { background: var(--zest); color: var(--zest-dp); }
+:focus-visible { outline: 2px solid var(--zest); outline-offset: 3px; }
+
+/* Pengguna keyboard harus melewati 7 tautan nav + tombol CTA sebelum sampai ke
+   isi, di setiap halaman. Tautan ini tak terlihat sampai ia menerima fokus. */
+/* Disembunyikan lewat `top`, bukan `transform`. Keduanya sah, tapi offset
+   posisi bisa diperiksa langsung dari getBoundingClientRect tanpa bergantung
+   pada layer komposit — lebih mudah diverifikasi, dan tidak ada bedanya bagi
+   pengguna. */
+.skip {
+  position: fixed; top: -120px; left: 10px; z-index: 200;
+  background: var(--zest); color: var(--zest-dp);
+  padding: 12px 20px; border-radius: var(--r);
+  font-size: .76rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  transition: top .22s var(--ease);
+}
+.skip:focus { top: 10px; }
+
+.wrap { width: 100%; max-width: var(--maxw); margin-inline: auto; padding-inline: var(--gutter); }
+.wrap--wide { max-width: 1600px; }
+
+/* ==========================================================================
+   Tipografi — tracking POSITIF pada display (kebalikan v1)
+   ========================================================================== */
+h1, h2, .display {
+  font-family: var(--serif);
+  font-weight: 700;
+  line-height: 1.06;
+  letter-spacing: .012em;
+  margin: 0;
+  text-wrap: balance;
+}
+h1 { font-size: clamp(2.5rem, 6.4vw, 5.2rem); letter-spacing: .006em; }
+h2 { font-size: clamp(1.9rem, 4vw, 3.2rem); }
+.d-md { font-family: var(--serif); font-weight: 700; font-size: clamp(1.4rem, 2.6vw, 2.1rem); letter-spacing: .012em; line-height: 1.15; }
+
+h3, h4 { font-family: var(--sans); font-weight: 700; letter-spacing: -.005em; line-height: 1.3; margin: 0; }
+h3 { font-size: 1.08rem; }
+h4 { font-size: .95rem; }
+
+p { margin: 0 0 1.1em; }
+p:last-child { margin-bottom: 0; }
+
+/* Label mikro — huruf besar, tracking sangat lebar (ala papan menu) */
+.label {
+  display: block;
+  font-size: .69rem;
+  font-weight: 700;
+  letter-spacing: .26em;
+  text-transform: uppercase;
+  color: var(--zest);
+  margin: 0 0 20px;
+}
+.label--mut { color: var(--muted-2); }
+.on-cream .label--mut { color: var(--on-cream-mut); }
+
+.lead { font-size: clamp(1.05rem, 1.45vw, 1.24rem); line-height: 1.6; color: var(--muted); max-width: 48ch; }
+.fine { font-size: .82rem; color: var(--muted-2); }
+
+/* Section bernada krem — jeda dari gelap */
+.on-cream { background: var(--cream); color: var(--on-cream); }
+.on-cream .lead, .on-cream .fine { color: var(--on-cream-mut); }
+
+/* ==========================================================================
+   Section
+   ========================================================================== */
+section { padding: var(--section) 0; position: relative; }
+.band { background: var(--ink-2); }
+.rule { border-top: 1px solid var(--hair); }
+.on-cream.rule { border-top-color: var(--hair-cream); }
+
+.opener { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,.85fr); gap: clamp(24px,4vw,72px); align-items: end; margin-bottom: clamp(36px,4.5vw,64px); }
+@media (max-width: 880px) { .opener { grid-template-columns: 1fr; gap: 18px; align-items: start; } }
+
+/* ==========================================================================
+   Tombol — radius nyaris nol
+   ========================================================================== */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 15px 30px;
+  border: 1px solid transparent; border-radius: var(--r);
+  font-family: var(--sans); font-size: .88rem; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  cursor: pointer; text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .2s var(--ease), color .2s var(--ease),
+              border-color .2s var(--ease), transform .12s var(--ease);
+}
+/* Di layar sentuh tidak ada :hover sama sekali, jadi tanpa ini tombol terasa
+   mati saat ditekan — tidak ada tanda bahwa sentuhan terbaca. Sengaja cepat
+   (120ms) supaya terasa sebagai respons, bukan animasi. */
+.btn:active { transform: scale(.975); }
+/* iOS memutar ulang :hover setelah tap dan membuat warnanya "nyangkut";
+   batasi seluruh hover ke perangkat yang benar-benar punya penunjuk presisi */
+@media (hover: none) {
+  .btn--zest:hover  { background: var(--zest); }
+  .btn--wa:hover    { background: var(--wa); }
+  .btn--ghost:hover { border-color: var(--hair-2); background: transparent; }
+}
+.btn--zest { background: var(--zest); color: var(--zest-dp); }
+.btn--zest:hover { background: #A2DC50; }
+.btn--wa { background: var(--wa); color: #042E14; }
+.btn--wa:hover { background: #35E877; }
+.btn--ghost { border-color: var(--hair-2); color: var(--paper); }
+.btn--ghost:hover { border-color: var(--paper); background: rgba(253,248,240,.06); }
+.on-cream .btn--ghost { border-color: var(--hair-cream); color: var(--on-cream); }
+.on-cream .btn--ghost:hover { background: rgba(36,19,16,.06); }
+.btn--block { width: 100%; }
+.btn--sm { padding: 11px 20px; font-size: .76rem; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 12px; }
+
+.link { border-bottom: 1px solid var(--hair-2); padding-bottom: 2px; transition: border-color .2s, color .2s; }
+.link:hover { border-color: var(--zest); color: var(--zest); }
+
+/* ==========================================================================
+   Header
+   ========================================================================== */
+.site-header {
+  position: sticky; top: 0; z-index: 60;
+  background: rgba(26,14,10,.78);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid transparent;
+  transition: background .3s var(--ease), border-color .3s var(--ease);
+}
+.site-header.is-stuck { background: rgba(26,14,10,.95); border-bottom-color: var(--hair); }
+.site-header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 76px; }
+.brand { display: flex; align-items: baseline; gap: 9px; }
+.brand__name { font-family: var(--serif); font-weight: 800; font-size: 1.45rem; letter-spacing: .02em; }
+.brand__sub { font-size: .6rem; font-weight: 700; letter-spacing: .24em; text-transform: uppercase; color: var(--muted-2); }
+@media (max-width: 560px) { .brand__sub { display: none; } }
+.nav { display: flex; gap: 28px; }
+.nav a { font-size: .78rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); transition: color .18s; }
+.nav a:hover { color: var(--zest); }
+/* Ambang nav dinaikkan 1040 -> 1120 waktu entri "Wuenak Poll" menjadi
+   "Warung Wuenak Poll" (nama brand yang benar). Anggaran header itu
+   brand 123 + nav 560 + CTA 231 + dua gap 24 = 962px isi. Dengan
+   --gutter clamp(20px,5vw,72px), 962px baru tersedia di sekitar 1070px
+   viewport. Di 1042px hasilnya terukur: CTA-nya membungkus jadi dua baris
+   (63px di dalam header 76px) dan nav diperas 30px di bawah lebar alaminya.
+   Nav yang disembunyikan lebih baik daripada header yang remuk. */
+@media (max-width: 1120px) { .nav { display: none; } }
+/* Tombol header tidak boleh membungkus dalam keadaan apa pun — tingginya
+   dikunci oleh header 76px, jadi baris kedua langsung merusak barisnya. */
+.header-cta { white-space: nowrap; }
+@media (max-width: 640px) { .header-cta { display: none; } }
+
+/* ==========================================================================
+   Hero — split editorial: teks kiri, satu foto utuh di kanan.
+
+   Kenapa bukan foto full-bleed lagi: satu-satunya foto makanan bergaya yang
+   kami punya berformat potret 1086x1448. Dipasang full-bleed di balik teks,
+   `object-fit: cover` memotongnya habis dan hasilnya "kepotong". Kolom kanan
+   dikunci pada aspect-ratio 3/4 — persis rasio asli foto — sehingga tidak ada
+   satu piksel pun yang dibuang, di lebar layar mana pun.
+   ========================================================================== */
+.hero { padding: clamp(40px,6vw,72px) 0 clamp(48px,6vw,88px); overflow: hidden; }
+/* lebar foto ikut lebar layar (clamp), bukan angka mati — dengan 480px tetap,
+   pada 1000px kolom teks tersisa 355px dan judulnya terjepit */
+.hero__grid { display: grid; grid-template-columns: minmax(0,1fr) clamp(280px, 32vw, 460px); gap: clamp(32px,5vw,72px); align-items: center; }
+.hero__copy { min-width: 0; }
+/* Hero memakai ukuran display sendiri, lebih kecil dari h1 global.
+
+   Headline Rev 2 jauh lebih panjang dari sebelumnya. Pada ukuran h1 global
+   (83px di 1440) ia membungkus jadi 7 baris di kolom 644px: hero membengkak
+   jadi 1141px dan judulnya menelan seluruh layar pertama. Pada 48px, ketiga
+   .reveal-line masing-masing pas satu baris dan hero turun ke 772px.
+
+   Membungkus tidak merusak animasinya — span tetap ter-reveal utuh karena
+   induknya overflow:hidden — tapi stagger per-baris hilang dan tingginya
+   melonjak. Kalau teks headline diganti, ukur lagi tinggi tiap .reveal-line
+   terhadap line-height-nya. Di bawah 480px baris pertama memang membungkus
+   jadi dua; itu diterima, mengecilkan font lagi membuatnya terlalu lemah. */
+.hero h1 { margin-bottom: 22px; font-size: clamp(2rem, 3.35vw, 3rem); line-height: 1.1; }
+.hero h1 em { font-style: italic; color: var(--zest); }
+.hero .lead { max-width: 46ch; }
+.hero .btn-row { margin-top: 30px; }
+.hero .lead b { color: var(--paper); font-weight: 700; }
+
+/* tiga janji operasional — dipisah titik tengah, bukan bullet, supaya terbaca
+   sebagai satu tarikan napas dan tidak menambah tinggi hero */
+.hero__promise { display: flex; flex-wrap: wrap; gap: 6px 18px; list-style: none; margin: 18px 0 0; padding: 0; }
+.hero__promise li { position: relative; font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.hero__promise li + li::before { content: "·"; position: absolute; left: -11px; color: var(--muted-2); }
+
+.hero__shot { position: relative; margin: 0; aspect-ratio: 3/4; overflow: hidden; background: var(--ink-3); }
+.hero__shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.hero__shot figcaption {
+  position: absolute; inset: auto 0 0 0; padding: 34px 20px 16px;
+  font-size: .64rem; letter-spacing: .2em; text-transform: uppercase; color: var(--paper);
+  background: linear-gradient(180deg, transparent, rgba(26,14,10,.9));
+}
+
+@media (max-width: 900px) {
+  .hero__grid { grid-template-columns: 1fr; gap: 34px; }
+  /* Di layar sempit foto pindah ke atas: itu yang paling menggugah lebih dulu.
+     1/1 dipilih, bukan 4/3 — potongan persegi masih memuat tampah secara utuh,
+     sementara 4/3 sudah mulai memakan tepi daun pisang. */
+  .hero__shot { order: -1; aspect-ratio: 1/1; }
+}
+
+/* deret fakta di dasar hero */
+.hero__facts { display: grid; grid-template-columns: repeat(4,auto); gap: clamp(20px,4vw,64px); margin-top: clamp(34px,4vw,54px); }
+@media (max-width: 720px) { .hero__facts { grid-template-columns: repeat(2,1fr); gap: 20px; } }
+.fact__n { font-family: var(--serif); font-weight: 800; font-size: clamp(1.6rem,3vw,2.4rem); line-height: 1; letter-spacing: .01em; font-variant-numeric: tabular-nums; }
+.fact__l { font-size: .66rem; letter-spacing: .2em; text-transform: uppercase; color: var(--muted-2); margin-top: 7px; }
+
+/* ==========================================================================
+   Logo klien
+
+   Rev 2: logo adalah social proof, BUKAN elemen utama halaman. Marquee 30 logo
+   dua baris yang berjalan otomatis menarik mata lebih kuat daripada headline
+   di atasnya — persis kebalikan dari fungsinya. Diganti satu baris diam berisi
+   9 nama terkuat; 30 logo lengkap turun ke #klien.
+
+   Logo klien SELALU pakai chip putih. Semua file logo buram (0% transparansi),
+   jadi trik silhouette (brightness(0) invert(1)) hanya menghasilkan kotak abu.
+   ========================================================================== */
+.logos { padding: clamp(38px,5vw,56px) 0; }
+.logos__title { text-align: center; font-size: .66rem; letter-spacing: .26em; text-transform: uppercase; color: var(--muted-2); margin: 0 0 26px; }
+.logos__row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px 14px; }
+.logos__row img,
+.logo-grid img {
+  height: 44px; width: auto; object-fit: contain; flex: none;
+  background: var(--paper); border-radius: var(--r); padding: 8px 14px;
+  filter: grayscale(1); opacity: .58; transition: opacity .25s, filter .25s;
+}
+.logos__row img:hover,
+.logo-grid img:hover { opacity: 1; filter: none; }
+.logos__more { text-align: center; margin: 22px auto 0; max-width: 56ch; font-size: .84rem; color: var(--muted); }
+.logos__more b { color: var(--paper); }
+
+/* daftar lengkap di bagian bawah (#klien) */
+.logo-grid {
+  display: flex; flex-wrap: wrap; gap: 8px 10px;
+  margin-top: clamp(30px,3.6vw,46px);
+  padding-top: clamp(26px,3vw,38px);
+  border-top: 1px solid var(--hair);
+}
+@media (max-width: 560px) { .logo-grid img, .logos__row img { height: 34px; padding: 6px 10px; } }
+
+/* ==========================================================================
+   Tile makanan — BESAR. Aturan Limón: jangan thumbnail kecil.
+   ========================================================================== */
+/* Jumlah kolom ditentukan oleh RESOLUSI SUMBER, bukan selera.
+
+   Aturan empiris: sebuah tile terlihat tajam kalau skala render <= ~0.62 dari
+   lebar aslinya.
+
+   Sempat dipakai 4 kolom (318 px) karena crop katalog hanya ±552 px dan sudah
+   lunak pada 1:1. Klien kemudian mengirim file foto studio aslinya — sumber
+   terkecil sekarang 819 px, terbesar 2896 px. Dengan itu 3 kolom (426 px)
+   kembali aman: skala terburuk 0.52, jauh di bawah ambang. Tile jadi 34%
+   lebih besar tanpa satu pun jadi pecah.
+
+   Kalau suatu saat ada hidangan bersumber < 700 px yang masuk ke grid ini,
+   turunkan lagi ke 4 kolom — jangan biarkan satu foto lemah merusak barisnya. */
+.plates { display: grid; grid-template-columns: repeat(3,1fr); gap: 2px; }
+@media (max-width: 900px) { .plates { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 560px) { .plates { grid-template-columns: 1fr; } }
+
+/* margin:0 wajib — <figure> punya margin bawaan 1em 40px yang menyusutkan
+   setiap tile 80px dan merusak grid */
+.plate { position: relative; margin: 0; overflow: hidden; background: var(--ink-3); }
+.plate img { width: 100%; aspect-ratio: 1/1; object-fit: cover; transition: transform 1.1s var(--ease); }
+/* Di layar sentuh :hover ikut menyala saat di-tap lalu NYANGKUT sampai tap
+   berikutnya — tile-nya membesar dan tidak pernah kembali. Batasi ke penunjuk
+   presisi; sentuhan tidak kehilangan apa pun karena tidak ada info di baliknya. */
+@media (hover: hover) and (pointer: fine) {
+  .plate:hover img { transform: scale(1.06); }
+}
+.plate__cap {
+  position: absolute; inset: auto 0 0 0; padding: 26px 24px 20px;
+  background: linear-gradient(180deg, transparent, rgba(26,14,10,.92));
+}
+.plate__n { font-family: var(--serif); font-weight: 700; font-size: 1.14rem; letter-spacing: .012em; }
+.plate__d { font-size: .78rem; color: var(--muted); margin-top: 3px; }
+
+/* Tile unggulan: LEBAR, bukan besar.
+
+   Versi sebelumnya memakai kotak 2x2 (853x853). Foto platter tumpeng
+   berkomposisi 2:1, jadi kotak itu memotong kedua tepinya sekaligus memaksa
+   sumber 880px dibesarkan — hasilnya pecah. Bingkai 2:1 memuat platter utuh
+   dan sumbernya 1792px, hanya perlu diperkecil. Aturannya: samakan rasio
+   bingkai dengan rasio aslinya, jangan lawan fotonya.
+
+   Tumpeng juga satu-satunya sumber beresolusi tinggi di section ini, jadi ia
+   satu-satunya yang boleh tampil besar. */
+.plate--wide { grid-column: span 2; }
+/* 2/1 membuat tinggi tile lebar persis sama dengan tinggi tile persegi di
+   samping kanannya — barisnya rata tanpa perlu grid-row */
+.plate--wide img { aspect-ratio: 2/1; }
+.plate--wide .plate__n { font-size: clamp(1.15rem,1.9vw,1.5rem); }
+/* di grid satu kolom, span 2 akan membuat kolom implisit dan merusak baris */
+@media (max-width: 560px) { .plate--wide { grid-column: span 1; } }
+
+/* ==========================================================================
+   Dua brand
+   ========================================================================== */
+.brands { display: grid; grid-template-columns: repeat(2,1fr); gap: 2px; }
+@media (max-width: 860px) { .brands { grid-template-columns: 1fr; } }
+.brand-card { padding: clamp(28px,3.4vw,46px); background: var(--ink-3); border-top: 3px solid var(--hair); }
+.brand-card--premium { background: var(--ink-4); border-top-color: var(--gold); }
+/* Chip logo brand — SATU-SATUNYA lingkaran di seluruh situs.
+
+   PENYIMPANGAN DISENGAJA dari aturan "radius hanya 2px". Alasannya dua, dan
+   keduanya sudah diuji:
+
+   1. Logonya wajib duduk di permukaan terang. File aslinya sudah dibuat
+      transparan (latar putih dibuang), tapi mark Wuenak Poll berisi mangkuk
+      panggangan HITAM — di atas --ink-3 ia lenyap dan logonya terbaca sebagai
+      ayam melayang tanpa panggangan. Diuji langsung: hilang.
+   2. Chip persegi membuatnya tampak seperti kotak putih tertempel. Lingkaran
+      mengikuti bentuk logo 3S yang memang bundar, jadi terbaca sebagai lencana
+      merek — bukan UI yang dilembutkan.
+
+   Ini penanda merek, bukan komponen UI: jangan jadikan alasan memakai radius
+   bulat di tempat lain. Aset-nya sendiri sudah dipadding agar sudut artwork
+   tidak tertebas tepi lingkaran (lihat tools cutout). */
+.brand-card__logo {
+  display: block; width: 104px; height: 104px; object-fit: contain;
+  background: var(--paper); border-radius: 50%;
+  margin-bottom: 22px;
+}
+.brand-card__tag { display: inline-block; font-size: .6rem; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; padding: 5px 11px; border-radius: var(--r); margin-bottom: 22px; background: rgba(253,248,240,.10); color: var(--muted); }
+.brand-card--premium .brand-card__tag { background: var(--gold); color: #2A1B08; }
+.brand-card__name { font-family: var(--serif); font-weight: 800; font-size: clamp(1.5rem,2.6vw,2.1rem); letter-spacing: .012em; line-height: 1.1; margin-bottom: 8px; }
+.brand-card__pos { font-size: .82rem; letter-spacing: .04em; color: var(--zest); margin-bottom: 18px; }
+.brand-card--premium .brand-card__pos { color: var(--gold); }
+.brand-card__desc { font-size: .94rem; color: var(--muted); margin-bottom: 20px; }
+.brand-card__list { list-style: none; margin: 0 0 24px; padding: 0; }
+.brand-card__list li { font-size: .87rem; color: var(--muted); padding: 8px 0 8px 16px; border-top: 1px solid var(--hair); position: relative; }
+.brand-card__list li::before { content: "·"; position: absolute; left: 2px; color: var(--muted-2); }
+.brand-card__price { font-size: .84rem; color: var(--muted-2); }
+.brand-card__price b { color: var(--paper); font-variant-numeric: tabular-nums; }
+
+/* Pintu ke halaman brand. Sengaja tautan eksplisit, bukan seluruh kartu dibuat
+   bisa diklik: kartu ini berisi daftar <li>, dan membungkus semuanya dalam satu
+   <a> membuat pembaca layar mengumumkan seluruh isinya sebagai satu nama tautan
+   yang panjang. Tingginya 44px supaya tetap jadi sasaran sentuh yang layak. */
+.brand-card__more {
+  /* flex (block-level), bukan inline-flex: .brand-card__price di atasnya
+     adalah <span> inline, jadi inline-flex akan mendarat di baris yang sama.
+     fit-content menahan garis bawah hover selebar teksnya saja. */
+  display: flex; width: fit-content; align-items: center; gap: 9px;
+  margin-top: 20px; min-height: 44px;
+  font-size: .78rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--zest);
+  border-bottom: 1px solid transparent;
+  transition: border-color .2s var(--ease);
+}
+.brand-card__more span { transition: transform .25s var(--ease-out); }
+.brand-card--premium .brand-card__more { color: var(--gold); }
+@media (hover: hover) and (pointer: fine) {
+  .brand-card__more:hover { border-bottom-color: currentColor; }
+  .brand-card__more:hover span { transform: translateX(5px); }
+}
+
+/* ==========================================================================
+   Paket
+
+   Kartu paket sengaja TIDAK membawa nama brand dapur maupun daftar jenis
+   layanan. Keduanya pernah ada dan dihapus atas permintaan klien: customer
+   cukup memutuskan lewat budget, jenis acara, dan jumlah pax — W3S yang
+   menentukan pesanannya masuk Wuenak Poll atau 3S. Menambahkan sumbu kategori
+   lain di sini hanya memindahkan keputusan itu ke pundak customer.
+   ========================================================================== */
+/* Dua kartu, bukan empat. Klien memangkas tier dari empat (20/25/35/50 rb)
+   menjadi dua — Value Meal 10rb dan Premium Indonesian Catering 35rb. Dengan
+   repeat(4,1fr) dua kartu tersisa akan menempati separuh baris dan menyisakan
+   dua kolom kosong. Lebar penuh dua kolom sama dengan .brands di section
+   "Tentang kami", jadi keduanya sejajar sebagai sepasang kartu. */
+.pkgs { display: grid; grid-template-columns: repeat(2,1fr); gap: 2px; }
+@media (max-width: 600px) { .pkgs { grid-template-columns: 1fr; } }
+.pkg { display: flex; flex-direction: column; padding: clamp(24px,2.4vw,32px); background: var(--ink-3); border-top: 3px solid var(--hair); transition: background .25s var(--ease); }
+.pkg:hover { background: var(--ink-4); }
+/* Garis emas menandai tier premium. Ini penanda TINGKAT, bukan penanda brand —
+   nama 3S sendiri tidak muncul di kartu. */
+.pkg--3s { border-top-color: var(--gold); }
+/* Tinggi blok nama dikunci dua baris.
+
+   Sejak nama tier memuat nama dapur ("... by Warung Wuenak Poll", "... by 3S"),
+   panjang keduanya nyaris sama tapi titik putus katanya berbeda — jadi ada
+   rentang lebar sempit di mana yang satu muat satu baris dan yang lain jadi
+   dua. Nama duduk di ATAS harga, jadi selisih satu baris menggeser angka
+   Rp10.000 dan Rp35.000 sejauh 24px terhadap satu sama lain: dua angka terbesar
+   di section ini jadi tidak sebaris.
+
+   Diukur dengan menyapu lebar kontainer memakai elemen sungguhan (bukan tiruan
+   probe, yang sempat memberi hasil menyesatkan). Dengan dua baris dipesan di
+   muka, kedua kartu selalu memulai baris harganya di ketinggian yang sama. */
+.pkg__name { font-family: var(--serif); font-weight: 700; font-size: 1.24rem; letter-spacing: .012em; line-height: 1.2; min-height: calc(2 * 1.2em); margin-bottom: 14px; }
+.pkg__from { font-size: .62rem; letter-spacing: .2em; text-transform: uppercase; color: var(--muted-2); }
+.pkg__price { font-family: var(--serif); font-weight: 800; font-size: clamp(1.8rem,3vw,2.5rem); line-height: 1.1; letter-spacing: .01em; font-variant-numeric: tabular-nums; }
+.pkg__price span { font-family: var(--sans); font-size: .74rem; font-weight: 500; color: var(--muted-2); letter-spacing: .06em; }
+.pkg__desc { font-size: .86rem; color: var(--muted); margin: 16px 0 26px; flex: 1; }
+
+/* ==========================================================================
+   Bukti — foto operasional (kapasitas & proses)
+   ========================================================================== */
+.proof { display: grid; grid-template-columns: repeat(12,1fr); gap: 2px; }
+.proof figure { position: relative; margin: 0; overflow: hidden; background: var(--ink-3); }
+.proof img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.1s var(--ease); }
+.proof figure:hover img { transform: scale(1.05); }
+.proof figcaption { position: absolute; inset: auto 0 0 0; padding: 22px 20px 16px; background: linear-gradient(180deg,transparent,rgba(26,14,10,.9)); font-size: .8rem; color: var(--muted); }
+.proof figcaption b { display: block; color: var(--paper); font-family: var(--serif); font-size: 1.05rem; font-weight: 700; letter-spacing: .012em; margin-bottom: 2px; }
+.proof__a { grid-column: span 7; aspect-ratio: 16/10; }
+.proof__b { grid-column: span 5; aspect-ratio: 4/3.35; }
+/* Baris bawah 16/10, bukan 4/3.
+
+   Dua alasan, dan yang kedua lebih penting dari yang pertama:
+
+   1. Rasio. Ketiga fotonya berasio 1.556-1.600; di bingkai 4/3 (1.333) terbuang
+      14-17%. Di 16/10 prasmanan-lontong (1.600) pas nol, dua lainnya (1.556)
+      tinggal 2.8%. 16/10 juga menyamakan baris ini dengan .proof__a.
+   2. Isi. Ketiganya adalah bukti KAPASITAS — barisan prasmanan, hamparan enam
+      tumpeng, deretan box. Bingkai lebih lebar memperlihatkan lebih banyak
+      barisannya; itu justru pesan yang ingin disampaikan section ini. */
+.proof__c { grid-column: span 4; aspect-ratio: 16/10; }
+.proof__d { grid-column: span 4; aspect-ratio: 16/10; }
+.proof__e { grid-column: span 4; aspect-ratio: 16/10; }
+@media (max-width: 860px) {
+  .proof { grid-template-columns: repeat(2,1fr); }
+  .proof__a, .proof__b { grid-column: span 2; aspect-ratio: 16/10; }
+  .proof__c, .proof__d, .proof__e { grid-column: span 1; }
+}
+/* Di bawah 760px ketiganya ikut selebar penuh. Bukan pilihan gaya — ini
+   memperbaiki cacat yang sudah ada sebelumnya: pada 375px tile setengah lebar
+   hanya 167x125px sementara kapsinya 128-155px, yaitu 103-124% tinggi tile.
+   Kapsi menutupi seluruh foto dan meluber keluar bingkai; tiga tile itu
+   praktis blok teks dengan foto tak terlihat di belakangnya.
+
+   Selebar penuh, tile jadi 335x210 dan kapsi turun ke 42-51% — angka yang
+   sama persis dengan .proof__a dan .proof__b di lebar yang sama. */
+@media (max-width: 760px) {
+  .proof__c, .proof__d, .proof__e { grid-column: span 2; }
+}
+
+/* ==========================================================================
+   Masalah
+   ========================================================================== */
+.grid4 { display: grid; grid-template-columns: repeat(4,1fr); gap: clamp(18px,2vw,30px); }
+@media (max-width: 1000px) { .grid4 { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 560px) { .grid4 { grid-template-columns: 1fr; } }
+.pain { border-top: 2px solid var(--ember); padding-top: 16px; }
+/* garis 2px boleh pakai --ember penuh (bukan teks); angkanya tidak boleh */
+.pain__n { display: block; font-size: .66rem; letter-spacing: .22em; color: var(--ember-lt); margin-bottom: 10px; }
+.pain h3 { margin-bottom: 7px; }
+.pain p { font-size: .9rem; color: var(--muted); }
+.on-cream .pain p { color: var(--on-cream-mut); }
+
+/* ==========================================================================
+   Sertifikat & langkah
+   ========================================================================== */
+.certs { display: grid; grid-template-columns: repeat(3,1fr); gap: 2px; }
+@media (max-width: 800px) { .certs { grid-template-columns: 1fr; } }
+.cert { padding: 26px clamp(20px,2.4vw,30px); background: var(--ink-3); border-top: 3px solid var(--zest); }
+.cert__name { font-weight: 700; font-size: .95rem; margin-bottom: 9px; }
+.cert__no { font-family: ui-monospace,'Cascadia Mono',Consolas,monospace; font-size: .76rem; color: var(--muted-2); word-break: break-all; }
+
+/* CTA sales mechanism utama — dipasang persis setelah lima field-nya, di
+   section krem, jadi ia jadi tombol paling kontras di seluruh halaman */
+.usp-cta { margin-top: clamp(30px,3.6vw,44px); text-align: center; }
+.usp-cta .fine { margin-top: 12px; color: var(--on-cream-mut); }
+.btn--lg { font-size: .84rem; padding: 19px 38px; }
+
+.steps { display: grid; grid-template-columns: repeat(5,1fr); gap: clamp(14px,1.6vw,24px); }
+@media (max-width: 900px) { .steps { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 460px) { .steps { grid-template-columns: 1fr; } }
+.step { border-top: 1px solid var(--hair-cream); padding-top: 14px; }
+.step__n { font-family: var(--serif); font-weight: 800; font-size: 1.5rem; color: var(--on-cream-mut); margin-bottom: 8px; }
+.step p { font-size: .82rem; color: var(--on-cream-mut); margin: 3px 0 0; }
+
+/* ==========================================================================
+   Klien
+   ========================================================================== */
+.clients { display: grid; grid-template-columns: repeat(2,1fr); gap: clamp(26px,3.4vw,52px); }
+@media (max-width: 800px) { .clients { grid-template-columns: 1fr; } }
+.client-cat h3 { font-size: .66rem; letter-spacing: .22em; text-transform: uppercase; color: var(--muted-2); padding-bottom: 11px; border-bottom: 1px solid var(--hair); margin-bottom: 14px; }
+.client-cat ul { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 22px; }
+@media (max-width: 480px) { .client-cat ul { columns: 1; } }
+.client-cat li { font-size: .9rem; color: var(--muted); padding: 5px 0; break-inside: avoid; }
+
+/* ==========================================================================
+   Penawaran
+   ========================================================================== */
+.offer { background: var(--ember-srf); color: var(--paper); padding: clamp(28px,4vw,48px); display: flex; align-items: center; justify-content: space-between; gap: 26px; flex-wrap: wrap; }
+/* opacity .82 sempat menurunkan tag ini ke 4.40:1; di permukaan berwarna,
+   redupkan lewat ukuran dan tracking, bukan lewat transparansi */
+.offer__tag { font-size: .64rem; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; }
+.offer h3 { font-family: var(--serif); font-weight: 800; font-size: clamp(1.4rem,2.8vw,2.1rem); letter-spacing: .012em; margin: 8px 0 5px; }
+.offer .fine { color: rgba(253,248,240,.88); }
+/* Blok promo ini berada DI DALAM section .on-cream, jadi tanpa penimpaan
+   berikut tombolnya mewarisi .on-cream .btn--ghost — teks dan garis gelap di
+   atas merah, 3.84:1. Konteksnya merah, bukan krem. */
+.offer .btn--ghost { border-color: rgba(253,248,240,.75); color: var(--paper); }
+.offer .btn--ghost:hover { background: var(--paper); color: var(--ember-srf); border-color: var(--paper); }
+
+/* ==========================================================================
+   FAQ
+   ========================================================================== */
+.faq { max-width: 900px; border-top: 1px solid var(--hair-cream); }
+.faq details { border-bottom: 1px solid var(--hair-cream); }
+.faq summary { cursor: pointer; padding: 22px 0; list-style: none; display: flex; justify-content: space-between; gap: 22px; align-items: center; font-family: var(--serif); font-weight: 700; font-size: clamp(1.02rem,1.7vw,1.35rem); letter-spacing: .012em; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary:hover { color: #6E9E2E; }
+.faq .sign { flex: none; width: 13px; height: 13px; position: relative; }
+.faq .sign::before, .faq .sign::after { content: ""; position: absolute; background: currentColor; transition: transform .3s var(--ease); }
+.faq .sign::before { inset: 6px 0 auto; height: 1px; }
+.faq .sign::after { inset: 0 6px auto; width: 1px; height: 13px; }
+.faq details[open] .sign::after { transform: scaleY(0); }
+.faq details p { padding: 0 0 22px; margin: 0; color: var(--on-cream-mut); max-width: 66ch; font-size: .95rem; }
+/* <details> tidak bisa ditransisi tingginya secara lintas-browser. Jadi yang
+   dianimasikan isinya, bukan wadahnya — jawabannya masuk dengan lembut alih-alih
+   muncul mendadak. Efeknya terbaca "smooth" tanpa hack max-height. */
+.faq details[open] p { animation: faqMasuk .38s var(--ease) both; }
+@keyframes faqMasuk {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: none; }
+}
+/* target sentuh: seluruh baris summary, bukan hanya teksnya */
+.faq summary { -webkit-tap-highlight-color: transparent; }
+
+/* ==========================================================================
+   Testimoni
+
+   Kutipan pakai serif (Petrona), bukan sans. Di sistem ini serif dipakai untuk
+   suara manusia — judul dan nama hidangan — sementara sans untuk label mesin.
+   Kutipan pelanggan jelas masuk kelompok pertama.
+
+   Ejaan aslinya dipertahankan ("uenak pool", "mantul"): itu logat Suroboyoan,
+   dan begitu diformalkan jadi "sangat enak", kutipannya langsung terbaca
+   seperti karangan tim marketing. Kredibilitasnya justru ada di ejaannya.
+   ========================================================================== */
+.quotes { display: grid; grid-template-columns: repeat(3,1fr); gap: 2px; }
+@media (max-width: 900px) { .quotes { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 600px) { .quotes { grid-template-columns: 1fr; } }
+.quote {
+  margin: 0; padding: clamp(24px,2.4vw,32px);
+  background: var(--cream-2); display: flex; flex-direction: column;
+  border-top: 2px solid transparent; transition: border-color .25s var(--ease);
+}
+.quote:hover { border-top-color: var(--zest); }
+.quote blockquote {
+  margin: 0 0 22px; flex: 1;
+  font-family: var(--serif); font-weight: 500;
+  font-size: clamp(1rem,1.35vw,1.12rem); line-height: 1.52;
+  letter-spacing: .012em; color: var(--on-cream);
+}
+.quote figcaption { font-size: .64rem; letter-spacing: .2em; text-transform: uppercase; color: var(--on-cream-mut); }
+.quote figcaption b { display: block; font-size: .76rem; letter-spacing: .12em; color: var(--on-cream); margin-bottom: 5px; }
+
+/* ==========================================================================
+   Formulir
+   ========================================================================== */
+.form-wrap { display: grid; grid-template-columns: minmax(0,.85fr) minmax(0,1.15fr); gap: clamp(34px,5vw,80px); align-items: start; }
+@media (max-width: 940px) { .form-wrap { grid-template-columns: 1fr; gap: 36px; } }
+.field { margin-bottom: 22px; }
+.field label { display: block; font-size: .64rem; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--muted-2); margin-bottom: 7px; }
+.field .req { color: var(--ember-dk); }
+.field input, .field select, .field textarea {
+  width: 100%; padding: 12px 14px;
+  background: rgba(253,248,240,.05);
+  border: 1px solid var(--hair); border-radius: var(--r);
+  color: var(--paper); font-family: var(--sans); font-size: .97rem;
+  transition: border-color .25s var(--ease), background .25s var(--ease), box-shadow .25s var(--ease);
+}
+/* 16px BUKAN pilihan gaya: di bawah itu, Safari iOS otomatis men-zoom halaman
+   setiap kali sebuah field disentuh, lalu tidak mengembalikannya. Formulir jadi
+   terasa "meloncat" di tiap isian. .97rem = 15.5px, tepat di bawah ambang. */
+@media (max-width: 760px) {
+  .field input, .field select, .field textarea { font-size: 16px; padding: 14px 14px; }
+}
+.field input::placeholder, .field textarea::placeholder { color: var(--muted-2); }
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none; border-color: var(--zest); background: rgba(253,248,240,.08);
+  box-shadow: 0 0 0 3px rgba(141,198,63,.16);
+}
+.field input, .field select, .field textarea { caret-color: var(--zest); }
+
+/* Satu-satunya state yang belum punya tampilan: GAGAL VALIDASI.
+   Sebelumnya form hanya memanggil reportValidity(), yang memunculkan gelembung
+   bawaan browser lalu hilang — begitu gelembungnya menutup, tidak ada jejak
+   field mana yang bermasalah.
+
+   Dipakai :user-invalid, BUKAN :invalid. `:invalid` menyala sejak halaman
+   dimuat pada semua field wajib yang masih kosong — memerahi formulir sebelum
+   pengunjung mengetik apa pun. `:user-invalid` baru menyala setelah orangnya
+   benar-benar berinteraksi. */
+.field input:user-invalid,
+.field select:user-invalid,
+.field textarea:user-invalid {
+  border-color: var(--ember-dk);
+  background: rgba(227,34,25,.07);
+}
+.field input:user-invalid:focus,
+.field select:user-invalid:focus,
+.field textarea:user-invalid:focus {
+  border-color: var(--ember-dk);
+  box-shadow: 0 0 0 3px rgba(227,34,25,.18);
+}
+.field select option { background: var(--ink-3); color: var(--paper); }
+.field textarea { resize: vertical; min-height: 78px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+@media (max-width: 540px) { .field-row { grid-template-columns: 1fr; } }
+/* invert(1) SENGAJA dihapus: dengan `color-scheme: dark` di :root, browser
+   sudah menggambar ikon kalender dalam versi terang. Membalikkannya lagi
+   justru mengembalikannya jadi gelap di atas field gelap — hilang. */
+.field input[type="date"]::-webkit-calendar-picker-indicator { opacity: .6; cursor: pointer; }
+.field input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+
+.contact-list { list-style: none; margin: 30px 0 0; padding: 0; border-top: 1px solid var(--hair); }
+.contact-list li { padding: 15px 0; border-bottom: 1px solid var(--hair); display: grid; grid-template-columns: 118px 1fr; gap: 14px; align-items: baseline; }
+@media (max-width: 480px) { .contact-list li { grid-template-columns: 1fr; gap: 3px; } }
+.contact-list .lbl { font-size: .64rem; letter-spacing: .2em; text-transform: uppercase; color: var(--muted-2); }
+.contact-list .val { font-size: .95rem; }
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+.site-footer { background: var(--ink-2); padding: clamp(52px,6vw,80px) 0 30px; border-top: 1px solid var(--hair); }
+.footer-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: clamp(26px,4vw,52px); margin-bottom: 44px; }
+@media (max-width: 820px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 540px) { .footer-grid { grid-template-columns: 1fr; } }
+.site-footer h4 { font-size: .64rem; letter-spacing: .22em; text-transform: uppercase; color: var(--muted-2); margin-bottom: 14px; }
+.site-footer p { color: var(--muted); font-size: .9rem; max-width: 40ch; }
+.site-footer ul { list-style: none; margin: 0; padding: 0; }
+.site-footer li { margin-bottom: 9px; font-size: .9rem; color: var(--muted); }
+.site-footer li a:hover { color: var(--zest); }
+/* Tautan footer dan daftar kontak adalah target sentuh sungguhan — nomor
+   WhatsApp, email, Instagram. Sebagai teks sebaris tingginya cuma 18-20px,
+   jauh di bawah ambang nyaman ibu jari. Di layar sentuh diberi tinggi minimum;
+   di desktop dibiarkan rapat supaya daftarnya tidak jadi renggang. */
+@media (max-width: 760px) {
+  .site-footer li a,
+  .contact-list .val a,
+  .footer-bottom a,
+  /* tautan di dalam p.fine bukan tautan dalam kalimat — itu kontrol navigasi
+     menuju katalog. Dulu dibatasi :only-child; sejak katalog pecah jadi dua
+     brand ada DUA tautan berdampingan di #sajian, dan pembatas itu justru
+     mencabut sasaran sentuh 40px persis di tempat yang paling membutuhkannya. */
+  p.fine > a.link { display: inline-flex; align-items: center; min-height: 40px; }
+  .site-footer li { margin-bottom: 2px; }
+}
+.footer-brands { list-style: none; margin: 0; padding: 0; }
+.footer-brands li { padding: 10px 0; border-top: 1px solid var(--hair); }
+.footer-brands b { display: block; color: var(--paper); font-size: .9rem; }
+.footer-brands span { font-size: .78rem; color: var(--muted-2); }
+.footer-bottom { border-top: 1px solid var(--hair); padding-top: 22px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; font-size: .76rem; color: var(--muted-2); }
+
+/* ==========================================================================
+   Sticky CTA (mobile)
+   ========================================================================== */
+.sticky-cta { position: fixed; left: 0; right: 0; bottom: 0; z-index: 70; background: rgba(26,14,10,.96); backdrop-filter: blur(14px); border-top: 1px solid var(--hair); padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); display: none; gap: 9px; }
+/* min-height 46px: di bawah ~44px tombol mulai sering meleset saat ditekan
+   dengan ibu jari, dan bar ini adalah CTA terakhir sebelum orang menyerah */
+.sticky-cta .btn { flex: 1; padding: 13px 10px; font-size: .72rem; min-height: 46px; }
+/* Padding bawah HARUS memakai env() yang sama dengan bar-nya. Dengan angka mati
+   (80px) bar setinggi 85px menutupi 5px baris terakhir footer — dan di iPhone
+   ber-home-indicator selisihnya bertambah lagi. */
+@media (max-width: 760px) {
+  .sticky-cta { display: flex; }
+  body { padding-bottom: calc(88px + env(safe-area-inset-bottom)); }
+}
+
+/* ==========================================================================
+   Gerak
+   ========================================================================== */
+.js [data-reveal] { opacity: 0; transform: translateY(18px); transition: opacity .8s var(--ease), transform .8s var(--ease); transition-delay: var(--d,0ms); }
+.js [data-reveal].is-in { opacity: 1; transform: none; }
+
+/* Di layar kecil semuanya jadi satu kolom, jadi jumlah elemen yang di-reveal
+   per layar jauh lebih banyak. Durasi dan jarak desktop membuat scroll terasa
+   berat — di sini dipendekkan supaya gerakannya menyusul jempol, bukan
+   tertinggal di belakangnya. */
+@media (max-width: 760px) {
+  .js [data-reveal] { transform: translateY(12px); transition-duration: .55s; }
+  .js .reveal-line > span { transition-duration: .7s; }
+
+  /* Label mikro sistem ini bertracking lebar dan huruf besar semua — di bawah
+     ~10.5px kombinasi itu mulai sulit dibaca di layar genggam. Naikkan sedikit
+     hanya di sini; ukuran desktopnya sengaja tetap kecil. */
+  .brand__sub, .brand-card__tag, .pkg__from,
+  .offer__tag, .contact-list .lbl, .field label { font-size: .68rem; }
+}
+.reveal-line { display: block; overflow: hidden; }
+.js .reveal-line > span { display: block; transform: translateY(105%); transition: transform 1.05s var(--ease); transition-delay: var(--d,0ms); }
+.js .reveal-line.is-in > span { transform: none; }
+
+/* parallax hero (motion.js) */
+.hero__shot img { will-change: transform; }
+
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.center { text-align: center; }
+
+/* ==========================================================================
+   Halaman katalog menu
+   ========================================================================== */
+.page-hero { padding: clamp(48px,6vw,88px) 0 clamp(26px,3vw,40px); }
+.menu-toolbar { position: sticky; top: 76px; z-index: 50; background: rgba(26,14,10,.95); backdrop-filter: blur(14px); border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); padding: 13px 0; }
+.menu-toolbar .wrap { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.menu-search { flex: 1; min-width: 190px; }
+.menu-search input { width: 100%; padding: 10px 13px; background: rgba(253,248,240,.05); border: 1px solid var(--hair); border-radius: var(--r); color: var(--paper); font-family: var(--sans); font-size: .93rem; }
+.menu-search input:focus { outline: none; border-color: var(--zest); }
+.menu-search input::placeholder { color: var(--muted-2); }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.filter { padding: 8px 14px; border-radius: var(--r); cursor: pointer; font-family: var(--sans); font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; background: transparent; border: 1px solid var(--hair); color: var(--muted); -webkit-tap-highlight-color: transparent; transition: background .18s var(--ease), border-color .18s var(--ease), color .18s var(--ease), transform .12s var(--ease); }
+.filter:hover { border-color: var(--paper); color: var(--paper); }
+.filter:active { transform: scale(.96); }
+.filter[aria-pressed="true"] { background: var(--zest); border-color: var(--zest); color: var(--zest-dp); }
+
+/* Di halaman katalog, filter dan kolom cari ADALAH interaksi utamanya —
+   sembilan tombol 31px berjajar rapat praktis mustahil ditekan tepat dengan
+   ibu jari. Kolom cari juga naik ke 16px demi alasan yang sama dengan formulir:
+   di bawah itu Safari iOS men-zoom halaman setiap kali kolomnya disentuh. */
+@media (max-width: 760px) {
+  .filters { gap: 8px; }
+  .filter { min-height: 42px; padding: 10px 16px; font-size: .72rem; }
+  .menu-search input { font-size: 16px; padding: 13px 14px; }
+}
+
+.menu-group { margin-bottom: clamp(40px,5vw,68px); }
+.menu-group__head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-bottom: 12px; border-bottom: 1px solid var(--hair); margin-bottom: 9px; }
+.menu-group__head h2 { font-size: clamp(1.35rem,2.6vw,2rem); }
+.menu-group__price { font-size: .82rem; color: var(--muted-2); font-variant-numeric: tabular-nums; }
+.menu-group__price b { color: var(--zest); }
+.menu-group__desc { color: var(--muted-2); font-size: .86rem; margin-bottom: 20px; max-width: 60ch; }
+
+.menu-list { list-style: none; margin: 0; padding: 0; }
+.menu-list li.is-hidden { display: none; }
+.menu-group.is-hidden { display: none; }
+.menu-list--photo { display: grid; grid-template-columns: repeat(4,1fr); gap: 2px; }
+@media (max-width: 1040px) { .menu-list--photo { grid-template-columns: repeat(3,1fr); } }
+@media (max-width: 720px) { .menu-list--photo { grid-template-columns: repeat(2,1fr); } }
+.menu-list--photo li { position: relative; background: var(--ink-3); overflow: hidden; }
+.menu-list--photo img { width: 100%; aspect-ratio: 4/3; object-fit: cover; transition: transform .9s var(--ease); }
+.menu-list--photo li:hover img { transform: scale(1.05); }
+.mi__n { position: absolute; inset: auto 0 0 0; padding: 34px 14px 8px; background: linear-gradient(180deg,transparent,rgba(26,14,10,.92)); font-size: .82rem; line-height: 1.3; }
+
+.menu-sub { font-size: .64rem; letter-spacing: .2em; text-transform: uppercase; color: var(--muted-2); margin: clamp(26px,3vw,38px) 0 12px; }
+.menu-list--text { display: grid; grid-template-columns: repeat(4,1fr); gap: 0 26px; }
+@media (max-width: 1000px) { .menu-list--text { grid-template-columns: repeat(3,1fr); } }
+@media (max-width: 720px) { .menu-list--text { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 440px) { .menu-list--text { grid-template-columns: 1fr; } }
+.menu-list--text li { font-size: .9rem; color: var(--muted); padding: 9px 0; border-bottom: 1px solid var(--hair); }
+.menu-list--text li:hover { color: var(--paper); }
+
+.no-result { display: none; text-align: center; color: var(--muted-2); padding: 52px 0; }
+.no-result.is-shown { display: block; }
+
+/* ==========================================================================
+   Kurangi gerak
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+  .js [data-reveal] { opacity: 1; transform: none; }
+  .js .reveal-line > span { transform: none; }
+}
+
+/* ==========================================================================
+   Halaman brand — wuenak-poll.html & 3s.html
+   --------------------------------------------------------------------------
+   Dua halaman ini memakai kerangka yang persis sama; yang berbeda hanya
+   SUHUnya, dan suhu itu datang dari fotonya, bukan dari selera:
+
+     WWP  — studio latar putih, jepretan tegak lurus dari atas. Di atas kanvas
+            krem latar fotonya nyaris lenyap, jadi piringnya terlihat mengambang
+            di halaman. Aksen tetap --zest seperti seluruh situs.
+     3S   — kayu hangat, daun pisang, gerabah. Ini persis dunia visual LP utama,
+            jadi halamannya tetap gelap. Aksen --gold, sama seperti penanda
+            .brand-card--premium yang sudah ada.
+
+   Tidak ada warna baru yang diperkenalkan di sini.
+   ========================================================================== */
+
+/* Logo brand di hero halaman. Chip bulat terang dipakai dengan alasan yang
+   sama seperti .brand-card__logo: kedua berkas logo memakai putih sebagai
+   warna isi, jadi di atas --ink bagian gelapnya lenyap. Ini penyimpangan
+   radius yang sudah tercatat — satu-satunya di seluruh sistem. */
+.brand-mark {
+  width: clamp(72px, 7vw, 96px); aspect-ratio: 1;
+  object-fit: contain; padding: 6px;
+  background: var(--paper); border-radius: 50%;
+  margin-bottom: clamp(20px, 2.4vw, 30px);
+}
+
+/* --------------------------------------------------------------------------
+   Cerita brand — naskah klien, tidak diubah satu kata pun.
+   Ditata sebagai kolom tunggal sempit: ini satu-satunya bagian di situs yang
+   minta dibaca berurutan, bukan dipindai.
+   -------------------------------------------------------------------------- */
+.story { max-width: 60ch; }
+.story__lead {
+  font-family: var(--serif); font-weight: 600;
+  font-size: clamp(1.3rem, 2.4vw, 1.95rem); line-height: 1.3;
+  letter-spacing: .012em; margin-bottom: .85em;
+}
+.story p { font-size: 1.02rem; }
+.story__sign {
+  font-family: var(--serif); font-weight: 700;
+  font-size: clamp(1.05rem, 1.8vw, 1.35rem); letter-spacing: .012em;
+  margin-top: 1.5em; padding-top: 1.1em;
+  border-top: 1px solid var(--hair);
+}
+.on-cream .story__sign { border-top-color: var(--hair-cream); }
+
+/* --------------------------------------------------------------------------
+   Galeri hidangan — potret, memakai grid .plates bawaan (3 kolom).
+
+   Tidak ada grid khusus di sini, dan itu disengaja. Setelah hidangan hero
+   dikeluarkan dan foto kembar Nasi Campur Bakwan Goreng dibuang, WWP menyisakan
+   9 tile — tepat 3x3 — dan 3S menyisakan 5, yang jatuh 3+2. Keduanya baris
+   terakhirnya utuh, tidak ada tile yatim.
+
+   .wrap, bukan .wrap--wide: pada 3 kolom di 1600 px satu tile jadi ~530 px CSS,
+   yang di layar 2x menuntut 1060 px — di atas sumber 1000 px, dan foto mulai
+   dibesarkan. Di .wrap (maks 1320) satu tile ~390 px, jadi 780 px di 2x.
+   -------------------------------------------------------------------------- */
+/* Galeri brand menahan DUA kolom sampai layar terkecil. .plates bawaan turun
+   ke satu kolom di bawah 560px — benar untuk tile persegi LP utama yang kapsinya
+   menumpang di atas foto, salah di sini: tile 3/4 selebar layar menjadi ~500px
+   tinggi, dan sembilan di antaranya menjadi galeri sepanjang 4.500px yang harus
+   digulir habis sebelum pengunjung sampai ke katalognya. */
+@media (max-width: 560px) { .plates--brand { grid-template-columns: repeat(2, 1fr); } }
+
+.plate--menu { background: transparent; }
+.plate--menu img { aspect-ratio: 3/4; background: var(--ink-3); }
+.on-cream .plate--menu img { background: var(--cream-2); }
+
+/* Kapsi turun ke bawah foto, tidak menumpang di atasnya seperti .plate__cap
+   di LP utama. Alasannya bukan gaya: gradien gelap .plate__cap dirancang untuk
+   foto bermeja kayu gelap. Di atas foto WWP yang latarnya nyaris putih, pita
+   gelap itu mendarat sebagai palang hitam di sepertiga bawah setiap piring.
+   Di bawah foto, nama hidangan juga terbaca sebagai daftar menu — yang memang
+   fungsi halaman ini. */
+.plate--menu .plate__cap { position: static; background: none; padding: 13px 2px 24px; }
+.plate--menu .plate__n { font-size: 1rem; line-height: 1.25; }
+.plate--menu .plate__d { font-size: .74rem; letter-spacing: .04em; }
+.on-cream .plate__d { color: var(--on-cream-mut); }
+
+/* Tirai: foto tersingkap dari bawah ke atas.
+
+   Elemen lain di situs ini naik-dan-memudar. Untuk foto makanan gerakan itu
+   salah — yang memudar adalah hidangannya sendiri, jadi setengah animasinya
+   dihabiskan menampilkan piring setengah transparan. clip-path menyingkap foto
+   yang sudah utuh dan pekat sejak frame pertama: yang bergerak hanya batas
+   tirainya. Hanya clip-path dan transform yang dianimasikan — keduanya lewat
+   compositor, tidak ada layout maupun paint ulang.
+
+   Peredam .js [data-reveal] dimatikan di sini supaya tidak ada dua animasi
+   masuk berjalan bersamaan pada elemen yang sama. */
+.js .plate--curtain[data-reveal] { opacity: 1; transform: none; }
+.js .plate--curtain img {
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path .8s var(--ease-out) var(--d, 0ms), transform 1.1s var(--ease);
+}
+.js .plate--curtain.is-in img { clip-path: inset(0 0 0 0); }
+/* kapsi menyusul, tapi setelah tirainya lewat */
+.js .plate--curtain .plate__cap { opacity: 0; transition: opacity .5s var(--ease) calc(var(--d, 0ms) + 340ms); }
+.js .plate--curtain.is-in .plate__cap { opacity: 1; }
+
+/* --------------------------------------------------------------------------
+   Tautan silang ke brand satunya — satu-satunya jalan keluar di dasar halaman
+   selain CTA, jadi ia harus terbaca sebagai kartu, bukan sebagai baris teks.
+   -------------------------------------------------------------------------- */
+.crosslink {
+  display: flex; align-items: center; gap: clamp(18px, 3vw, 34px);
+  padding: clamp(24px, 3.2vw, 40px);
+  background: var(--ink-3); border-top: 3px solid var(--hair);
+  transition: background .25s var(--ease), border-color .25s var(--ease);
+}
+.crosslink__logo {
+  width: clamp(60px, 6vw, 78px); aspect-ratio: 1; flex: none;
+  object-fit: contain; padding: 5px;
+  background: var(--paper); border-radius: 50%;
+}
+.crosslink__t { flex: 1; min-width: 0; }
+.crosslink__k { font-size: .64rem; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: var(--muted-2); }
+.crosslink__n { font-family: var(--serif); font-weight: 800; font-size: clamp(1.25rem, 2.3vw, 1.85rem); letter-spacing: .012em; line-height: 1.15; margin: 7px 0 5px; }
+.crosslink__d { font-size: .9rem; color: var(--muted); }
+.crosslink__a { flex: none; font-size: 1.4rem; color: var(--muted); transition: transform .25s var(--ease-out), color .25s var(--ease); }
+@media (hover: hover) and (pointer: fine) {
+  .crosslink:hover { background: var(--ink-4); border-top-color: var(--zest); }
+  .crosslink:hover .crosslink__a { transform: translateX(7px); color: var(--zest); }
+  .t-3s .crosslink:hover { border-top-color: var(--gold); }
+  .t-3s .crosslink:hover .crosslink__a { color: var(--gold); }
+}
+@media (max-width: 560px) {
+  .crosslink { flex-wrap: wrap; gap: 16px; }
+  .crosslink__t { flex-basis: 100%; }
+  .crosslink__a { margin-left: auto; }
+}
+
+/* --------------------------------------------------------------------------
+   Tema 3S — emas menggantikan zest.
+
+   --gold sudah ada di sistem sebagai penanda premium (.brand-card--premium),
+   jadi ini bukan warna baru, hanya cakupannya yang diperluas ke satu halaman.
+   Kontras di atas --ink: 8.1:1. Teks #2A1B08 di atas permukaan --gold: 7.1:1.
+   -------------------------------------------------------------------------- */
+.t-3s .label { color: var(--gold); }
+.t-3s .hero h1 em { color: var(--gold); }
+.t-3s .lead b { color: var(--paper); }
+.t-3s .menu-group__price b { color: var(--gold); }
+.t-3s .menu-search input:focus { border-color: var(--gold); }
+.t-3s .filter[aria-pressed="true"] { background: var(--gold); border-color: var(--gold); color: #2A1B08; }
+.t-3s ::selection { background: var(--gold); color: #2A1B08; }
+.t-3s .btn--zest { background: var(--gold); color: #2A1B08; }
+.t-3s .btn--zest:hover { background: #D8B87F; }
+.t-3s :focus-visible { outline-color: var(--gold); }
+@media (hover: hover) and (pointer: fine) {
+  .t-3s .nav a:hover { color: var(--gold); }
+  .t-3s .link:hover { border-color: var(--gold); color: var(--gold); }
+}
+
+/* Hero halaman brand: sedikit lebih rapat dari hero LP utama karena tidak ada
+   deret fakta di dasarnya. */
+.brand-hero { padding-top: clamp(34px, 4.5vw, 60px); }
+.brand-hero h1 { font-size: clamp(2rem, 3.5vw, 3.1rem); }
+
+/* Tirai galeri ikut dimatikan saat pengguna minta kurangi gerak. Blok
+   @media di atas hanya memangkas DURASI transisi; keadaan awal clip-path
+   tetap harus dilepas, kalau tidak fotonya berangkat dari tersembunyi. */
+@media (prefers-reduced-motion: reduce) {
+  .js .plate--curtain img { clip-path: none; }
+  .js .plate--curtain .plate__cap { opacity: 1; }
+}
+
+/* ==========================================================================
+   Tumpukan kartu hero — index.html
+   --------------------------------------------------------------------------
+   Dua tumpukan berdampingan, satu per brand, menggantikan foto tumpeng tunggal.
+
+   Kedalamannya NYATA, bukan tiruan: .decks memegang `perspective`, .deck
+   memegang `transform-style: preserve-3d`, dan tiap kartu duduk di translateZ
+   sendiri. Waktu tumpukan dimiringkan mengikuti kursor, kartu di kedalaman
+   berbeda bergeser dengan laju berbeda — itu parallax sungguhan, bukan lapisan
+   datar yang digeser manual.
+
+   Referensi klien adalah HUD Iron Man. Yang dipinjam HANYA mekanik
+   kedalamannya. Tampilan holografik birunya sengaja tidak diambil: itu akan
+   melawan dunia hangat "Warm Table", dan halaman v1 sudah pernah ditolak klien
+   justru karena terasa dingin.
+
+   Seluruh geometri kipas ada di sini. motion.js cuma memutar angka --i.
+   ========================================================================== */
+
+/* Dua tumpukan TUMPANG TINDIH, bukan berdampingan — dan itu dipaksa oleh
+   ukuran, bukan selera.
+
+   Diukur di 1440: baris pertama headline Rev 2 menuntut 621px sedangkan kolom
+   kirinya 644px, jadi hanya tersisa 23px kelonggaran. Kolom kanan tidak bisa
+   dilebarkan tanpa headline pecah jadi empat baris. Berdampingan di ruang itu
+   memberi kartu 219px — lebih kecil dari thumbnail katalog (280px) dan setengah
+   foto hero lama (460px). Untuk foto makanan di hero, itu terlalu kecil.
+
+   Dengan lebar 55% masing-masing, keduanya bertindih 10% dari wadah (~55px,
+   sekitar 18% lebar kartu) dan kartu depan naik ke ~300px. Bagian yang tertutup
+   adalah tepi kiri kartu 3S, yang isinya beludru merah — bukan hidangannya.
+
+   Bonusnya kebetulan tepat sasaran: dua tumpukan yang saling menindih adalah
+   gambar harfiah dari posisi W3S — dua brand, satu dapur. */
+.decks {
+  display: flex;
+  align-items: flex-start;
+  /* Ruang untuk kartu yang mengintip di atas kartu depan (4 x 13px). */
+  padding-top: 60px;
+  perspective: 1100px;
+}
+.deck { flex: 0 0 55%; }
+/* Tumpukan 3S di ATAS: kartu depannya tampil utuh, dan yang tertutup adalah
+   tepi kanan tumpukan WWP — di situ hanya sirip kipas, bukan kotak nasinya. */
+.deck:first-child { z-index: 1; }
+.deck:last-child  { margin-left: -10%; margin-top: 54px; z-index: 2; }
+
+/* Menjorok ke pelipit kanan. Ruang itu memang ada dan tidak dipakai apa pun;
+   di bawah 1180px pelipitnya menyempit sendiri, jadi jangan dipaksa. */
+@media (min-width: 1180px) { .decks { margin-right: -48px; } }
+
+.deck {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 3/4;
+  transform-style: preserve-3d;
+  transition: transform .5s var(--ease);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Kartu.
+
+   Kipas naik LURUS ke atas, bukan melebar ke samping: dua tumpukan berbagi
+   satu kolom hero, jadi kipas yang melebar akan menabrak kartu depan
+   tetangganya. Rotasi kecil (-1.6deg per tingkat) sudah cukup memunculkan
+   tepi kartu di belakang tanpa menambah jejak horizontal.
+
+   translateZ negatif membuat kartu belakang otomatis mengecil oleh perspective
+   — jadi tidak perlu scale() terpisah, dan pengecilannya benar secara optik. */
+.deck__card {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: var(--ink-3);
+  z-index: calc(10 - var(--i));
+  transform:
+    translateZ(calc(var(--i) * -26px))
+    translateY(calc(var(--i) * -13px))
+    rotate(calc(var(--i) * -1.6deg));
+  box-shadow: 0 0 0 2px var(--ink), 0 18px 38px rgba(0,0,0,.46);
+  transition: transform .72s var(--ease-out);
+}
+
+.deck__tag {
+  position: absolute;
+  inset: auto 0 -30px 0;
+  text-align: center;
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--muted-2);
+}
+
+/* Kursor hanya diberikan kalau tumpukannya memang bisa ditekan untuk maju —
+   dan itu baru dipasang motion.js. Tanpa JS, tumpukan diam dan tidak berpura
+   pura bisa diklik. */
+.js .deck { cursor: pointer; }
+
+@media (max-width: 900px) {
+  /* Di bawah 900px kolom hero naik ke atas dan melebar penuh; tumpukan ikut
+     membesar, jadi ruang kipasnya perlu ditambah. */
+  .decks { padding-top: 72px; gap: 16px; }
+}
+@media (max-width: 420px) {
+  /* Di layar tersempit dua tumpukan berdampingan menyisakan ~150px per kartu.
+     Itu di bawah ukuran yang masih menggugah selera, jadi kipasnya dirapatkan
+     supaya kartu depan mendapat porsi sebesar mungkin. */
+  .decks { padding-top: 46px; }
+  .deck__card {
+    transform:
+      translateZ(calc(var(--i) * -18px))
+      translateY(calc(var(--i) * -9px))
+      rotate(calc(var(--i) * -1.2deg));
+  }
+}
+
+/* Kurangi gerak: kipas tetap ditampilkan (itu tata letak, bukan animasi), tapi
+   tidak ada tilt dan tidak ada pergantian otomatis — keduanya dimatikan di
+   motion.js. Transisi kartunya ikut dipangkas oleh blok global. */
+@media (prefers-reduced-motion: reduce) {
+  .deck { transition: none; }
+  .deck__card { transition: none; }
+}
+
+/* ==========================================================================
+   Band tumpeng — index.html, tepat di puncak layar kedua
+   --------------------------------------------------------------------------
+   Foto di KIRI, kebalikan dari hero. Hero, band ini, dan #dapur semuanya
+   memakai susunan terpisah teks/foto; kalau ketiganya menaruh foto di kanan,
+   sisi kanan halaman jadi satu pita gambar vertikal dan halamannya terbaca
+   miring. Menyelang-nyeling sisi memberi ritme tanpa menambah komponen baru.
+
+   Bingkai 3/4 = rasio asli fotonya (1086x1448), jadi tidak ada satu piksel pun
+   yang dibuang — aturan foto nomor satu di dokumen ini.
+   ========================================================================== */
+.tumpeng__grid {
+  display: grid;
+  grid-template-columns: clamp(240px, 30vw, 380px) minmax(0, 1fr);
+  gap: clamp(28px, 5vw, 72px);
+  align-items: center;
+}
+.tumpeng__shot { margin: 0; aspect-ratio: 3/4; overflow: hidden; background: var(--ink-3); }
+.tumpeng__shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tumpeng__copy { min-width: 0; }
+/* Sedikit lebih kecil dari h2 global: ini pesan pendamping, bukan section
+   utama, dan tidak boleh bersaing dengan "Sajian unggulan" tepat di bawahnya. */
+.tumpeng__copy h2 { font-size: clamp(1.7rem, 3vw, 2.6rem); }
+.tumpeng__copy .lead { margin-top: 20px; max-width: 46ch; }
+.tumpeng__copy .lead b { color: var(--paper); font-weight: 700; }
+.tumpeng__copy .btn-row { margin-top: 28px; }
+
+@media (max-width: 760px) {
+  /* Foto turun ke bawah teks. Di layar sempit, judul yang muncul lebih dulu
+     lebih cepat menjelaskan apa yang sedang dilihat daripada foto tanpa
+     konteks — dan tumpeng tanpa kalimatnya mudah dikira hidangan biasa. */
+  .tumpeng__grid { grid-template-columns: 1fr; gap: 26px; }
+  .tumpeng__shot { order: 2; aspect-ratio: 4/3; }
+  .tumpeng__copy { order: 1; }
+}
