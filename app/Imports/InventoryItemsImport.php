@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 use App\Models\InventoryItem;
+use App\Support\NumberParser;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
@@ -176,12 +177,11 @@ class InventoryItemsImport implements SkipsEmptyRows, ToCollection, WithHeadingR
             return null;
         }
 
-        // Angka bisa datang berformat Indonesia ("1.500.000,50") dari file yang
-        // diedit manusia di Excel.
-        $clean = str_replace(['.', ' '], '', (string) $value);
-        $clean = str_replace(',', '.', $clean);
+        // Sel angka dari ekspor dipakai apa adanya; teks berformat Indonesia
+        // ("1.500.000,50") dari file yang diedit manusia dibaca NumberParser.
+        $number = NumberParser::parse($value);
 
-        return is_numeric($clean) ? round((float) $clean, 4) : null;
+        return $number === null ? null : round($number, 4);
     }
 
     protected function normalizeBoolean(mixed $value): bool

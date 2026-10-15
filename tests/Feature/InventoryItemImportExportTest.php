@@ -266,3 +266,47 @@ it('menampilkan pemakaian residual dan pemakaian resep berdampingan di laporan p
         ->assertSeeInOrder(['Pemakaian', '60.000,00', 'Sumber HPP: residual opname'])
         ->assertSee('Pemakaian Resep');
 });
+
+it('tidak mengubah harga apa pun saat berkas ekspor diimpor kembali (harga desimal)', function () {
+    // Bug lama: impor membuang semua titik, sehingga 147,5 hasil ekspor menjadi 1.475.
+    $items = collect([
+        ['Keju Prochiz 160gr', 'gram', 147.5, null, null],
+        ['Nasi putih', 'gram', 52.9801, null, null],
+        ['Air', 'ml', 0.63, null, null],
+        ['Cup 75 ml', 'pcs', 533.76, 1, 533.76],
+        ['Telur Omega', 'butir', 2187.5, 2187.5, null],
+        ['Beras', 'gram', 12000, null, null],
+    ])->map(fn ($row) => InventoryItem::query()->create([
+        'name' => $row[0], 'unit' => $row[1], 'category' => InventoryItem::CATEGORY_RAW_MATERIAL,
+        'unit_price' => $row[2], 'pack_qty' => $row[3], 'pack_price' => $row[4], 'is_active' => true,
+    ]));
+    $snapshot = fn () => InventoryItem::query()->whereIn('id', $items->pluck('id'))->orderBy('id')
+        ->get(['unit_price', 'pack_qty', 'pack_price'])->map(fn ($i) => [(float) $i->unit_price, $i->pack_qty === null ? null : (float) $i->pack_qty, $i->pack_price === null ? null : (float) $i->pack_price])->all();
+    $before = $snapshot();
+
+    $path = tempnam(sys_get_temp_dir(), 'inv').'.xlsx';
+    file_put_contents($path, Excel::raw(new InventoryItemsExport, \Maatwebsite\Excel\Excel::XLSX));
+    $import = new InventoryItemsImport;
+    Excel::import($import, $path);
+
+    expect($import->hasErrors())->toBeFalse()
+        ->and($snapshot())->toBe($before)
+        ->and($before[0][0])->toBe(147.5);
+    unlink($path);
+});
+
+it('membaca angka teks gaya Indonesia maupun Inggris tanpa salah skala', function (mixed $input, ?float $expected) {
+    expect(\App\Support\NumberParser::parse($input))->toBe($expected);
+})->with([
+    'sel angka asli' => [147.5, 147.5],
+    'titik ribuan + koma desimal' => ['1.500.000,50', 1500000.5],
+    'gaya inggris' => ['1,500,000.50', 1500000.5],
+    'ribuan satu titik' => ['12.000', 12000.0],
+    'desimal titik' => ['147.5', 147.5],
+    'desimal empat digit' => ['52.9801', 52.9801],
+    'nol koma' => ['0.125', 0.125],
+    'koma desimal' => ['10,5', 10.5],
+    'rupiah dengan spasi' => ['Rp 15.000', 15000.0],
+    'kosong' => ['', null],
+    'bukan angka' => ['abc', null],
+]);
