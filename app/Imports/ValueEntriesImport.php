@@ -24,6 +24,10 @@ use Throwable;
  * nilai. Berkas dengan satu saja baris bermasalah ditolak seluruhnya --
  * opname yang tersimpan separuh lebih sulit dibereskan daripada yang tidak
  * tersimpan sama sekali.
+ *
+ * Baris tanpa id, item_id, maupun nama_item tidak menunjuk item mana pun
+ * (biasanya sisa isian Excel: tanggal/nilai yang ikut ditarik ke bawah).
+ * Baris itu dilewati dan nomornya dilaporkan, bukan membatalkan berkas.
  */
 class ValueEntriesImport implements SkipsEmptyRows, ToCollection, WithHeadingRow
 {
@@ -33,6 +37,9 @@ class ValueEntriesImport implements SkipsEmptyRows, ToCollection, WithHeadingRow
 
     /** @var array<int, string> */
     protected array $errors = [];
+
+    /** @var list<int> nomor baris tanpa penunjuk item yang dilewati */
+    protected array $skipped = [];
 
     /**
      * @param  class-string<StockOpname|InventoryOpening>  $model
@@ -59,6 +66,12 @@ class ValueEntriesImport implements SkipsEmptyRows, ToCollection, WithHeadingRow
 
         foreach ($rows as $index => $row) {
             $lineNumber = $index + 2;
+
+            if (blank($row['id'] ?? null) && blank($row['item_id'] ?? null) && blank(trim((string) ($row['nama_item'] ?? '')))) {
+                $this->skipped[] = $lineNumber;
+
+                continue;
+            }
 
             $item = $this->resolveItem($row['item_id'] ?? null, $row['nama_item'] ?? null);
 
@@ -186,6 +199,25 @@ class ValueEntriesImport implements SkipsEmptyRows, ToCollection, WithHeadingRow
         }
 
         return str_replace(['Rp', ' ', '.', ','], ['', '', '', '.'], $text) ?: '0';
+    }
+
+    /** @return list<int> */
+    public function skipped(): array
+    {
+        return $this->skipped;
+    }
+
+    /** Catatan baris yang dilewati untuk notifikasi; null bila tidak ada. */
+    public function notes(): ?string
+    {
+        if ($this->skipped === []) {
+            return null;
+        }
+
+        $lines = array_slice($this->skipped, 0, 10);
+
+        return count($this->skipped).' baris tanpa item dilewati (baris '.implode(', ', $lines)
+            .(count($this->skipped) > count($lines) ? ', …' : '').').';
     }
 
     public function created(): int

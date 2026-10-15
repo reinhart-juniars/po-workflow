@@ -62,10 +62,14 @@ trait HasValueEntryExcelActions
                         return;
                     }
 
+                    $summary = $importer->created().' catatan baru, '.$importer->updated().' diperbarui.';
+                    $notes = $importer->notes();
+
                     Notification::make()
-                        ->success()
+                        ->status($notes ? 'warning' : 'success')
                         ->title('Import selesai')
-                        ->body($importer->created().' catatan baru, '.$importer->updated().' diperbarui.')
+                        ->body($notes ? $summary."\n".$notes : $summary)
+                        ->duration($notes !== null ? 'persistent' : 6000)
                         ->send();
                 }),
         ];

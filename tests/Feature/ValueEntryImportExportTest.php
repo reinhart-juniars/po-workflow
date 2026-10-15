@@ -146,3 +146,36 @@ it('mengekspor pembelian bahan baku beserta kondisi dan tautan form kebutuhan', 
     Livewire::test(ListInventoryPurchases::class)->callAction('export')->assertHasNoActionErrors();
     Excel::assertDownloaded('/^pembelian-bahan-baku-.*\.xlsx$/');
 });
+
+it('melewati baris opname tanpa item sama sekali dan melaporkannya, tanpa membatalkan berkas', function () {
+    $path = berkasNilai(implode("\n", [
+        'id,item_id,nama_item,tanggal,nilai,catatan',
+        ',,Tepung Terigu,2026-08-31,200000,',
+        ',,,2026-08-31,,',          // sisa tarik-isi tanggal di Excel
+        ',,Bahan Tidak Ada,2026-08-31,5000,',
+    ]));
+
+    $import = ValueEntriesImport::opname();
+    Excel::import($import, $path);
+    unlink($path);
+
+    // Baris tanpa item dilewati; nama yang tidak ditemukan tetap kesalahan.
+    expect($import->skipped())->toBe([3])
+        ->and($import->errors())->toHaveCount(1)
+        ->and($import->errors()[0])->toContain('Bahan Tidak Ada')
+        ->and(StockOpname::query()->count())->toBe(0);
+
+    $path = berkasNilai(implode("\n", [
+        'id,item_id,nama_item,tanggal,nilai,catatan',
+        ',,Tepung Terigu,2026-08-31,200000,',
+        ',,,2026-08-31,,',
+    ]));
+
+    $import = ValueEntriesImport::opname();
+    Excel::import($import, $path);
+    unlink($path);
+
+    expect($import->hasErrors())->toBeFalse()
+        ->and($import->created())->toBe(1)
+        ->and($import->notes())->toBe('1 baris tanpa item dilewati (baris 3).');
+});

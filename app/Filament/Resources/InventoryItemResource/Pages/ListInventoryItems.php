@@ -101,10 +101,16 @@ class ListInventoryItems extends ListRecords
                         return;
                     }
 
+                    $summary = $import->created().' item baru, '.$import->updated().' item diperbarui.';
+                    $notes = $import->notes();
+
+                    // Ada baris dilewati / kategori diisi otomatis: tetap tampil
+                    // sampai ditutup supaya sempat dibaca.
                     Notification::make()
-                        ->success()
+                        ->status($notes ? 'warning' : 'success')
                         ->title('Import selesai')
-                        ->body($import->created().' item baru, '.$import->updated().' item diperbarui.')
+                        ->body($notes ? $summary."\n".$notes : $summary)
+                        ->duration($notes !== null ? 'persistent' : 6000)
                         ->send();
                 }),
         ];
