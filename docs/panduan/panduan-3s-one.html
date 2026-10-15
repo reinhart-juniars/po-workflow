@@ -185,6 +185,7 @@
     <tr><td>SPK Produksi (termasuk Breakdown Bahan), Pelaksana</td><td class="c yes">Kelola</td><td class="c yes">Kelola</td><td class="c view">Lihat</td><td class="c view">Lihat*</td><td class="c yes">Kelola</td></tr>
     <tr><td><b>Rencana Masak</b> (KPI stok siap, rencana belanja, pesanan PO) <span class="new">BARU</span></td><td class="c yes">Kelola</td><td class="c yes">Kelola</td><td class="c view">Lihat</td><td class="c yes">Kelola</td><td class="c view">Lihat</td></tr>
     <tr><td><b>Impor Rencana Masak</b>, Buat Rencana Masak, <b>Tutup Stok Siap</b></td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td></tr>
+    <tr><td><b>Impor Laporan Stok</b> gudang (pratinjau, item baru, saldo awal) <span class="new">BARU</span></td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">–</td></tr>
     <tr><td><b>Export Laporan Stok</b> (di Item Inventaris)</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
     <tr><td>Pengaturan Inventory</td><td class="c yes">Kelola</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td></tr>
   </table>
@@ -688,6 +689,7 @@
     <tr><th style="width: 26%">Menu</th><th>Untuk apa</th></tr>
     <tr><td>Dashboard</td><td>Ringkasan: bahan di bawah stok minimum, antrean form yang menunggu Anda, SPK terdekat, perubahan harga terakhir.</td></tr>
     <tr><td>Item Inventaris</td><td>Daftar bahan (nama, satuan, harga per satuan, stok minimum). Setiap perubahan harga tersimpan di <b>Histori Harga</b>. Tombol <b>Export Riwayat Harga</b> mengunduh seluruh histori harga semua bahan ke Excel; <b>Import Excel</b> untuk mengisi atau memperbarui banyak bahan sekaligus. Dua tombol ekspor lain: <b>Export Laporan Stok</b> <span class="new">BARU</span> (format laporan stok harian gudang, lihat di bawah) dan <b>Export Data Master</b> (daftar item lengkap dengan kelompok, kemasan, dan harga &mdash; format yang sama dengan Import Excel).</td></tr>
+    <tr><td><b>Impor Laporan Stok</b> <span class="new">BARU</span></td><td>Mengunggah laporan stok harian gudang (Excel BAHAN BAKU / KEMASAN / PERALATAN) untuk melengkapi Item Inventaris dan mengisi saldo awal Kartu Stok, lewat pratinjau. Lihat <i>Impor Laporan Stok Gudang</i> di bawah.</td></tr>
     <tr><td>Stock Opname</td><td>Hasil hitung fisik stok per periode dalam <b>rupiah per kategori</b>; menjadi dasar nilai persediaan di Neraca.</td></tr>
     <tr><td><b>Opname Bahan</b></td><td>Hitung fisik <b>per bahan dalam kuantitas</b> (kg, liter, butir) kapan saja. Isi hasil hitung pada bahan yang diopname; selisih terhadap Kartu Stok otomatis tercatat sebagai <b>Barang Hilang</b> (hitung kurang) atau <b>Barang Temuan</b> (hitung lebih). Bahan yang belum pernah tercatat di Kartu Stok: hitungan pertamanya menjadi saldo awal. Tidak menggantikan Stock Opname bulanan.</td></tr>
     <tr><td><b>Susut Bahan</b></td><td>Indikator per bahan: <b style="color:#059669;">hijau</b> (susut di bawah 1%), <b style="color:#b45309;">kuning</b> (1–10%), <b style="color:#e11d48;">merah</b> (di atas 10%). Klik sebuah bahan untuk melihat SPK dan menu yang memakainya — di situlah susutnya bisa dilacak. Cara hitungnya di Bab 14.</td></tr>
@@ -724,6 +726,30 @@
   </table>
   <div class="tip">Sisa Stok, Value, dan Total ditulis sebagai <b>rumus</b>, sama seperti berkas gudang selama ini. Kalau tim gudang mengoreksi angka di Excel, totalnya ikut berubah. Tetapi koreksi di Excel <b>tidak mengubah sistem</b>: selisih fisik tetap dicatat lewat <b>Opname Bahan</b>.</div>
   <div class="warn"><b>Barang yang tidak ada di laporan</b> berarti belum ada di Item Inventaris. Laporan gudang selama ini memuat lebih banyak barang (terutama kemasan dan peralatan) daripada daftar item di sistem. Tambahkan item yang masih dipakai lewat <b>Tambah Item</b> atau Import Excel supaya laporannya lengkap.</div>
+
+  <h3>Impor Laporan Stok Gudang <span class="new">BARU</span></h3>
+  <p>Laporan stok yang selama ini dibuat tim gudang di Excel memuat jauh lebih banyak barang daripada Item Inventaris (terutama kemasan dan peralatan). Halaman <b>Inventory › Impor Laporan Stok</b> memasukkan barang-barang itu ke sistem, <b>sekaligus</b> sisa stoknya sebagai saldo awal Kartu Stok. Karena laporan gudang dan sistem sering berbeda ejaan (<i>Asem Mentah</i> vs <i>Asam Mentah</i>) dan satuan (laporan per Kg, resep per gram), tidak ada yang disimpan sebelum Anda memeriksa pratinjaunya.</p>
+  <ol>
+    <li>Buka <b>Inventory › Impor Laporan Stok</b>, pilih berkas laporan (.xlsx), tekan <b>Baca Berkas</b>. Laporan seribuan barang selesai dibaca dalam beberapa detik.</li>
+    <li>Baca <b>Ringkasan &amp; stok</b>: berapa barang berstatus <i>Sama</i>, <i>Mirip</i>, dan <i>Baru</i>, sheet mana yang dibaca beserta jenisnya, dan sheet mana yang dilewati (catatan kerja, daftar pengurangan, dan sheet tanpa kepala <i>Nama Barang</i>).</li>
+    <li>Periksa centang <b>Isi Saldo Awal Kartu Stok dari kolom Sisa Stok</b> dan <b>Tanggal saldo awal</b> (terisi dari sel <i>TANGGAL :</i> di laporan).</li>
+    <li>Tampilan dibuka di tab <b>Mirip — pilih dulu</b>. Untuk setiap barang, pilih di kolom <b>Pilihan</b>: item yang benar (tautkan), <i>Buat item baru</i>, atau <i>Lewati</i>. Persentase di belakang nama item menunjukkan kemiripannya. Tombol <b>Semua jadi item baru</b> / <b>Semua dilewati</b> berlaku untuk semua barang di tampilan itu.</li>
+    <li>Lihat tab <b>Baru</b> dan <b>Sama</b> sekilas, cari barang tertentu lewat kotak <i>Cari nama barang</i>, lalu tekan <b>Simpan Impor</b> dan setujui pertanyaannya.</li>
+  </ol>
+  <table class="grid" style="page-break-inside: avoid;">
+    <tr><th style="width: 18%">Status</th><th style="width: 30%">Artinya</th><th>Pilihan bawaan</th></tr>
+    <tr><td><b>Sama</b></td><td>Nama persis sama dengan item yang ada.</td><td>Ditautkan; satuan dan harga item <b>tidak diubah</b>.</td></tr>
+    <tr><td><b>Mirip</b></td><td>Ada item bernama mirip, bisa jadi barang yang sama dengan ejaan lain, bisa juga barang lain.</td><td><b>Dilewati</b> sampai Anda memilih, supaya tidak terbentuk item kembar atau tautan yang salah.</td></tr>
+    <tr><td><b>Baru</b></td><td>Tidak ada item yang mirip.</td><td>Dibuat sebagai item baru, jenisnya dari nama sheet (BAHAN BAKU, KEMASAN, PERALATAN/INVENTARIS), harga dari kolom HARGA.</td></tr>
+  </table>
+  <ul>
+    <li><b>Tautkan + perbarui harga</b> hanya ditawarkan bila satuan laporan sama dengan satuan item. Satuan yang berbeda (Kg vs gram) tidak pernah ditimpa, karena takaran resep bergantung padanya.</li>
+    <li><b>Saldo awal</b> hanya diisi untuk item <b>baru</b>, atau item tertaut yang satuannya sama dan <b>belum punya Kartu Stok</b>. Item yang stoknya sudah berjalan dikoreksi lewat <b>Opname Bahan</b>. Keterangan kecil di bawah tiap pilihan menyebut apakah stoknya akan diisi.</li>
+    <li>Barang yang muncul di dua sheet (atau dua kali) diimpor sekali. Sheet tanpa kolom harga (mis. daftar inventaris WWP) memakai Total ÷ Qty sebagai harga.</li>
+    <li>Hasil baca disimpan 3 jam. Lebih dari itu, baca ulang berkasnya.</li>
+  </ul>
+  <div class="tip"><b>Contoh:</b> laporan 14 Oktober berisi 1.032 barang: 52 Sama, 164 Mirip, 816 Baru. Gudang memeriksa 164 barang Mirip (mis. <i>Asem Mentah</i> &rarr; tautkan ke <i>Asam Mentah</i>; <i>Termometer minyak goreng</i> &rarr; buat baru), lalu menyimpan. Barang baru masuk Item Inventaris lengkap dengan saldo awal tanggal 14 Oktober; resep yang memakai bahan lama tidak berubah.</div>
+  <p class="small muted">Berkas laporan gudang yang diunggah lewat <b>Import Excel</b> di Item Inventaris tidak diproses di sana. Muncul pemberitahuan <i>Ini laporan stok gudang</i> dengan tombol <b>Buka Impor Laporan Stok</b>.</p>
 
   <h3>Impor Item Inventaris: harga berkoma kini aman <span class="new">PERBAIKAN</span></h3>
   <p>Sebelum v3.1.2, berkas <b>Export Data Master</b> yang diedit lalu diimpor kembali bisa <b>melipatgandakan</b> harga per satuan yang berkoma, misalnya Rp 147,5/gram menjadi Rp 1.475, atau Rp 0,63/ml menjadi Rp 63. Sekarang:</p>
@@ -1300,6 +1326,7 @@
     <tr><td><b>2</b></td><td>Owner</td><td>Buka <b>Inventory › Pengaturan Inventory</b>. Periksa angka bawaan: % OHC, % profit, perlakuan barang ditolak (retur / dibayar), batas profit menu. Kalau ragu, biarkan bawaannya — bisa diubah kapan saja.</td><td>Pengaturan tersimpan.</td></tr>
     <tr><td><b>3</b></td><td>Admin</td><td>Rapikan <b>Admin › Master Menu</b>: nonaktifkan menu yang sudah tidak dijual, pastikan harga jual benar, dan tulis ulang SKU tiap menu yang akan tampil di website (SKU lama masih berbentuk kode seperti <i>ALACARTE-AYAM-BISTIK</i>). Menu yang tidak aktif tidak akan muncul di laporan mana pun.</td><td>Daftar menu aktif = menu yang benar-benar dijual sekarang.</td></tr>
     <tr><td><b>4</b></td><td>Gudang</td><td>Rapikan <b>Inventory › Item Inventaris</b>: nama bahan, <b>satuan beli</b> (kg, liter, ikat, pak), harga beli terakhir, stok minimum. Hapus/nonaktifkan bahan yang tidak dipakai lagi. Satu bahan = satu baris; jangan ada "Telur" dan "Telur Ayam" berdampingan.</td><td>Setiap bahan punya satuan dan harga.</td></tr>
+    <tr><td><b>4b</b></td><td>Gudang</td><td><span class="new">BARU</span> Lengkapi barang yang belum ada (kemasan, peralatan) dari laporan stok gudang lewat <b>Inventory › Impor Laporan Stok</b>. Periksa semua barang berstatus <i>Mirip</i> sebelum menyimpan.</td><td>Laporan Stok sistem memuat barang yang sama dengan laporan gudang.</td></tr>
     <tr><td><b>5</b></td><td>Gudang / Accounting</td><td>Isi <b>Inventory › Master Supplier</b>: nama, kontak, rekening, dan <b>termin bayar</b> tiap pemasok, lalu pilih bahan yang dipasoknya. Supplier yang namanya sudah tercatat di pembelian lama sudah dibuatkan otomatis &mdash; lengkapi saja datanya.</td><td>Setiap pemasok aktif ada di daftar, tanpa nama kembar.</td></tr>
     <tr><td><b>6</b></td><td>Gudang</td><td>Hitung fisik semua bahan pada satu tanggal (pilih hari yang tenang), lalu masukkan ke <b>Inventory › Saldo Awal Stok</b> dengan tanggal itu. Inilah titik nol Kartu Stok — semua keluar-masuk setelahnya otomatis.</td><td>Kartu Stok tiap bahan menampilkan saldo awal.</td></tr>
     <tr><td><b>7</b></td><td>Tim Menu</td><td>Buka <b>Menu › Pencocokan Menu</b>. Mulai dari baris paling atas (paling laku): tautkan ke resep yang sudah ada, buat resep baru, atau tandai "Tanpa Resep". 20 menu teratas biasanya sudah mencakup dua pertiga porsi yang terjual — kerjakan itu dulu, sisanya bertahap.</td><td>Menu terlaris semuanya bertaut ke resep.</td></tr>
@@ -1473,7 +1500,7 @@
   <p>Tidak. Kolom yang tidak ada di berkas tidak disentuh. Harga lapak hanya berubah bila berkasnya memuat kolom <i>harga_lapak</i>.</p>
 
   <h3>Import Excel Item Inventaris ditolak: "nama item kosong".</h3>
-  <p>Sejak v3.1.2 baris tanpa nama <b>dan</b> tanpa id dilewati (nomornya dilaporkan), jadi pesan ini hanya muncul bila barisnya <b>punya id</b> tetapi namanya terhapus. Isi kembali namanya, atau hapus id-nya bila baris itu memang tidak dipakai. Bila pesannya <i>Kolom nama_item … tidak ditemukan</i>, judul kolom tidak ada di baris pertama: pakai berkas dari <b>Export Data Master</b>, atau beri judul <i>Nama Barang</i> di baris pertama.</p>
+  <p>Sejak v3.1.2 baris tanpa nama <b>dan</b> tanpa id dilewati (nomornya dilaporkan), jadi pesan ini hanya muncul bila barisnya <b>punya id</b> tetapi namanya terhapus. Isi kembali namanya, atau hapus id-nya bila baris itu memang tidak dipakai. Bila pesannya <i>Kolom nama_item … tidak ditemukan</i>, judul kolom tidak ada di baris pertama: pakai berkas dari <b>Export Data Master</b>, atau beri judul <i>Nama Barang</i> di baris pertama. Berkas <b>laporan stok harian gudang</b> (beberapa sheet, judul kolom di baris ke-3) diimpor lewat <b>Inventory › Impor Laporan Stok</b>, bukan lewat Import Excel.</p>
 
   <h3>Barang di laporan gudang lebih banyak daripada di Laporan Stok sistem.</h3>
   <p>Laporan Stok hanya memuat barang yang terdaftar di <b>Item Inventaris</b>. Tambahkan barang yang masih dipakai (terutama kemasan dan peralatan), beri saldo awalnya, dan barisnya ikut muncul di ekspor berikutnya.</p>

@@ -61,7 +61,11 @@ it('membangun panduan pengguna pdf dari sumber html', function () {
         ->toContain('Export Laporan Stok')
         ->toContain('Export Data Master')
         ->toContain('Terbitkan ke Website')
-        ->toContain('Dicentang, belum ada kategori');
+        ->toContain('Dicentang, belum ada kategori')
+        // Laporan stok gudang diimpor lewat pratinjau, bukan Import Excel.
+        ->toContain('Impor Laporan Stok Gudang')
+        ->toContain('Mirip — pilih dulu')
+        ->toContain('Ini laporan stok gudang');
     expect(base_path('docs/panduan/img/alur-rencana-masak.jpg'))->toBeFile();
 
     @unlink($output);

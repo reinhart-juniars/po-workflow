@@ -145,6 +145,7 @@ class Navigation
                 ],
                 'Inventory' => [
                     ['label' => 'Item Inventaris', 'route' => 'filament.admin.resources.inventory-items.index', 'can' => 'inventory.view'],
+                    ['label' => 'Impor Laporan Stok', 'route' => 'filament.admin.pages.impor-laporan-stok', 'can' => 'inventory.manage'],
                     ['label' => 'Stock Opname', 'route' => 'filament.admin.resources.stock-opnames.index', 'can' => 'inventory.view'],
                     ['label' => 'Opname Bahan', 'route' => 'filament.admin.pages.opname-bahan', 'can' => 'inventory.manage'],
                     ['label' => 'Susut Bahan', 'route' => 'filament.admin.pages.susut-bahan', 'can' => 'ledger.view'],
