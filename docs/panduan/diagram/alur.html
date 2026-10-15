@@ -596,6 +596,95 @@
   <text class="s" x="300" y="219" text-anchor="middle">transaksi sebelumnya tetap seperti yang sudah dilaporkan</text>
 </svg>
 
+<!-- ===== Rencana Masak: stok siap disiapkan gudang, didistribusikan admin ke PO (v3.1.2) ===== -->
+<svg class="alur" id="alur-rencana-masak" viewBox="0 0 600 600" width="600" height="600">
+  <rect class="band" x="0" y="0" width="600" height="38"/>
+  <path class="sep" d="M180,0 V352 M360,0 V352 M0,38 H600 M0,352 H600"/>
+  <rect x="0.5" y="0.5" width="599" height="599" rx="6" style="fill: none; stroke: #cbd5e1;"/>
+  <text class="t" x="90" y="17" text-anchor="middle">Gudang</text>
+  <text class="s" x="90" y="31" text-anchor="middle">peran Inventory</text>
+  <text class="t" x="270" y="17" text-anchor="middle">Dapur</text>
+  <text class="s" x="270" y="31" text-anchor="middle">peran Production</text>
+  <text class="t" x="480" y="17" text-anchor="middle">Admin</text>
+  <text class="s" x="480" y="31" text-anchor="middle">Admin App › Purchase Orders</text>
+
+  <rect class="bx br" x="8" y="50" width="164" height="72" rx="6"/>
+  <text class="t" x="90" y="69" text-anchor="middle">1 · Rencana Masak</text>
+  <text class="s" x="90" y="84" text-anchor="middle">Impor Excel mingguan</text>
+  <text class="s" x="90" y="98" text-anchor="middle">atau Buat Rencana Masak;</text>
+  <text class="s" x="90" y="112" text-anchor="middle">biasanya H-7 s/d H-2</text>
+  <path class="ln br dash" d="M172,72 H369"/>
+  <text class="s" x="270" y="66" text-anchor="middle">sisa stok siap tampil</text>
+  <text class="s" x="270" y="92" text-anchor="middle">di form PO</text>
+  <path class="ln" d="M90,122 V139"/>
+
+  <rect class="bx br" x="8" y="140" width="164" height="58" rx="6"/>
+  <text class="t" x="90" y="159" text-anchor="middle">2 · Form Kebutuhan</text>
+  <text class="s" x="90" y="174" text-anchor="middle">= rencana belanja: Setujui,</text>
+  <text class="s" x="90" y="188" text-anchor="middle">belanja, terima, Periksa</text>
+  <path class="ln" d="M172,169 H270 V213"/>
+
+  <rect class="bx br" x="188" y="214" width="164" height="58" rx="6"/>
+  <text class="t" x="270" y="233" text-anchor="middle">3 · Masak (hari H)</text>
+  <text class="s" x="270" y="248" text-anchor="middle">isi pemakaian &amp; sisa bahan,</text>
+  <text class="s" x="270" y="262" text-anchor="middle">Tutup SPK Rencana Masak</text>
+  <path class="ln" d="M270,272 V318 H173"/>
+
+  <rect class="bx solid" x="8" y="296" width="164" height="46" rx="6"/>
+  <text class="t on" x="90" y="315" text-anchor="middle">4 · Tutup Stok Siap</text>
+  <text class="s on" x="90" y="331" text-anchor="middle">setelah SPK-nya ditutup</text>
+
+  <rect class="bx br" x="370" y="50" width="220" height="58" rx="6"/>
+  <text class="t" x="480" y="69" text-anchor="middle">PO customer / lapak</text>
+  <text class="s" x="480" y="84" text-anchor="middle">per item: harga Normal atau Lapak,</text>
+  <text class="s" x="480" y="98" text-anchor="middle">tanggal kirim = tanggal rencana</text>
+  <path class="ln" d="M480,108 V123"/>
+  <polygon class="bx br" points="480,124 550,152 480,180 410,152"/>
+  <text class="t" x="480" y="149" text-anchor="middle">Ada di</text>
+  <text class="t" x="480" y="163" text-anchor="middle">stok siap?</text>
+  <path class="ln ok" d="M480,180 V190 H422 V211"/>
+  <path class="ln" d="M480,190 H539 V211"/>
+  <text class="yes" x="430" y="203">Ya</text>
+  <text class="no" x="547" y="203">Tidak</text>
+
+  <rect class="bx ok" x="366" y="212" width="112" height="76" rx="6"/>
+  <text class="t" x="422" y="231" text-anchor="middle">Stok siap</text>
+  <text class="s" x="422" y="246" text-anchor="middle">centang "Ambil dari</text>
+  <text class="s" x="422" y="260" text-anchor="middle">stok siap"; maks.</text>
+  <text class="s" x="422" y="274" text-anchor="middle">sisa porsi</text>
+  <rect class="bx" x="484" y="212" width="110" height="76" rx="6"/>
+  <text class="t" x="539" y="231" text-anchor="middle">PO biasa</text>
+  <text class="s" x="539" y="246" text-anchor="middle">masuk SPK slot,</text>
+  <text class="s" x="539" y="260" text-anchor="middle">dimasak di SPK</text>
+  <text class="s" x="539" y="274" text-anchor="middle">Produksi biasa</text>
+  <text class="s" x="422" y="306" text-anchor="middle">tidak dimasak ulang;</text>
+  <text class="s" x="422" y="320" text-anchor="middle">tercatat "terdistribusi"</text>
+
+  <path class="ln ok" d="M90,342 V371"/>
+  <rect class="bx ok" x="8" y="372" width="584" height="62" rx="6"/>
+  <text class="lab" x="300" y="389" text-anchor="middle">OTOMATIS SAAT STOK SIAP DITUTUP</text>
+  <text x="300" y="406" text-anchor="middle">Sisa = Disiapkan − Terdistribusi ke PO  →  masuk Sales › Barang Sisa, dinilai HPP resep</text>
+  <text class="s" x="300" y="422" text-anchor="middle">asal: "Stok Siap Dapur (internal)" · PO tanggal itu tidak bisa mengambil stok siap lagi</text>
+
+  <path class="ln" d="M100,434 V461"/>
+  <path class="ln" d="M300,434 V461"/>
+  <path class="ln" d="M500,434 V461"/>
+  <rect class="bx br" x="8" y="462" width="184" height="54" rx="6"/>
+  <text class="t" x="100" y="481" text-anchor="middle">Jual</text>
+  <text class="s" x="100" y="497" text-anchor="middle">ke customer mana pun</text>
+  <rect class="bx br" x="208" y="462" width="184" height="54" rx="6"/>
+  <text class="t" x="300" y="481" text-anchor="middle">Rinci per komponen</text>
+  <text class="s" x="300" y="497" text-anchor="middle">saran dari HPP bagian resep</text>
+  <rect class="bx wa" x="408" y="462" width="184" height="54" rx="6"/>
+  <text class="t" x="500" y="481" text-anchor="middle">Buang</text>
+  <text class="s" x="500" y="497" text-anchor="middle">alasan wajib · Laporan Waste</text>
+
+  <rect class="bx" x="8" y="534" width="584" height="56" rx="6"/>
+  <text class="lab br" x="300" y="551" text-anchor="middle">KPI · INVENTORY › RENCANA MASAK DAN DASHBOARD ADMIN</text>
+  <text class="t" x="300" y="569" text-anchor="middle">Disiapkan  ·  Terdistribusi ke PO  ·  Sisa</text>
+  <text class="s" x="300" y="583" text-anchor="middle">per menu (resep) dan per tanggal</text>
+</svg>
+
 <!-- ===== Rencana pelatihan Oktober ===== -->
 <svg class="alur" id="alur-pelatihan" viewBox="0 0 600 150" width="600" height="150">
   <path d="M30,52 H555" style="stroke: #cbd5e1; stroke-width: 4;"/>

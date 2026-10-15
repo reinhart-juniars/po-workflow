@@ -23,6 +23,11 @@ class BuildManualCommand extends Command
 
     public function handle(): int
     {
+        // Panduan 3S ONE (120+ halaman bergambar, disematkan sebagai base64)
+        // melewati batas memori CLI bawaan 128 MB. Dinaikkan di awal, sebelum
+        // gambar dibaca; tidak pernah diturunkan bila php.ini memberi lebih.
+        $this->raiseMemoryLimit(1024);
+
         $name = (string) $this->argument('panduan');
 
         // Nama dipakai sebagai bagian path: huruf kecil, angka, dan tanda hubung saja.
@@ -67,5 +72,26 @@ class BuildManualCommand extends Command
         $this->info('Panduan ditulis ke '.$output.' ('.number_format(filesize($output) / 1024).' KB)');
 
         return self::SUCCESS;
+    }
+
+    private function raiseMemoryLimit(int $megabytes): void
+    {
+        $current = (string) ini_get('memory_limit');
+
+        if ($current === '-1') {
+            return;
+        }
+
+        // "128M" / "1G" / "134217728" -> byte.
+        $bytes = (int) $current * match (strtoupper(substr($current, -1))) {
+            'G' => 1024 ** 3,
+            'M' => 1024 ** 2,
+            'K' => 1024,
+            default => 1,
+        };
+
+        if ($bytes < $megabytes * 1024 ** 2) {
+            ini_set('memory_limit', $megabytes.'M');
+        }
     }
 }
