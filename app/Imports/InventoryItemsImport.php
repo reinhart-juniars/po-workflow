@@ -20,10 +20,33 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
  *
  * Kolom yang tidak ada di berkas tidak disentuh sama sekali. Tanpa aturan itu,
  * berkas lama yang belum punya kolom harga akan mengosongkan harga seluruh
- * bahan begitu diunggah -- dan HPP seluruh menu ikut menjadi nol.
+ * bahan begitu diunggah -- dan HPP seluruh menu ikut menjadi nol. Sel kategori
+ * yang kosong juga tidak mengubah kategori item yang sudah ada; item baru
+ * tanpa kategori menjadi Bahan Baku (dan dilaporkan).
+ *
+ * Baris tanpa nama DAN tanpa id tidak menunjuk item mana pun -- biasanya sisa
+ * isian Excel (kategori/aktif yang ikut ditarik ke bawah, baris berformat).
+ * Baris itu dilewati dan nomornya dilaporkan, bukan membatalkan seluruh berkas.
+ * Baris ber-id tanpa nama tetap ditolak: id-nya menunjuk item, isinya rusak.
  */
 class InventoryItemsImport implements SkipsEmptyRows, ToCollection, WithHeadingRow
 {
+    /**
+     * Judul kolom lain yang dipakai berkas buatan tim (mis. laporan stok
+     * gudang: "NAMA BARANG", "JENIS", "HARGA") -> judul kolom hasil export.
+     */
+    protected const HEADING_ALIASES = [
+        'nama_item' => ['nama_barang', 'nama'],
+        'kategori' => ['jenis', 'jenis_item', 'jenis_barang'],
+        'harga_satuan' => ['harga'],
+    ];
+
+    /** Sebutan kategori di laporan gudang yang tidak sama dengan label sistem. */
+    protected const CATEGORY_ALIASES = [
+        'peralatan' => InventoryItem::CATEGORY_FIXED_ASSET,
+        'aset' => InventoryItem::CATEGORY_FIXED_ASSET,
+    ];
+
     /** Kolom berkas -> kolom item, untuk kolom yang boleh diisi sebagian. */
     protected const OPTIONAL_COLUMNS = [
         'kelompok_bahan' => 'ingredient_group',
@@ -42,8 +65,24 @@ class InventoryItemsImport implements SkipsEmptyRows, ToCollection, WithHeadingR
     /** @var array<int, string> */
     protected array $errors = [];
 
+    /** @var list<int> nomor baris tanpa nama & tanpa id yang dilewati */
+    protected array $skipped = [];
+
+    /** @var list<string> item baru yang kategorinya kosong, dibuat sebagai Bahan Baku */
+    protected array $defaultedCategory = [];
+
     public function collection(Collection $rows): void
     {
+        $rows = $rows->map(fn (Collection $row) => $this->applyHeadingAliases($row));
+
+        // Tanpa kolom nama sama sekali, setiap baris akan dilaporkan "nama
+        // kosong"; satu pesan tentang judul kolom jauh lebih jelas.
+        if ($rows->isNotEmpty() && ! $rows->contains(fn (Collection $row) => $row->has('nama_item'))) {
+            $this->errors[] = 'Kolom nama_item (atau "Nama Barang") tidak ditemukan di baris judul. Pakai berkas dari Export Data Master, judul kolom di baris pertama.';
+
+            return;
+        }
+
         $parsed = [];
 
         foreach ($rows as $index => $row) {
@@ -52,14 +91,18 @@ class InventoryItemsImport implements SkipsEmptyRows, ToCollection, WithHeadingR
             $name = trim((string) ($row['nama_item'] ?? ''));
 
             if ($name === '') {
-                $this->errors[] = "Baris {$lineNumber}: nama item kosong.";
+                if (blank($row['id'] ?? null)) {
+                    $this->skipped[] = $lineNumber;
+                } else {
+                    $this->errors[] = "Baris {$lineNumber}: nama item kosong (id {$row['id']}).";
+                }
 
                 continue;
             }
 
             $category = $this->normalizeCategory($row['kategori'] ?? null);
 
-            if ($category === null) {
+            if ($category === false) {
                 $this->errors[] = "Baris {$lineNumber}: kategori '".($row['kategori'] ?? '')."' tidak dikenal.";
 
                 continue;
@@ -68,8 +111,12 @@ class InventoryItemsImport implements SkipsEmptyRows, ToCollection, WithHeadingR
             $data = [
                 'name' => $name,
                 'unit' => trim((string) ($row['satuan'] ?? '')) ?: 'unit',
-                'category' => $category,
             ];
+
+            // Kategori kosong: item lama tetap kategorinya, item baru Bahan Baku (persist()).
+            if ($category !== null) {
+                $data['category'] = $category;
+            }
 
             if ($row->has('aktif')) {
                 $data['is_active'] = $this->normalizeBoolean($row['aktif']);
@@ -123,6 +170,11 @@ class InventoryItemsImport implements SkipsEmptyRows, ToCollection, WithHeadingR
                     continue;
                 }
 
+                if (! isset($data['category'])) {
+                    $data['category'] = InventoryItem::CATEGORY_RAW_MATERIAL;
+                    $this->defaultedCategory[] = $data['name'];
+                }
+
                 // Item baru bergabung ke bucket kategorinya, bukan berdiri
                 // sendiri: item tanpa induk diperlakukan sebagai bucket, dan
                 // bucket bayangan akan mengacaukan pengelompokan Laba Rugi.
@@ -153,13 +205,16 @@ class InventoryItemsImport implements SkipsEmptyRows, ToCollection, WithHeadingR
             ->value('id');
     }
 
-    /** Menerima kunci kategori maupun labelnya, supaya file hasil edit manusia tetap masuk. */
-    protected function normalizeCategory(mixed $value): ?string
+    /**
+     * Menerima kunci kategori maupun labelnya, supaya file hasil edit manusia
+     * tetap masuk. Null = sel kosong (kategori tidak diubah); false = tidak dikenal.
+     */
+    protected function normalizeCategory(mixed $value): string|false|null
     {
         $value = mb_strtolower(trim((string) $value));
 
         if ($value === '') {
-            return InventoryItem::CATEGORY_RAW_MATERIAL;
+            return null;
         }
 
         foreach (InventoryItem::categoryOptions() as $key => $label) {
@@ -168,7 +223,27 @@ class InventoryItemsImport implements SkipsEmptyRows, ToCollection, WithHeadingR
             }
         }
 
-        return null;
+        return self::CATEGORY_ALIASES[$value] ?? false;
+    }
+
+    /** Salin kolom berjudul lain ke judul hasil export, bila judul aslinya tidak ada. */
+    protected function applyHeadingAliases(Collection $row): Collection
+    {
+        foreach (self::HEADING_ALIASES as $target => $aliases) {
+            if ($row->has($target)) {
+                continue;
+            }
+
+            foreach ($aliases as $alias) {
+                if ($row->has($alias)) {
+                    $row[$target] = $row[$alias];
+
+                    break;
+                }
+            }
+        }
+
+        return $row;
     }
 
     protected function normalizeMoney(mixed $value): ?float
@@ -210,5 +285,40 @@ class InventoryItemsImport implements SkipsEmptyRows, ToCollection, WithHeadingR
     public function hasErrors(): bool
     {
         return $this->errors !== [];
+    }
+
+    /** @return list<int> */
+    public function skipped(): array
+    {
+        return $this->skipped;
+    }
+
+    /** @return list<string> */
+    public function defaultedCategory(): array
+    {
+        return $this->defaultedCategory;
+    }
+
+    /**
+     * Catatan untuk pengguna setelah impor berhasil: baris yang dilewati dan
+     * item baru yang kategorinya diisi otomatis. Null bila tidak ada.
+     */
+    public function notes(): ?string
+    {
+        $notes = [];
+
+        if ($this->skipped !== []) {
+            $lines = array_slice($this->skipped, 0, 10);
+            $notes[] = count($this->skipped).' baris tanpa nama item dilewati (baris '.implode(', ', $lines)
+                .(count($this->skipped) > count($lines) ? ', …' : '').').';
+        }
+
+        if ($this->defaultedCategory !== []) {
+            $names = array_slice($this->defaultedCategory, 0, 5);
+            $notes[] = count($this->defaultedCategory).' item baru tanpa kategori dibuat sebagai Bahan Baku ('.implode(', ', $names)
+                .(count($this->defaultedCategory) > count($names) ? ', …' : '').'). Ubah kategorinya bila itu kemasan atau inventaris.';
+        }
+
+        return $notes === [] ? null : implode("\n", $notes);
     }
 }

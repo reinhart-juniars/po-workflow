@@ -6,7 +6,8 @@
  * panduan memakai gambar hasil render Chrome (JPEG: PNG beralpha sebesar ini
  * menghabiskan memori dompdf); sumber yang disunting tetap SVG-nya.
  *
- *   node scripts/docs/render-diagrams.mjs
+ *   node scripts/docs/render-diagrams.mjs                       (semua)
+ *   node scripts/docs/render-diagrams.mjs alur-rencana-masak    (satu diagram)
  *   QA_CHROME="C:/Program Files/Google/Chrome/Application/chrome.exe" node scripts/docs/render-diagrams.mjs
  */
 import puppeteer from 'puppeteer-core';
@@ -25,9 +26,14 @@ await page.setViewport({ width: 700, height: 900, deviceScaleFactor: 3 });
 await page.goto(pathToFileURL(source).href, { waitUntil: 'networkidle0' });
 await page.evaluate(() => document.fonts.ready);
 
+// Argumen opsional = id diagram yang dirender (mis. alur-rencana-masak); tanpa
+// argumen semua dirender ulang. Dengan begitu menambah satu diagram tidak
+// mengubah berkas JPEG diagram lain.
+const only = process.argv.slice(2);
 const diagrams = await page.$$('svg.alur');
 for (const svg of diagrams) {
   const id = await svg.evaluate((el) => el.id);
+  if (only.length && !only.includes(id)) continue;
   const file = path.join(outDir, `${id}.jpg`);
   // Beri ruang 4px supaya garis tepi kotak yang menempel di batas viewBox tidak terpotong.
   const box = await svg.boundingBox();

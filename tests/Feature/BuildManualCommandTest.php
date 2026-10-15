@@ -8,7 +8,17 @@ it('membangun panduan pengguna pdf dari sumber html', function () {
     $output = storage_path('app/panduan-uji.pdf');
     @unlink($output);
 
-    $this->artisan('panduan:pdf', ['--output' => $output])->assertSuccessful();
+    // Batas memori CLI bawaan (128 MB) tidak cukup untuk panduan 120+ halaman
+    // bergambar; perintahnya sendiri yang menaikkan batas, bukan penggunanya.
+    $previousLimit = ini_get('memory_limit');
+    ini_set('memory_limit', '128M');
+
+    try {
+        $this->artisan('panduan:pdf', ['--output' => $output])->assertSuccessful();
+        expect(ini_get('memory_limit'))->toBe('1024M');
+    } finally {
+        ini_set('memory_limit', $previousLimit);
+    }
 
     expect(is_file($output))->toBeTrue()
         ->and(filesize($output))->toBeGreaterThan(50_000)
@@ -36,6 +46,23 @@ it('membangun panduan pengguna pdf dari sumber html', function () {
         ->toContain('Hak akses rinci per peran')
         ->toContain('Satu peran untuk gudang: Inventory')
         ->not->toContain('Staf Gudang dan Supervisor Gudang: apa bedanya?');
+
+    // v3.1.2 (revisi meeting 14 Okt): Rencana Masak sampai Barang Sisa, harga
+    // lapak, saran rincian dari HPP resep, Laporan Stok, dan Terbitkan ke Website
+    // -- dengan label yang sama persis dengan tombol di layar.
+    expect($html)->toContain('Versi 3.1.2')
+        ->toContain('15. Rencana Masak: stok siap untuk lapak')
+        ->toContain('Ambil dari stok siap (Rencana Masak)')
+        ->toContain('Tutup Stok Siap')
+        ->toContain('Stok Siap Dapur (internal)')
+        ->toContain('Impor Rencana Masak')
+        ->toContain('Harga Lapak')
+        ->toContain('Isi dari HPP resep')
+        ->toContain('Export Laporan Stok')
+        ->toContain('Export Data Master')
+        ->toContain('Terbitkan ke Website')
+        ->toContain('Dicentang, belum ada kategori');
+    expect(base_path('docs/panduan/img/alur-rencana-masak.jpg'))->toBeFile();
 
     @unlink($output);
 });

@@ -91,7 +91,7 @@
   <div class="sub">Business Control System</div>
   <p style="margin-top: 24pt; font-size: 14pt;">Panduan Pengguna</p>
   <p class="muted">Satu sistem untuk pesanan, produksi, stok, dan keuangan<br>W3S Catering</p>
-  <div class="meta">Versi 3.1 &middot; pembaruan Oktober 2026</div>
+  <div class="meta">Versi 3.1.2 &middot; pembaruan 15 Oktober 2026</div>
 </div>
 
 <!-- ============ DAFTAR ISI ============ -->
@@ -101,7 +101,7 @@
     <tr><td>1. Apa itu 3S ONE</td></tr>
     <tr><td>2. Siapa memakai apa (termasuk hak akses rinci per peran)</td></tr>
     <tr><td>3. Peta besar: dari pesanan sampai laporan</td></tr>
-    <tr><td>4. Sebelum dan sesudah Modul Inventory, dan pembaruan Oktober 2026</td></tr>
+    <tr><td>4. Sebelum dan sesudah Modul Inventory, pembaruan Oktober 2026, dan <b>yang baru di v3.1.2</b> <span class="new">BARU</span></td></tr>
     <tr><td>5. Cara masuk dan berkeliling</td></tr>
     <tr><td>6. Aplikasi Admin, Sales, Marketing, Production, Delivery</td></tr>
     <tr><td>7. Aplikasi Accounting</td></tr>
@@ -112,10 +112,11 @@
     <tr><td>12. Tagihan Pembelian: gudang belanja, accounting membayar <span class="new">BARU</span></td></tr>
     <tr><td>13. Dari mana angka HPP dan stok berasal</td></tr>
     <tr><td>14. Susut, Barang Hilang, dan Barang Sisa</td></tr>
-    <tr><td>15. Aplikasi Owner</td></tr>
-    <tr><td>16. Memulai dengan sistem baru: langkah demi langkah</td></tr>
-    <tr><td>17. Kamus istilah</td></tr>
-    <tr><td>18. Pertanyaan yang sering muncul</td></tr>
+    <tr><td>15. Rencana Masak: stok siap untuk lapak, harga lapak <span class="new">BARU</span></td></tr>
+    <tr><td>16. Aplikasi Owner</td></tr>
+    <tr><td>17. Memulai dengan sistem baru: langkah demi langkah</td></tr>
+    <tr><td>18. Kamus istilah</td></tr>
+    <tr><td>19. Pertanyaan yang sering muncul</td></tr>
   </table>
 
   <h2 style="margin-top: 26pt;">1. Apa itu 3S ONE</h2>
@@ -136,13 +137,13 @@
   <table class="grid">
     <tr><th style="width: 26%">Peran</th><th style="width: 22%">Aplikasi yang tampil</th><th>Tugas utama</th></tr>
     <tr><td><b>Owner</b></td><td>Semua</td><td>Melihat dashboard & laporan, mengatur pengguna, analisa HPP, jejak perubahan (audit).</td></tr>
-    <tr><td><b>Admin</b></td><td>Admin, Inventory, Menu (lihat)</td><td>Mengurus <b>customer</b> (profil &amp; riwayat order), mencatat pesanan (PO), menyusun SPK per jadwal masak, <b>harga jual</b> menu di Master Menu, laporan operasional. Resep hanya dibaca.</td></tr>
+    <tr><td><b>Admin</b></td><td>Admin, Inventory, Menu (lihat)</td><td>Mengurus <b>customer</b> (profil &amp; riwayat order), mencatat pesanan (PO) dengan harga <b>Normal</b> atau <b>Lapak</b>, <b>mengambil porsi dari stok siap</b> Rencana Masak, menyusun SPK per jadwal masak, <b>harga jual &amp; harga lapak</b> menu di Master Menu, laporan operasional. Resep hanya dibaca.</td></tr>
     <tr><td><b>Accounting</b></td><td>Accounting, Inventory, Menu (lihat)</td><td>Kas, pemasukan, pengeluaran, <b>membayar Tagihan Pembelian</b> dari gudang, hutang-piutang, tutup buku, laporan keuangan.</td></tr>
     <tr><td><b>Menu</b> (tim menu) <span class="new">BARU</span></td><td>Menu</td><td>Menyusun resep <b>menu utama &amp; sub menu</b>, takaran, HPP &amp; OHC, pencocokan menu ke Master Menu, konversi satuan, pekerjaan menu.</td></tr>
-    <tr><td><b>Inventory</b> (gudang)</td><td>Inventory, Menu (lihat)</td><td><b>Menyetujui / menolak Form Kebutuhan</b> dari dapur, belanja &amp; menerima barang, <b>mengajukan Tagihan Pembelian</b> ke accounting, mencatat stok, opname (termasuk Opname Bahan), data bahan &amp; supplier.</td></tr>
-    <tr><td><b>Production</b></td><td>Production, Inventory</td><td>Menyusun Form Kebutuhan, memasak sesuai SPK, mencatat pemakaian bahan, menutup SPK.</td></tr>
+    <tr><td><b>Inventory</b> (gudang)</td><td>Inventory, Menu (lihat)</td><td><b>Menyusun Rencana Masak</b> (stok siap untuk lapak, termasuk impor Excel) dan menutup stok siapnya, <b>menyetujui / menolak Form Kebutuhan</b> dari dapur, belanja &amp; menerima barang, <b>mengajukan Tagihan Pembelian</b> ke accounting, mencatat stok, opname (termasuk Opname Bahan), data bahan &amp; supplier.</td></tr>
+    <tr><td><b>Production</b></td><td>Production, Inventory</td><td>Menyusun Form Kebutuhan, memasak sesuai SPK <b>dan Rencana Masak</b>, mencatat pemakaian bahan, menutup SPK.</td></tr>
     <tr><td><b>Sales</b></td><td>Sales</td><td>Sales actual, <b>Barang Sisa</b> (retur yang dijual lagi atau dibuang), laporan penjualan, sales final & retur, waste.</td></tr>
-    <tr><td><b>Marketing</b></td><td>Marketing</td><td>Katalog foto menu dan memilih menu yang tampil di website.</td></tr>
+    <tr><td><b>Marketing</b></td><td>Marketing</td><td>Katalog foto menu, memilih menu yang tampil di website beserta <b>kategorinya</b>, dan menekan <b>Terbitkan ke Website</b>.</td></tr>
     <tr><td><b>Delivery</b></td><td>Delivery</td><td>Pengiriman pesanan dan bukti kirim.</td></tr>
   </table>
   <p class="small muted" style="margin-top: 6pt;">Satu orang boleh punya lebih dari satu peran (misalnya Admin + Accounting). Peran Owner berdiri sendiri.</p>
@@ -181,10 +182,13 @@
     <tr><td><b>Pembelian</b>: Tagihan Pembelian (Belanja Lepas, lampirkan nota, Ajukan), Pembelian Bahan Baku, Master Supplier</td><td class="c yes">Kelola</td><td class="c yes">Kelola</td><td class="c yes">Kelola</td><td class="c yes">Kelola</td><td class="c view">Lihat</td></tr>
     <tr><td><b>Opname Bahan</b> (hitung fisik per bahan)</td><td class="c yes">Kelola</td><td class="c yes">Kelola</td><td class="c yes">Kelola</td><td class="c yes">Kelola</td><td class="c no">–</td></tr>
     <tr><td><b>Susut Bahan</b>, Kartu Stok</td><td class="c view">Lihat</td><td class="c view">Lihat</td><td class="c view">Lihat</td><td class="c view">Lihat</td><td class="c view">Lihat</td></tr>
-    <tr><td>SPK Produksi (termasuk Breakdown Bahan), Pelaksana</td><td class="c yes">Kelola</td><td class="c yes">Kelola</td><td class="c view">Lihat</td><td class="c view">Lihat</td><td class="c yes">Kelola</td></tr>
+    <tr><td>SPK Produksi (termasuk Breakdown Bahan), Pelaksana</td><td class="c yes">Kelola</td><td class="c yes">Kelola</td><td class="c view">Lihat</td><td class="c view">Lihat*</td><td class="c yes">Kelola</td></tr>
+    <tr><td><b>Rencana Masak</b> (KPI stok siap, rencana belanja, pesanan PO) <span class="new">BARU</span></td><td class="c yes">Kelola</td><td class="c yes">Kelola</td><td class="c view">Lihat</td><td class="c yes">Kelola</td><td class="c view">Lihat</td></tr>
+    <tr><td><b>Impor Rencana Masak</b>, Buat Rencana Masak, <b>Tutup Stok Siap</b></td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">–</td><td class="c yes">✓</td><td class="c no">–</td></tr>
+    <tr><td><b>Export Laporan Stok</b> (di Item Inventaris)</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
     <tr><td>Pengaturan Inventory</td><td class="c yes">Kelola</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td></tr>
   </table>
-  <p class="small muted">Sales dan Delivery tidak membuka aplikasi Inventory sama sekali.</p>
+  <p class="small muted">Sales dan Delivery tidak membuka aplikasi Inventory sama sekali. *Gudang <b>boleh</b> membuat dan mengubah SPK Produksi yang bertanda <b>Rencana Masak</b> (beserta Form Kebutuhannya sampai Ajukan), tetapi tidak SPK Produksi dari slot SPK admin. Tutup SPK Rencana Masak tetap oleh dapur (atau Admin/Owner).</p>
 
   <h3>2b. Menu di aplikasi Menu <span class="new">BARU</span></h3>
   <table class="grid matrix">
@@ -205,7 +209,7 @@
     <tr><td>Isi pemakaian aktual + <b>Tutup SPK</b></td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">✓</td></tr>
     <tr><td>Melihat form di tahap mana pun</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td><td class="c yes">✓</td></tr>
   </table>
-  <p class="small muted">Owner dan Admin memegang semua tahap sebagai <b>cadangan</b> — misalnya saat pemegang inventory sedang libur.</p>
+  <p class="small muted">Owner dan Admin memegang semua tahap sebagai <b>cadangan</b> — misalnya saat pemegang inventory sedang libur. Untuk Form Kebutuhan <b>Rencana Masak</b>, gudang juga boleh menyusun, mengisi Stok Awal, dan Ajukan (baris pertama), karena rencananya memang disusun gudang.</p>
 
   <h3>3b. Tagihan Pembelian <span class="new">BARU</span></h3>
   <table class="grid matrix">
@@ -396,6 +400,27 @@
   <div class="tip"><b>Pekerjaan harian tidak bertambah.</b> Yang berubah adalah <i>siapa</i> menekan tombol apa: gudang tidak lagi memilih akun kas, admin tidak lagi mengetik HPP, dan accounting tidak lagi mengetik ulang nota belanja.</div>
 </div>
 
+<div class="page">
+  <h3 style="margin-top: 0;">Yang baru di v3.1.2 (15 Oktober 2026): hasil meeting 14 Oktober <span class="new">BARU</span></h3>
+  <p>Empat permintaan dari meeting 14 Oktober sudah masuk, ditambah laporan stok berformat gudang, perbaikan impor harga, dan persiapan website. Ringkasannya di bawah; caranya ada di bab yang disebut.</p>
+  <table class="grid">
+    <tr><th style="width: 19%">Fitur</th><th>Apa yang berubah</th><th style="width: 15%">Siapa</th><th style="width: 9%">Bab</th></tr>
+    <tr><td><b>Rencana Masak</b> (stok siap)</td><td>Gudang menyusun rencana masak <b>sebelum PO masuk</b> (biasanya H-7 sampai H-2), untuk lapak dan pesanan yang sudah pasti. Dapur memasaknya; bahan dibelanjakan lewat Form Kebutuhan rencana itu.</td><td>Gudang, Dapur</td><td>15</td></tr>
+    <tr><td><b>Impor Excel rencana masak</b></td><td>Excel rencana menu mingguan yang biasa dipakai tim bisa langsung diunggah. Nama menu dicocokkan ke Master Menu; pilihan yang dicocokkan manual <b>diingat</b> untuk minggu berikutnya.</td><td>Gudang</td><td>15</td></tr>
+    <tr><td><b>Distribusi ke PO</b></td><td>Saat membuat PO, admin mencentang <b>Ambil dari stok siap</b>: porsinya diambil dari Rencana Masak bertanggal kirim sama dan <b>tidak dimasak ulang</b> di SPK. PO yang tidak dicentang berjalan seperti biasa.</td><td>Admin</td><td>15</td></tr>
+    <tr><td><b>KPI stok siap</b></td><td>Disiapkan, Terdistribusi ke PO, dan Sisa per menu, di halaman <b>Rencana Masak</b> dan di <b>Dashboard Admin</b> (blok <i>Rencana Masak Hari Ini</i>).</td><td>Admin, Gudang, Owner</td><td>6, 15</td></tr>
+    <tr><td><b>Tutup Stok Siap</b></td><td>Setelah hari produksi selesai, porsi yang tidak terdistribusi otomatis menjadi <b>Barang Sisa</b> bernilai HPP resep, lalu bisa dijual, dirinci, atau dibuang seperti retur biasa.</td><td>Gudang</td><td>14, 15</td></tr>
+    <tr><td><b>Rencana belanja</b></td><td>Bahan yang harus dibeli untuk semua Rencana Masak dalam rentang tanggal, dijumlahkan per bahan. Admin dan Owner ikut bisa membacanya.</td><td>Gudang, Admin</td><td>15</td></tr>
+    <tr><td><b>Harga Lapak</b></td><td>Master Menu punya kolom <b>Harga Lapak</b> di samping harga jual. Di PO, setiap item memilih harga <b>Normal</b> atau <b>Lapak</b>; untuk customer bertanda <i>Lapak</i>, pilihan Lapak terisi otomatis.</td><td>Admin</td><td>6, 15</td></tr>
+    <tr><td><b>Saran rincian Barang Sisa</b></td><td>Tombol <b>Isi dari HPP resep</b> mengisi komponen (nasi, ayam, sambal, …) dan nilainya dari <b>bagian-bagian resep</b> menu; kemasan tidak dihitung. Harga jual komponen juga disarankan. Semuanya tetap boleh diubah.</td><td>Sales</td><td>14</td></tr>
+    <tr><td><b>Export Laporan Stok</b></td><td>Item Inventaris bisa diekspor dalam format laporan stok harian gudang: lembar <b>BAHAN BAKU</b>, <b>KEMASAN</b>, <b>INVENTARIS</b>, dengan kolom Stok awal, Masuk, Keluar, Harga, Mutasi, Sisa Stok, dan Value.</td><td>Gudang</td><td>8</td></tr>
+    <tr><td><b>Impor harga desimal</b> (perbaikan)</td><td>Dulu, berkas hasil <i>Export Data Master</i> yang diimpor kembali bisa melipatgandakan harga bahan yang berkoma (147,5 menjadi 1.475). Sekarang angka terbaca apa adanya.</td><td>Gudang</td><td>8</td></tr>
+    <tr><td><b>Website: kategori &amp; Terbitkan</b></td><td>Menu yang tampil di website diberi <b>kategori</b> sesuai halamannya (Warung Wuenak Poll atau Kuliner Tradisional 3S), lalu marketing menekan <b>Terbitkan ke Website</b>.</td><td>Marketing</td><td>6</td></tr>
+  </table>
+  <div class="warn"><b>Website belum tersambung.</b> Halaman menu baru di www.w3scatering.com sedang disiapkan. Sampai tersambung, kotak <i>Website</i> di aplikasi Marketing berlabel <b>Belum tersambung</b> dan tombol Terbitkan belum aktif. Kategori dan foto sudah boleh dilengkapi dari sekarang.</div>
+  <div class="tip"><b>Yang tidak berubah:</b> PO tanpa centang <i>Ambil dari stok siap</i> tetap masuk SPK dan dimasak seperti biasa. Rencana Masak adalah jalur tambahan untuk lapak, bukan pengganti SPK.</div>
+</div>
+
 <!-- ============ 4. MASUK ============ -->
 <div class="page">
   <h2>5. Cara masuk dan berkeliling</h2>
@@ -469,15 +494,39 @@
   <p>Aplikasi Admin sekarang dikelompokkan seperti <b>mini CRM</b>: customer, pesanan, menu &amp; harga, dan laporan.</p>
   <table class="grid">
     <tr><th style="width: 28%">Menu</th><th>Untuk apa</th></tr>
-    <tr><td>Dashboard</td><td>Ringkasan pesanan hari ini dan bulan berjalan.</td></tr>
-    <tr><td><b>Customer</b> <span class="new">BARU</span></td><td>Daftar pelanggan beserta <b>order terakhir</b>, jumlah PO dan omzet 90 hari, serta <b>status</b>. Tab di atas memisahkan statusnya; kotak <i>Cari</i> mencari nama, telepon, atau alamat. Klik nama untuk membuka <b>profil customer</b>.</td></tr>
-    <tr><td>Purchase Orders</td><td>Mencatat pesanan pelanggan: menu, jumlah, tanggal & jam kirim, cara bayar.</td></tr>
+    <tr><td>Dashboard</td><td>Ringkasan pesanan hari ini dan bulan berjalan, ditambah blok <b>Rencana Masak Hari Ini</b> <span class="new">BARU</span>: per menu berapa porsi <i>disiapkan</i> gudang, berapa yang sudah <i>terdistribusi ke PO</i>, dan <i>sisa</i> yang masih bisa diambil (angka sisa berwarna oranye bila masih ada). Tautan <b>Buka Rencana Masak</b> membuka halaman lengkapnya di Inventory (Bab 15).</td></tr>
+    <tr><td><b>Customer</b><td>Daftar pelanggan beserta <b>order terakhir</b>, jumlah PO dan omzet 90 hari, serta <b>status</b>. Tab di atas memisahkan statusnya; kotak <i>Cari</i> mencari nama, telepon, atau alamat. Klik nama untuk membuka <b>profil customer</b>.</td></tr>
+    <tr><td>Purchase Orders</td><td>Mencatat pesanan pelanggan: menu, jumlah, tanggal & jam kirim, cara bayar. Tiap item punya pilihan <b>Harga: Normal / Lapak</b> dan centang <b>Ambil dari stok siap (Rencana Masak)</b> <span class="new">BARU</span>; caranya di bawah.</td></tr>
     <tr><td>SPK</td><td>Mengelompokkan pesanan ke slot jadwal masak. <b>Begitu SPK disimpan, SPK Produksi di Inventory terbentuk otomatis</b> dan dapur bisa menyusun kebutuhan bahannya.</td></tr>
     <tr><td>Delivery</td><td>Memantau pengiriman per pesanan.</td></tr>
-    <tr><td><b>Master Menu</b></td><td>Daftar menu yang dijual. Admin mengurus <b>harga jual</b>; profit dan margin terhitung sendiri. Untuk menu yang resepnya sudah lengkap di aplikasi Menu, kolom <b>Bahan Baku (HPP)</b> dan <b>Overhead Cost</b> terisi dari resep dan <b>terkunci</b> (label <i>HPP dari resep</i>). Menu yang resepnya belum lengkap masih diisi manual — kotak kuning di form menu menyebut resepnya dan apa yang kurang. Mengubah harga jual mengirim lonceng ke Owner. <b>SKU diketik sendiri</b> (tidak dibuat otomatis) karena SKU tampil sebagai nama menu di website &mdash; tulis persis seperti yang ingin dibaca pelanggan, mis. <i>Nasi Goreng Kampung</i>. SKU wajib diisi dan tidak boleh sama dengan menu lain.</td></tr>
+    <tr><td><b>Master Menu</b></td><td>Daftar menu yang dijual. Admin mengurus <b>harga jual</b>; profit dan margin terhitung sendiri. Untuk menu yang resepnya sudah lengkap di aplikasi Menu, kolom <b>Bahan Baku (HPP)</b> dan <b>Overhead Cost</b> terisi dari resep dan <b>terkunci</b> (label <i>HPP dari resep</i>). Menu yang resepnya belum lengkap masih diisi manual — kotak kuning di form menu menyebut resepnya dan apa yang kurang. Mengubah harga jual mengirim lonceng ke Owner. <b>SKU diketik sendiri</b> (tidak dibuat otomatis) karena SKU tampil sebagai nama menu di website &mdash; tulis persis seperti yang ingin dibaca pelanggan, mis. <i>Nasi Goreng Kampung</i>. SKU wajib diisi dan tidak boleh sama dengan menu lain. Kolom <b>Harga Lapak</b> <span class="new">BARU</span> berisi harga khusus lapak; kosongkan bila menu itu tidak punya harga lapak (PO tetap memakai harga jual). Di daftar menu, harga lapak tampil kecil berwarna oranye di bawah harga jual. Lewat <b>Import Excel</b>, harga lapak diisi di kolom <i>harga_lapak</i>.</td></tr>
     <tr><td>Menu Tanpa HPP/OHC</td><td>Daftar menu yang belum punya harga pokok. Lengkapi resepnya lewat tim Menu (aplikasi Menu › Pencocokan Menu), atau isi manual bila memang tanpa resep.</td></tr>
     <tr><td>Laporan PO / Produksi / Delivery / Best Seller</td><td>Rekap operasional per periode.</td></tr>
   </table>
+  <h3>Harga Lapak dan Harga Normal <span class="new">BARU</span></h3>
+  <p>Satu menu bisa punya dua harga: <b>harga jual</b> (normal) dan <b>harga lapak</b>. Pilihannya dibuat <b>per item</b> saat mencatat PO, jadi satu PO boleh mencampur keduanya.</p>
+  <ol>
+    <li><b>Sekali saja, di Master Menu:</b> buka menu › <b>Ubah</b>, isi <b>Harga Lapak</b>, Simpan. Untuk banyak menu sekaligus, isi kolom <i>harga_lapak</i> di Excel Master Menu lalu Import.</li>
+    <li><b>Sekali saja, di Customer:</b> buka customer lapak › <b>Ubah data</b>, centang <b>Lapak</b>, Simpan. Di daftar customer dan profilnya muncul label <i>Lapak</i>.</li>
+    <li><b>Saat membuat PO:</b> pilih customer, menu, dan qty, lalu kotak <b>Harga</b> di samping qty: <i>Normal</i> atau <i>Lapak</i>. Untuk customer bertanda Lapak, kotak ini otomatis <i>Lapak</i> (tetap bisa diganti per item).</li>
+    <li>Tekan <b>+ Tambah Item</b>. Item berharga lapak berlabel oranye <b>Harga Lapak</b> di daftar item, di detail PO, dan di halaman ubah PO.</li>
+  </ol>
+  <ul>
+    <li>Menu yang <b>belum punya harga lapak</b> memakai harga jual, walau dipilih <i>Lapak</i>. Sistem menerapkan aturan yang sama saat menyimpan, jadi angkanya tidak bisa berbeda dari yang tampil.</li>
+    <li><b>Mengubah PO:</b> item yang menu dan pilihan harganya tidak diganti <b>tetap memakai harga lamanya</b>, walau harga di Master Menu sudah berubah. Harga baru hanya terpakai bila menu atau pilihan Normal/Lapak item itu diganti.</li>
+    <li>Laporan Penjualan mode <i>Lihat Lengkap</i> tetap memisahkan <b>Lapak</b> dan <b>Retail</b> menurut tanda customer.</li>
+  </ul>
+
+  <h3>Mengambil porsi dari stok siap saat membuat PO <span class="new">BARU</span></h3>
+  <p>Bila gudang sudah menyiapkan menu itu lewat <b>Rencana Masak</b> untuk tanggal kirim yang sama, PO-nya tidak perlu dimasak lagi:</p>
+  <ol>
+    <li>Isi <b>tanggal kirim</b> PO lebih dulu, lalu pilih menunya.</li>
+    <li>Di bawah baris item, lihat petunjuk di samping centang <b>Ambil dari stok siap (Rencana Masak)</b>: <i>— sisa 40 porsi</i> berarti masih bisa diambil; <i>— tidak ada di Rencana Masak tanggal ini</i> berarti centangnya tidak bisa dipilih.</li>
+    <li>Centang, isi qty (tidak boleh melebihi sisa), lalu <b>+ Tambah Item</b>. Item itu berlabel hijau <b>Stok Siap</b>.</li>
+    <li>Simpan PO seperti biasa. Item berlabel Stok Siap <b>tidak ikut</b> ke SPK Produksi slot, karena porsinya sudah dimasak di Rencana Masak.</li>
+  </ol>
+  <p>Tautan <b>Lihat Rencana Masak &amp; stok siap</b> di sebelah kanan centang membuka halaman Rencana Masak di tab baru. Aturan lengkap dan pesan penolakannya ada di Bab 15.</p>
+
   <div class="fig"><img src="img/crm-customer.jpg" alt="Admin › Customer: tab status, order terakhir, PO dan omzet 90 hari per customer."><div class="cap">Admin › Customer: tab status di atas; tiap baris menunjukkan order terakhir, PO dan omzet 90 hari, dan statusnya.</div></div>
 
   <h3>Profil customer</h3>
@@ -506,24 +555,48 @@
   <table class="grid">
     <tr><th style="width: 28%">Menu</th><th>Untuk apa</th></tr>
     <tr><td>Dashboard</td><td>Berapa menu aktif yang sudah punya foto, berapa yang tampil di website, dan daftar menu yang sudah tampil di website tapi <b>belum punya foto</b>.</td></tr>
-    <tr><td>Katalog Foto Menu</td><td>Satu foto resmi per menu untuk materi promosi. Tekan <b>Unggah foto</b> (atau <b>Ganti foto</b>) di kartu menu, pilih berkas, dan foto langsung terunggah. JPG, PNG, WEBP maks. 5 MB; sistem otomatis mengecilkannya. Centang <b>Tampil di website</b> untuk menu yang terbit di website &mdash; langsung tersimpan tanpa tombol Simpan. SKU menjadi nama menu di website, jadi menu tanpa SKU tidak bisa dicentang. Menu nonaktif tidak terbit walau tercentang. <b>Ganti SKU</b>: klik SKU di kartu (ikon pensil), ketik, lalu Enter. Admin juga bisa menggantinya dari Master Menu; bila menunya sedang tampil di website, pihak lain (admin atau marketing) menerima lonceng, dan semua penggantian tercatat di Audit Logs. Saring dengan ikon corong: foto ada/belum, tampil/tidak tampil di website.</td></tr>
+    <tr><td>Katalog Foto Menu</td><td>Satu foto resmi per menu untuk materi promosi. Tekan <b>Unggah foto</b> (atau <b>Ganti foto</b>) di kartu menu, pilih berkas, dan foto langsung terunggah. JPG, PNG, WEBP maks. 5 MB; sistem otomatis mengecilkannya. Centang <b>Tampil di website</b> untuk menu yang terbit di website &mdash; langsung tersimpan tanpa tombol Simpan. SKU menjadi nama menu di website, jadi menu tanpa SKU tidak bisa dicentang. Menu nonaktif tidak terbit walau tercentang. <b>Ganti SKU</b>: klik SKU di kartu (ikon pensil), ketik, lalu Enter. Admin juga bisa menggantinya dari Master Menu; bila menunya sedang tampil di website, pihak lain (admin atau marketing) menerima lonceng, dan semua penggantian tercatat di Audit Logs. Saring dengan ikon corong: foto ada/belum, tampil/tidak tampil di website. <b>Kategori website</b> <span class="new">BARU</span>: setiap menu yang tampil di website memilih kelompoknya di kotak <i>Kategori website…</i> di kartunya. Pilihan kategorinya mengikuti halaman brand menu itu (lihat tabel di bawah) dan langsung tersimpan.</td></tr>
   </table>
   <div class="fig"><img src="img/marketing-dashboard.jpg" alt="Marketing › Dashboard: jumlah menu aktif, yang sudah berfoto, yang tampil di website, dan daftar “Perlu Foto Dulu” — menu yang sudah dicentang tampil di website tetapi belum punya foto."><div class="cap">Marketing › Dashboard: jumlah menu aktif, yang sudah berfoto, yang tampil di website, dan daftar “Perlu Foto Dulu” — menu yang sudah dicentang tampil di website tetapi belum punya foto.</div></div>
   <div class="fig"><img src="img/katalog.jpg" alt="Marketing › Katalog Foto Menu: satu kartu per menu dengan SKU (ikon pensil untuk mengganti), centang Tampil di website, dan tombol Unggah foto."><div class="cap">Marketing › Katalog Foto Menu: satu kartu per menu dengan SKU (ikon pensil untuk mengganti), centang Tampil di website, dan tombol Unggah foto.</div></div>
+  <table class="grid" style="page-break-inside: avoid;">
+    <tr><th style="width: 30%">Halaman di website</th><th>Kategori yang bisa dipilih</th></tr>
+    <tr><td><b>Warung Wuenak Poll</b> (menu non-3S)</td><td>Nasi Box Wuenak Poll · Menu Ayam · Menu Telur &amp; Sayur · Menu Ikan &amp; Seafood · Nasi Goreng, Mie &amp; Bihun · Internasional &amp; Rice Bowl</td></tr>
+    <tr><td><b>Kuliner Tradisional 3S</b> (menu bertanda 3S)</td><td>Nasi Premium &amp; Signature · Frozen Food · Tumpeng &amp; Hidangan Acara</td></tr>
+  </table>
+  <p class="small muted">Halaman brand mengikuti tanda <i>3S</i> menu di Master Menu. Menu yang dicentang <i>Tampil di website</i> tetapi belum diberi kategori <b>tidak ikut terbit</b>; kotaknya ditandai, dan saringan <b>Dicentang, belum ada kategori</b> (ikon corong) menampilkan semuanya.</p>
+
+  <h3>Terbitkan ke Website <span class="new">BARU</span></h3>
+  <p>Di atas Katalog dan Dashboard Marketing ada kotak <b>Website</b>. Labelnya menunjukkan keadaan website:</p>
+  <table class="grid" style="page-break-inside: avoid;">
+    <tr><th style="width: 34%">Label</th><th>Artinya</th></tr>
+    <tr><td><b>Sudah terbaru</b> (hijau)</td><td>Isi website sama dengan data menu di 3S ONE.</td></tr>
+    <tr><td><b>Ada perubahan belum diterbitkan</b> (kuning)</td><td>Ada foto, SKU, kategori, atau centang yang berubah sejak terakhir diterbitkan. Tekan Terbitkan supaya pelanggan melihatnya.</td></tr>
+    <tr><td><b>Belum tersambung</b> (abu-abu)</td><td>Website belum disambungkan ke 3S ONE; tombol belum aktif.</td></tr>
+  </table>
+  <ol>
+    <li>Selesaikan dulu perubahan di Katalog (foto, SKU, centang, kategori). Tidak perlu menerbitkan setiap kali satu menu diubah.</li>
+    <li>Tekan <b>Terbitkan ke Website</b>, lalu <b>OK</b> pada pertanyaan <i>Terbitkan … menu ke website sekarang?</i>.</li>
+    <li>Website diperbarui dalam ±1–2 menit. Kotak Website mencatat <i>Terakhir diterbitkan … oleh …</i>; tautan <b>Lihat website</b> membukanya.</li>
+  </ol>
+  <p class="small muted">Setelah menekan Terbitkan, tombol beristirahat sekitar 2 menit supaya website tidak dibangun ulang berkali-kali. Menu nonaktif, tanpa SKU, atau tanpa kategori tidak ikut terbit. Website tetap tampil walau 3S ONE sedang tidak bisa diakses, karena yang terbit adalah salinan.</p>
+
   <p><b>Langkah menyiapkan satu menu untuk website:</b></p>
   <ol>
     <li>Buka <b>Marketing › Katalog Foto Menu</b>, cari menunya lewat kotak <i>Cari nama atau SKU</i>.</li>
     <li>Periksa <b>SKU</b> di kartu: inilah nama yang dibaca pelanggan di website. Kalau masih berupa kode (mis. <i>ALACARTE-AYAM-BISTIK</i>), klik ikon pensil, ketik nama yang enak dibaca, tekan <b>Enter</b>.</li>
     <li>Tekan <b>Unggah foto</b>, pilih foto. Foto dari HP boleh langsung dipakai — sistem mengecilkan dan meluruskan sendiri.</li>
     <li>Centang <b>Tampil di website</b>. Tersimpan saat itu juga, tanpa tombol Simpan.</li>
+    <li>Pilih <b>Kategori website</b> di kartu yang sama (mis. <i>Menu Ayam</i>). Tanpa kategori, menunya belum terbit.</li>
     <li>Kembali ke <b>Dashboard</b>: menu yang tampil di website tetapi belum berfoto ada di daftar <i>Perlu Foto Dulu</i>. Targetnya daftar itu kosong.</li>
+    <li>Tekan <b>Terbitkan ke Website</b> bila semua perubahan hari itu sudah selesai.</li>
   </ol>
 
-  <h3>Sales</h3>
+  <h3 style="page-break-before: always; margin-top: 0;">Sales</h3>
   <table class="grid">
     <tr><th style="width: 28%">Menu</th><th>Untuk apa</th></tr>
     <tr><td>Dashboard</td><td>Penjualan hari ini dan bulan berjalan. Buka Sales Actual untuk mengisi qty yang benar-benar terjual; sisanya otomatis menjadi retur.</td></tr>
-    <tr><td><b>Barang Sisa</b></td><td>Retur dari Sales Actual yang sudah disubmit. Barang Sisa boleh <b>dijual ke customer mana pun</b> (tombol <b>Jual</b>: pilih Sales Actual draft tujuan, qty, harga) atau <b>dibuang</b> bila tidak layak jual (tombol <b>Buang</b>, alasan wajib). Seporsi juga bisa <b>dirinci per komponen</b> (nasi, telur, …) yang dijual atau di-waste sendiri-sendiri. Customer yang mengganti menu dicatat di Sales Actual dengan <b>Porsi Tambahan</b> (harga PO). Rinciannya di Bab 14.</td></tr>
+    <tr><td><b>Barang Sisa</b></td><td>Retur dari Sales Actual yang sudah disubmit. Barang Sisa boleh <b>dijual ke customer mana pun</b> (tombol <b>Jual</b>: pilih Sales Actual draft tujuan, qty, harga) atau <b>dibuang</b> bila tidak layak jual (tombol <b>Buang</b>, alasan wajib). Seporsi juga bisa <b>dirinci per komponen</b> (nasi, telur, …) yang dijual atau di-waste sendiri-sendiri; tombol <b>Isi dari HPP resep</b> <span class="new">BARU</span> mengisi komponen dan nilainya dari bagian resep. Sisa <b>stok siap</b> Rencana Masak yang tidak terdistribusi juga masuk ke sini. Customer yang mengganti menu dicatat di Sales Actual dengan <b>Porsi Tambahan</b> (harga PO). Rinciannya di Bab 14.</td></tr>
     <tr><td>Laporan Sales Final & Retur</td><td>Penjualan yang benar-benar terjadi setelah retur, dan ke mana tiap retur pergi: dijual ke siapa, dibuang, atau masih di Barang Sisa.</td></tr>
     <tr><td>Laporan Waste</td><td>Barang Sisa yang dibuang — baik yang ketahuan tidak layak saat dijual ulang, maupun yang dibuang langsung dari halaman Barang Sisa.</td></tr>
     <tr><td>Laporan Penjualan</td><td>Rekap penjualan per periode (juga terbaca Accounting). Mode <b>Ringkas</b> muat satu lembar; mode <b>Lihat Lengkap</b> menampilkan jumlah per harga jual untuk tiap pelanggan, dipisah Lapak dan Retail, dengan subtotal per tanggal.</td></tr>
@@ -600,6 +673,7 @@
     <li>Barang datang <b>rusak tetapi tetap dibayar</b> masuk pos <b>Kerugian Barang Rusak</b> di Laba Rugi, bukan ke stok.</li>
     <li><b>Barang Hilang</b> dan <b>Barang Temuan</b> tampil sebagai rincian di bawah Bahan Baku Terpakai (“termasuk …”). Nilainya sudah ada di Bahan Baku Terpakai, jadi tidak mengubah Laba — dan terpisah dari Kerugian Barang Rusak.</li>
     <li>Nilai persediaan di Neraca mengikuti stock opname terakhir, ditambah <b>Barang Sisa</b> (retur yang belum terjual) yang dinilai sebesar HPP menunya. Di Laba Rugi muncul sebagai <i>Barang Sisa Awal</i> dan <i>Barang Sisa Akhir</i> (Bab 14).</li>
+    <li><b>Sisa stok siap</b> Rencana Masak (Bab 15) masuk Barang Sisa lewat catatan internal atas nama <i>Stok Siap Dapur (internal)</i>. Catatan ini <b>bukan penjualan</b>: tidak muncul di Laporan Penjualan, Dashboard Sales, daftar customer, maupun omzet. Nilainya hanya menjadi persediaan Barang Sisa sebesar HPP resep, sampai porsinya dijual atau dibuang.</li>
     <li>Kolom <b>Supplier</b> di Pengeluaran, Saldo Awal (hutang), dan Pembelian Stok menyarankan nama dari <b>Master Supplier</b> saat Anda mengetik. Pilih dari saran supaya satu supplier tidak tercatat dengan dua ejaan.</li>
   </ul>
 </div>
@@ -613,7 +687,7 @@
   <table class="grid">
     <tr><th style="width: 26%">Menu</th><th>Untuk apa</th></tr>
     <tr><td>Dashboard</td><td>Ringkasan: bahan di bawah stok minimum, antrean form yang menunggu Anda, SPK terdekat, perubahan harga terakhir.</td></tr>
-    <tr><td>Item Inventaris</td><td>Daftar bahan (nama, satuan, harga per satuan, stok minimum). Setiap perubahan harga tersimpan di <b>Histori Harga</b>. Tombol <b>Export Riwayat Harga</b> mengunduh seluruh histori harga semua bahan ke Excel; <b>Import Excel</b> untuk mengisi atau memperbarui banyak bahan sekaligus.</td></tr>
+    <tr><td>Item Inventaris</td><td>Daftar bahan (nama, satuan, harga per satuan, stok minimum). Setiap perubahan harga tersimpan di <b>Histori Harga</b>. Tombol <b>Export Riwayat Harga</b> mengunduh seluruh histori harga semua bahan ke Excel; <b>Import Excel</b> untuk mengisi atau memperbarui banyak bahan sekaligus. Dua tombol ekspor lain: <b>Export Laporan Stok</b> <span class="new">BARU</span> (format laporan stok harian gudang, lihat di bawah) dan <b>Export Data Master</b> (daftar item lengkap dengan kelompok, kemasan, dan harga &mdash; format yang sama dengan Import Excel).</td></tr>
     <tr><td>Stock Opname</td><td>Hasil hitung fisik stok per periode dalam <b>rupiah per kategori</b>; menjadi dasar nilai persediaan di Neraca.</td></tr>
     <tr><td><b>Opname Bahan</b></td><td>Hitung fisik <b>per bahan dalam kuantitas</b> (kg, liter, butir) kapan saja. Isi hasil hitung pada bahan yang diopname; selisih terhadap Kartu Stok otomatis tercatat sebagai <b>Barang Hilang</b> (hitung kurang) atau <b>Barang Temuan</b> (hitung lebih). Bahan yang belum pernah tercatat di Kartu Stok: hitungan pertamanya menjadi saldo awal. Tidak menggantikan Stock Opname bulanan.</td></tr>
     <tr><td><b>Susut Bahan</b></td><td>Indikator per bahan: <b style="color:#059669;">hijau</b> (susut di bawah 1%), <b style="color:#b45309;">kuning</b> (1–10%), <b style="color:#e11d48;">merah</b> (di atas 10%). Klik sebuah bahan untuk melihat SPK dan menu yang memakainya — di situlah susutnya bisa dilacak. Cara hitungnya di Bab 14.</td></tr>
@@ -623,6 +697,42 @@
   <div class="fig"><img src="img/inventory-dashboard.jpg" alt="Inventory › Dashboard: bahan di bawah stok minimum, antrean form yang menunggu Anda, SPK terdekat, perubahan harga."><div class="cap">Inventory › Dashboard: bahan di bawah stok minimum, antrean form yang menunggu Anda, SPK terdekat, perubahan harga.</div></div>
   <div class="fig"><img src="img/inventory-items.jpg" alt="Inventory › Item Inventaris: daftar bahan beserta harga per satuan; ikon pensil dan tempat sampah di ujung baris."><div class="cap">Inventory › Item Inventaris: daftar bahan beserta harga per satuan; ikon pensil dan tempat sampah di ujung baris.</div></div>
   <div class="fig"><img src="img/opname-bahan.jpg" alt="Inventory › Opname Bahan: ketik hasil hitung fisik; kolom Selisih langsung menunjukkan Hilang atau Temuan."><div class="cap">Inventory › Opname Bahan: ketik hasil hitung fisik; kolom Selisih langsung menunjukkan Hilang (merah) atau Temuan. Bahan yang belum tercatat di kartu stok menjadi saldo awal.</div></div>
+
+  <h3>Laporan Stok format gudang <span class="new">BARU</span></h3>
+  <p>Laporan stok harian yang biasa dibuat tim gudang di Excel sekarang bisa diunduh langsung dari sistem, dengan susunan kolom yang sama. Isinya dihitung dari <b>Kartu Stok</b>, jadi tidak perlu diketik ulang.</p>
+  <ol>
+    <li>Buka <b>Inventory › Item Inventaris</b>, tekan <b>Export Laporan Stok</b> di kanan atas.</li>
+    <li>Isi <b>Dari tanggal</b> dan <b>Sampai tanggal</b>. Untuk laporan satu hari, isi tanggal yang sama di keduanya.</li>
+    <li>Tekan <b>Kirim</b>. Berkas bernama <i>Stok 3S ONE 14 Oktober 2026.xlsx</i> (tanggal akhir) terunduh.</li>
+  </ol>
+  <table class="grid">
+    <tr><th style="width: 22%">Lembar</th><th>Isinya</th></tr>
+    <tr><td><b>BAHAN BAKU</b></td><td>Semua bahan baku dalam satu lembar (protein, sayur, bumbu, … tidak dipecah per kelompok).</td></tr>
+    <tr><td><b>KEMASAN</b></td><td>Item berkategori kemasan (besek, dus, sendok, stiker, …).</td></tr>
+    <tr><td><b>INVENTARIS</b></td><td>Item berkategori aktiva tetap / peralatan.</td></tr>
+  </table>
+  <table class="grid" style="margin-top: 6pt;">
+    <tr><th style="width: 22%">Kolom</th><th>Dari mana angkanya</th></tr>
+    <tr><td>NAMA BARANG, SATUAN</td><td>Item Inventaris.</td></tr>
+    <tr><td>STOK &lt;tanggal&gt;</td><td>Sisa akhir hari <b>sebelum</b> tanggal awal (judul kolomnya menyebut tanggal itu, mis. <i>STOK 13 Oktober</i>).</td></tr>
+    <tr><td>MASUK</td><td>Pembelian dan saldo awal dalam rentang tanggal.</td></tr>
+    <tr><td>KELUAR</td><td>Pemakaian (Tutup SPK).</td></tr>
+    <tr><td>HARGA</td><td>Harga per satuan di Item Inventaris.</td></tr>
+    <tr><td>MUTASI</td><td>Penyesuaian dari hitung fisik: Barang Hilang (minus) dan Barang Temuan (plus).</td></tr>
+    <tr><td>SISA STOK</td><td>Rumus Excel: Stok awal + Masuk − Keluar + Mutasi.</td></tr>
+    <tr><td>VALUE</td><td>Rumus Excel: Sisa Stok × Harga; baris <b>TOTAL</b> di bawah menjumlahkannya.</td></tr>
+  </table>
+  <div class="tip">Sisa Stok, Value, dan Total ditulis sebagai <b>rumus</b>, sama seperti berkas gudang selama ini. Kalau tim gudang mengoreksi angka di Excel, totalnya ikut berubah. Tetapi koreksi di Excel <b>tidak mengubah sistem</b>: selisih fisik tetap dicatat lewat <b>Opname Bahan</b>.</div>
+  <div class="warn"><b>Barang yang tidak ada di laporan</b> berarti belum ada di Item Inventaris. Laporan gudang selama ini memuat lebih banyak barang (terutama kemasan dan peralatan) daripada daftar item di sistem. Tambahkan item yang masih dipakai lewat <b>Tambah Item</b> atau Import Excel supaya laporannya lengkap.</div>
+
+  <h3>Impor Item Inventaris: harga berkoma kini aman <span class="new">PERBAIKAN</span></h3>
+  <p>Sebelum v3.1.2, berkas <b>Export Data Master</b> yang diedit lalu diimpor kembali bisa <b>melipatgandakan</b> harga per satuan yang berkoma, misalnya Rp 147,5/gram menjadi Rp 1.475, atau Rp 0,63/ml menjadi Rp 63. Sekarang:</p>
+  <ul>
+    <li>Sel <b>angka</b> di Excel dipakai apa adanya.</li>
+    <li>Sel <b>teks</b> yang diketik manual dibaca dengan aturan Indonesia: <i>1.500.000,50</i> = satu setengah juta lebih 50 sen, <i>12.000</i> = dua belas ribu, <i>147,5</i> dan <i>147.5</i> = seratus empat puluh tujuh koma lima.</li>
+  </ul>
+  <p><b>Baris kosong dan judul kolom lain.</b> Baris yang <b>tidak punya nama item dan tidak punya id</b> (mis. sisa kategori atau "ya" yang ikut ditarik ke bawah di Excel) <b>dilewati</b>; nomor barisnya disebut di pemberitahuan kuning <i>Import selesai</i>, jadi berkasnya tidak lagi ditolak seluruhnya. Sel <b>kategori kosong</b> tidak mengubah kategori item yang sudah ada; item <b>baru</b> tanpa kategori dibuat sebagai Bahan Baku dan namanya disebut di pemberitahuan. Judul kolom ala laporan gudang juga dikenali: <i>Nama Barang</i> = nama_item, <i>Jenis</i> = kategori, <i>Harga</i> = harga_satuan, dan jenis <i>Peralatan</i> = Inventaris. Aturan baris kosong yang sama berlaku untuk Import Excel di <b>Stock Opname</b> dan <b>Saldo Awal Stok</b>.</p>
+  <div class="warn"><b>Periksa sekali:</b> bila sebelum 15 Oktober tim pernah ekspor → edit → impor Item Inventaris, buka beberapa bahan berharga kecil (keju, air, nasi, bumbu per gram/ml) dan bandingkan dengan nota terakhir. Harga yang membengkak dikoreksi di Item Inventaris; HPP resep ikut kembali benar.</div>
 
   <h3>Kelompok Pembelian <span class="new">BARU</span></h3>
   <table class="grid">
@@ -634,14 +744,16 @@
   <div class="fig"><img src="img/tagihan-daftar.jpg" alt="Inventory › Tagihan Pembelian: tab Belum diajukan, Di accounting, Dibayar, Semua; tombol Belanja Lepas di kanan atas."><div class="cap">Inventory › Tagihan Pembelian: tab status di atas, tombol <b>Belanja Lepas</b> di kanan atas, ikon mata untuk membuka tagihan.</div></div>
   <div class="fig"><img src="img/master-supplier.jpg" alt="Inventory › Master Supplier: kontak, jumlah bahan yang dipasok, total dan tanggal pembelian terakhir."><div class="cap">Inventory › Master Supplier: kontak, jumlah bahan yang dipasok, total dan tanggal pembelian terakhir.</div></div>
 
-  <h3>Kelompok Produksi</h3>
+  <h3 style="page-break-before: always; margin-top: 0;">Kelompok Produksi</h3>
   <table class="grid">
     <tr><th style="width: 26%">Menu</th><th>Untuk apa</th></tr>
-    <tr><td>SPK Produksi</td><td>Jadwal masak dari SPK admin: menu & jumlah. Dari halamannya ada:
+    <tr><td>SPK Produksi</td><td>Jadwal masak dari SPK admin: menu & jumlah. Tab <b>Rencana Masak</b> <span class="new">BARU</span> memisahkan SPK Produksi stok siap yang disusun gudang (kolom Slot SPK berisi <i>Rencana Masak</i>). Dari halamannya ada:
       <br>• <b>Form Kebutuhan</b> — daftar belanja & stok (Bab 10).
       <br>• <b>Breakdown Bahan</b> — <b>Rincian per menu</b> bertingkat: tiap menu utama punya tanda ▸; klik untuk membuka komponennya (sub menu dan bahan), dan klik ▸ pada sub menu untuk membuka bahannya. Di bawahnya <b>Rekap bahan &amp; stok</b> menjumlahkan semua bahan mentah dan mencocokkannya dengan Kartu Stok: kolom <i>Perlu Beli</i> = kebutuhan − stok sistem. Label <i>belum lengkap</i> / <i>belum tertaut</i> menandai baris resep yang biayanya belum bisa dihitung. Menu yang belum punya resep disebutkan di kotak kuning — minta tim Menu menautkannya di Pencocokan Menu. Bisa <b>Export Excel</b>.
       <br>• <b>Lembar Kerja</b> (menu Lainnya) — pembagian tugas dapur: <b>Salin dari Template Menu</b> mengisi dari Pekerjaan Menu, lalu tentukan pelaksana dan centang yang selesai; <b>Export Excel</b> untuk ditempel di dapur.
       <br>• <b>Plating</b> (menu Lainnya) — komponen isi piring tiap menu (kuah, lauk, nasi, kemasan) dengan jumlah porsinya; <b>Komponen per Menu</b>, <b>Cetak Plating</b> (PDF), dan <b>Export Excel</b>.</td></tr>
+    <tr><td><b>Rencana Masak</b> <span class="new">BARU</span></td><td>Halaman <b>Rencana Masak &amp; Belanja</b>: KPI stok siap (disiapkan, terdistribusi ke PO, sisa), stok siap per menu, <b>Tutup Stok Siap</b> per tanggal, <b>rencana belanja</b> per bahan, dan semua <b>pesanan PO</b> yang sudah masuk. Tombol <b>Buat Rencana Masak</b> dan <b>Impor Excel</b> di kanan atas. Bab 15.</td></tr>
+    <tr><td><b>Impor Rencana Masak</b> <span class="new">BARU</span></td><td>Mengunggah Excel rencana menu mingguan menjadi Rencana Masak per tanggal. Bab 15.</td></tr>
     <tr><td>Form Kebutuhan</td><td>Daftar semua form beserta statusnya. Alur lengkapnya di Bab 10.</td></tr>
     <tr><td>Kartu Stok</td><td>Catatan keluar-masuk tiap bahan (saldo awal, pembelian, pemakaian, <b>Barang Hilang</b>, <b>Barang Temuan</b>). Hanya dibaca — terisi otomatis dari form, Tutup SPK, dan Opname Bahan.</td></tr>
     <tr><td>Pelaksana</td><td>Daftar orang dapur untuk lembar kerja.</td></tr>
@@ -902,6 +1014,7 @@
     <tr><td>Barang Sisa tidak layak jual</td><td><b>Sales › Barang Sisa › Buang</b></td><td>Barang Sisa Dibuang (rincian HPP) & Laporan Waste</td></tr>
     <tr><td>Barang Sisa dirinci per komponen</td><td><b>Sales › Barang Sisa › Rinci per komponen</b></td><td>Komponen tetap persediaan sebesar nilai yang diketik; selisih tidak terinci masuk Barang Sisa Dibuang</td></tr>
     <tr><td>Customer mengganti menu (mis. 10+5 menjadi 13+2)</td><td>Sales Actual: qty actual menu lama dikurangi, menu pengganti lewat <b>Porsi Tambahan</b></td><td>Kelebihan menjadi Barang Sisa; Porsi Tambahan ditagih harga PO</td></tr>
+    <tr><td>Porsi stok siap Rencana Masak tidak terdistribusi ke PO</td><td><b>Inventory › Rencana Masak › Tutup Stok Siap</b> (Bab 15)</td><td>Barang Sisa (persediaan), asal <i>Stok Siap Dapur (internal)</i></td></tr>
     <tr><td>Barang datang rusak tetapi tetap dibayar</td><td>Form Kebutuhan, perlakuan <b>Dibayar</b> (Bab 11)</td><td>Kerugian Barang Rusak (Pengeluaran)</td></tr>
   </table>
 
@@ -957,6 +1070,7 @@
     <li><b>Cara bayar</b> Penjualan Barang Sisa mengikuti PO customer pembeli di DO-nya (tunai ke akun kasnya, atau piutang). Karena itu Barang Sisa hanya bisa dijual lewat Sales Actual yang berasal dari DO — kecuali dijual kembali ke customer asal returnya.</li>
     <li>Satu retur boleh dipecah ke beberapa customer. Barang Sisa yang sudah ditambahkan ke draft langsung dikunci, jadi tidak bisa terjual dua kali.</li>
     <li>Barang Sisa tidak punya batas umur; biasanya terjual keesokan harinya.</li>
+    <li><b>Sisa stok siap</b> dari Rencana Masak juga muncul di sini, dengan asal <i>Stok Siap Dapur (internal)</i> dan HPP per porsi dari resepnya. Cara menjual, merinci, dan membuangnya sama persis dengan retur biasa (Bab 15).</li>
   </ul>
   <p><b>Langkah menjual dari halaman Barang Sisa:</b></p>
   <ol>
@@ -976,11 +1090,12 @@
   </ol>
   <div class="fig"><img src="img/barang-sisa-buang.jpg" alt="Tombol ▸ Buang terbuka: qty, tanggal, dan alasan wajib, lalu Catat Dibuang."><div class="cap">Tombol ▸ Buang terbuka: qty, tanggal, dan alasan wajib, lalu Catat Dibuang.</div></div>
   <h3>Merinci Barang Sisa per komponen</h3>
-  <p>Seporsi retur sering tidak dijual utuh: nasinya diambil satu customer, telurnya customer lain, sisanya tidak layak. Karena itu Barang Sisa bisa <b>dirinci per komponen</b>. Komponennya <b>diketik bebas</b> (bukan dari resep, karena nasi yang sudah digoreng tidak bisa kembali menjadi bahan), dan <b>nilai HPP</b> tiap komponen juga diketik sendiri dengan acuan HPP menunya.</p>
+  <p>Seporsi retur sering tidak dijual utuh: nasinya diambil satu customer, telurnya customer lain, sisanya tidak layak. Karena itu Barang Sisa bisa <b>dirinci per komponen</b>. Komponennya <b>diketik bebas</b> (bukan bahan mentah dari resep, karena nasi yang sudah digoreng tidak bisa kembali menjadi beras), dan <b>nilai HPP</b> tiap komponen diketik dengan acuan HPP menunya. Untuk menu yang punya resep, sistem bisa <b>mengisikannya</b> lebih dulu dari bagian-bagian resep (lihat <i>Saran dari HPP resep</i> di bawah).</p>
   <ol>
     <li>Di <b>Sales › Barang Sisa</b>, buka <b>▸ Rinci … per komponen</b> di bawah baris menunya.</li>
     <li>Isi <b>Porsi dirinci</b> (boleh sebagian), tanggal, dan catatan bila perlu.</li>
-    <li>Tulis tiap komponen: nama, jumlah, satuan, dan nilai HPP-nya. Baris yang dikosongkan diabaikan. Di bawahnya terlihat <i>Total nilai komponen … dari HPP …</i>.</li>
+    <li><span class="new">BARU</span> Bila tombol <b>Isi dari HPP resep</b> tampil, tekan tombol itu: baris komponen terisi dari bagian resep. Periksa lalu ubah seperlunya, misalnya hapus komponen yang tidak tersisa, atau ganti satuan <i>porsi</i> menjadi <i>gram</i>.</li>
+    <li>Tulis atau periksa tiap komponen: nama, jumlah, satuan, dan nilai HPP-nya. Baris yang dikosongkan diabaikan. Di bawahnya terlihat <i>Total nilai komponen … dari HPP …</i>.</li>
     <li>Tekan <b>Simpan Rincian</b>. Porsi itu keluar dari stok porsi utuh dan muncul sebagai kotak <b>Rincian</b> berisi komponennya.</li>
   </ol>
   <ul>
@@ -989,6 +1104,19 @@
     <li>Selama belum ada komponen yang dijual atau dibuang, rincian bisa diubah (<b>▸ Ubah rincian</b>) atau dibatalkan (<b>Batalkan rincian</b>) dan porsinya kembali ke stok.</li>
     <li>Komponen yang belum terjual di akhir bulan tetap tercatat sebagai persediaan Barang Sisa, sebesar nilai yang diketik.</li>
   </ul>
+  <h3>Saran dari HPP resep <span class="new">BARU</span></h3>
+  <p>Resep di aplikasi Menu disusun per <b>bagian</b> (nasi kuning, perkedel, ayam bakar, sambal, …). Tombol <b>Isi dari HPP resep</b> memakai bagian-bagian itu sebagai komponen. Di sebelah tombol tertulis bagian apa saja yang dipakai, mis. <i>4 bagian resep: Nasi Putih, Ayam Bakar, Sambal, Lalapan</i>.</p>
+  <table class="grid">
+    <tr><th style="width: 26%">Yang diisikan</th><th>Cara hitungnya</th></tr>
+    <tr><td>Nama komponen</td><td>Nama bagian resep. Bahan yang tidak masuk bagian mana pun menjadi komponen sendiri.</td></tr>
+    <tr><td>Jumlah &amp; satuan</td><td>Sebanyak <b>Porsi dirinci</b>, satuan <i>porsi</i>. Boleh diganti (mis. 600 gram).</td></tr>
+    <tr><td>Nilai HPP</td><td>HPP porsi yang tercatat saat menu itu terjual × <b>bagian biaya</b> komponen itu di resep × porsi dirinci, dibulatkan ke bawah. Jadi jumlahnya tidak pernah melebihi HPP porsi, walau harga bahan sudah berubah.</td></tr>
+    <tr><td>Kemasan</td><td><b>Tidak</b> dijadikan komponen (dus, sendok, stiker tidak bisa dijual ulang). Bagian biayanya menjadi selisih <i>tidak terinci</i>, yang tercatat sebagai waste.</td></tr>
+    <tr><td>Harga jual komponen</td><td>Saat menekan <b>▸ Jual</b> pada komponen, kolom Harga terisi <b>nilai HPP per satuan × markup menu asal</b> (harga jual ÷ HPP menu). Tertulis <i>Saran dari HPP × markup menu asal; boleh diubah.</i></td></tr>
+  </table>
+  <div class="tip"><b>Contoh saran:</b> Nasi Ayam Bakar, HPP Rp 12.000, harga jual Rp 18.000. Biaya resepnya: Nasi Putih 20%, Ayam Bakar 60%, Sambal 10%, Lalapan 5%, kemasan 5%. Dirinci 4 porsi &rarr; Nasi Putih 4 porsi Rp 9.600, Ayam Bakar 4 porsi Rp 28.800, Sambal Rp 4.800, Lalapan Rp 2.400. Totalnya Rp 45.600 dari HPP Rp 48.000; Rp 2.400 (bagian kemasan) dicatat sebagai waste tidak terinci. Saat Ayam Bakar dijual, harga saran per porsinya Rp 7.200 × 18.000 ÷ 12.000 = <b>Rp 10.800</b>.</div>
+  <p class="small muted">Menu tanpa resep tidak punya tombol ini; komponennya tetap diketik manual seperti sebelumnya. Saran hanya mengisi form, bukan menyimpan: rincian tersimpan setelah <b>Simpan Rincian</b> ditekan.</p>
+
   <div class="tip"><b>Contoh:</b> 3 porsi nasi goreng diretur, HPP Rp 9.000/porsi (Rp 27.000). Dirinci menjadi nasi goreng 600 gram Rp 12.000, telur ceplok 3 butir Rp 7.500, ayam suwir 150 gram Rp 6.000 — total Rp 25.500; Rp 1.500 sisanya dicatat sebagai waste. Besoknya 3 telur dijual ke customer lain Rp 3.000/butir: penjualan Rp 9.000, dan Rp 7.500 keluar dari persediaan.</div>
   <div class="fig"><img src="img/barang-sisa-rinci.jpg" alt="Form Rinci per komponen di bawah baris Barang Sisa: porsi dirinci, tanggal, catatan, lalu komponen dengan jumlah, satuan, dan nilai HPP; total nilai komponen dibandingkan dengan HPP porsinya."><div class="cap">Form Rinci per komponen di bawah baris Barang Sisa: porsi dirinci, tanggal, catatan, lalu komponen dengan jumlah, satuan, dan nilai HPP; total nilai komponen dibandingkan dengan HPP porsinya.</div></div>
   <div class="fig"><img src="img/barang-sisa-komponen.jpg" alt="Kotak Rincian: tiap komponen dengan sisa, HPP per satuan, nilai, serta tombol Jual dan Waste; Ubah rincian dan Batalkan rincian selama belum ada komponen yang terpakai."><div class="cap">Kotak Rincian: tiap komponen dengan sisa, HPP per satuan, nilai, serta tombol Jual dan Waste; Ubah rincian dan Batalkan rincian selama belum ada komponen yang terpakai.</div></div>
@@ -1020,9 +1148,119 @@
   <p class="small muted">Retur sebelum tanggal yang diatur di Pengaturan Inventory (<i>Barang Sisa dihitung sebagai persediaan mulai</i>) tidak dinilai sebagai persediaan, supaya laporan bulan yang sudah dilaporkan tidak bergeser.</p>
 </div>
 
+<!-- ============ 15. RENCANA MASAK (v3.1.2) ============ -->
+<div class="page">
+  <h2>15. Rencana Masak: stok siap untuk lapak, harga lapak</h2>
+  <p>Untuk lapak dan pesanan yang jumlahnya sudah pasti, dapur tidak perlu menunggu PO masuk. Gudang menyusun <b>Rencana Masak</b> lebih awal, biasanya H-7 sampai H-2, sama seperti Excel rencana menu mingguan selama ini. Dapur memasaknya, lalu admin <b>mendistribusikan</b> porsinya ke PO. Porsi yang tidak terambil sampai hari itu selesai menjadi <b>Barang Sisa</b>.</p>
+  <div class="diagram"><img src="img/alur-rencana-masak.jpg" alt="Alur Rencana Masak: gudang menyusun rencana dan Form Kebutuhan, dapur memasak dan menutup SPK, admin mengambil porsi ke PO lewat centang Ambil dari stok siap; saat stok siap ditutup sisanya menjadi Barang Sisa yang dijual, dirinci, atau dibuang."><div class="cap">Satu Rencana Masak dari gudang sampai Barang Sisa. Angka KPI di bawah terbaca di Inventory › Rencana Masak dan di Dashboard Admin.</div></div>
+
+</div>
+
+<div class="page">
+  <h3 style="margin-top: 0;">Istilah di bab ini</h3>
+  <table class="grid" style="page-break-inside: avoid;">
+    <tr><th style="width: 24%">Istilah</th><th>Artinya</th></tr>
+    <tr><td><b>Rencana Masak</b></td><td>SPK Produksi yang disusun gudang tanpa PO, bertanda <i>Rencana Masak (stok siap)</i>. Satu tanggal produksi bisa punya satu atau lebih Rencana Masak.</td></tr>
+    <tr><td><b>Stok siap</b></td><td>Porsi hasil Rencana Masak yang menunggu diambil PO. Dihitung <b>per resep</b>: varian harga yang berbagi resep (mis. <i>Nasi Ayam Teriyaki 12K</i> dan <i>18K</i>) mengambil dari masakan yang sama.</td></tr>
+    <tr><td><b>Disiapkan</b></td><td>Jumlah porsi di Rencana Masak tanggal itu.</td></tr>
+    <tr><td><b>Terdistribusi ke PO</b></td><td>Porsi yang sudah diambil item PO bercentang <i>Ambil dari stok siap</i>, bertanggal kirim sama, dan PO-nya tidak dibatalkan.</td></tr>
+    <tr><td><b>Sisa</b></td><td>Disiapkan − Terdistribusi. Masih bisa diambil PO sampai stok siap ditutup.</td></tr>
+  </table>
+
+  <h3>Langkah 1 · Gudang: menyusun Rencana Masak</h3>
+  <p>Ada dua cara. Keduanya menghasilkan Rencana Masak yang sama.</p>
+  <p><b>Cara A: impor Excel mingguan</b> (disarankan, karena tim sudah punya berkasnya)</p>
+  <ol>
+    <li>Buka <b>Inventory › Produksi › Impor Rencana Masak</b> (atau tombol <b>Impor Excel</b> di halaman Rencana Masak).</li>
+    <li><b>1. Pilih berkas</b>: pilih Excel rencana masak (.xlsx/.xls), tunggu tulisan <i>Mengunggah…</i> hilang, lalu tekan <b>Baca Berkas</b>.</li>
+    <li><b>2. Periksa pencocokan menu</b>: tiap hari tampil sebagai satu tabel berisi <i>Menu di Excel</i>, Harga, Qty, pilihan <i>Master Menu</i>, dan Status. Badge di samping tanggal memberi tahu apakah hari itu menjadi <b>Rencana Masak baru</b>, <b>Memperbarui SPKP-…</b>, atau <b>dilewati</b> (rencananya sudah lewat tahap ubah).</li>
+    <li>Untuk baris berstatus <b>Pilih menu</b>, pilih produknya di kotak Master Menu. Bagian <i>Saran</i> di paling atas berisi menu yang namanya mirip; di bawahnya <i>Semua menu aktif</i>.</li>
+    <li>Tekan <b>Simpan Rencana Masak</b>. Pemberitahuan menyebut nomor tiap rencana dan berapa menu yang berresep, mis. <i>SPKP-20261016-0001 dibuat (9/12 menu berresep)</i>.</li>
+  </ol>
+  <table class="grid" style="page-break-inside: avoid;">
+    <tr><th style="width: 26%">Status baris</th><th>Artinya</th></tr>
+    <tr><td><b>Cocok</b></td><td>Nama dan harga di Excel cocok dengan satu varian Master Menu. Harga dipakai untuk memilih varian yang tepat (mis. 12K vs 18K).</td></tr>
+    <tr><td><b>Cocok (diingat)</b></td><td>Pernah dicocokkan manual di impor sebelumnya; sistem mengingat pilihannya.</td></tr>
+    <tr><td><b>Dipilih manual</b></td><td>Anda mengganti pilihan otomatis. Pilihan ini <b>diingat</b> untuk minggu berikutnya.</td></tr>
+    <tr><td><b>Tanpa resep</b></td><td>Menu itu belum bertaut ke resep. Tetap masuk rencana sebagai catatan dapur, tetapi <b>tidak bisa didistribusikan</b> dari stok siap dan bahannya tidak terhitung di rencana belanja. Minta tim Menu menautkannya (Menu › Pencocokan Menu).</td></tr>
+    <tr><td><b>Pilih menu</b></td><td>Belum ada yang cocok. Bila dibiarkan, baris tetap masuk rencana sebagai baris manual berketerangan <i>Belum dicocokkan ke Master Menu</i>, tetapi tidak bisa didistribusikan dan bahannya tidak terhitung.</td></tr>
+  </table>
+  <table class="grid" style="margin-top: 6pt; page-break-inside: avoid;">
+    <tr><th style="width: 26%">Bentuk Excel yang dibaca</th><th>Keterangan</th></tr>
+    <tr><td>Kepala tiap hari</td><td>Sel <b>tanggal</b> (boleh rumus seperti <i>=A3+1</i>) dengan <b>nama hari</b> (senin … minggu) dua kolom di kanannya. Blok hari boleh berdampingan (Senin–Rabu di kiri, Kamis–Sabtu di kanan) dan boleh di beberapa sheet.</td></tr>
+    <tr><td>Baris menu</td><td>Nama menu | harga | qty, di bawah kepala hari.</td></tr>
+    <tr><td>Baris total</td><td>Sel qty berisi rumus <b>=SUM(…)</b>. Semua baris di atasnya = menu harian (diimpor). Bila jumlah baris tidak sama dengan total di Excel, muncul badge merah <i>Total Excel … tidak sama</i>; periksa berkasnya.</td></tr>
+    <tr><td>Pesanan khusus</td><td>Baris <b>di bawah total</b> tidak diimpor, karena itu PO customer. Daftarnya tampil di kotak kuning <i>Pesanan khusus (tidak diimpor — pastikan PO-nya sudah dibuat)</i>.</td></tr>
+  </table>
+  <div class="tip"><b>Impor ulang aman.</b> Excel minggu yang sama boleh diimpor lagi setelah direvisi. Baris hasil impor sebelumnya di rencana tanggal itu diganti; baris yang ditambahkan manual di rencana tidak disentuh. Rencana yang sudah <b>Selesai</b> (SPK ditutup) atau <b>Dibatalkan</b> dilewati.</div>
+  <div class="warn">Bila Form Kebutuhan sebuah hari sudah <b>diajukan atau disetujui</b>, jangan impor ulang hari itu: belanjanya sudah berjalan. Ubah menunya langsung di Rencana Masak tersebut, atau buat Rencana Masak tambahan untuk tanggal yang sama, lalu kabari dapur.</div>
+
+  <p><b>Cara B: buat manual</b></p>
+  <ol>
+    <li>Di <b>Inventory › Rencana Masak</b>, tekan <b>Buat Rencana Masak</b>.</li>
+    <li>Isi <b>Tanggal Produksi</b> dan <b>Judul</b>. Sakelar <b>Rencana Masak (stok siap untuk didistribusikan ke PO)</b> menyala dan terkunci untuk gudang. Admin yang membuat SPK Produksi manual menyalakannya sendiri bila SPK itu memang stok siap.</li>
+    <li>Di <b>Menu yang Dimasak</b>, tekan <b>Tambah Baris</b>: Jenis <i>Menu (dari resep)</i>, pilih <b>Resep</b>, isi <b>Jumlah</b> porsi. Ulangi untuk tiap menu, lalu simpan.</li>
+  </ol>
+
+  <h3>Langkah 2 · Gudang: Form Kebutuhan = rencana belanja</h3>
+  <p>Setiap Rencana Masak punya <b>Form Kebutuhan</b> seperti SPK Produksi biasa (Bab 10), hanya saja <b>gudang boleh menyusunnya sendiri</b>: Susun Form, isi Stok Awal, Ajukan, Setujui, belanja, isi Diterima/Ditolak/Harga, Periksa, lalu ajukan Tagihan Pembelian ke Accounting.</p>
+  <p>Bagian <b>Rencana belanja</b> di halaman Rencana Masak menjumlahkan semua Form Kebutuhan Rencana Masak dalam rentang tanggal yang dipilih, <b>per bahan</b>: kolom <i>Kebutuhan</i>, <i>Beli</i> (= Kebutuhan − Stok Awal), dan Satuan. Di atas tabel ada tombol untuk tiap rencana beserta status formnya (<i>Form belum disusun</i>, Diajukan, Disetujui, …); klik untuk membuka formnya.</p>
+  <div class="warn">Rencana belanja hanya berisi rencana yang <b>Form Kebutuhannya sudah disusun</b>. Rencana berstatus <i>Form belum disusun</i> belum terhitung bahannya; buka dan tekan <b>Susun Form</b> lebih dulu.</div>
+
+  <h3>Langkah 3 · Dapur: masak dan Tutup SPK</h3>
+  <p>Dapur memasak sesuai Rencana Masak, mengisi Pemakaian Aktual dan Sisa Stok bila dihitung, lalu <b>Tutup SPK</b>, sama seperti SPK biasa. Di sinilah bahan baku keluar dari Kartu Stok, <b>sekali saja</b> untuk seluruh porsi rencana. Porsi yang nanti diambil PO tidak memotong bahan lagi.</p>
+
+  <h3>Langkah 4 · Admin: mengambil porsi ke PO</h3>
+  <p>Di form PO, centang <b>Ambil dari stok siap (Rencana Masak)</b> pada item yang porsinya diambil dari rencana (langkah rinci di Bab 6). Aturannya:</p>
+  <table class="grid" style="page-break-inside: avoid;">
+    <tr><th style="width: 34%">Aturan</th><th>Yang terjadi</th></tr>
+    <tr><td>Tanggal kirim PO = tanggal produksi rencana</td><td>Stok siap hanya bisa diambil PO yang <b>tanggal kirimnya sama</b> dengan tanggal Rencana Masak.</td></tr>
+    <tr><td>Menu harus punya resep</td><td>Ditolak: <i>… belum punya resep, jadi tidak bisa diambil dari stok siap.</i></td></tr>
+    <tr><td>Tidak boleh melebihi sisa</td><td>Ditolak: <i>Stok siap … tanggal … tinggal 5 porsi, diminta 8. Kurangi qty atau hapus centang "Ambil dari stok siap".</i> Pemeriksaan ini dilakukan saat menyimpan, jadi dua admin yang menyimpan bersamaan tidak bisa mengambil porsi yang sama.</td></tr>
+    <tr><td>Stok siap tanggal itu sudah ditutup</td><td>Ditolak: <i>Stok siap tanggal … sudah ditutup; sisa … sudah menjadi Barang Sisa.</i> Jual lewat halaman Barang Sisa, atau hapus centangnya. PO lama yang sudah memegang stok siap tetap boleh dikoreksi selama qty-nya tidak bertambah.</td></tr>
+    <tr><td>PO diubah atau dibatalkan</td><td>Kuota dihitung ulang. Porsi dari PO yang <b>dibatalkan</b> kembali ke sisa stok siap.</td></tr>
+    <tr><td>Item tidak dimasak ulang</td><td>Item berlabel <b>Stok Siap</b> tidak ikut ke SPK Produksi slot. Item lain di PO yang sama tetap dimasak seperti biasa.</td></tr>
+  </table>
+
+  <h3>Langkah 5 · Gudang: Tutup Stok Siap</h3>
+  <p>Setelah hari produksi selesai dan semua SPK Rencana Masak tanggal itu sudah <b>ditutup dapur</b>:</p>
+  <ol>
+    <li>Buka <b>Inventory › Rencana Masak</b>. Rentang bawaan H-2 sampai H+7, jadi hari yang baru lewat masih terlihat.</li>
+    <li>Di bagian <b>Tutup stok siap</b>, cari tanggalnya (status <i>Terbuka</i>, kuning), tekan <b>Tutup Stok Siap</b>, lalu <b>Konfirmasi</b>.</li>
+    <li>Pemberitahuan <i>Sisa … porsi masuk Barang Sisa</i> muncul (atau <i>Semua porsi sudah terdistribusi</i>). Status tanggal itu menjadi <b>Ditutup</b>, dengan jumlah dan nilai sisanya.</li>
+  </ol>
+  <table class="grid" style="page-break-inside: avoid;">
+    <tr><th style="width: 40%">Pesan "Belum bisa ditutup"</th><th>Artinya</th></tr>
+    <tr><td><i>Tutup dulu SPK Rencana Masak … supaya pemakaian bahannya tercatat</i></td><td>Dapur belum menutup SPK Rencana Masak tanggal itu. Tanpa itu, bahan bakunya belum keluar dari Kartu Stok dan nilai sisanya tidak bisa dipercaya.</td></tr>
+    <tr><td><i>Stok siap baru bisa ditutup pada hari produksinya atau sesudahnya</i></td><td>Tanggalnya masih di masa depan.</td></tr>
+    <tr><td><i>Stok siap tanggal … sudah ditutup</i></td><td>Sudah ditutup orang lain. Penutupan tidak bisa dibuka lagi.</td></tr>
+  </table>
+  <p>Sisanya muncul di <b>Sales › Barang Sisa</b> dengan asal <i>Stok Siap Dapur (internal)</i>, dinilai <b>HPP resep</b> per porsi. Dari sana porsinya bisa <b>dijual</b> ke customer mana pun, <b>dirinci per komponen</b> (tombol <i>Isi dari HPP resep</i>), atau <b>dibuang</b> dengan alasan (Bab 14).</p>
+  <div class="tip"><b>Contoh:</b> Rencana Masak Jumat 16 Okt: Nasi Ayam Teriyaki 60 porsi (HPP Rp 8.000). Admin membuat PO lapak A 25 porsi varian 12K dan PO kantor B 20 porsi varian 18K, keduanya dicentang <i>Ambil dari stok siap</i>. KPI: Disiapkan 60, Terdistribusi 45, Sisa 15. Sabtu pagi gudang menekan Tutup Stok Siap 16 Okt &rarr; 15 porsi senilai Rp 120.000 masuk Barang Sisa. Senin, 10 porsi dijual ke customer lain dan 5 dibuang karena basi.</div>
+
+  <h3>Membaca halaman Rencana Masak &amp; Belanja</h3>
+  <table class="grid" style="page-break-inside: avoid;">
+    <tr><th style="width: 26%">Bagian</th><th>Isinya</th></tr>
+    <tr><td>Dari tanggal / Sampai</td><td>Rentang yang ditampilkan (bawaan H-2 sampai H+7, paling panjang 31 hari).</td></tr>
+    <tr><td>Empat kotak KPI</td><td><b>Disiapkan</b>, <b>Terdistribusi ke PO</b>, <b>Sisa</b> (merah bila masih ada), dan <b>Pesanan PO</b>: jumlah porsi semua PO di rentang itu.</td></tr>
+    <tr><td>Stok siap per menu</td><td>Per tanggal dan resep: disiapkan, terdistribusi, sisa.</td></tr>
+    <tr><td>Tutup stok siap</td><td>Per tanggal: nomor Rencana Masak (klik untuk membuka) beserta statusnya, status Terbuka/Ditutup, dan tombol <b>Tutup Stok Siap</b>.</td></tr>
+    <tr><td>Rencana belanja</td><td>Bahan yang harus dibeli untuk semua Rencana Masak di rentang itu (Langkah 2).</td></tr>
+    <tr><td>Pesanan PO yang sudah masuk</td><td>Semua PO selain yang dibatalkan, per tanggal kirim dan menu: qty, berapa yang dari stok siap, dan jumlah PO. Gudang memakai tabel ini untuk melihat pesanan yang sudah masuk sebelum menyusun rencana.</td></tr>
+  </table>
+  <p class="small muted">Siapa melihat apa: Gudang, Admin, dan Owner bisa menyusun, mengimpor, dan menutup. Accounting dan Production hanya membaca. Di Dashboard Admin, blok <b>Rencana Masak Hari Ini</b> menampilkan KPI hari ini saja.</p>
+
+  <h3>Hubungannya dengan laporan keuangan</h3>
+  <ul>
+    <li><b>Bahan baku</b> Rencana Masak tercatat saat dapur menutup SPK-nya, sama seperti SPK biasa (Laba Rugi: Bahan Baku Terpakai).</li>
+    <li><b>Penjualan</b> tercatat dari PO yang mengambil stok siap, lewat DO dan Sales Actual seperti biasa, dengan harga Normal atau Lapak yang dipilih di PO.</li>
+    <li><b>Sisa</b> menjadi persediaan Barang Sisa sebesar HPP resep, lalu dibebankan saat dijual atau dibuang. Catatan internal <i>Stok Siap Dapur (internal)</i> tidak dihitung sebagai penjualan maupun customer.</li>
+  </ul>
+</div>
+
 <!-- ============ 11. OWNER ============ -->
 <div class="page">
-  <h2>15. Aplikasi Owner</h2>
+  <h2>16. Aplikasi Owner</h2>
   <table class="grid">
     <tr><th style="width: 26%">Menu</th><th>Untuk apa</th></tr>
     <tr><td>Dashboard</td><td>Ringkasan seluruh usaha: penjualan, kas, KPI, dan pengeluaran per kategori (batang terurut dari yang terbesar).</td></tr>
@@ -1052,7 +1290,7 @@
 
 <!-- ============ 13. MEMULAI ============ -->
 <div class="page">
-  <h2>16. Memulai dengan sistem baru: langkah demi langkah</h2>
+  <h2>17. Memulai dengan sistem baru: langkah demi langkah</h2>
   <p>Sistem ini baru berguna kalau datanya beres. Bab ini adalah urutan kerja yang kami sarankan: <b>bagian A</b> dikerjakan sekali di awal (kira-kira satu sampai dua minggu, sambil operasional jalan seperti biasa), <b>bagian B</b> adalah kebiasaan harian setelahnya. Kerjakan berurutan — tiap langkah memakai hasil langkah sebelumnya.</p>
 
   <h3>A. Persiapan sekali di awal</h3>
@@ -1070,6 +1308,9 @@
     <tr><td><b>10</b></td><td>Tim Menu / Owner</td><td>Buka beberapa menu di <b>Menu › Menu Utama › Analisa HPP</b>. Angka HPP per porsi harus masuk akal (nasi box belasan ribu, bukan ratusan ribu). Kalau aneh, hampir pasti satuannya: kembali ke langkah 9.</td><td>Kartu <b>Profit menu keseluruhan</b> di Dashboard Menu menampilkan angka, bukan "–".</td></tr>
     <tr><td><b>11</b></td><td>Semua</td><td><b>Uji coba satu SPK dari awal sampai akhir</b> sebelum dipakai sungguhan: Admin buat SPK → dapur isi Form Kebutuhan & Ajukan → gudang Setujui → gudang belanja & isi Diterima/Ditolak/harga → Periksa → gudang lampirkan nota & Ajukan tagihan → Accounting Bayar. Lihat Kartu Stok, Pembelian Bahan Baku, dan kas ikut terisi.</td><td>Satu tagihan berstatus Dibayar tanpa ada yang bingung di tengah jalan.</td></tr>
     <tr><td><b>12</b></td><td>Admin</td><td><b>Marketing › Katalog Foto Menu</b>: unggah foto menu, mulai dari yang paling laku, lalu centang menu yang tampil di website. Boleh bertahap — foto langsung dari HP pun aman karena sistem mengecilkannya sendiri.</td><td>Filter "Belum ada foto" makin pendek tiap minggu.</td></tr>
+    <tr><td><b>13</b></td><td>Admin</td><td><span class="new">BARU</span> Isi <b>Harga Lapak</b> di Master Menu untuk menu yang dijual ke lapak (boleh lewat kolom <i>harga_lapak</i> di Excel), lalu centang <b>Lapak</b> di data customer lapak.</td><td>PO untuk customer lapak otomatis memilih harga Lapak.</td></tr>
+    <tr><td><b>14</b></td><td>Gudang</td><td><span class="new">BARU</span> Impor Excel rencana masak minggu berjalan di <b>Impor Rencana Masak</b>. Cocokkan sekali semua menu berstatus <i>Pilih menu</i>; minggu berikutnya pilihan itu sudah diingat. Menu berstatus <i>Tanpa resep</i> diserahkan ke tim Menu.</td><td>Impor minggu kedua hampir semuanya <i>Cocok</i> / <i>Cocok (diingat)</i>.</td></tr>
+    <tr><td><b>15</b></td><td>Marketing</td><td><span class="new">BARU</span> Beri <b>Kategori website</b> pada setiap menu yang dicentang tampil di website (saringan <i>Dicentang, belum ada kategori</i>).</td><td>Saringan itu kosong; siap diterbitkan begitu website tersambung.</td></tr>
   </table>
   <div class="tip"><b>Tiga angka penanda sistem siap:</b> Bahan Belum Cocok = 0, Konversi Belum Diatur = 0, dan kartu Profit menu keseluruhan menampilkan angka. Selama salah satu belum tercapai, laporan HPP dari resep belum bisa dipercaya — laporan lain (kas, penjualan, pengiriman) tetap berjalan normal.</div>
   <div class="warn">Jangan menunggu semua 400-an menu selesai untuk mulai memakai Form Kebutuhan. Form Kebutuhan bekerja per SPK dan hanya membutuhkan resep menu yang ada di SPK itu. Mulailah dengan menu yang sering dimasak; menu langka menyusul.</div>
@@ -1082,7 +1323,8 @@
   <h3 style="margin-top: 10pt;">Setiap hari</h3>
   <table class="grid" style="table-layout: fixed; page-break-inside: avoid;">
     <tr><th style="width: 20%">Siapa</th><th style="width: 80%">Apa yang dikerjakan</th></tr>
-    <tr><td>Admin</td><td>Masukkan pesanan (PO) dan susun <b>SPK</b> seperti biasa. SPK Produksi di Inventory terbentuk sendiri.</td></tr>
+    <tr><td>Gudang</td><td><span class="new">BARU</span> Untuk lapak: pastikan <b>Rencana Masak</b> H-7 s/d H-2 sudah ada (impor Excel mingguan), Form Kebutuhannya disusun, dan <b>Rencana belanja</b> dibelanjakan. Pagi hari: <b>Tutup Stok Siap</b> untuk tanggal kemarin setelah dapur menutup SPK-nya.</td></tr>
+    <tr><td>Admin</td><td>Masukkan pesanan (PO) dan susun <b>SPK</b> seperti biasa. SPK Produksi di Inventory terbentuk sendiri. Untuk menu yang ada di Rencana Masak tanggal kirimnya, centang <b>Ambil dari stok siap</b>; pilih harga <b>Lapak</b> untuk item lapak. Cek blok <b>Rencana Masak Hari Ini</b> di Dashboard: sisa yang masih banyak berarti ada porsi yang belum terjual.</td></tr>
     <tr><td>Dapur (Production)</td><td>Buka <b>SPK Produksi</b> → <b>Form Kebutuhan</b>. Isi kolom <i>Stok</i> sesuai yang ada di gudang; kolom <i>Beli</i> terhitung sendiri. Tekan <b>Ajukan</b>. Bila ditolak, baca alasannya, perbaiki, Ajukan lagi.</td></tr>
     <tr><td>Inventory (gudang)</td><td>Ada lonceng "form menunggu persetujuan": buka, periksa jumlahnya wajar, tekan <b>Setujui</b> — atau <b>Tolak</b> dengan alasan yang jelas supaya dapur tahu apa yang harus diubah.</td></tr>
     <tr><td>Gudang / Belanja</td><td>Belanja sesuai kolom Beli. Saat barang datang, isi <i>Diterima</i>, <i>Ditolak</i> (dan perlakuannya: retur / dibayar), <i>harga beli</i> per bahan, dan supplier. Tekan <b>Periksa</b> sekali saja. Lalu buka <b>Tagihan Pembelian</b>-nya, lampirkan foto nota, dan <b>Ajukan ke Accounting</b>.</td></tr>
@@ -1099,7 +1341,8 @@
     <tr><td>Gudang</td><td><b>Opname Bahan</b> untuk bahan yang mahal atau sering susut (ayam, daging, minyak).</td></tr>
     <tr><td>Tim Menu</td><td>Lihat <b>Bahan Belum Cocok</b> dan <b>Konversi Belum Diatur</b> — resep baru sering menambah satu-dua baris. Jaga tetap 0. Kerjakan Pencocokan Menu untuk menu baru dari Admin.</td></tr>
     <tr><td>Accounting</td><td>Buka tab <b>Hutang supplier</b> di Tagihan Pembelian dan <b>Monitoring Hutang</b>: bayar yang jatuh tempo minggu ini.</td></tr>
-    <tr><td>Marketing</td><td>Tambah foto di <b>Katalog Foto Menu</b> dan centang menu yang tampil di website.</td></tr>
+    <tr><td>Marketing</td><td>Tambah foto di <b>Katalog Foto Menu</b>, centang menu yang tampil di website beserta kategorinya, lalu <b>Terbitkan ke Website</b> bila label kotak Website <i>Ada perubahan belum diterbitkan</i>.</td></tr>
+    <tr><td>Gudang</td><td><b>Export Laporan Stok</b> (Item Inventaris) untuk laporan stok mingguan; bandingkan dengan hitungan fisik, catat selisihnya lewat <b>Opname Bahan</b>.</td></tr>
   </table>
   <h3 style="margin-top: 10pt;">Setiap bulan</h3>
   <table class="grid" style="table-layout: fixed; page-break-inside: avoid;">
@@ -1118,12 +1361,14 @@
     <li>Menekan <b>Periksa</b> sebelum harga beli diisi — harga itu yang jadi dasar nilai stok dan pembaruan harga master.</li>
     <li>Membuat bahan baru dengan nama yang mirip bahan lama (mis. "Minyak" dan "Minyak Goreng"). Cari dulu, tautkan ke yang ada.</li>
     <li>Mengubah satuan sebuah bahan setelah punya riwayat — buat aturan konversi, jangan ganti satuannya.</li>
+    <li>Memasukkan menu lapak ke PO <b>tanpa</b> centang <i>Ambil dari stok siap</i> padahal porsinya diambil dari Rencana Masak — menunya akan dimasak dua kali di SPK, bahan terpotong dua kali, dan stok siapnya tercatat sisa.</li>
+    <li>Menunda <b>Tutup Stok Siap</b> berhari-hari — sisa porsi baru bisa dijual dari Barang Sisa setelah ditutup.</li>
   </ul>
 </div>
 
 <!-- ============ 14. KAMUS ============ -->
 <div class="page">
-  <h2>17. Kamus istilah</h2>
+  <h2>18. Kamus istilah</h2>
   <table class="grid">
     <tr><th style="width: 24%">Istilah</th><th>Artinya</th></tr>
     <tr><td>PO (Purchase Order)</td><td>Pesanan pelanggan.</td></tr>
@@ -1153,12 +1398,22 @@
     <tr><td>Residual opname</td><td>Pemakaian bahan dihitung dari selisih: Saldo Awal + Beli − Sisa.</td></tr>
     <tr><td>Closing / Tutup buku</td><td>Mengunci transaksi satu periode agar laporannya tidak berubah lagi.</td></tr>
     <tr><td>Peran</td><td>Jenis pengguna yang menentukan aplikasi & tombol yang tampil. Rinciannya di Bab 2, <i>Hak akses rinci per peran</i>.</td></tr>
+    <tr><td>Rencana Masak</td><td>SPK Produksi yang disusun gudang sebelum PO masuk, untuk lapak/pesanan pasti. Porsinya menjadi stok siap (Bab 15).</td></tr>
+    <tr><td>Stok siap</td><td>Porsi Rencana Masak yang menunggu diambil PO bertanggal kirim sama; dihitung per resep.</td></tr>
+    <tr><td>Terdistribusi ke PO</td><td>Porsi stok siap yang sudah diambil item PO bercentang <i>Ambil dari stok siap</i>.</td></tr>
+    <tr><td>Tutup Stok Siap</td><td>Menutup stok siap satu tanggal: sisa yang tidak terdistribusi menjadi Barang Sisa, dan PO tanggal itu tidak bisa mengambil stok siap lagi.</td></tr>
+    <tr><td>Rencana belanja</td><td>Jumlah bahan dari Form Kebutuhan semua Rencana Masak dalam satu rentang tanggal.</td></tr>
+    <tr><td>Harga Lapak</td><td>Harga khusus lapak di Master Menu; dipilih per item PO (Normal / Lapak).</td></tr>
+    <tr><td>Customer lapak</td><td>Customer bertanda <i>Lapak</i>; item PO-nya otomatis memakai harga Lapak.</td></tr>
+    <tr><td>Laporan Stok</td><td>Ekspor Excel format gudang: stok awal, masuk, keluar, harga, mutasi, sisa, value per barang, dalam lembar Bahan Baku / Kemasan / Inventaris.</td></tr>
+    <tr><td>Kategori website</td><td>Kelompok menu di halaman website (mis. Menu Ayam, Tumpeng &amp; Hidangan Acara), mengikuti brand menu: Warung Wuenak Poll atau Kuliner Tradisional 3S.</td></tr>
+    <tr><td>Terbitkan ke Website</td><td>Tombol di aplikasi Marketing yang memperbarui isi menu website dari data 3S ONE.</td></tr>
   </table>
 </div>
 
 <!-- ============ 15. FAQ ============ -->
 <div>
-  <h2>18. Pertanyaan yang sering muncul</h2>
+  <h2>19. Pertanyaan yang sering muncul</h2>
 
   <h3>Saya tidak melihat tombol Setujui, padahal formnya sudah ada.</h3>
   <p>Tombol Setujui hanya tampil untuk peran <b>Inventory</b> (atau Owner/Admin) dan hanya setelah produksi menekan <b>Ajukan</b>. Kalau status masih "Dibuat / Diisi", giliran dapur dulu.</p>
@@ -1195,6 +1450,36 @@
 
   <h3>Barang Sisa tidak bisa ditambahkan ke Sales Actual customer lain.</h3>
   <p>Sales Actual itu tidak berasal dari DO, sehingga sistem tidak tahu cara bayarnya. Tambahkan ke Sales Actual customer tersebut yang dibuat dari DO-nya.</p>
+
+  <h3>Centang "Ambil dari stok siap" tidak bisa dipilih.</h3>
+  <p>Menu itu tidak ada di Rencana Masak <b>tanggal kirim PO</b> (petunjuknya: <i>tidak ada di Rencana Masak tanggal ini</i>), sisanya sudah 0, atau tanggal kirim belum diisi. Periksa tanggal kirim lebih dulu. Bila menunya memang dimasak di rencana tanggal lain, stok siapnya tidak bisa dipakai untuk tanggal ini.</p>
+
+  <h3>Menu ada di Excel rencana masak, tetapi stok siapnya tidak muncul.</h3>
+  <p>Saat impor, menu itu berstatus <i>Tanpa resep</i> atau <i>Pilih menu</i>. Ia tetap tercatat di rencana sebagai catatan dapur, tetapi stok siap hanya dihitung dari menu yang bertaut ke resep. Minta tim Menu menautkan resepnya, lalu impor ulang hari itu (selama Form Kebutuhannya belum diajukan).</p>
+
+  <h3>PO menolak disimpan: "Stok siap … tinggal … porsi".</h3>
+  <p>Porsi yang diminta lebih banyak dari sisa. Kurangi qty item bercentang, lalu tambahkan sisanya sebagai item biasa tanpa centang. Item tanpa centang dimasak lewat SPK seperti biasa.</p>
+
+  <h3>Tutup Stok Siap menolak: "Tutup dulu SPK Rencana Masak …".</h3>
+  <p>Dapur belum menutup SPK Rencana Masak tanggal itu. Minta dapur mengisi pemakaian dan menekan <b>Tutup SPK</b> lebih dulu, karena nilai Barang Sisa diambil dari bahan yang benar-benar terpakai.</p>
+
+  <h3>Saya memilih harga Lapak, tetapi harganya tetap harga normal.</h3>
+  <p>Menu itu belum punya <b>Harga Lapak</b> di Master Menu. Item seperti itu tersimpan sebagai <i>Normal</i>. Isi dulu harga lapaknya, lalu buka PO › ubah, pilih <b>Lapak</b> lagi pada item itu, dan simpan; karena pilihannya berganti, harganya dihitung ulang memakai harga lapak.</p>
+
+  <h3>Harga Master Menu sudah naik, tetapi PO lama tetap memakai harga lama.</h3>
+  <p>Itu disengaja: PO yang diubah tetap memakai harga saat PO dibuat, selama menu dan pilihan Normal/Lapak itemnya tidak diganti. Harga yang sudah disepakati dengan customer tidak berubah diam-diam.</p>
+
+  <h3>Saya mengimpor Excel Master Menu lama yang belum ada kolom harga lapaknya. Apakah harga lapak terhapus?</h3>
+  <p>Tidak. Kolom yang tidak ada di berkas tidak disentuh. Harga lapak hanya berubah bila berkasnya memuat kolom <i>harga_lapak</i>.</p>
+
+  <h3>Import Excel Item Inventaris ditolak: "nama item kosong".</h3>
+  <p>Sejak v3.1.2 baris tanpa nama <b>dan</b> tanpa id dilewati (nomornya dilaporkan), jadi pesan ini hanya muncul bila barisnya <b>punya id</b> tetapi namanya terhapus. Isi kembali namanya, atau hapus id-nya bila baris itu memang tidak dipakai. Bila pesannya <i>Kolom nama_item … tidak ditemukan</i>, judul kolom tidak ada di baris pertama: pakai berkas dari <b>Export Data Master</b>, atau beri judul <i>Nama Barang</i> di baris pertama.</p>
+
+  <h3>Barang di laporan gudang lebih banyak daripada di Laporan Stok sistem.</h3>
+  <p>Laporan Stok hanya memuat barang yang terdaftar di <b>Item Inventaris</b>. Tambahkan barang yang masih dipakai (terutama kemasan dan peralatan), beri saldo awalnya, dan barisnya ikut muncul di ekspor berikutnya.</p>
+
+  <h3>Tombol Terbitkan ke Website abu-abu.</h3>
+  <p>Ada dua kemungkinan. Bila labelnya <b>Belum tersambung</b>, website belum disambungkan ke 3S ONE. Bila baru saja diterbitkan, tunggu sekitar 2 menit; arahkan tetikus ke tombol untuk melihat sisa waktunya.</p>
 
   <h3>Laba bulan ini naik, padahal banyak retur.</h3>
   <p>Retur yang belum terjual dicatat sebagai persediaan Barang Sisa, sehingga bahan bakunya belum dibebankan ke bulan ini. Biayanya pindah ke bulan saat porsinya terjual atau dibuang. Buang Barang Sisa yang memang sudah tidak layak jual supaya laporannya jujur.</p>
