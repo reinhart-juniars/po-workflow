@@ -99,7 +99,15 @@
       <tbody>
         @forelse ($po->items as $it)
           <tr>
-            <td>{{ $it->product->name ?? '-' }}</td>
+            <td>
+              {{ $it->product->name ?? '-' }}
+              @if ($it->price_tier === \App\Models\PurchaseOrderItem::TIER_LAPAK)
+                <span class="ml-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">Harga Lapak</span>
+              @endif
+              @if ($it->from_ready_stock)
+                <span class="ml-1 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">Stok Siap</span>
+              @endif
+            </td>
             <td class="text-right">{{ $it->qty }}</td>
             <td class="text-right">Rp {{ number_format($it->unit_price, 0, ',', '.') }}</td>
             <td class="text-right font-semibold">Rp {{ number_format($it->subtotal, 0, ',', '.') }}</td>

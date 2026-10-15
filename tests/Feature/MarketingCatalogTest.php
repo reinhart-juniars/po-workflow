@@ -32,6 +32,7 @@ function menuKatalog(array $attributes = []): Product
         'unit' => 'porsi',
         'base_price' => 15000,
         'active' => true,
+        'website_category' => 'ayam',
     ], $attributes));
 }
 

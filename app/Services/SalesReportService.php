@@ -25,6 +25,7 @@ class SalesReportService
         }
 
         $allActuals = SalesActual::query()
+            ->external()
             ->with('customer:id,name,is_lapak')
             ->where('status', 'submitted')
             ->whereBetween('sales_date', [

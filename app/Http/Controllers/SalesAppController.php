@@ -29,7 +29,9 @@ class SalesAppController extends Controller
             $status = 'draft';
         }
 
+        // Sales Actual internal (Barang Sisa Rencana Masak) bukan penjualan; tidak didaftar.
         $baseQuery = SalesActual::query()
+            ->external()
             ->whereDate('sales_date', '>=', $dateFrom->toDateString())
             ->whereDate('sales_date', '<=', $dateTo->toDateString());
 
@@ -154,6 +156,7 @@ class SalesAppController extends Controller
         [$dateFrom, $dateTo] = $this->parseDateRange($request);
 
         $actuals = SalesActual::query()
+            ->external()
             ->with(['customer', 'deliveryOrder'])
             ->withSum('items as total_actual_amount', 'subtotal_actual')
             ->withSum('items as total_return_qty', 'qty_return')

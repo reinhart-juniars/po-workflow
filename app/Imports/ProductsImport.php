@@ -233,6 +233,10 @@ class ProductsImport implements SkipsEmptyRows, ToCollection, WithHeadingRow
         $basePrice = $this->parseNumber($basePriceRaw, 'harga jual', $excelRow, false);
         $rawMaterialCost = $this->parseNumber($rawMaterialRaw, 'bahan baku', $excelRow, false);
         $overheadCost = $this->parseNumber($overheadRaw, 'overhead cost', $excelRow, false);
+        // Kolom harga lapak hanya dipakai bila ada di berkas: template lama (tanpa
+        // kolom ini) tidak boleh menghapus harga lapak yang sudah diisi.
+        $hasLapakColumn = $row->has('harga_lapak') || $row->has('lapak_price');
+        $lapakPrice = $this->parseNumber($this->cellValue($row, ['harga_lapak', 'lapak_price']), 'harga lapak', $excelRow, false);
 
         return [
             'id' => filled($id) ? (int) $id : null,
@@ -240,6 +244,7 @@ class ProductsImport implements SkipsEmptyRows, ToCollection, WithHeadingRow
             'name' => $name,
             'unit' => $unit,
             'base_price' => $basePrice,
+            ...($hasLapakColumn ? ['lapak_price' => $lapakPrice] : []),
             'raw_material_cost' => $rawMaterialCost,
             'overhead_cost' => $overheadCost,
             'active' => $this->parseBoolean($activeRaw, $excelRow),

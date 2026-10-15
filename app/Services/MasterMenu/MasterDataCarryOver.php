@@ -37,7 +37,7 @@ class MasterDataCarryOver
     private const REQUISITION_PRICE_SOURCE = 'Form ';
 
     /** Kolom menu jual yang diisi di 3S ONE, bukan di v2. */
-    private const PRODUCT_COLUMNS = ['recipe_id', 'needs_recipe', 'photo_path', 'photo_updated_at', 'show_on_website'];
+    private const PRODUCT_COLUMNS = ['recipe_id', 'needs_recipe', 'photo_path', 'photo_updated_at', 'show_on_website', 'website_category', 'lapak_price'];
 
     /** @var array<int, int> id pengguna latihan => id pengguna tujuan */
     private array $userMap = [];

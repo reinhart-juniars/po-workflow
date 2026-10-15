@@ -159,6 +159,8 @@ class Navigation
                     ['label' => 'Master Supplier', 'route' => 'filament.admin.resources.suppliers.index', 'can' => 'inventory.view'],
                 ],
                 'Produksi' => [
+                    ['label' => 'Rencana Masak', 'route' => 'filament.admin.pages.rencana-masak', 'can' => 'production.view'],
+                    ['label' => 'Impor Rencana Masak', 'route' => 'filament.admin.pages.impor-rencana-masak', 'can' => 'plan.manage'],
                     ['label' => 'SPK Produksi', 'route' => 'filament.admin.resources.production-orders.index', 'can' => 'production.view'],
                     ['label' => 'Form Kebutuhan', 'route' => 'filament.admin.resources.requisitions.index', 'can' => 'production.view'],
                     ['label' => 'Kartu Stok', 'route' => 'filament.admin.resources.inventory-movements.index', 'can' => 'ledger.view'],

@@ -148,7 +148,7 @@ class RequisitionForm extends Page implements HasForms
         }
 
         if ($requisition->isDraft()) {
-            return $user?->can('production.manage')
+            return $this->getOrder()->canBeManagedBy($user)
                 ? ['color' => 'info', 'text' => 'Meja produksi: isi Stok Awal hasil hitungan fisik (Beli = Kebutuhan − Stok Awal, boleh dibulatkan ke kemasan), Simpan, lalu Ajukan ke gudang.']
                 : ['color' => 'gray', 'text' => 'Masih disusun produksi; belum diajukan ke gudang.'];
         }
@@ -166,7 +166,7 @@ class RequisitionForm extends Page implements HasForms
         }
 
         if (! $this->getOrder()->isCompleted()) {
-            return $user?->can('production.manage')
+            return $this->getOrder()->canBeManagedBy($user)
                 ? ['color' => 'info', 'text' => 'Meja produksi: barang sudah masuk kartu stok. Setelah produksi, isi Pemakaian Aktual dan Sisa Stok bila dihitung, lalu Tutup SPK.']
                 : ['color' => 'gray', 'text' => 'Diperiksa '.($requisition->checkedBy?->name ?? '').'; menunggu produksi menutup SPK.'];
         }
@@ -298,7 +298,7 @@ class RequisitionForm extends Page implements HasForms
 
         return $requisition->isApproved()
             ? $user->can('requisition.check')
-            : $user->can('production.manage');
+            : (bool) $requisition->productionOrder?->canBeManagedBy($user);
     }
 
     /**
@@ -311,7 +311,7 @@ class RequisitionForm extends Page implements HasForms
         return [
             Actions\Action::make('susun')
                 ->label(fn () => $this->getRequisition() ? 'Segarkan Kebutuhan' : 'Susun Form')
-                ->authorize('production.manage')
+                ->authorize(fn () => $this->getOrder()->canBeManagedBy(auth()->user()))
                 ->icon('heroicon-m-calculator')
                 ->color(fn () => $this->getRequisition() ? 'gray' : 'primary')
                 ->visible(function () {
@@ -361,7 +361,7 @@ class RequisitionForm extends Page implements HasForms
             // menolak. Tombolnya tidak pernah tampil bersamaan.
             Actions\Action::make('ajukan')
                 ->label('Ajukan ke Gudang')
-                ->authorize('production.manage')
+                ->authorize(fn () => $this->getOrder()->canBeManagedBy(auth()->user()))
                 ->icon('heroicon-m-paper-airplane')
                 ->color('info')
                 ->visible(fn () => $this->getRequisition()?->isDraft() ?? false)

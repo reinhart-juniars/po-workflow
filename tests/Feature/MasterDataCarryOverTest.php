@@ -141,7 +141,7 @@ function bawaSkenario(): string
     $l->table('production_workers')->insert(['name' => 'Bu Sri', 'is_active' => 1] + $t);
     $l->table('app_settings')->insert(['key' => 'requisition.update_master_price', 'value' => 'false', 'updated_by' => 1] + $t);
 
-    $l->table('products')->where('id', 1)->update(['recipe_id' => 10, 'sku' => 'NASI-TELUR', 'show_on_website' => 1]);
+    $l->table('products')->where('id', 1)->update(['recipe_id' => 10, 'sku' => 'NASI-TELUR', 'show_on_website' => 1, 'website_category' => 'ayam', 'lapak_price' => 9000]);
     $l->table('products')->where('id', 2)->update(['needs_recipe' => 0]);
     $l->table('products')->insert(['id' => 3, 'name' => 'MENU COBA LATIHAN', 'base_price' => 1000, 'created_at' => '2026-10-12 09:00:00', 'updated_at' => '2026-10-12 09:00:00']);
 
@@ -217,7 +217,7 @@ it('membawa data master dengan ID bahan baru tanpa menimpa item v2, dan HPP rese
 
     // Menu jual: kolom 3S ONE dibawa, nama/harga v2 dan menu Oktober v2 tidak disentuh.
     $nasi = DB::table('products')->find(1);
-    expect($nasi->recipe_id)->toBe(10)->and($nasi->sku)->toBe('NASI-TELUR')->and((int) $nasi->show_on_website)->toBe(1)
+    expect($nasi->recipe_id)->toBe(10)->and($nasi->sku)->toBe('NASI-TELUR')->and((int) $nasi->show_on_website)->toBe(1)->and($nasi->website_category)->toBe('ayam')->and((float) $nasi->lapak_price)->toBe(9000.0)
         ->and((int) DB::table('products')->find(2)->needs_recipe)->toBe(0)
         ->and(DB::table('products')->find(3)->name)->toBe('MENU BARU OKTOBER');
 

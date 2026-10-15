@@ -4,13 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
 use App\Models\Product;
+use App\Services\WebsitePublisher;
 use App\Support\MenuPhotoProcessor;
+use App\Support\WebsiteCatalog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use InvalidArgumentException;
@@ -42,6 +45,7 @@ class MenuCatalogController extends Controller
                 'website_without_photo' => Product::query()->onWebsite()->whereNull('photo_path')->count(),
             ],
             'needsPhoto' => Product::query()->onWebsite()->whereNull('photo_path')->orderBy('name')->limit(10)->get(),
+            'websiteStatus' => app(WebsitePublisher::class)->status(),
         ]);
     }
 
@@ -61,6 +65,9 @@ class MenuCatalogController extends Controller
             ->when($filter === 'belum', fn ($query) => $query->whereNull('photo_path'))
             ->when($website === 'tampil', fn ($query) => $query->where('show_on_website', true))
             ->when($website === 'tidak', fn ($query) => $query->where('show_on_website', false))
+            // Dicentang tapi belum bisa terbit: kategori kosong atau bukan milik brand-nya.
+            ->when($website === 'tanpa-kategori', fn ($query) => $query->where('show_on_website', true)
+                ->whereNotIn('id', Product::query()->onWebsite()->select('id')))
             ->orderBy('name')
             ->paginate(48)
             ->withQueryString();
@@ -78,6 +85,7 @@ class MenuCatalogController extends Controller
             'filter' => $filter,
             'website' => $website,
             'activeOnly' => $activeOnly,
+            'websiteStatus' => app(WebsitePublisher::class)->status(),
         ]);
     }
 
@@ -103,11 +111,22 @@ class MenuCatalogController extends Controller
         return back()->with('success', $message);
     }
 
-    /** Centang / hapus centang "Tampil di website" untuk satu menu. */
+    /**
+     * Centang "Tampil di website" dan kategori websitenya (Menu Ayam, Frozen Food, ...)
+     * untuk satu menu. Kategori yang ditawarkan hanya milik brand menu itu (is_3s).
+     */
     public function updateWebsite(Request $request, Product $product): RedirectResponse|JsonResponse
     {
-        $show = $request->validate(['show_on_website' => ['required', 'boolean']])['show_on_website'];
-        $show = filter_var($show, FILTER_VALIDATE_BOOLEAN);
+        $brand = WebsiteCatalog::brandOf($product);
+        $data = $request->validate([
+            'show_on_website' => ['required', 'boolean'],
+            'website_category' => ['nullable', 'string', Rule::in(array_keys(WebsiteCatalog::categoriesFor($brand)))],
+        ], [
+            'website_category.in' => 'Kategori itu bukan milik halaman '.WebsiteCatalog::brands()[$brand]['label'].'.',
+        ]);
+        $show = filter_var($data['show_on_website'], FILTER_VALIDATE_BOOLEAN);
+        // Form lama (tanpa pilihan kategori) tidak boleh menghapus kategori yang sudah ada.
+        $category = $request->has('website_category') ? ($data['website_category'] ?? null) : $product->website_category;
 
         // SKU = nama menu di website; tanpa SKU menunya tidak punya nama untuk tampil.
         if ($show && blank($product->sku)) {
@@ -116,24 +135,36 @@ class MenuCatalogController extends Controller
             ]);
         }
 
-        if ($product->show_on_website !== $show) {
-            $product->forceFill(['show_on_website' => $show])->save();
+        if ($show && ! WebsiteCatalog::fits($product, $category)) {
+            throw ValidationException::withMessages([
+                'show_on_website' => 'Pilih kategori website untuk '.$product->sku.' dulu -- kategori menentukan letak menunya di halaman website.',
+            ]);
+        }
+
+        $showChanged = $product->show_on_website !== $show;
+        $categoryChanged = $product->website_category !== $category;
+
+        if ($showChanged || $categoryChanged) {
+            $product->forceFill(['show_on_website' => $show, 'website_category' => $category])->save();
 
             AuditLog::create([
                 'user_id' => Auth::id(),
                 'entity' => 'product',
                 'entity_id' => $product->id,
-                'action' => $show ? 'website_shown' : 'website_hidden',
-                'message' => 'Menu '.$product->name.' ('.$product->sku.') '.($show ? 'ditampilkan di' : 'disembunyikan dari').' website',
+                'action' => $showChanged ? ($show ? 'website_shown' : 'website_hidden') : 'website_category_changed',
+                'message' => 'Menu '.$product->name.' ('.$product->sku.') '
+                    .($show ? 'tampil di' : 'tidak tampil di').' website'
+                    .($category ? ', kategori '.WebsiteCatalog::title($category) : ', tanpa kategori'),
                 'ip_address' => $request->ip(),
             ]);
         }
 
-        $message = $product->sku.($show ? ' tampil di website.' : ' tidak tampil di website.');
+        $message = $product->sku.($show ? ' tampil di website ('.WebsiteCatalog::title($category).').' : ' tidak tampil di website.');
 
         if ($request->expectsJson()) {
             return response()->json([
                 'show_on_website' => $show,
+                'website_category' => $category,
                 'message' => $message,
                 'on_website' => Product::query()->onWebsite()->count(),
             ]);

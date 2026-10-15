@@ -367,6 +367,7 @@ class ProfitLossReportController extends Controller
             ->sum('subtotal_actual'), 2);
 
         $salesActualCount = SalesActual::query()
+            ->external()
             ->where('status', 'submitted')
             ->whereBetween('submitted_at', [
                 $dateFrom->copy()->startOfDay(),

@@ -18,7 +18,7 @@ class AdminCustomerController extends Controller
             ? (string) $request->query('status')
             : null;
 
-        $customers = $insights->withListAggregates(Customer::query())
+        $customers = $insights->withListAggregates(Customer::query()->external())
             ->when($status, fn ($query) => $insights->filterByStatus($query, $status))
             ->when($q !== '', function ($query) use ($q) {
                 $like = '%'.$q.'%';
@@ -33,7 +33,7 @@ class AdminCustomerController extends Controller
             ->withQueryString();
 
         $statusCounts = collect(CustomerInsightService::statusOptions())
-            ->map(fn ($label, $key) => $insights->filterByStatus(Customer::query(), $key)->count());
+            ->map(fn ($label, $key) => $insights->filterByStatus(Customer::query()->external(), $key)->count());
 
         return view('adminapp.customers.index', [
             'customers' => $customers,

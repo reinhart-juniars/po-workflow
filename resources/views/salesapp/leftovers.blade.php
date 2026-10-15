@@ -148,6 +148,7 @@
                                             'portionQty' => $row['available_qty'],
                                             'maxPortion' => $row['available_qty'],
                                             'components' => [],
+                                            'suggestions' => $row['suggestions'] ?? [],
                                             'withDate' => true,
                                             'notes' => '',
                                         ])
@@ -233,7 +234,11 @@
                                                         <div>
                                                             <label class="form-label" for="csell-price-{{ $component['component_id'] }}">Harga / {{ $component['unit'] }}</label>
                                                             <input id="csell-price-{{ $component['component_id'] }}" type="number" name="unit_price" step="0.01" min="0"
+                                                                value="{{ $component['suggested_price'] }}"
                                                                 class="form-control text-right tabular-nums" required>
+                                                            @if ($component['suggested_price'] !== null)
+                                                                <p class="mt-1 text-[11px] text-slate-500">Saran dari HPP × markup menu asal; boleh diubah.</p>
+                                                            @endif
                                                         </div>
                                                     </div>
                                                     <button type="submit" class="btn-primary">Tambahkan ke Sales Actual</button>
@@ -286,6 +291,7 @@
                                 'components' => $bd['breakdown']->components
                                     ->map(fn ($c) => ['name' => $c->name, 'qty' => (float) $c->qty, 'unit' => $c->unit, 'value' => (float) $c->value])
                                     ->all(),
+                                'suggestions' => $bd['suggestions'] ?? [],
                                 'withDate' => false,
                                 'notes' => $bd['breakdown']->notes,
                             ])
@@ -371,6 +377,25 @@
 
             form.addEventListener('input', update);
             update();
+
+            // "Isi dari HPP resep": nilai per porsi x porsi dirinci, dibulatkan ke bawah
+            // (sen) supaya totalnya tidak melebihi HPP -- aturan yang sama di server.
+            form.querySelector('.js-bd-suggest')?.addEventListener('click', (event) => {
+                const suggestions = JSON.parse(event.currentTarget.dataset.suggestions || '[]');
+                const portions = Math.max(0, Number(portion?.value || 0));
+                const rows = form.querySelectorAll('.js-bd-row');
+
+                rows.forEach((row, index) => {
+                    const suggestion = suggestions[index];
+                    row.querySelector('input[name$="[name]"]').value = suggestion ? suggestion.name : '';
+                    row.querySelector('input[name$="[qty]"]').value = suggestion ? portions : '';
+                    row.querySelector('input[name$="[unit]"]').value = suggestion ? suggestion.unit : '';
+                    row.querySelector('input[name$="[value]"]').value = suggestion
+                        ? (Math.floor(suggestion.value_per_portion * portions * 100) / 100).toFixed(2)
+                        : '';
+                });
+                update();
+            });
         });
     </script>
 @endsection

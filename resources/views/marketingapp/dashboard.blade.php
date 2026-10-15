@@ -9,6 +9,8 @@
         <a href="{{ route('marketingapp.catalog.index') }}" class="btn-primary">Buka Katalog Foto Menu</a>
     </div>
 
+    @include('marketingapp.partials.website-publish', ['onWebsite' => $stats['on_website']])
+
     <section class="sales-stats-grid mt-4">
         <article class="sales-stat-card">
             <p class="stat-label">Menu Aktif</p>

@@ -1,18 +1,32 @@
 <?php
 
 namespace App\Models;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class PurchaseOrderItem extends Model {
+class PurchaseOrderItem extends Model
+{
     use HasFactory;
-    protected $fillable=
-    [
-        'purchase_order_id','product_id','is_custom','custom_name','qty','unit',
-        'unit_price','raw_material_cost','overhead_cost','subtotal','notes'
+
+    /** Harga jual normal menu (products.base_price). */
+    public const TIER_NORMAL = 'normal';
+
+    /** Harga khusus lapak owner (products.lapak_price). */
+    public const TIER_LAPAK = 'lapak';
+
+    protected $fillable =
+        [
+            'purchase_order_id', 'product_id', 'is_custom', 'custom_name', 'qty', 'unit',
+            'unit_price', 'price_tier', 'from_ready_stock', 'raw_material_cost', 'overhead_cost', 'subtotal', 'notes',
+        ];
+
+    protected $attributes = [
+        'price_tier' => self::TIER_NORMAL,
     ];
 
     protected $casts = [
+        'from_ready_stock' => 'boolean',
         'unit_price' => 'decimal:2',
         'raw_material_cost' => 'decimal:2',
         'overhead_cost' => 'decimal:2',
@@ -31,7 +45,7 @@ class PurchaseOrderItem extends Model {
 
                 if ($product) {
                     if (empty($item->unit_price)) {
-                        $item->unit_price = (float) ($product->base_price ?? 0);
+                        $item->unit_price = $product->priceForTier($item->price_tier ?? self::TIER_NORMAL);
                     }
                     if ($item->raw_material_cost === null) {
                         $item->raw_material_cost = $product->raw_material_cost;
@@ -46,7 +60,7 @@ class PurchaseOrderItem extends Model {
             $item->unit_price = max(0, (float) ($item->unit_price ?? 0));
             $disc = (float) ($item->discount_percent ?? 0);
             $item->discount_percent = min(100, max(0, $disc));
-            $item->subtotal = round($item->qty * $item->unit_price * (1 - $item->discount_percent/100), 2);
+            $item->subtotal = round($item->qty * $item->unit_price * (1 - $item->discount_percent / 100), 2);
         });
 
         static::saved(function (self $item) {
@@ -57,14 +71,17 @@ class PurchaseOrderItem extends Model {
             $item->purchaseOrder?->recalcTotals();
         });
     }
+
     public function purchaseOrder()
     {
         return $this->belongsTo(\App\Models\PurchaseOrder::class);
     }
+
     public function product()
     {
         return $this->belongsTo(\App\Models\Product::class);
     }
+
     public function salesActualItems()
     {
         return $this->hasMany(\App\Models\SalesActualItem::class);

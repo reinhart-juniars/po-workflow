@@ -26,7 +26,9 @@
     .catalog-website input { width: 16px; height: 16px; flex-shrink: 0; border-radius: 4px; }
     .catalog-website.is-on { background: #ecfdf5; color: #047857; }
     .catalog-website.is-disabled { cursor: not-allowed; color: #94a3b8; font-weight: 500; }
-    .catalog-website.is-busy { opacity: .6; pointer-events: none; }
+    .catalog-website.is-busy, .catalog-website-category.is-busy { opacity: .6; pointer-events: none; }
+    .catalog-website-category { width: 100%; margin-top: 4px; font-size: 12px; padding: 5px 8px; border-radius: 8px; }
+    .catalog-website-category.is-missing { border-color: #f59e0b; background: #fffbeb; }
     .catalog-actions { display: flex; align-items: center; gap: 4px; margin-top: auto; padding-top: 8px; }
     .catalog-actions form { flex: 1; min-width: 0; }
     .catalog-badge { position: absolute; top: 8px; left: 8px; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 999px; background: rgba(15, 23, 42, 0.75); color: #fff; }
@@ -46,16 +48,13 @@
         </div>
     </div>
 
-    @if (session('success'))
-        <div class="flash-success mt-4">{{ session('success') }}</div>
-    @endif
+    @include('marketingapp.partials.website-publish', ['onWebsite' => $summary['on_website']])
     @error('photo')
         <div class="flash-error mt-4">{{ $message }}</div>
     @enderror
     @error('show_on_website')
         <div class="flash-error mt-4">{{ $message }}</div>
     @enderror
-    <div class="flash-error mt-4" data-website-error hidden></div>
 
     <x-table-toolbar standalone class="mt-4" title="Menu" :action="url()->current()"
         :meta="number_format($products->total(), 0, ',', '.').' menu'"
@@ -65,7 +64,7 @@
              'options' => ['ada' => 'Sudah ada foto', 'belum' => 'Belum ada foto'],
              'value' => $filter === 'semua' ? null : $filter],
             ['type' => 'select', 'name' => 'website', 'label' => 'Website', 'placeholder' => 'Semua',
-             'options' => ['tampil' => 'Tampil di website', 'tidak' => 'Tidak tampil'],
+             'options' => ['tampil' => 'Tampil di website', 'tanpa-kategori' => 'Dicentang, belum ada kategori', 'tidak' => 'Tidak tampil'],
              'value' => $website === 'semua' ? null : $website],
             ['type' => 'select', 'name' => 'aktif', 'label' => 'Status Menu', 'placeholder' => 'Hanya menu aktif',
              'options' => ['0' => 'Termasuk menu nonaktif'], 'value' => $activeOnly ? null : '0'],
@@ -119,10 +118,22 @@
                         @method('PATCH')
                         <input type="hidden" name="show_on_website" value="0">
                         @if (filled($product->sku))
+                            @php($brand = \App\Support\WebsiteCatalog::brandOf($product))
                             <label class="catalog-website {{ $product->show_on_website ? 'is-on' : '' }}">
                                 <input type="checkbox" name="show_on_website" value="1" @checked($product->show_on_website) data-website-toggle>
                                 Tampil di website
                             </label>
+                            {{-- Kategori = kelompok menu di halaman brand-nya; hanya kategori brand ini yang ditawarkan. --}}
+                            <select name="website_category" class="catalog-website-category {{ $product->show_on_website && ! \App\Support\WebsiteCatalog::fits($product, $product->website_category) ? 'is-missing' : '' }}"
+                                    data-website-category data-previous="{{ $product->website_category }}"
+                                    aria-label="Kategori website {{ $product->name }}"
+                                    title="Halaman {{ \App\Support\WebsiteCatalog::brands()[$brand]['label'] }}">
+                                <option value="">Kategori website…</option>
+                                @foreach (\App\Support\WebsiteCatalog::categoriesFor($brand) as $key => $category)
+                                    <option value="{{ $key }}" @selected($product->website_category === $key)>{{ $category['title'] }}</option>
+                                @endforeach
+                            </select>
+                            <p class="catalog-sku-error mt-1" data-website-card-error hidden></p>
                             <noscript><button type="submit" class="btn-ghost mt-1 text-xs">Simpan</button></noscript>
                         @else
                             <label class="catalog-website is-disabled" title="SKU = nama menu di website. Isi SKU di Admin › Master Menu.">
@@ -219,34 +230,47 @@
             }
         }, true);
 
-        // Centang "Tampil di website" tersimpan tanpa memuat ulang halaman, supaya
-        // marketing bisa mencentang banyak menu berturut-turut tanpa kehilangan posisi.
+        // Centang "Tampil di website" dan kategori websitenya tersimpan tanpa memuat ulang
+        // halaman, supaya marketing bisa mengatur banyak menu berturut-turut tanpa kehilangan posisi.
         document.addEventListener('change', async (event) => {
             const toggle = event.target.closest('[data-website-toggle]');
-            if (!toggle) return;
-            const label = toggle.closest('.catalog-website');
-            const errorBox = document.querySelector('[data-website-error]');
+            const select = event.target.closest('[data-website-category]');
+            if (!toggle && !select) return;
+            const form = (toggle || select).form;
+            const checkbox = form.querySelector('[data-website-toggle]');
+            const category = form.querySelector('[data-website-category]');
+            const label = checkbox.closest('.catalog-website');
+            // Pesan di kartu itu sendiri: marketing sering sedang menggulir jauh dari atas halaman.
+            const errorBox = form.querySelector('[data-website-card-error]');
             label.classList.add('is-busy');
+            category.classList.add('is-busy');
             errorBox.hidden = true;
 
             try {
-                const response = await fetch(toggle.form.action, {
+                const response = await fetch(form.action, {
                     method: 'POST',
-                    body: new FormData(toggle.form),
+                    body: new FormData(form),
                     headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
                 });
                 const body = await response.json().catch(() => ({}));
-                if (!response.ok) throw new Error(body.message || 'Gagal menyimpan. Muat ulang halaman lalu coba lagi.');
+                if (!response.ok) {
+                    const errors = body.errors || {};
+                    throw new Error(errors.show_on_website?.[0] || errors.website_category?.[0] || body.message || 'Gagal menyimpan. Muat ulang halaman lalu coba lagi.');
+                }
 
-                toggle.checked = body.show_on_website;
+                checkbox.checked = body.show_on_website;
+                category.value = category.dataset.previous = body.website_category || '';
                 label.classList.toggle('is-on', body.show_on_website);
+                category.classList.remove('is-missing');
                 document.querySelectorAll('[data-website-count]').forEach((el) => { el.textContent = body.on_website; });
             } catch (error) {
-                toggle.checked = !toggle.checked;
+                if (toggle) checkbox.checked = !checkbox.checked;
+                if (select) category.value = category.dataset.previous || '';
                 errorBox.textContent = error.message;
                 errorBox.hidden = false;
             } finally {
                 label.classList.remove('is-busy');
+                category.classList.remove('is-busy');
             }
         });
     </script>

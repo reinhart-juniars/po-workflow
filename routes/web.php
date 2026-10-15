@@ -36,6 +36,7 @@ use App\Http\Controllers\SalesAppController;
 use App\Http\Controllers\SuperadminBackupController;
 use App\Http\Controllers\SuperadminDashboardController;
 use App\Http\Controllers\UserProfileController;
+use App\Http\Controllers\WebsitePublishController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('web')->group(function () {
@@ -136,6 +137,8 @@ Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:admin|ow
         Route::get('/orders', [AdminAppController::class, 'ordersIndex'])->name('orders.index');
         Route::get('/orders/{po}', [AdminAppController::class, 'ordersShow'])->name('orders.show');
         Route::post('/orders', [AdminAppController::class, 'ordersStore'])->name('orders.store');
+        // Sisa stok siap Rencana Masak per produk pada tanggal kirim (petunjuk form PO).
+        Route::get('/stok-siap', [AdminAppController::class, 'readyStockAvailable'])->name('ready-stock.available');
 
         // Edit & Update PO
         Route::get('/orders/{po}/edit', [AdminAppController::class, 'ordersEdit'])->name('orders.edit');
@@ -313,6 +316,7 @@ Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:marketin
         Route::delete('/catalog/{product}/photo', [MenuCatalogController::class, 'destroyPhoto'])->name('catalog.photo.destroy');
         Route::patch('/catalog/{product}/website', [MenuCatalogController::class, 'updateWebsite'])->name('catalog.website');
         Route::patch('/catalog/{product}/sku', [MenuCatalogController::class, 'updateSku'])->name('catalog.sku');
+        Route::post('/website/publish', [WebsitePublishController::class, 'store'])->name('website.publish');
     });
 
 // Panel Filament pindah dari /admin ke /inventory; tautan
