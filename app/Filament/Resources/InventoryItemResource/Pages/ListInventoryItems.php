@@ -4,10 +4,13 @@ namespace App\Filament\Resources\InventoryItemResource\Pages;
 
 use App\Exports\InventoryItemsExport;
 use App\Exports\StockReportExport;
+use App\Filament\Pages\ImportStockReport;
 use App\Filament\Resources\InventoryItemResource;
 use App\Imports\InventoryItemsImport;
+use App\Imports\StockReportReader;
 use Filament\Actions;
 use Filament\Forms;
+use Filament\Notifications\Actions\Action as NotificationAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Support\Carbon;
@@ -84,6 +87,24 @@ class ListInventoryItems extends ListRecords
                         ->storeFiles(false),
                 ])
                 ->action(function (array $data) {
+                    // Laporan stok harian gudang punya format sendiri (beberapa
+                    // sheet, kepala kolom di baris ke-3) dan perlu pratinjau.
+                    if (app(StockReportReader::class)->looksLikeStockReport($data['berkas']->getRealPath())) {
+                        Notification::make()
+                            ->warning()
+                            ->title('Ini laporan stok gudang')
+                            ->body('Berkas ini bukan format Export Data Master. Impor laporan stok gudang lewat halaman Impor Laporan Stok: barangnya dicocokkan dulu dengan item yang ada sebelum disimpan.')
+                            ->actions([
+                                NotificationAction::make('buka')
+                                    ->label('Buka Impor Laporan Stok')
+                                    ->url(ImportStockReport::getUrl()),
+                            ])
+                            ->persistent()
+                            ->send();
+
+                        return;
+                    }
+
                     $import = new InventoryItemsImport;
 
                     Excel::import($import, $data['berkas']);
