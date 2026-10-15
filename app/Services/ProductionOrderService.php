@@ -127,6 +127,48 @@ class ProductionOrderService
     }
 
     /**
+     * Pakai resep yang baru ditautkan ke produk setelah SPK Produksi disusun.
+     *
+     * Baris PO yang dulu masuk sebagai manual ("belum ada resep") dinaikkan
+     * menjadi baris menu begitu produknya punya resep aktif. Hanya baris itu
+     * yang disentuh: jumlah dan baris lain yang disunting dapur tetap.
+     *
+     * @return int Jumlah baris yang kini menunjuk resep.
+     */
+    public function adoptNewRecipes(ProductionOrder $order): int
+    {
+        if (! $order->isEditable()) {
+            return 0;
+        }
+
+        $lines = $order->lines()
+            ->where('source', ProductionOrderLine::SOURCE_PO)
+            ->where('kind', ProductionOrderLine::KIND_MANUAL)
+            ->whereNotNull('purchase_order_item_id')
+            ->with('purchaseOrderItem.product.recipe')
+            ->get();
+
+        $adopted = 0;
+
+        foreach ($lines as $line) {
+            $recipe = $line->purchaseOrderItem?->product?->recipe;
+
+            if (! $recipe?->is_active) {
+                continue;
+            }
+
+            $line->update([
+                'kind' => ProductionOrderLine::KIND_MENU,
+                'recipe_id' => $recipe->id,
+                'remark' => str_replace(' — belum ada resep', '', (string) $line->remark),
+            ]);
+            $adopted++;
+        }
+
+        return $adopted;
+    }
+
+    /**
      * Kebutuhan bahan seluruh SPK Produksi, dijumlahkan per bahan.
      *
      * Kuantitasnya dalam satuan harga bahan. Baris yang tidak bisa dihitung
@@ -146,6 +188,13 @@ class ProductionOrderService
             if (! $line->isMenu()) {
                 if ($line->kind === ProductionOrderLine::KIND_MENU) {
                     $issues[] = 'Baris "'.$line->displayName().'" belum menunjuk resep; kebutuhannya tidak dihitung.';
+                }
+
+                // Pesanan PO yang produknya belum punya resep: bahannya tidak
+                // masuk form. Harus disuarakan -- kalau diam, form tersusun
+                // kosong dan dapur mengira memang tidak ada yang dibeli.
+                if ($line->source === ProductionOrderLine::SOURCE_PO) {
+                    $issues[] = 'Menu "'.$line->displayName().'" belum punya resep; bahannya tidak dihitung. Tautkan resep ke produknya di Master Menu, lalu Segarkan Kebutuhan.';
                 }
 
                 continue;

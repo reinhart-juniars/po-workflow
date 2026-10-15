@@ -64,6 +64,12 @@ class RequisitionService
                 throw new RuntimeException('Form '.$requisition->number.' sudah '.mb_strtolower($requisition->statusLabel()).'; angkanya tidak bisa disusun ulang.');
             }
 
+            // Resep yang ditautkan sesudah SPK Produksi disusun ikut terhitung,
+            // tanpa produksi harus lebih dulu "Segarkan dari PO".
+            if ($this->orders->adoptNewRecipes($order) > 0) {
+                $order->unsetRelation('lines');
+            }
+
             $requirements = $this->orders->requirements($order);
             $existing = $requisition->lines()->get()->keyBy('inventory_item_id');
             $seen = [];

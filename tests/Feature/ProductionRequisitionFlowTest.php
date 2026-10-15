@@ -79,7 +79,48 @@ it('menjumlahkan kebutuhan bahan seluruh spk dalam satuan harga bahan', function
         ->and($rows[$d['tepung']->id]['unit'])->toBe('kg')
         ->and($rows[$d['minyak']->id]['qty'])->toBe(1.2)
         ->and($req['total_cost'])->toBe(48000.0)
-        ->and($req['issues'])->toBe([]);
+        // Es Teh belum punya resep: tidak dihitung, tetapi disuarakan.
+        ->and($req['issues'])->toHaveCount(1)
+        ->and($req['issues'][0])->toContain('ES TEH')->toContain('belum punya resep');
+});
+
+it('memakai resep yang ditautkan setelah spk produksi disusun saat form disegarkan', function () {
+    $d = siapkanProduksi();
+    $order = app(ProductionOrderService::class)->generateFromSpk($d['spk']);
+    $service = app(RequisitionService::class);
+
+    // Kasus latihan 15 Okt: menu baru dipesan sebelum resepnya ditautkan.
+    // Form tersusun tanpa bahan Es Teh, dan itu harus disuarakan.
+    $first = $service->build($order);
+    expect($first['requisition']->lines)->toHaveCount(2)
+        ->and(collect($first['issues'])->implode(' '))->toContain('ES TEH');
+
+    $gula = App\Models\InventoryItem::query()->create([
+        'parent_id' => $d['bucket']->id, 'name' => 'Gula Pasir', 'unit' => 'kg',
+        'category' => App\Models\InventoryItem::CATEGORY_RAW_MATERIAL, 'unit_price' => 15000, 'is_active' => true,
+    ]);
+    $resepTeh = App\Models\Recipe::query()->create([
+        'name' => 'Es Teh', 'jenis' => App\Models\Recipe::JENIS_UTAMA,
+        'yield_qty' => 1, 'yield_unit' => 'cup', 'ohc_pct' => 0.4, 'profit_pct' => 0.25,
+    ]);
+    App\Models\RecipeItem::query()->create(['recipe_id' => $resepTeh->id, 'inventory_item_id' => $gula->id, 'raw_name' => 'gula', 'qty' => 50, 'unit' => 'gr']);
+    $d['tanpaResep']->update(['recipe_id' => $resepTeh->id]);
+
+    // Segarkan Kebutuhan saja -- tanpa "Segarkan dari PO" -- sudah memakai resepnya.
+    $again = $service->build($order->fresh());
+    $gulaLine = $again['requisition']->lines->firstWhere('inventory_item_id', $gula->id);
+
+    // 20 cup x 50 gr = 1 kg gula.
+    expect($gulaLine)->not->toBeNull()
+        ->and((float) $gulaLine->required_qty)->toBe(1.0)
+        ->and($again['issues'])->toBe([])
+        // Baris menu lain tidak tersentuh.
+        ->and($again['requisition']->lines->firstWhere('inventory_item_id', $d['tepung']->id)->required_qty)->not->toBeNull();
+
+    $teh = $order->fresh()->lines->firstWhere('label', 'ES TEH');
+    expect($teh->kind)->toBe(ProductionOrderLine::KIND_MENU)
+        ->and($teh->recipe_id)->toBe($resepTeh->id)
+        ->and($teh->remark)->not->toContain('belum ada resep');
 });
 
 it('menyusun form kebutuhan dan menjaga isian manusia saat disegarkan', function () {
