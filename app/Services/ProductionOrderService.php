@@ -76,6 +76,13 @@ class ProductionOrderService
             $seen = [];
 
             foreach ($items as $item) {
+                // Diambil dari stok siap Rencana Masak: sudah dimasak (dan bahannya
+                // terhitung) di sana, jadi tidak dimasak lagi di SPK slot ini. Baris
+                // lamanya, bila ada, ikut terhapus di bawah karena tidak masuk $seen.
+                if ($item->from_ready_stock) {
+                    continue;
+                }
+
                 $recipe = $item->product_id ? $recipeByProduct->get($item->product_id) : null;
                 $label = $item->is_custom ? ($item->custom_name ?: 'Item khusus') : ($item->product?->name ?? 'Produk #'.$item->product_id);
 

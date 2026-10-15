@@ -7,6 +7,7 @@ use App\Models\LeftoverComponent;
 use App\Models\LeftoverDisposal;
 use App\Models\SalesActual;
 use App\Models\SalesActualItem;
+use App\Services\LeftoverComponentSuggester;
 use App\Services\LeftoverStockService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,12 +21,40 @@ use Illuminate\View\View;
  */
 class LeftoverStockController extends Controller
 {
-    public function __construct(private readonly LeftoverStockService $leftovers) {}
+    public function __construct(
+        private readonly LeftoverStockService $leftovers,
+        private readonly LeftoverComponentSuggester $suggester,
+    ) {}
 
     public function index(): View
     {
         $stock = $this->leftovers->available();
         $breakdowns = $this->leftovers->breakdownRows();
+
+        // Saran rincian dari bagian resep tiap menu (lihat LeftoverComponentSuggester).
+        $entries = SalesActualItem::query()
+            ->with('product.recipe')
+            ->whereIn('id', $stock->pluck('entry_id')->merge($breakdowns->pluck('entry_id'))->filter()->unique())
+            ->get()
+            ->keyBy('id');
+        $stock = $stock->map(fn (array $row) => $row + [
+            'suggestions' => ($entry = $entries->get($row['entry_id']))
+                ? $this->suggester->perPortion($entry->product, $entry->leftoverUnitCost(), (float) $entry->unit_price)
+                : [],
+        ]);
+        $breakdowns = $breakdowns->map(function (array $row) use ($entries) {
+            $entry = $entries->get($row['entry_id']);
+            $row['components'] = $row['components']->map(fn (array $component) => $component + [
+                'suggested_price' => $entry
+                    ? $this->suggester->salePrice((float) $component['unit_cost'], (float) $entry->unit_price, $entry->leftoverUnitCost())
+                    : null,
+            ]);
+            $row['suggestions'] = $entry
+                ? $this->suggester->perPortion($entry->product, $entry->leftoverUnitCost(), (float) $entry->unit_price)
+                : [];
+
+            return $row;
+        });
 
         $draftActuals = SalesActual::query()
             ->with(['customer:id,name', 'deliveryOrder:id,do_code'])

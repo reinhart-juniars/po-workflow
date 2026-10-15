@@ -4,15 +4,19 @@ use App\Models\Area;
 use App\Models\CashAccount;
 use App\Models\Customer;
 use App\Models\DeliveryOrder;
+use App\Models\InventoryItem;
 use App\Models\LeftoverBreakdown;
 use App\Models\LeftoverComponent;
 use App\Models\OtherIncome;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
+use App\Models\Recipe;
+use App\Models\RecipeItem;
 use App\Models\SalesActual;
 use App\Models\SalesActualItem;
 use App\Models\User;
+use App\Services\LeftoverComponentSuggester;
 use App\Services\LeftoverStockService;
 use App\Services\SalesActualService;
 use App\Support\Settings\Settings;
@@ -272,4 +276,70 @@ it('mengubah atau membatalkan rincian selama komponennya belum tersentuh', funct
     $this->post(route('salesapp.leftovers.components.dispose', $nasi), [
         'qty' => 301, 'disposed_at' => now()->toDateString(), 'reason' => 'basi',
     ])->assertSessionHasErrors('dispose_qty');
+});
+
+/**
+ * Revisi v3.1: saran rincian dari bagian resep. Resep Nasi Goreng: bagian nasi
+ * Rp 2.000, bagian telur Rp 2.000, sambal tanpa bagian Rp 1.000, dus (kemasan)
+ * Rp 1.000. Total biaya resep Rp 6.000; HPP tercatat saat dijual Rp 5.000.
+ */
+function resepBerbagian(Product $product): void
+{
+    $item = fn (string $name, string $unit, float $price, string $category = InventoryItem::CATEGORY_RAW_MATERIAL) => InventoryItem::query()->create([
+        'name' => $name, 'unit' => $unit, 'category' => $category, 'unit_price' => $price, 'is_active' => true,
+    ]);
+    $recipe = Recipe::query()->create(['name' => 'Nasi Goreng', 'jenis' => Recipe::JENIS_UTAMA, 'yield_qty' => 1, 'yield_unit' => 'porsi', 'ohc_pct' => 0, 'profit_pct' => 0.25, 'is_active' => true]);
+    $baris = [
+        ['nasi goreng', $item('Beras', 'gram', 20), 100, 'gram'],
+        ['telur ceplok', $item('Telur', 'butir', 2000), 1, 'butir'],
+        [null, $item('Sambal', 'gram', 100), 10, 'gram'],
+        [null, $item('Dus Nasi', 'pcs', 1000, InventoryItem::CATEGORY_PACKAGING), 1, 'pcs'],
+    ];
+    foreach ($baris as [$section, $bahan, $qty, $unit]) {
+        RecipeItem::query()->create(['recipe_id' => $recipe->id, 'section' => $section, 'inventory_item_id' => $bahan->id, 'raw_name' => $bahan->name, 'qty' => $qty, 'unit' => $unit]);
+    }
+    $product->forceFill(['recipe_id' => $recipe->id])->saveQuietly();
+}
+
+it('menyarankan komponen dan nilai rincian dari bagian resep, tanpa kemasan', function () {
+    $f = komponenFixture();
+    resepBerbagian($f['product']);
+
+    $saran = app(LeftoverComponentSuggester::class)->forPortions($f['product']->fresh(), 5000, 2);
+
+    // Nilai = HPP tercatat (5.000) x porsi biaya bagian, dibulatkan ke bawah.
+    expect($saran)->toBe([
+        ['name' => 'Nasi Goreng', 'qty' => 2.0, 'unit' => 'porsi', 'value' => 3333.33],
+        ['name' => 'Telur Ceplok', 'qty' => 2.0, 'unit' => 'porsi', 'value' => 3333.33],
+        ['name' => 'Sambal', 'qty' => 2.0, 'unit' => 'porsi', 'value' => 1666.66],
+    ]);
+
+    actingAs($f['sales'])->get(route('salesapp.leftovers.index'))
+        ->assertOk()
+        ->assertSee('data-suggestions=', false)
+        ->assertSee('Nasi Goreng, Telur Ceplok, Sambal')
+        ->assertDontSee('Dus Nasi');
+
+    // Saran langsung lolos aturan "tidak melebihi HPP" saat disimpan.
+    actingAs($f['sales'])->post(route('salesapp.leftovers.breakdowns.store', $f['entry']), [
+        'portion_qty' => 2, 'broken_at' => now()->toDateString(), 'components' => $saran,
+    ])->assertSessionHasNoErrors()->assertRedirect(route('salesapp.leftovers.index'));
+    expect(LeftoverComponent::query()->orderBy('id')->pluck('name')->all())->toBe(['Nasi Goreng', 'Telur Ceplok', 'Sambal']);
+
+    // Harga jual saran komponen = HPP per porsi komponen x markup menu asal (15.000 / 5.000).
+    actingAs($f['sales'])->get(route('salesapp.leftovers.index'))
+        ->assertOk()
+        ->assertSee('value="5000"', false)
+        ->assertSee('Saran dari HPP × markup menu asal');
+});
+
+it('tidak memberi saran untuk menu tanpa resep, rincian tetap bisa diketik manual', function () {
+    $f = komponenFixture();
+
+    expect(app(LeftoverComponentSuggester::class)->forPortions($f['product'], 5000, 2))->toBe([]);
+
+    actingAs($f['sales'])->get(route('salesapp.leftovers.index'))
+        ->assertOk()
+        ->assertSee('Rinci NASI GORENG per komponen')
+        ->assertDontSee('data-suggestions=', false);
 });

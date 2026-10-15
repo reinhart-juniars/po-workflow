@@ -53,7 +53,7 @@
                 <label class="mb-1.5 block">Customer</label>
                 <select name="customer_id" required>
                     @foreach($customers as $customer)
-                        <option value="{{ $customer->id }}" @selected(old('customer_id', $po->customer_id) == $customer->id)>
+                        <option value="{{ $customer->id }}" data-lapak="{{ $customer->is_lapak ? '1' : '0' }}" @selected(old('customer_id', $po->customer_id) == $customer->id)>
                             {{ $customer->name }}
                             @if($customer->phone)
                                 - {{ $customer->phone }}
@@ -157,15 +157,19 @@
                 @php $idx = 0; @endphp
                 @foreach ($po->items as $item)
                     <div class="item-row grid grid-cols-1 gap-2 rounded-xl border border-slate-200 bg-white p-3 md:grid-cols-12" data-index="{{ $idx }}">
-                        <div class="md:col-span-5">
+                        <div class="md:col-span-4">
                             <label class="mb-1 block text-xs text-slate-500">Produk</label>
                             <select name="items[{{ $idx }}][product_id]" class="product-select" required>
                                 @foreach ($products as $p)
-                                    <option value="{{ $p->id }}" data-price="{{ $p->base_price }}" @selected(old("items.$idx.product_id", $item->product_id) == $p->id)>
+                                    <option value="{{ $p->id }}" data-price="{{ $p->base_price }}" data-lapak-price="{{ $p->lapak_price }}" @selected(old("items.$idx.product_id", $item->product_id) == $p->id)>
                                         {{ $p->name }}
                                     </option>
                                 @endforeach
                             </select>
+                            <label class="mt-1.5 inline-flex items-center gap-1.5 text-xs text-slate-600">
+                                <input type="checkbox" name="items[{{ $idx }}][from_ready_stock]" value="1" class="h-4 w-4" @checked(old("items.$idx.from_ready_stock", $item->from_ready_stock))>
+                                Ambil dari stok siap (Rencana Masak)
+                            </label>
                         </div>
 
                         <div class="md:col-span-2">
@@ -173,7 +177,15 @@
                             <input type="number" name="items[{{ $idx }}][qty]" min="1" value="{{ old("items.$idx.qty", $item->qty) }}" class="qty-input" required>
                         </div>
 
-                        <div class="md:col-span-3">
+                        <div class="md:col-span-2">
+                            <label class="mb-1 block text-xs text-slate-500">Harga</label>
+                            <select name="items[{{ $idx }}][price_tier]" class="tier-select">
+                                <option value="normal" @selected(old("items.$idx.price_tier", $item->price_tier) === 'normal')>Normal</option>
+                                <option value="lapak" @selected(old("items.$idx.price_tier", $item->price_tier) === 'lapak')>Lapak</option>
+                            </select>
+                        </div>
+
+                        <div class="md:col-span-2">
                             <label class="mb-1 block text-xs text-slate-500">Keterangan</label>
                             <input type="text" name="items[{{ $idx }}][notes]" value="{{ old("items.$idx.notes", $item->notes) }}" class="notes-input" placeholder="contoh: tanpa sambal">
                         </div>
@@ -289,8 +301,12 @@ document.addEventListener('DOMContentLoaded', function () {
             const qtyInput = row.querySelector('.qty-input');
             const subtotalEl = row.querySelector('.item-subtotal');
 
-            const price = select && select.selectedOptions[0]
-                ? parseFloat(select.selectedOptions[0].dataset.price || 0)
+            const tierSelect = row.querySelector('.tier-select');
+            const opt = select ? select.selectedOptions[0] : null;
+            // Menu tanpa harga lapak tetap memakai harga normal (sama dengan aturan server).
+            const lapakPrice = opt ? opt.dataset.lapakPrice : '';
+            const price = opt
+                ? parseFloat((tierSelect && tierSelect.value === 'lapak' && lapakPrice) ? lapakPrice : (opt.dataset.price || 0))
                 : 0;
             const qty = qtyInput ? parseFloat(qtyInput.value || 0) : 0;
             const sub = price * qty;
@@ -313,7 +329,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const qtyInput = row.querySelector('.qty-input');
         const remove = row.querySelector('.remove-row');
 
+        const tierSelect = row.querySelector('.tier-select');
         if (select) select.addEventListener('change', recalcTotal);
+        if (tierSelect) tierSelect.addEventListener('change', recalcTotal);
         if (qtyInput) qtyInput.addEventListener('input', recalcTotal);
         if (remove) {
             remove.addEventListener('click', () => {
@@ -327,23 +345,37 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (btnAddItem) {
         btnAddItem.addEventListener('click', () => {
+            // Baris baru: harga lapak otomatis bila customer PO ditandai lapak.
+            const customerOpt = document.querySelector('select[name=customer_id]')?.selectedOptions[0];
+            const defaultTier = customerOpt && customerOpt.dataset.lapak === '1' ? 'lapak' : 'normal';
             const wrapper = document.createElement('div');
             wrapper.innerHTML = `
             <div class="item-row grid grid-cols-1 gap-2 rounded-xl border border-slate-200 bg-white p-3 md:grid-cols-12" data-index="${idx}">
-                <div class="md:col-span-5">
+                <div class="md:col-span-4">
                     <label class="mb-1 block text-xs text-slate-500">Produk</label>
                     <select name="items[${idx}][product_id]" class="product-select" required>
                         <option value="">-- Pilih Menu --</option>
                         @foreach ($products as $p)
-                            <option value="{{ $p->id }}" data-price="{{ $p->base_price }}">{{ $p->name }}</option>
+                            <option value="{{ $p->id }}" data-price="{{ $p->base_price }}" data-lapak-price="{{ $p->lapak_price }}">{{ $p->name }}</option>
                         @endforeach
                     </select>
+                    <label class="mt-1.5 inline-flex items-center gap-1.5 text-xs text-slate-600">
+                        <input type="checkbox" name="items[${idx}][from_ready_stock]" value="1" class="h-4 w-4">
+                        Ambil dari stok siap (Rencana Masak)
+                    </label>
                 </div>
                 <div class="md:col-span-2">
                     <label class="mb-1 block text-xs text-slate-500">Qty</label>
                     <input type="number" name="items[${idx}][qty]" min="1" class="qty-input" placeholder="Qty" required>
                 </div>
-                <div class="md:col-span-3">
+                <div class="md:col-span-2">
+                    <label class="mb-1 block text-xs text-slate-500">Harga</label>
+                    <select name="items[${idx}][price_tier]" class="tier-select">
+                        <option value="normal" ${defaultTier === 'normal' ? 'selected' : ''}>Normal</option>
+                        <option value="lapak" ${defaultTier === 'lapak' ? 'selected' : ''}>Lapak</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2">
                     <label class="mb-1 block text-xs text-slate-500">Keterangan</label>
                     <input type="text" name="items[${idx}][notes]" class="notes-input" placeholder="contoh: tanpa sambal">
                 </div>

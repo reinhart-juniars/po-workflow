@@ -13,8 +13,7 @@ class ProductsExport implements FromCollection, ShouldAutoSize, WithHeadings, Wi
 {
     public function __construct(
         protected Collection $products
-    ) {
-    }
+    ) {}
 
     public function collection(): Collection
     {
@@ -32,6 +31,7 @@ class ProductsExport implements FromCollection, ShouldAutoSize, WithHeadings, Wi
             'overhead_cost',
             'profit',
             'harga_jual',
+            'harga_lapak',
             'menu_3s',
             'aktif',
         ];
@@ -49,6 +49,7 @@ class ProductsExport implements FromCollection, ShouldAutoSize, WithHeadings, Wi
             $product->overhead_cost !== null ? (float) $product->overhead_cost : null,
             $product->profit !== null ? (float) $product->profit : null,
             (float) $product->base_price,
+            $product->lapak_price !== null ? (float) $product->lapak_price : null,
             $product->is_3s ? 1 : 0,
             $product->active ? 1 : 0,
         ];

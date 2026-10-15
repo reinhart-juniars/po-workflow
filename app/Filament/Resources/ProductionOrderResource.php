@@ -89,7 +89,7 @@ class ProductionOrderResource extends Resource
                                 $spk = $record?->spk;
 
                                 if (! $spk) {
-                                    return 'Disusun manual';
+                                    return $record?->is_ready_stock ? 'Rencana Masak (stok siap)' : 'Disusun manual';
                                 }
 
                                 // Rantai Admin -> Produksi: nomor PO di slot ini
@@ -98,6 +98,16 @@ class ProductionOrderResource extends Resource
 
                                 return new \Illuminate\Support\HtmlString(e($spk->spk_code).($links !== '' ? ' &middot; PO: '.$links : ' &middot; tanpa PO'));
                             }),
+
+                        // Rencana Masak: disusun gudang sebelum PO masuk (lapak yang pasti);
+                        // admin mendistribusikan porsinya ke PO bertanggal kirim sama.
+                        Forms\Components\Toggle::make('is_ready_stock')
+                            ->label('Rencana Masak (stok siap untuk didistribusikan ke PO)')
+                            ->helperText('Porsi rencana ini diambil admin lewat centang "Ambil dari stok siap" di PO bertanggal kirim sama. Sisa yang tidak terdistribusi menjadi Barang Sisa.')
+                            ->default(fn () => ! auth()->user()?->can('production.manage'))
+                            ->disabled(fn (?ProductionOrder $record) => $record !== null || ! auth()->user()?->can('production.manage'))
+                            ->dehydrated(fn (?ProductionOrder $record) => $record === null)
+                            ->columnSpanFull(),
 
                         Forms\Components\Textarea::make('notes')
                             ->label('Catatan')
@@ -225,6 +235,7 @@ class ProductionOrderResource extends Resource
                 TextColumn::make('spk.spk_code')
                     ->label('Slot SPK')
                     ->placeholder('Manual')
+                    ->getStateUsing(fn (ProductionOrder $record) => $record->spk?->spk_code ?? ($record->is_ready_stock ? 'Rencana Masak' : null))
                     ->toggleable(),
             ])
             ->filters([

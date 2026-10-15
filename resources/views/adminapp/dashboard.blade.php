@@ -63,6 +63,49 @@
   </article>
 </section>
 
+{{-- Revisi v3.1: Rencana Masak hari ini dari gudang; porsinya diambil lewat centang "Ambil dari stok siap" di PO. --}}
+<section class="table-shell mt-4">
+  <div class="table-head flex flex-wrap items-center justify-between gap-2">
+    <span>
+      Rencana Masak Hari Ini
+      <span class="ml-2 text-xs font-normal text-slate-500">
+        disiapkan {{ number_format($readyStockToday->sum('planned'), 0, ',', '.') }}
+        • terdistribusi {{ number_format($readyStockToday->sum('distributed'), 0, ',', '.') }}
+        • sisa {{ number_format($readyStockToday->sum('remaining'), 0, ',', '.') }} porsi
+      </span>
+    </span>
+    @can('production.view')
+      <a href="{{ route('filament.admin.pages.rencana-masak') }}" class="text-xs font-semibold text-brand-600 underline">Buka Rencana Masak</a>
+    @endcan
+  </div>
+  <div class="data-table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Menu</th>
+          <th class="text-right">Disiapkan</th>
+          <th class="text-right">Terdistribusi ke PO</th>
+          <th class="text-right">Sisa</th>
+        </tr>
+      </thead>
+      <tbody>
+        @forelse ($readyStockToday as $row)
+          <tr>
+            <td class="font-medium">{{ $row['recipe'] }}</td>
+            <td class="text-right tabular-nums">{{ number_format($row['planned'], 0, ',', '.') }}</td>
+            <td class="text-right tabular-nums">{{ number_format($row['distributed'], 0, ',', '.') }}</td>
+            <td class="text-right tabular-nums font-semibold {{ $row['remaining'] > 0 ? 'text-amber-600' : 'text-slate-400' }}">{{ number_format($row['remaining'], 0, ',', '.') }}</td>
+          </tr>
+        @empty
+          <tr class="empty-row">
+            <td colspan="4" class="py-6 text-center text-sm text-slate-500">Belum ada Rencana Masak untuk hari ini.</td>
+          </tr>
+        @endforelse
+      </tbody>
+    </table>
+  </div>
+</section>
+
 <section class="table-shell mt-4">
   <div class="table-head">
     Daftar PO Aktif

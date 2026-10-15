@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\WebsiteCatalog;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -20,6 +21,7 @@ class Product extends Model
         'sku',
         'unit',
         'base_price',
+        'lapak_price',
         'raw_material_cost',
         'overhead_cost',
         'profit',
@@ -32,6 +34,7 @@ class Product extends Model
         'photo_path',
         'photo_updated_at',
         'show_on_website',
+        'website_category',
     ];
 
     /** Sama dengan default kolom: menu baru tidak tampil di website sampai dicentang marketing. */
@@ -47,6 +50,7 @@ class Product extends Model
         'needs_recipe' => 'boolean',
         'cost_synced_at' => 'datetime',
         'base_price' => 'decimal:2',
+        'lapak_price' => 'decimal:2',
         'raw_material_cost' => 'decimal:2',
         'overhead_cost' => 'decimal:2',
         'profit' => 'decimal:2',
@@ -254,6 +258,25 @@ class Product extends Model
         );
     }
 
+    /**
+     * Tingkat harga yang benar-benar berlaku untuk menu ini: harga lapak hanya
+     * bila menu punya harga lapak; selain itu harga normal.
+     */
+    public function effectivePriceTier(?string $tier): string
+    {
+        return $tier === PurchaseOrderItem::TIER_LAPAK && $this->lapak_price !== null
+            ? PurchaseOrderItem::TIER_LAPAK
+            : PurchaseOrderItem::TIER_NORMAL;
+    }
+
+    /** Harga jual menu untuk tingkat harga tertentu (normal / lapak). */
+    public function priceForTier(?string $tier): float
+    {
+        return $this->effectivePriceTier($tier) === PurchaseOrderItem::TIER_LAPAK
+            ? (float) $this->lapak_price
+            : (float) ($this->base_price ?? 0);
+    }
+
     public static function normalizeSku(mixed $value): ?string
     {
         $sku = trim((string) preg_replace('/\s+/u', ' ', (string) $value));
@@ -261,11 +284,19 @@ class Product extends Model
         return $sku === '' ? null : $sku;
     }
 
-    /** Menu yang terbit di website: aktif, dicentang marketing, dan punya SKU (= namanya di website). */
+    /**
+     * Menu yang terbit di website: aktif, dicentang marketing, punya SKU (= namanya
+     * di website), dan berkategori website yang cocok dengan brand-nya (is_3s).
+     */
     public function scopeOnWebsite(Builder $query): Builder
     {
         return $query->where('active', true)
             ->where('show_on_website', true)
-            ->whereNotNull('sku');
+            ->whereNotNull('sku')
+            ->where(fn (Builder $brand) => $brand
+                ->where(fn (Builder $q) => $q->where('is_3s', true)
+                    ->whereIn('website_category', array_keys(WebsiteCatalog::categoriesFor(WebsiteCatalog::BRAND_3S))))
+                ->orWhere(fn (Builder $q) => $q->where('is_3s', false)
+                    ->whereIn('website_category', array_keys(WebsiteCatalog::categoriesFor(WebsiteCatalog::BRAND_WWP)))));
     }
 }

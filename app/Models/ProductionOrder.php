@@ -30,6 +30,7 @@ class ProductionOrder extends Model
         'number',
         'title',
         'spk_id',
+        'is_ready_stock',
         'production_date',
         'production_time',
         'status',
@@ -43,6 +44,7 @@ class ProductionOrder extends Model
     ];
 
     protected $casts = [
+        'is_ready_stock' => 'boolean',
         'production_date' => 'date',
         'completed_at' => 'datetime',
     ];
@@ -84,6 +86,25 @@ class ProductionOrder extends Model
     public function isCancelled(): bool
     {
         return $this->status === self::STATUS_CANCELLED;
+    }
+
+    /**
+     * Rencana Masak (stok siap): disusun inventory sebelum PO masuk; porsinya
+     * didistribusikan admin ke item PO bertanggal kirim sama.
+     */
+    public function scopeReadyStock(Builder $query): Builder
+    {
+        return $query->where('is_ready_stock', true);
+    }
+
+    /**
+     * Boleh menyusun/mengisi SPK ini: pemegang production.manage untuk semua SPK,
+     * pemegang plan.manage (gudang) hanya untuk Rencana Masak.
+     */
+    public function canBeManagedBy(?User $user): bool
+    {
+        return $user !== null
+            && ($user->can('production.manage') || ($this->is_ready_stock && $user->can('plan.manage')));
     }
 
     /** Baris menu masih boleh diubah. */

@@ -19,6 +19,9 @@ class ProductionOrderLine extends Model
 
     public const SOURCE_MASTER_MENU = 'master_menu';
 
+    /** Dari Excel rencana masak mingguan klien (ReadyStockPlanImporter); disusun ulang tiap impor. */
+    public const SOURCE_IMPORT = 'impor';
+
     protected $fillable = [
         'production_order_id',
         'sort_order',

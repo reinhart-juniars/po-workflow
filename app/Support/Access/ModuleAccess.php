@@ -48,6 +48,7 @@ class ModuleAccess
         'production.view' => 'Lihat SPK produksi, form kebutuhan, lembar kerja, plating',
         'production.manage' => 'Kelola SPK produksi (susun, isi form, lembar kerja, pelaksana)',
         'production.complete' => 'Tutup SPK produksi (posting pemakaian ke kartu stok)',
+        'plan.manage' => 'Susun Rencana Masak (stok siap untuk lapak) beserta rencana belanjanya',
         'requisition.approve' => 'Setujui form kebutuhan',
         'requisition.check' => 'Periksa form kebutuhan (barang dibeli)',
         'ledger.view' => 'Lihat kartu stok dan perbandingan HPP',
@@ -69,6 +70,7 @@ class ModuleAccess
             'inventory.view', 'inventory.manage',
             'recipe.view', 'recipe.manage',
             'production.view', 'production.manage', 'production.complete',
+            'plan.manage',
             'requisition.approve', 'requisition.check',
             'ledger.view',
             'settings.manage',
@@ -81,6 +83,7 @@ class ModuleAccess
             'inventory.view', 'inventory.manage',
             'recipe.view',
             'production.view', 'production.manage', 'production.complete',
+            'plan.manage',
             'requisition.approve', 'requisition.check',
             'ledger.view',
             'notification.price', 'notification.profit',
@@ -98,10 +101,12 @@ class ModuleAccess
         // opname, saldo awal; menyetujui / menolak Form Kebutuhan yang
         // diajukan produksi, lalu memeriksanya saat barang dibeli. Resep hanya
         // dibaca. Tidak menyusun/menutup SPK produksi.
+        // Revisi v3.1: gudang juga menyusun Rencana Masak (stok siap lapak) dan
+        // rencana belanjanya; SPK Produksi slot tetap dipegang produksi.
         'inventory' => [
             'inventory.view', 'inventory.manage',
             'recipe.view',
-            'production.view',
+            'production.view', 'plan.manage',
             'requisition.approve', 'requisition.check',
             'ledger.view',
             'notification.price',

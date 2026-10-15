@@ -22,7 +22,7 @@ class EditProductionOrder extends EditRecord
 
         return [
             Actions\Action::make('siap')
-                ->authorize('production.manage')
+                ->authorize(fn () => $order->canBeManagedBy(auth()->user()))
                 ->label('Tandai Siap Produksi')
                 ->icon('heroicon-m-check')
                 ->color('info')
@@ -47,7 +47,7 @@ class EditProductionOrder extends EditRecord
             // Aksi sekunder dikelompokkan supaya bilah tombol muat di layar laptop.
             Actions\ActionGroup::make([
                 Actions\Action::make('segarkan')
-                    ->authorize('production.manage')
+                    ->authorize(fn () => $order->canBeManagedBy(auth()->user()))
                     ->label('Segarkan dari PO')
                     ->icon('heroicon-m-arrow-path')
                     ->visible(fn () => $order->spk_id !== null && $order->isEditable())
@@ -82,7 +82,7 @@ class EditProductionOrder extends EditRecord
                     ->action(fn () => app(ProductionDocumentService::class)->productionOrderPdf($order)),
 
                 Actions\Action::make('batalkan')
-                    ->authorize('production.manage')
+                    ->authorize(fn () => $order->canBeManagedBy(auth()->user()))
                     ->label('Batalkan SPK')
                     ->icon('heroicon-m-x-mark')
                     ->color('danger')

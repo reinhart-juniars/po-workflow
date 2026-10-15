@@ -51,6 +51,7 @@
                         data-address="{{ $customer->address }}"
                         data-phone="{{ $customer->phone }}"
                         data-area-id="{{ $customer->area_id }}"
+                        data-lapak="{{ $customer->is_lapak ? '1' : '0' }}"
                         {{ old('customer_id') == $customer->id ? 'selected' : '' }}>
                     {{ $customer->name }}
                     @if($customer->phone)
@@ -197,14 +198,15 @@
 
         {{-- Form kecil untuk tambah 1 item --}}
         <div class="grid grid-cols-12 gap-2 mb-3 items-end">
-          <div class="col-span-5">
+          <div class="col-span-4">
             <label class="block text-xs text-gray-600 mb-1">Produk</label>
             <select id="itemProduct"
                     class="w-full border rounded px-2 py-2 text-sm">
               <option value="">-- Pilih Produk --</option>
               @foreach ($products as $p)
                 <option value="{{ $p->id }}"
-                        data-price="{{ $p->base_price }}">
+                        data-price="{{ $p->base_price }}"
+                        data-lapak-price="{{ $p->lapak_price }}">
                   {{ $p->name }}
                 </option>
               @endforeach
@@ -221,7 +223,16 @@
                   placeholder="-">
           </div>
 
-          <div class="col-span-3">
+          {{-- Harga lapak = harga khusus lapak owner; otomatis dipilih untuk customer lapak. --}}
+          <div class="col-span-2">
+            <label class="block text-xs text-gray-600 mb-1">Harga</label>
+            <select id="itemTier" class="w-full border rounded px-2 py-2 text-sm">
+              <option value="normal">Normal</option>
+              <option value="lapak">Lapak</option>
+            </select>
+          </div>
+
+          <div class="col-span-2">
             <label class="block text-xs text-gray-600 mb-1">Keterangan</label>
             <input id="itemNotes"
                   type="text"
@@ -236,6 +247,18 @@
               + Tambah Item
             </button>
           </div>
+        </div>
+
+        {{-- Revisi v3.1: porsi yang sudah disiapkan gudang lewat Rencana Masak bertanggal kirim sama. --}}
+        <div class="-mt-1 mb-3 flex flex-wrap items-center gap-2 text-xs text-gray-600">
+          <label class="inline-flex items-center gap-1.5">
+            <input id="itemReady" type="checkbox" class="h-4 w-4">
+            Ambil dari stok siap (Rencana Masak)
+          </label>
+          <span id="itemReadyHint" class="text-gray-400"></span>
+          @can('production.view')
+            <a href="{{ route('filament.admin.pages.rencana-masak') }}" target="_blank" class="ml-auto text-brand-600 underline">Lihat Rencana Masak &amp; stok siap</a>
+          @endcan
         </div>
 
         {{-- Panel daftar item --}}
@@ -349,7 +372,43 @@ document.addEventListener('DOMContentLoaded', function () {
     const itemProduct       = document.getElementById('itemProduct');
     const itemQty           = document.getElementById('itemQty');
     const itemNotes         = document.getElementById('itemNotes');
+    const itemTier          = document.getElementById('itemTier');
+    const itemReady         = document.getElementById('itemReady');
+    const itemReadyHint     = document.getElementById('itemReadyHint');
+    const deliveryDate      = document.querySelector('input[name=delivery_date]');
+
+    // Petunjuk sisa stok siap untuk menu terpilih pada tanggal kirim. Hanya petunjuk:
+    // server tetap menolak bila porsinya keburu diambil PO lain.
+    const readyCache = {};
+    async function refreshReadyHint() {
+        if (!itemReady || !itemReadyHint) return;
+        const date = deliveryDate ? deliveryDate.value : '';
+        const productId = itemProduct ? itemProduct.value : '';
+        if (!date || !productId) { itemReadyHint.textContent = ''; return; }
+        try {
+            readyCache[date] ??= fetch(`{{ route('adminapp.ready-stock.available') }}?date=${encodeURIComponent(date)}`, { headers: { Accept: 'application/json' } }).then(r => r.json());
+            const data = await readyCache[date];
+            const left = data.products ? data.products[productId] : undefined;
+            itemReadyHint.textContent = left === undefined ? '— tidak ada di Rencana Masak tanggal ini' : `— sisa ${Number(left).toLocaleString('id-ID')} porsi`;
+            itemReady.disabled = left === undefined || left <= 0;
+            if (itemReady.disabled) itemReady.checked = false;
+        } catch (e) {
+            itemReadyHint.textContent = '';
+        }
+    }
+    if (itemProduct) itemProduct.addEventListener('change', refreshReadyHint);
+    if (deliveryDate) deliveryDate.addEventListener('change', refreshReadyHint);
     const btnAddItem        = document.getElementById('btnAddItem');
+
+    // Customer lapak: pilihan harga item berikutnya otomatis "Lapak" (tetap bisa diganti).
+    if (customerSelect && itemTier) {
+        const syncDefaultTier = () => {
+            const opt = customerSelect.options[customerSelect.selectedIndex];
+            itemTier.value = opt && opt.dataset.lapak === '1' ? 'lapak' : 'normal';
+        };
+        customerSelect.addEventListener('change', syncDefaultTier);
+        syncDefaultTier();
+    }
     const itemsPanel        = document.getElementById('itemsPanel');
     const noItemsHint       = document.getElementById('noItemsHint');
     const itemsTotalDisplay = document.getElementById('itemsTotalDisplay');
@@ -371,7 +430,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    function addItemRow(prodId, prodName, price, qty, notes) {
+    function addItemRow(prodId, prodName, price, qty, notes, tier, ready) {
         if (!itemsPanel) return;
 
         const subtotal = price * qty;
@@ -386,7 +445,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Bagian teks / tampilan
         wrapper.innerHTML = `
             <div>
-                <div class="font-semibold">${prodName}</div>
+                <div class="font-semibold">${prodName}${tier === 'lapak' ? ' <span class="ml-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">Harga Lapak</span>' : ''}${ready ? ' <span class="ml-1 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">Stok Siap</span>' : ''}</div>
                 <div class="text-xs text-gray-500">
                     Qty: ${qty} × ${price.toLocaleString('id-ID')} =
                     <span data-item-subtotal="${subtotal}">
@@ -426,7 +485,19 @@ document.addEventListener('DOMContentLoaded', function () {
         wrapper.appendChild(hidProduct);
         wrapper.appendChild(hidQty);
         wrapper.appendChild(hidPrice);
+        const hidTier    = document.createElement('input');
+        hidTier.type     = 'hidden';
+        hidTier.name     = `items[${itemsIndex}][price_tier]`;
+        hidTier.value    = tier;
+
         wrapper.appendChild(hidNotes);
+        wrapper.appendChild(hidTier);
+
+        const hidReady   = document.createElement('input');
+        hidReady.type    = 'hidden';
+        hidReady.name    = `items[${itemsIndex}][from_ready_stock]`;
+        hidReady.value   = ready ? 1 : 0;
+        wrapper.appendChild(hidReady);
 
         // Tombol hapus
         const removeBtn = wrapper.querySelector('.removeItem');
@@ -454,7 +525,10 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             const prodName = opt.textContent.trim();
-            const price    = parseFloat(opt.getAttribute('data-price') || '0');
+            // Menu tanpa harga lapak tetap memakai harga normal (server menerapkan aturan yang sama).
+            const lapakPrice = opt.getAttribute('data-lapak-price');
+            const tier     = itemTier && itemTier.value === 'lapak' && lapakPrice ? 'lapak' : 'normal';
+            const price    = parseFloat(tier === 'lapak' ? lapakPrice : (opt.getAttribute('data-price') || '0'));
             const qty      = parseFloat(itemQty.value || '0');
             const notes    = (itemNotes.value || '').trim();
 
@@ -463,7 +537,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            addItemRow(prodId, prodName, price, qty, notes);
+            addItemRow(prodId, prodName, price, qty, notes, tier, itemReady && itemReady.checked);
+            if (itemReady) itemReady.checked = false;
 
             // reset mini form
             itemProduct.selectedIndex = 0;

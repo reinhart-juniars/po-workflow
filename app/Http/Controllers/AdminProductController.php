@@ -194,6 +194,8 @@ class AdminProductController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'unit' => ['required', 'string', 'max:50'],
             'base_price' => ['required', 'numeric', 'min:0'],
+            // Kosong = menu ini tidak punya harga khusus lapak (item lapak memakai harga normal).
+            'lapak_price' => ['nullable', 'numeric', 'min:0'],
             'raw_material_cost' => ['nullable', 'numeric', 'min:0'],
             'overhead_cost' => ['nullable', 'numeric', 'min:0'],
             'active' => ['nullable', 'boolean'],

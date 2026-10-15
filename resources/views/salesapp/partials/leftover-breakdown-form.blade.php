@@ -1,10 +1,12 @@
 {{--
     Form rincian Barang Sisa per komponen (diketik bebas).
     Parameter: $action, $method ('POST'|'PUT'), $key (unik per form), $unitCost (HPP acuan per porsi),
-    $portionQty, $maxPortion, $components (list {name, qty, unit, value}), $withDate, $notes.
+    $portionQty, $maxPortion, $components (list {name, qty, unit, value}), $withDate, $notes,
+    $suggestions (opsional; saran per porsi dari bagian resep, LeftoverComponentSuggester::perPortion).
 --}}
 @php
-    $blankRows = max(2, 5 - count($components));
+    $suggestions ??= [];
+    $blankRows = max(2, 5 - count($components), count($suggestions) - count($components));
     $rows = array_merge($components, array_fill(0, $blankRows, ['name' => '', 'qty' => '', 'unit' => '', 'value' => '']));
     $columns = 'sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]';
 @endphp
@@ -34,6 +36,13 @@
         </div>
     </div>
 
+    @if ($suggestions)
+        <div class="flex flex-wrap items-center gap-2 rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-800">
+            <button type="button" class="btn-ghost js-bd-suggest" data-suggestions='@json($suggestions)'>Isi dari HPP resep</button>
+            <span>{{ count($suggestions) }} bagian resep: {{ collect($suggestions)->pluck('name')->implode(', ') }}. Nilai dibagi menurut porsi biaya tiap bagian; kemasan tidak dihitung.</span>
+        </div>
+    @endif
+
     <p class="text-xs text-slate-500">
         Komponen dan nilainya diketik sendiri. Acuan: HPP Rp {{ number_format((float) $unitCost, 0, ',', '.') }} per porsi.
         Total nilai komponen tidak boleh melebihi HPP porsi yang dirinci; sisanya dicatat sebagai waste. Baris kosong diabaikan.
@@ -44,7 +53,7 @@
             <span>Komponen</span><span class="text-right">Jumlah</span><span>Satuan</span><span class="text-right">Nilai HPP (Rp)</span>
         </div>
         @foreach ($rows as $index => $row)
-            <div class="grid grid-cols-3 gap-2 {{ $columns }}">
+            <div class="grid grid-cols-3 gap-2 {{ $columns }} js-bd-row">
                 <input type="text" name="components[{{ $index }}][name]" value="{{ $row['name'] }}" maxlength="100"
                     placeholder="mis. telur ceplok" aria-label="Nama komponen {{ $index + 1 }}" class="form-control col-span-3 sm:col-span-1">
                 <input type="number" name="components[{{ $index }}][qty]" value="{{ $row['qty'] }}" step="0.01" min="0"

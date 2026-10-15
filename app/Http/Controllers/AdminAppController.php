@@ -16,6 +16,7 @@ use App\Models\Spk;
 use App\Models\User;
 use App\Services\AutoNumberService;
 use App\Services\ProductionOrderService;
+use App\Services\ReadyStockService;
 use App\Support\UiLabel;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -63,6 +64,8 @@ class AdminAppController extends Controller
             'posToday' => $filteredPos,
             'allPosToday' => $openPos,
             'statusFilter' => $statusFilter,
+            // Revisi v3.1: Rencana Masak hari ini -- porsi siap yang bisa didistribusikan ke PO.
+            'readyStockToday' => app(ReadyStockService::class)->summary(Carbon::today(), Carbon::today()),
         ]);
     }
 
@@ -71,7 +74,7 @@ class AdminAppController extends Controller
         $today = Carbon::today();
 
         // 🔹 ambil master customer aktif
-        $customers = Customer::select('id', 'name', 'phone', 'address', 'area_id')
+        $customers = Customer::select('id', 'name', 'phone', 'address', 'area_id', 'is_lapak')
             ->where('active', true)
             ->orderBy('name')
             ->get();
@@ -98,7 +101,7 @@ class AdminAppController extends Controller
 
         $products = Product::where('active', true)
             ->orderBy('name')
-            ->get(['id', 'name', 'base_price']);
+            ->get(['id', 'name', 'base_price', 'lapak_price']);
 
         $previewPo = $this
             ->previewPoNumber();
@@ -165,7 +168,7 @@ class AdminAppController extends Controller
                 }
             })
             ->orderBy('name')
-            ->get(['id', 'name', 'base_price']);
+            ->get(['id', 'name', 'base_price', 'lapak_price']);
 
         $cashAccounts = CashAccount::where('is_active', true)
             ->orderBy('name')
@@ -192,6 +195,8 @@ class AdminAppController extends Controller
             'items.*.product_id' => ['required', 'exists:products,id'],
             'items.*.qty' => ['required', 'integer', 'min:1'],
             'items.*.notes' => ['nullable', 'string', 'max:255'],
+            'items.*.price_tier' => ['nullable', Rule::in([PurchaseOrderItem::TIER_NORMAL, PurchaseOrderItem::TIER_LAPAK])],
+            'items.*.from_ready_stock' => ['nullable', 'boolean'],
         ]);
 
         // Dua admin yang menyimpan di detik yang sama bisa mendapat nomor PO
@@ -226,9 +231,13 @@ class AdminAppController extends Controller
             $totalQty = 0;
             $totalAmount = 0;
 
+            $defaultTier = $this->defaultPriceTier((int) $data['customer_id']);
+            app(ReadyStockService::class)->assertAvailable($data['delivery_date'], $data['items']);
+
             foreach ($data['items'] as $row) {
                 $product = Product::find($row['product_id']);
-                $price = $product->base_price ?? 0;
+                $tier = $product->effectivePriceTier($row['price_tier'] ?? $defaultTier);
+                $price = $product->priceForTier($tier);
                 $qty = (int) $row['qty'];
                 $notes = $row['notes'] ?? null;
 
@@ -241,6 +250,8 @@ class AdminAppController extends Controller
                     'product_id' => $product->id,
                     'qty' => $qty,
                     'unit_price' => $price,
+                    'price_tier' => $tier,
+                    'from_ready_stock' => (bool) ($row['from_ready_stock'] ?? false),
                     'raw_material_cost' => $product->raw_material_cost,
                     'overhead_cost' => $product->overhead_cost,
                     'subtotal' => $subtotal,
@@ -324,6 +335,8 @@ class AdminAppController extends Controller
             'items.*.product_id' => ['required', 'exists:products,id'],
             'items.*.qty' => ['required', 'integer', 'min:1'],
             'items.*.notes' => ['nullable', 'string', 'max:255'],
+            'items.*.price_tier' => ['nullable', Rule::in([PurchaseOrderItem::TIER_NORMAL, PurchaseOrderItem::TIER_LAPAK])],
+            'items.*.from_ready_stock' => ['nullable', 'boolean'],
             'edit_reason' => ['required', 'string', 'max:1000'],
         ]);
 
@@ -368,9 +381,12 @@ class AdminAppController extends Controller
                 'receivable_status' => $paymentState['receivable_status'],
             ]);
 
-            // Snapshot harga & cost lama per produk supaya edit tidak menarik harga master terbaru
-            // untuk produk yang memang sudah ada di PO ini.
-            $existingByProduct = $po->items->groupBy('product_id');
+            // Snapshot harga & cost lama per produk + tingkat harga supaya edit tidak menarik
+            // harga master terbaru untuk item yang memang sudah ada di PO ini. Mengganti
+            // tingkat harga (normal <-> lapak) mengambil harga master tingkat yang baru.
+            $existingByProduct = $po->items->groupBy(fn (PurchaseOrderItem $item) => $item->product_id.'|'.$item->price_tier);
+            $defaultTier = $this->defaultPriceTier((int) $data['customer_id']);
+            app(ReadyStockService::class)->assertAvailable($data['delivery_date'], $data['items'], $po->id);
 
             $po->items()->delete();
 
@@ -382,10 +398,11 @@ class AdminAppController extends Controller
                 $qty = (int) $row['qty'];
                 $notes = $row['notes'] ?? null;
 
-                $existing = $existingByProduct->get($product->id)?->first();
+                $tier = $product->effectivePriceTier($row['price_tier'] ?? $defaultTier);
+                $existing = $existingByProduct->get($product->id.'|'.$tier)?->first();
                 $price = $existing
                     ? (float) $existing->unit_price
-                    : (float) ($product->base_price ?? 0);
+                    : $product->priceForTier($tier);
                 $rawMaterialCost = $existing
                     ? $existing->raw_material_cost
                     : $product->raw_material_cost;
@@ -401,6 +418,8 @@ class AdminAppController extends Controller
                     'product_id' => $product->id,
                     'qty' => $qty,
                     'unit_price' => $price,
+                    'price_tier' => $tier,
+                    'from_ready_stock' => (bool) ($row['from_ready_stock'] ?? false),
                     'raw_material_cost' => $rawMaterialCost,
                     'overhead_cost' => $overheadCost,
                     'subtotal' => $subtotal,
@@ -462,16 +481,45 @@ class AdminAppController extends Controller
      *
      * @param  array<int, array<string, mixed>>  $rows
      */
+    /**
+     * Sisa stok siap per produk untuk tanggal kirim tertentu (JSON untuk form PO).
+     * `po` = PO yang sedang diubah, supaya porsinya sendiri tidak dihitung terpakai.
+     */
+    public function readyStockAvailable(Request $r)
+    {
+        $data = $r->validate([
+            'date' => ['required', 'date'],
+            'po' => ['nullable', 'integer'],
+        ]);
+
+        return response()->json([
+            'products' => app(ReadyStockService::class)->remainingByProduct(Carbon::parse($data['date']), $data['po'] ?? null),
+        ]);
+    }
+
+    /**
+     * Tingkat harga bawaan item PO yang tidak memilih sendiri: harga lapak untuk
+     * customer yang ditandai lapak, harga normal untuk yang lain.
+     */
+    protected function defaultPriceTier(int $customerId): string
+    {
+        return Customer::query()->whereKey($customerId)->value('is_lapak')
+            ? PurchaseOrderItem::TIER_LAPAK
+            : PurchaseOrderItem::TIER_NORMAL;
+    }
+
     protected function purchaseOrderItemsChanged(PurchaseOrder $po, array $rows): bool
     {
+        // Pindah antara "dimasak di SPK slot" dan "ambil dari stok siap" juga mengubah
+        // isi dapur, jadi tanda stok siap ikut menjadi kunci pembanding.
         $normalize = fn ($pairs) => collect($pairs)
-            ->groupBy('product_id')
+            ->groupBy(fn (array $pair) => $pair['product_id'].'|'.($pair['ready'] ? 1 : 0))
             ->map(fn ($group) => (int) $group->sum('qty'))
             ->sortKeys()
             ->all();
 
-        $old = $normalize($po->items->map(fn (PurchaseOrderItem $item) => ['product_id' => (int) $item->product_id, 'qty' => (int) $item->qty]));
-        $new = $normalize(collect($rows)->map(fn (array $row) => ['product_id' => (int) $row['product_id'], 'qty' => (int) $row['qty']]));
+        $old = $normalize($po->items->map(fn (PurchaseOrderItem $item) => ['product_id' => (int) $item->product_id, 'qty' => (int) $item->qty, 'ready' => (bool) $item->from_ready_stock]));
+        $new = $normalize(collect($rows)->map(fn (array $row) => ['product_id' => (int) $row['product_id'], 'qty' => (int) $row['qty'], 'ready' => filter_var($row['from_ready_stock'] ?? false, FILTER_VALIDATE_BOOLEAN)]));
 
         return $old !== $new;
     }

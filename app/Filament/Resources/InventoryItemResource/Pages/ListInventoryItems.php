@@ -3,12 +3,14 @@
 namespace App\Filament\Resources\InventoryItemResource\Pages;
 
 use App\Exports\InventoryItemsExport;
+use App\Exports\StockReportExport;
 use App\Filament\Resources\InventoryItemResource;
 use App\Imports\InventoryItemsImport;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Support\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ListInventoryItems extends ListRecords
@@ -20,8 +22,31 @@ class ListInventoryItems extends ListRecords
         return [
             Actions\CreateAction::make()->label('Tambah Item'),
 
+            // Format laporan stok harian gudang: satu lembar per jenis (Bahan Baku,
+            // Kemasan, Inventaris) dengan stok awal / masuk / keluar / mutasi / sisa / value.
+            Actions\Action::make('laporan_stok')
+                ->label('Export Laporan Stok')
+                ->icon('heroicon-m-document-chart-bar')
+                ->color('gray')
+                ->form([
+                    Forms\Components\DatePicker::make('from')->label('Dari tanggal')->default(now())->required()->native(false)->displayFormat('d/m/Y'),
+                    Forms\Components\DatePicker::make('to')->label('Sampai tanggal')->default(now())->required()->native(false)->displayFormat('d/m/Y')
+                        ->afterOrEqual('from')
+                        ->helperText('Stok awal = sisa akhir hari sebelum tanggal awal. Satu hari: isi tanggal yang sama.'),
+                ])
+                ->action(function (array $data) {
+                    $from = Carbon::parse($data['from']);
+                    $to = Carbon::parse($data['to']);
+
+                    return Excel::download(
+                        new StockReportExport($from, $to),
+                        'Stok 3S ONE '.$to->translatedFormat('d F Y').'.xlsx'
+                    );
+                }),
+
             Actions\Action::make('export')
-                ->label('Export Excel')
+                ->label('Export Data Master')
+                ->tooltip('Daftar item beserta kelompok, kemasan, dan harga -- format yang sama dipakai untuk Import Excel.')
                 ->icon('heroicon-m-arrow-down-tray')
                 ->color('gray')
                 ->action(fn () => Excel::download(

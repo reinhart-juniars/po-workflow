@@ -16,7 +16,7 @@ class ListProductionOrders extends ListRecords
     {
         return [
             ProductionOrderResource::generateFromSpkAction(),
-            Actions\CreateAction::make()->label('Susun Manual'),
+            Actions\CreateAction::make()->label(auth()->user()?->can('production.manage') ? 'Susun Manual' : 'Buat Rencana Masak'),
         ];
     }
 
@@ -27,6 +27,10 @@ class ListProductionOrders extends ListRecords
             'terbuka' => Tab::make('Terbuka')
                 ->modifyQueryUsing(fn ($query) => $query->open())
                 ->badge(ProductionOrder::query()->open()->count()),
+
+            'rencana' => Tab::make('Rencana Masak')
+                ->modifyQueryUsing(fn ($query) => $query->readyStock()->open())
+                ->badge(ProductionOrder::query()->readyStock()->open()->count()),
 
             'selesai' => Tab::make('Selesai')
                 ->modifyQueryUsing(fn ($query) => $query->completed()),

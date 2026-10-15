@@ -113,6 +113,13 @@
                             value="{{ old('base_price', $product->base_price) }}" required>
                         <p class="mt-1 text-xs text-slate-500">Profit otomatis = harga jual - (bahan baku + overhead).</p>
                     </div>
+
+                    <div>
+                        <label for="lapak_price" class="mb-1.5 block">Harga Lapak</label>
+                        <input id="lapak_price" type="number" step="0.01" min="0" name="lapak_price"
+                            value="{{ old('lapak_price', $product->lapak_price) }}" placeholder="Kosong = pakai harga jual">
+                        <p class="mt-1 text-xs text-slate-500">Harga khusus lapak. Dipilih per item saat membuat PO; otomatis untuk customer lapak.</p>
+                    </div>
                 </div>
             </div>
         </div>
