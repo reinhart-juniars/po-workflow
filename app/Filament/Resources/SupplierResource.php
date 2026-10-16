@@ -65,6 +65,13 @@ class SupplierResource extends Resource
                             ->tel()
                             ->maxLength(50),
 
+                        Forms\Components\TextInput::make('website')
+                            ->label('Link / Website')
+                            ->maxLength(500)
+                            ->placeholder('mis. tokopedia.com/tokomakmur')
+                            ->helperText('Link toko online, Instagram, atau website supplier. https:// boleh tidak ditulis.')
+                            ->rules([fn (): Closure => static::websiteRule()]),
+
                         Forms\Components\TextInput::make('email')
                             ->label('Email')
                             ->email()
@@ -145,6 +152,16 @@ class SupplierResource extends Resource
                     ->label('Telepon')
                     ->searchable()
                     ->placeholder('-'),
+
+                TextColumn::make('website')
+                    ->label('Link / Website')
+                    ->searchable()
+                    ->placeholder('-')
+                    ->limit(30)
+                    ->tooltip(fn (Supplier $record) => $record->website)
+                    ->color('primary')
+                    // Hanya link http(s) yang tersimpan (lihat Supplier::normalizeWebsite).
+                    ->url(fn (Supplier $record) => $record->website, shouldOpenInNewTab: true),
 
                 TextColumn::make('items_count')
                     ->label('Bahan')
@@ -269,6 +286,19 @@ class SupplierResource extends Resource
 
             if ($existing && $existing->getKey() !== $record?->getKey()) {
                 $fail('Supplier dengan nama ini sudah ada.');
+            }
+        };
+    }
+
+    /**
+     * Aturan validasi link/website: ditolak bila tidak bisa dirapikan menjadi
+     * link http(s), supaya pengguna tahu isiannya salah alih-alih hilang diam-diam.
+     */
+    public static function websiteRule(): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail) {
+            if (filled($value) && Supplier::normalizeWebsite((string) $value) === null) {
+                $fail('Link / website tidak valid. Contoh: tokopedia.com/tokomakmur atau https://instagram.com/tokomakmur');
             }
         };
     }

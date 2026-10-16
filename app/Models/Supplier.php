@@ -21,6 +21,7 @@ class Supplier extends Model
         'contact_person',
         'phone',
         'email',
+        'website',
         'address',
         'bank_account',
         'payment_term_days',
@@ -41,7 +42,42 @@ class Supplier extends Model
             if ($supplier->isDirty('name')) {
                 $supplier->name = trim((string) $supplier->name);
             }
+
+            if ($supplier->isDirty('website')) {
+                $supplier->website = static::normalizeWebsite($supplier->website);
+            }
         });
+    }
+
+    /**
+     * Rapikan link/website yang diketik: tambahkan https:// bila skemanya
+     * tidak ditulis ("tokopedia.com/tokomakmur"). Hasilnya null bila bukan
+     * link http(s) yang sah -- skema lain (javascript:, data:) tidak boleh
+     * tersimpan karena kolom ini ditampilkan sebagai tautan yang bisa diklik.
+     */
+    public static function normalizeWebsite(?string $value): ?string
+    {
+        $value = trim((string) $value);
+
+        if ($value === '') {
+            return null;
+        }
+
+        if (! preg_match('~^[a-z][a-z0-9+.-]*://~i', $value)) {
+            $value = 'https://'.ltrim($value, '/');
+        }
+
+        $scheme = strtolower((string) parse_url($value, PHP_URL_SCHEME));
+        $host = (string) parse_url($value, PHP_URL_HOST);
+
+        // Host wajib bertitik supaya teks biasa ("ada", "-") tidak lolos sebagai link.
+        if (! in_array($scheme, ['http', 'https'], true)
+            || ! str_contains($host, '.')
+            || filter_var($value, FILTER_VALIDATE_URL) === false) {
+            return null;
+        }
+
+        return $value;
     }
 
     /** Bahan yang dipasok supplier ini. */
