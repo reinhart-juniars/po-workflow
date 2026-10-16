@@ -100,6 +100,65 @@ it('menolak nama supplier kembar walau beda huruf besar/kecil', function () {
     expect($makmur->fresh()->phone)->toBe('0899');
 });
 
+it('menyimpan link / website supplier dan melengkapi https:// yang tidak ditulis', function () {
+    Livewire::test(CreateSupplier::class)
+        ->fillForm(['name' => 'Toko Makmur', 'website' => '  tokopedia.com/tokomakmur  ', 'is_active' => true])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    expect(Supplier::query()->sole()->website)->toBe('https://tokopedia.com/tokomakmur');
+
+    // Link yang sudah lengkap disimpan apa adanya; dikosongkan menjadi null.
+    $supplier = Supplier::query()->sole();
+    Livewire::test(EditSupplier::class, ['record' => $supplier->getRouteKey()])
+        ->fillForm(['website' => 'http://instagram.com/tokomakmur?igsh=abc'])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect($supplier->fresh()->website)->toBe('http://instagram.com/tokomakmur?igsh=abc');
+
+    Livewire::test(EditSupplier::class, ['record' => $supplier->getRouteKey()])
+        ->fillForm(['website' => ''])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect($supplier->fresh()->website)->toBeNull();
+});
+
+it('menolak link supplier yang bukan http(s), termasuk javascript:', function (string $link) {
+    Livewire::test(CreateSupplier::class)
+        ->fillForm(['name' => 'Toko Nakal', 'website' => $link, 'is_active' => true])
+        ->call('create')
+        ->assertHasFormErrors(['website']);
+
+    expect(Supplier::query()->count())->toBe(0);
+
+    // Positive control: form yang sama dengan link sah tersimpan.
+    Livewire::test(CreateSupplier::class)
+        ->fillForm(['name' => 'Toko Nakal', 'website' => 'shopee.co.id/tokonakal', 'is_active' => true])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    expect(Supplier::query()->sole()->website)->toBe('https://shopee.co.id/tokonakal');
+
+    // Jalur di luar form (impor, tinker) juga tidak bisa menyimpan skema lain.
+    expect(supplierMakmur(['website' => $link])->website)->toBeNull();
+})->with([
+    'javascript' => ['javascript:alert(1)'],
+    'javascript dengan //' => ['javascript://tokopedia.com/%0aalert(1)'],
+    'data' => ['data:text/html,<script>alert(1)</script>'],
+    'teks biasa' => ['tanya bu sari'],
+]);
+
+it('menampilkan link supplier sebagai tautan yang dibuka di tab baru', function () {
+    $supplier = supplierMakmur(['website' => 'tokopedia.com/tokomakmur']);
+
+    Livewire::test(ListSuppliers::class)
+        ->assertCanSeeTableRecords([$supplier])
+        ->assertTableColumnExists('website', fn ($column) => $column->getUrl() === 'https://tokopedia.com/tokomakmur'
+            && $column->shouldOpenUrlInNewTab(), $supplier);
+});
+
 it('pembelian kredit dari master menyalin nama, mengisi jatuh tempo dari termin, dan menautkan bahan', function () {
     $supplier = supplierMakmur();
 
