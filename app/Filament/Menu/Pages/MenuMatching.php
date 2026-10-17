@@ -148,10 +148,15 @@ class MenuMatching extends Page implements HasTable
             ->defaultSort('porsi_terjual', 'desc')
             ->recordTitleAttribute('name')
             ->columns([
+                // Boleh turun baris: nama paket bisa 80+ karakter, dan tanpa wrap
+                // satu nama panjang melebarkan tabel sampai tombol Tautkan
+                // terdorong keluar layar. Karena baris bergeser setiap kali satu
+                // produk ditautkan, gejalanya terasa seperti layar makin "zoom".
                 TextColumn::make('name')
                     ->label('Produk (Admin App)')
                     ->searchable()
                     ->sortable()
+                    ->wrap()
                     ->weight('medium')
                     ->description(fn (Product $record) => $record->active ? null : 'Nonaktif'),
 

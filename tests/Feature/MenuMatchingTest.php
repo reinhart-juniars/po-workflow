@@ -219,3 +219,13 @@ it('menampilkan status resep tiap produk di master menu Admin App', function () 
         ->assertSee('Belum ada resep')
         ->assertSee(route('filament.menu.pages.pencocokan-menu'), false);
 });
+
+it('membiarkan nama produk panjang turun baris supaya tombol Tautkan tetap di layar', function () {
+    $this->actingAs(penggunaPencocokan('admin'));
+
+    produkUji('PAKET KELUARGA INDONESIAN FOOD SAYUR ASEM TEMPE TAHU IKAN ASIN AYAM GR + KREMESAN 100K');
+
+    Livewire::test(MenuMatching::class)
+        ->assertTableColumnExists('name', fn (\Filament\Tables\Columns\TextColumn $column) => $column->canWrap())
+        ->assertTableColumnExists('resep', fn (\Filament\Tables\Columns\TextColumn $column) => $column->canWrap());
+});
