@@ -80,6 +80,12 @@ class MissingUnitConversions extends Page
         ]);
     }
 
+    /** Tautan ke aturan tersimpan yang satuannya belum nyambung. */
+    public function editUrl(int $ruleId): string
+    {
+        return InventoryUnitConversionResource::getUrl('edit', ['record' => $ruleId]);
+    }
+
     /** Bacaan usulan untuk sebuah baris, bila ada. */
     public function hintText(array $row): ?string
     {

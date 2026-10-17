@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\InventoryUnitConversion;
 use App\Support\Units\PackSizeHint;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -35,6 +36,16 @@ class MissingUnitConversionScanner
         // aturan dibuang supaya daftar ini tidak menampilkan yang sudah beres.
         $this->converter->flush();
 
+        // Aturan milik bahan yang sudah ada tetapi tidak menutup pasangan ini.
+        // Ditampilkan di samping barisnya: tanpa itu pengguna mengira aturan
+        // yang baru disimpan diabaikan, padahal satuannya yang tidak nyambung
+        // (mis. "1 ikat = 800 gram" untuk bahan yang dihargai per pcs).
+        $existing = InventoryUnitConversion::query()
+            ->whereNotNull('inventory_item_id')
+            ->orderBy('id')
+            ->get()
+            ->groupBy('inventory_item_id');
+
         return collect(DB::table('recipe_items as ri')
             ->join('inventory_items as ii', 'ii.id', '=', 'ri.inventory_item_id')
             ->whereNotNull('ri.inventory_item_id')
@@ -62,6 +73,10 @@ class MissingUnitConversionScanner
                 // Sekadar usulan angka yang dibaca dari nama bahan; tetap harus
                 // dibenarkan manusia sebelum menjadi aturan.
                 'hint' => PackSizeHint::suggest($row->item_name, $row->to_unit, $row->from_unit),
+                'existing_rules' => $existing->get((int) $row->inventory_item_id, collect())
+                    ->map(fn (InventoryUnitConversion $rule) => ['id' => $rule->id, 'summary' => $rule->summary()])
+                    ->values()
+                    ->all(),
             ])
             ->sortByDesc('line_count')
             ->values();

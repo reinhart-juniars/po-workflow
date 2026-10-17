@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\IngredientUnitConverter;
 use App\Support\Units\Unit;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -64,6 +65,32 @@ class InventoryUnitConversion extends Model
             })
             ->orderByRaw('inventory_item_id IS NULL')
             ->orderBy('id');
+    }
+
+    /**
+     * Salah satu sisi aturan bisa dibaca dalam satuan ini (lewat registri).
+     *
+     * Aturan milik bahan hanya dipakai untuk mengubah takaran resep ke satuan
+     * harga bahan itu, dan penyambungannya dibatasi satu aturan. Aturan yang
+     * tidak menyentuh satuan harga -- mis. "1 ikat = 800 gram" untuk bahan
+     * yang dihargai per pcs -- tersimpan tetapi tidak pernah terpakai.
+     */
+    public static function sidesConnectTo(?string $fromUnit, ?string $toUnit, ?string $unit): bool
+    {
+        if (blank($unit)) {
+            return true;
+        }
+
+        $converter = app(IngredientUnitConverter::class);
+
+        return $converter->convertByRegistry(1.0, $fromUnit, $unit) !== null
+            || $converter->convertByRegistry(1.0, $toUnit, $unit) !== null;
+    }
+
+    /** Aturan milik bahan ini bisa dipakai menghitung HPP-nya. */
+    public function reachesPriceUnit(): bool
+    {
+        return $this->isGlobal() || static::sidesConnectTo($this->from_unit, $this->to_unit, $this->item?->unit);
     }
 
     /** Ringkasan aturan dalam bahasa manusia, mis. "1 botol = 600 ml". */

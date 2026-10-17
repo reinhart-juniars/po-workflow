@@ -211,3 +211,72 @@ it('tidak mengisi apa pun ketika form aturan dibuka tanpa tautan', function () {
             'to_unit' => null,
         ]);
 });
+
+it('menolak aturan milik bahan yang tidak memuat satuan harganya', function () {
+    // Kasus Sereh di lapangan: harga per pcs, aturan diisi "1 ikat = 800 gram".
+    // Aturan itu tersimpan tetapi tidak pernah terpakai, dan pasangan gram -> pcs
+    // tetap muncul di daftar Konversi yang Belum Diatur.
+    Livewire::test(CreateInventoryUnitConversion::class)
+        ->fillForm([
+            'inventory_item_id' => $this->ayam->id,
+            'from_unit' => 'ikat',
+            'to_unit' => 'gram',
+            'factor' => 800,
+        ])
+        ->call('create')
+        ->assertHasFormErrors(['to_unit']);
+
+    expect(InventoryUnitConversion::query()->count())->toBe(0);
+
+    // Kontrol positif: aturan yang memuat satuan harga (di sisi mana pun) diterima.
+    Livewire::test(CreateInventoryUnitConversion::class)
+        ->fillForm([
+            'inventory_item_id' => $this->ayam->id,
+            'from_unit' => 'gram',
+            'to_unit' => 'pcs',
+            'factor' => 0.004,
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    expect(InventoryUnitConversion::query()->count())->toBe(1);
+});
+
+it('menunjukkan aturan tersimpan yang belum nyambung di halaman butuh aturan', function () {
+    $resep = Recipe::query()->create([
+        'name' => 'Ayam Bakar',
+        'jenis' => Recipe::JENIS_UTAMA,
+        'yield_qty' => 1,
+        'yield_unit' => 'porsi',
+        'ohc_pct' => 0.40,
+        'profit_pct' => 0.25,
+    ]);
+
+    RecipeItem::query()->create([
+        'recipe_id' => $resep->id,
+        'inventory_item_id' => $this->ayam->id,
+        'raw_name' => 'ayam fillet',
+        'qty' => 1000,
+        'unit' => 'gr',
+    ]);
+
+    // Aturan lama yang tersimpan sebelum ada pagar satuan harga.
+    $salah = InventoryUnitConversion::query()->create([
+        'inventory_item_id' => $this->ayam->id,
+        'from_unit' => 'ikat',
+        'to_unit' => 'gram',
+        'factor' => 800,
+    ]);
+
+    Livewire::test(MissingUnitConversions::class)
+        ->assertSee('Ayam Fillet')
+        ->assertSee('Sudah ada aturan "1 ikat = 800 gram"', false)
+        ->assertSee('Perbaiki aturan');
+
+    $salah->update(['from_unit' => 'pcs', 'factor' => 250]);
+
+    // Kontrol positif: setelah aturannya diperbaiki, pasangan itu keluar dari daftar.
+    Livewire::test(MissingUnitConversions::class)
+        ->assertDontSee('Ayam Fillet')
+        ->assertDontSee('Perbaiki aturan');
+});
