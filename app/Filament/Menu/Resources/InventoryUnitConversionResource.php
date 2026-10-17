@@ -55,10 +55,16 @@ class InventoryUnitConversionResource extends Resource
                     ->preload()
                     ->native(false)
                     ->live()
-                    ->helperText(
-                        'Kosongkan untuk membuat aturan umum yang berlaku pada semua bahan. '
-                        .'Aturan milik bahan selalu menang atas aturan umum.'
-                    )
+                    ->helperText(function (Get $get) {
+                        $unit = $get('inventory_item_id')
+                            ? InventoryItem::query()->whereKey($get('inventory_item_id'))->value('unit')
+                            : null;
+
+                        return filled($unit)
+                            ? 'Harga bahan ini tersimpan per "'.$unit.'". Aturannya harus memuat '.$unit.', mis. 1 '.$unit.' = ... gram.'
+                            : 'Kosongkan untuk membuat aturan umum yang berlaku pada semua bahan. '
+                                .'Aturan milik bahan selalu menang atas aturan umum.';
+                    })
                     ->columnSpanFull(),
 
                 Forms\Components\TextInput::make('factor')
@@ -94,6 +100,7 @@ class InventoryUnitConversionResource extends Resource
                     ->rules([
                         fn (?InventoryUnitConversion $record, Get $get): Closure => static::uniquePairRule($record, $get),
                         fn (Get $get): Closure => static::differentUnitRule($get),
+                        fn (Get $get): Closure => static::priceUnitRule($get),
                     ]),
 
                 Forms\Components\Placeholder::make('ringkasan')
@@ -123,11 +130,16 @@ class InventoryUnitConversionResource extends Resource
                         ? 'Berlaku untuk semua bahan'
                         : null),
 
+                // Aturan yang tidak memuat satuan harga bahannya tersimpan tetapi
+                // tidak pernah dipakai; ditandai supaya mudah dicari dan diperbaiki.
                 TextColumn::make('aturan')
                     ->label('Aturan')
                     ->state(fn (InventoryUnitConversion $record) => $record->summary())
                     ->badge()
-                    ->color('info'),
+                    ->color(fn (InventoryUnitConversion $record) => $record->reachesPriceUnit() ? 'info' : 'danger')
+                    ->description(fn (InventoryUnitConversion $record) => $record->reachesPriceUnit()
+                        ? null
+                        : 'Tidak terpakai: satuan harga bahan ini "'.$record->item->unit.'"'),
 
                 TextColumn::make('from_unit')
                     ->label('Satuan Asal')
@@ -161,6 +173,7 @@ class InventoryUnitConversionResource extends Resource
                 Tables\Actions\EditAction::make()->label('Edit'),
                 Tables\Actions\DeleteAction::make()->label('Hapus'),
             ])
+            ->modifyQueryUsing(fn ($query) => $query->with('item'))
             ->defaultSort('id', 'desc');
     }
 
@@ -194,6 +207,36 @@ class InventoryUnitConversionResource extends Resource
         return function (string $attribute, mixed $value, Closure $fail) use ($get) {
             if (filled($value) && mb_strtolower(trim((string) $value)) === mb_strtolower(trim((string) $get('from_unit')))) {
                 $fail('Satuan asal dan tujuan sama; aturan ini tidak mengubah apa pun.');
+            }
+        };
+    }
+
+    /**
+     * Aturan validasi: aturan milik bahan harus memuat satuan harga bahan itu.
+     *
+     * HPP mengubah takaran resep ke satuan harga bahan dengan paling banyak
+     * satu aturan. Aturan "1 ikat = 800 gram" untuk bahan yang dihargai per
+     * pcs tidak pernah terpakai, dan pasangan gram -> pcs tetap muncul di
+     * daftar Konversi yang Belum Diatur -- seolah aturannya diabaikan.
+     */
+    protected static function priceUnitRule(Get $get): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail) use ($get) {
+            $item = $get('inventory_item_id')
+                ? InventoryItem::query()->find($get('inventory_item_id'), ['id', 'name', 'unit'])
+                : null;
+
+            if ($item === null || blank($get('from_unit')) || blank($value)) {
+                return;
+            }
+
+            if (! InventoryUnitConversion::sidesConnectTo($get('from_unit'), $value, $item->unit)) {
+                $fail(sprintf(
+                    'Harga %1$s tersimpan per "%2$s", jadi salah satu satuan aturan harus %2$s (mis. 1 %2$s = ... %3$s). Aturan tanpa %2$s tidak dipakai menghitung HPP.',
+                    $item->name,
+                    $item->unit,
+                    $value,
+                ));
             }
         };
     }

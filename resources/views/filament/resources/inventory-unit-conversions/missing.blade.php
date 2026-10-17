@@ -49,6 +49,15 @@
                                         Usul dari nama bahan: {{ $hint }}
                                     </div>
                                 @endif
+                                @foreach ($row['existing_rules'] as $rule)
+                                    <div class="mt-0.5 text-xs font-normal text-danger-600 dark:text-danger-400">
+                                        Sudah ada aturan "{{ $rule['summary'] }}", tetapi tidak menghubungkan
+                                        {{ $row['from_unit'] ?: '-' }} ke {{ $row['to_unit'] ?: '-' }}.
+                                        <x-filament::link :href="$this->editUrl($rule['id'])" size="xs" color="danger">
+                                            Perbaiki aturan
+                                        </x-filament::link>
+                                    </div>
+                                @endforeach
                             </td>
                             <td class="py-2 pr-4">{{ $row['from_unit'] ?: '-' }}</td>
                             <td class="py-2 pr-4">{{ $row['to_unit'] ?: '-' }}</td>
