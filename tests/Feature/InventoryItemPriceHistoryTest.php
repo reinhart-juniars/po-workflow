@@ -102,3 +102,29 @@ it('menampilkan histori harga di halaman edit bahan', function () {
     expect((float) $item->fresh()->unit_price)->toBe(14000.0)
         ->and($item->priceHistories()->first()->action)->toBe(InventoryItemPriceHistory::ACTION_NAIK);
 });
+
+it('menampilkan harga paling banyak 2 desimal tanpa mengubah harga lama yang tidak disentuh', function () {
+    $item = InventoryItem::query()->create(['name' => 'Kunyit bubuk', 'unit' => 'gram', 'parent_id' => $this->bucket->id, 'category' => InventoryItem::CATEGORY_RAW_MATERIAL, 'is_active' => true, 'pack_qty' => 1, 'pack_price' => 181000, 'unit_price' => 133.3333]);
+
+    // Bukan "181000.0000" / "133.3333": nol buntut dibuang, desimal dipangkas 2.
+    Livewire::test(EditInventoryItem::class, ['record' => $item->id])
+        ->assertFormSet(['pack_qty' => '1', 'pack_price' => '181000', 'unit_price' => '133.33'])
+        ->fillForm(['description' => 'catatan saja'])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    // Menyimpan tanpa menyentuh harga tidak membulatkan harga tersimpan, jadi
+    // tidak tercatat sebagai "harga turun" dan tidak membunyikan lonceng.
+    $item->refresh();
+    expect((float) $item->unit_price)->toBe(133.3333)
+        ->and($item->priceHistories()->count())->toBe(1);
+
+    // Kontrol positif: harga yang benar-benar diubah tersimpan (2 desimal) dan tercatat.
+    Livewire::test(EditInventoryItem::class, ['record' => $item->id])
+        ->fillForm(['unit_price' => 140.456])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect((float) $item->refresh()->unit_price)->toBe(140.46)
+        ->and($item->priceHistories()->count())->toBe(2);
+});

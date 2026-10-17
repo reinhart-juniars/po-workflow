@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\Recipe;
 use App\Models\RecipeItem;
 use App\Services\RecipeCostService;
+use App\Support\PriceInput;
 use App\Support\Settings\Settings;
 use App\Support\Units\Unit;
 use Closure;
@@ -233,11 +234,8 @@ class RecipeResource extends Resource
                                 // Padanan "Snapshot" di Master Menu: harga per satuan baris
                                 // untuk bahan yang belum ditautkan, supaya HPP-nya tetap
                                 // terhitung sementara bahan masternya belum ada.
-                                Forms\Components\TextInput::make('unit_price_snapshot')
+                                PriceInput::configure(Forms\Components\TextInput::make('unit_price_snapshot'))
                                     ->label('Harga Manual / Satuan')
-                                    ->numeric()
-                                    ->minValue(0)
-                                    ->step('any')
                                     ->prefix('Rp')
                                     ->visible(fn (Get $get) => blank($get('inventory_item_id')) && blank($get('ref_recipe_id')))
                                     ->helperText('Hanya untuk baris yang belum ditautkan ke bahan atau sub-menu.')

@@ -360,3 +360,28 @@ it('menampilkan jumlah dengan 2 desimal tanpa menggeser nilai asli saat resep di
     $page->fillForm(['items' => $items])->call('save')->assertHasNoFormErrors();
     expect((float) $gula->fresh()->qty)->toBe(0.1);
 });
+
+it('menampilkan harga manual baris resep dengan 2 desimal tanpa menggeser nilai asli', function () {
+    $recipe = Recipe::query()->create([
+        'name' => 'Sayur Asem', 'jenis' => Recipe::JENIS_UTAMA, 'yield_qty' => 1, 'yield_unit' => 'porsi',
+        'ohc_pct' => 0.4, 'profit_pct' => 0.25, 'is_active' => true,
+    ]);
+    $sereh = $recipe->items()->create(['raw_name' => 'sereh', 'qty' => 20, 'unit' => 'gram', 'unit_price_snapshot' => 8.7533]);
+
+    $page = Livewire::test(RecipeResource\Pages\EditRecipe::class, ['record' => $recipe->getRouteKey()])
+        ->assertFormSet(function (array $state) {
+            expect(collect($state['items'])->pluck('unit_price_snapshot')->all())->toBe(['8.75']);
+        });
+
+    // Simpan tanpa mengubah apa pun: harga asli tetap.
+    $page->call('save')->assertHasNoFormErrors();
+    expect((float) $sereh->fresh()->unit_price_snapshot)->toBe(8.7533);
+
+    // Kontrol positif: harga yang diubah tersimpan, dibulatkan 2 desimal.
+    $items = $page->get('data.items');
+    foreach ($items as &$row) {
+        $row['unit_price_snapshot'] = '9.125';
+    }
+    $page->fillForm(['items' => $items])->call('save')->assertHasNoFormErrors();
+    expect((float) $sereh->fresh()->unit_price_snapshot)->toBe(9.13);
+});

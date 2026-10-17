@@ -6,6 +6,7 @@ use App\Filament\Menu\Resources\RecipeMismatchResource\Pages;
 use App\Models\InventoryItem;
 use App\Models\RecipeMismatch;
 use App\Services\RecipeMismatchResolver;
+use App\Support\PriceInput;
 use App\Support\Units\Unit;
 use Filament\Forms;
 use Filament\Notifications\Notification;
@@ -158,11 +159,9 @@ class RecipeMismatchResource extends Resource
                             ->required()
                             ->native(false),
 
-                        Forms\Components\TextInput::make('unit_price')
+                        PriceInput::configure(Forms\Components\TextInput::make('unit_price'))
                             ->label('Harga per Satuan')
                             ->prefix('Rp')
-                            ->numeric()
-                            ->minValue(0)
                             ->helperText('Boleh dikosongkan; barisnya akan terhitung nol sampai harganya diisi.'),
 
                         Forms\Components\TextInput::make('resolution_note')
