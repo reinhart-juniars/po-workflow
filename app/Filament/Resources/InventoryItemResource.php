@@ -6,6 +6,7 @@ use App\Filament\Resources\InventoryItemResource\Pages;
 use App\Filament\Resources\InventoryItemResource\RelationManagers;
 use App\Models\InventoryItem;
 use App\Services\InventoryStockAlertService;
+use App\Support\PriceInput;
 use App\Support\Units\Unit;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -61,11 +62,9 @@ class InventoryItemResource extends Resource
                     ->required()
                     ->native(false),
 
-                Forms\Components\TextInput::make('minimum_stock_value')
+                PriceInput::configure(Forms\Components\TextInput::make('minimum_stock_value'))
                     ->label('Nilai Stok Minimum')
                     ->prefix('Rp')
-                    ->numeric()
-                    ->minValue(0)
                     ->helperText(
                         'Alert menyala saat nilai stok turun di bawah angka ini. '
                         .'Kosongkan bila item ini tidak perlu dipantau. '
@@ -115,26 +114,26 @@ class InventoryItemResource extends Resource
                         Forms\Components\TextInput::make('pack_qty')
                             ->label('Isi Kemasan')
                             ->numeric()
+                            // Jumlah, bukan harga: desimalnya dipertahankan (0,125 kg),
+                            // hanya nol buntut dari kolom decimal(…, 4) yang dibuang.
+                            ->formatStateUsing(fn (mixed $state) => is_numeric($state)
+                                ? rtrim(rtrim(number_format((float) $state, 4, '.', ''), '0'), '.')
+                                : $state)
                             ->minValue(0)
                             ->step('any')
                             ->suffix(fn (Forms\Get $get) => $get('unit'))
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn (Forms\Get $get, Forms\Set $set) => static::syncUnitPrice($get, $set)),
 
-                        Forms\Components\TextInput::make('pack_price')
+                        PriceInput::configure(Forms\Components\TextInput::make('pack_price'))
                             ->label('Harga Kemasan')
                             ->prefix('Rp')
-                            ->numeric()
-                            ->minValue(0)
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn (Forms\Get $get, Forms\Set $set) => static::syncUnitPrice($get, $set)),
 
-                        Forms\Components\TextInput::make('unit_price')
+                        PriceInput::configure(Forms\Components\TextInput::make('unit_price'))
                             ->label('Harga Satuan')
                             ->prefix('Rp')
-                            ->numeric()
-                            ->minValue(0)
-                            ->step('any')
                             ->helperText('Per satuan di atas. Terisi otomatis dari harga kemasan / isi; setiap perubahan dicatat ke Histori Harga.'),
 
                         Forms\Components\Toggle::make('is_prepared')
@@ -154,7 +153,7 @@ class InventoryItemResource extends Resource
         $price = (float) $get('pack_price');
 
         if ($qty > 0 && $price > 0) {
-            $set('unit_price', round($price / $qty, 4));
+            $set('unit_price', PriceInput::display($price / $qty));
         }
     }
 
