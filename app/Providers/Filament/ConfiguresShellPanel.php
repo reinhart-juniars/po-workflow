@@ -44,6 +44,11 @@ trait ConfiguresShellPanel
                 'warning' => Color::Amber,
                 'danger' => Color::Rose,
                 'info' => Color::Sky,
+                // Badge asal data menu di Pencocokan Menu. Sengaja beda dari
+                // warna status (amber/emerald/slate) supaya tidak terbaca
+                // sebagai keadaan.
+                'v2' => Color::Violet,
+                'mmr' => Color::Teal,
             ])
             ->font('Public Sans')
             ->darkMode(false)

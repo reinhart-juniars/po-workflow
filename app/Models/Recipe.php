@@ -88,6 +88,12 @@ class Recipe extends Model
         return $this->jenis === self::JENIS_SUB;
     }
 
+    /** Resep ini dibawa dari aplikasi Master Menu Revamp (badge MMR), bukan dibuat di 3S ONE. */
+    public function isFromMasterMenu(): bool
+    {
+        return $this->source_recipe_id !== null;
+    }
+
     /** Satuan hasil produksi resep ini, bila dikenali registri satuan. */
     public function yieldUnit(): ?Unit
     {

@@ -19,6 +19,7 @@ use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\HtmlString;
 use Maatwebsite\Excel\Facades\Excel;
 
 /**
@@ -158,6 +159,8 @@ class MenuMatching extends Page implements HasTable
                     ->sortable()
                     ->wrap()
                     ->weight('medium')
+                    ->html()
+                    ->formatStateUsing(fn (string $state, Product $record) => static::withOrigin($state, $record->origin === Product::ORIGIN_V2 ? 'v2' : null))
                     ->description(fn (Product $record) => $record->active ? null : 'Nonaktif'),
 
                 TextColumn::make('porsi_terjual')
@@ -184,7 +187,7 @@ class MenuMatching extends Page implements HasTable
                     ->label('Resep / Usulan')
                     ->state(function (Product $record) use ($suggester) {
                         if ($record->recipe) {
-                            return $record->recipe->name;
+                            return static::withOrigin($record->recipe->name, $record->recipe->isFromMasterMenu() ? 'mmr' : null);
                         }
 
                         if (static::statusOf($record) !== self::STATUS_BELUM) {
@@ -193,8 +196,14 @@ class MenuMatching extends Page implements HasTable
 
                         $usulan = $suggester->suggest($record);
 
-                        return $usulan ? 'Usulan: '.$usulan['recipe']->name.' ('.number_format($usulan['score'], 0).'%)' : null;
+                        return $usulan
+                            ? static::withOrigin(
+                                'Usulan: '.$usulan['recipe']->name.' ('.number_format($usulan['score'], 0).'%)',
+                                $usulan['recipe']->isFromMasterMenu() ? 'mmr' : null,
+                            )
+                            : null;
                     })
+                    ->html()
                     ->placeholder(fn (Product $record) => static::statusOf($record) === self::STATUS_BELUM ? 'Tidak ada yang mirip' : '-')
                     ->color(fn (Product $record) => $record->recipe ? null : 'gray')
                     ->wrap()
@@ -304,6 +313,32 @@ class MenuMatching extends Page implements HasTable
             ->emptyStateHeading('Tidak ada produk pada status ini')
             ->emptyStateDescription('Ubah filter Status untuk melihat produk yang sudah tertaut atau ditandai tanpa resep.')
             ->paginated([25, 50, 100]);
+    }
+
+    /**
+     * Nama menu + badge asal datanya: V2 untuk menu jual dari PO Workflow v2
+     * (tim admin), MMR untuk resep dari Master Menu Revamp (tim menu). Diminta
+     * setelah dua tim saling menyalahkan soal data yang ternyata milik pihak
+     * lain; data buatan 3S ONE sengaja tanpa badge.
+     */
+    public static function withOrigin(string $text, ?string $origin): HtmlString
+    {
+        return new HtmlString(view('filament.components.menu-origin', [
+            'text' => $text,
+            'origin' => $origin,
+            'label' => static::originLabels()[$origin] ?? null,
+            'tooltip' => match ($origin) {
+                'v2' => 'Menu jual dari PO Workflow versi 2 (data tim admin)',
+                'mmr' => 'Resep dari Master Menu Revamp (data tim menu)',
+                default => null,
+            },
+        ])->render());
+    }
+
+    /** @return array<string, string> */
+    public static function originLabels(): array
+    {
+        return ['v2' => 'V2', 'mmr' => 'MMR'];
     }
 
     public static function statusOf(Product $product): string

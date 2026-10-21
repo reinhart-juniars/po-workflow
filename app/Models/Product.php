@@ -56,6 +56,13 @@ class Product extends Model
         'profit' => 'decimal:2',
     ];
 
+    /**
+     * Asal menu jual (kolom origin): dari PO Workflow versi 2. Produk yang
+     * dibuat di 3S ONE dibiarkan kosong. Sengaja tidak fillable: asal data
+     * bukan isian form.
+     */
+    public const ORIGIN_V2 = 'v2';
+
     /** HPP & OHC diketik admin. */
     public const COST_MANUAL = 'manual';
 

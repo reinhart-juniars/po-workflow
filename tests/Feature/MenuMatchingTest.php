@@ -229,3 +229,46 @@ it('membiarkan nama produk panjang turun baris supaya tombol Tautkan tetap di la
         ->assertTableColumnExists('name', fn (\Filament\Tables\Columns\TextColumn $column) => $column->canWrap())
         ->assertTableColumnExists('resep', fn (\Filament\Tables\Columns\TextColumn $column) => $column->canWrap());
 });
+
+it('memberi badge V2 pada menu jual dari v2 dan MMR pada resep dari Master Menu Revamp', function () {
+    $this->actingAs(penggunaPencocokan('admin'));
+
+    // Resep MMR dikenali dari id aslinya di Master Menu; resep buatan 3S ONE tidak punya.
+    $mmr = resepUji('Nasi Goreng Ala Solaria');
+    $mmr->forceFill(['source_recipe_id' => 77])->save();
+    $baru = resepUji('Nasi Bakar Baru');
+
+    $dariV2 = produkUji('NASI GORENG SOLARIA 12K');
+    $dariV2->forceFill(['origin' => Product::ORIGIN_V2])->save();
+    $buatan3sOne = produkUji('NASI BAKAR BARU 15K', ['recipe_id' => $baru->id]);
+
+    $html = Livewire::test(MenuMatching::class)
+        ->filterTable('status', null)
+        ->assertCanSeeTableRecords([$dariV2, $buatan3sOne])
+        ->html();
+
+    // Satu produk v2 dan satu usulan resep MMR; produk & resep buatan 3S ONE polos.
+    expect(substr_count($html, 'fi-color-v2'))->toBe(1)
+        ->and(substr_count($html, 'fi-color-mmr'))->toBe(1)
+        ->and($html)->toContain('Usulan: Nasi Goreng Ala Solaria')
+        ->and($html)->toContain('Nasi Bakar Baru');
+
+    // Kontrol positif: begitu resep MMR ditautkan, badge-nya ikut ke kolom resep.
+    $buatan3sOne->forceFill(['recipe_id' => $mmr->id])->save();
+    $html = Livewire::test(MenuMatching::class)->filterTable('status', null)->html();
+
+    expect(substr_count($html, 'fi-color-mmr'))->toBe(2);
+});
+
+it('menandai semua menu jual yang sudah ada sebagai v2 lewat migrasi', function () {
+    // Produk dari dump v2 lahir sebelum kolom origin ada; produk buatan 3S ONE
+    // sesudahnya tidak diisi apa-apa oleh aplikasi.
+    expect(produkUji('NASI BARU 10K')->origin)->toBeNull();
+
+    $migration = require database_path('migrations/2026_10_21_100001_add_origin_to_products_table.php');
+    $migration->down();
+    $lama = produkUji('NASI LAMA 10K');
+    $migration->up();
+
+    expect($lama->fresh()->origin)->toBe(Product::ORIGIN_V2);
+});
