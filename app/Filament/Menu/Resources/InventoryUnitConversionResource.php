@@ -6,6 +6,7 @@ use App\Filament\Menu\Resources\InventoryUnitConversionResource\Pages;
 use App\Models\InventoryItem;
 use App\Models\InventoryUnitConversion;
 use App\Services\MissingUnitConversionScanner;
+use App\Support\Units\Unit;
 use Closure;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -79,24 +80,27 @@ class InventoryUnitConversionResource extends Resource
                     ->prefix('1 satuan asal =')
                     ->helperText('Contoh: bila 1 pcs ayam beratnya 250 gram, isi 250.'),
 
-                Forms\Components\Select::make('from_unit')
+                // Isian bebas dengan saran, bukan pilihan tetap: dapur memakai satuan
+                // yang tidak ada di registri (ikat, batang, sachet), dan klien
+                // perlu bisa mengetiknya sendiri. Saran = satuan baku + satuan
+                // yang sudah dipakai di resep dan bahan.
+                Forms\Components\TextInput::make('from_unit')
                     ->label('Satuan Asal')
                     ->required()
-                    ->searchable()
-                    ->native(false)
-                    ->live()
-                    // Nilai yang dibawa dari halaman "Butuh Aturan" bisa berupa satuan
-                    // lepas yang tidak ada di registri; ikut ditawarkan supaya
-                    // pengisian dari daftar itu tidak kehilangan satuannya.
-                    ->options(fn (?InventoryUnitConversion $record, Get $get) => InventoryUnitConversion::unitOptions($record?->from_unit, $get('from_unit'))),
+                    ->maxLength(50)
+                    ->datalist(fn () => InventoryUnitConversion::unitSuggestions())
+                    ->placeholder('ketik atau pilih, mis. ikat')
+                    ->live(onBlur: true)
+                    ->dehydrateStateUsing(fn (?string $state) => Unit::canonical($state)),
 
-                Forms\Components\Select::make('to_unit')
+                Forms\Components\TextInput::make('to_unit')
                     ->label('Satuan Tujuan')
                     ->required()
-                    ->searchable()
-                    ->native(false)
-                    ->live()
-                    ->options(fn (?InventoryUnitConversion $record, Get $get) => InventoryUnitConversion::unitOptions($record?->to_unit, $get('to_unit')))
+                    ->maxLength(50)
+                    ->datalist(fn () => InventoryUnitConversion::unitSuggestions())
+                    ->placeholder('ketik atau pilih, mis. gram')
+                    ->live(onBlur: true)
+                    ->dehydrateStateUsing(fn (?string $state) => Unit::canonical($state))
                     ->rules([
                         fn (?InventoryUnitConversion $record, Get $get): Closure => static::uniquePairRule($record, $get),
                         fn (Get $get): Closure => static::differentUnitRule($get),

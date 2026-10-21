@@ -135,6 +135,33 @@ class MasterMenuMigrationService
         return $text !== '' ? $text : 'pcs';
     }
 
+    /**
+     * Kolom item inventaris untuk satu baris ingredients sumber.
+     *
+     * Dipakai juga oleh impor resep baru (MasterMenuNewRecipeImporter) supaya
+     * kedua jalur memetakan bahan dengan cara yang sama persis.
+     *
+     * @return array<string, mixed>
+     */
+    public function ingredientAttributes(object $row): array
+    {
+        $bucket = $this->bucketFor($row->category);
+
+        return [
+            'parent_id' => $bucket->id,
+            'name' => trim((string) $row->name),
+            'unit' => $this->normalizeUnit($row->pack_unit),
+            'category' => $bucket->category,
+            'ingredient_group' => trim((string) ($row->category ?? '')) ?: null,
+            'pack_qty' => (float) ($row->pack_qty ?? 0) ?: null,
+            'pack_price' => (float) ($row->pack_price ?? 0) ?: null,
+            'unit_price' => (float) ($row->unit_price ?? 0) ?: null,
+            'is_prepared' => (bool) ($row->is_prepared ?? false),
+            'description' => $row->notes ?: null,
+            'is_active' => true,
+        ];
+    }
+
     /** @return array<string, int> */
     protected function migrateIngredients(): array
     {
@@ -142,21 +169,7 @@ class MasterMenuMigrationService
         $updated = 0;
 
         foreach ($this->source->table('ingredients')->orderBy('id')->cursor() as $row) {
-            $bucket = $this->bucketFor($row->category);
-
-            $attributes = [
-                'parent_id' => $bucket->id,
-                'name' => trim((string) $row->name),
-                'unit' => $this->normalizeUnit($row->pack_unit),
-                'category' => $bucket->category,
-                'ingredient_group' => trim((string) ($row->category ?? '')) ?: null,
-                'pack_qty' => (float) ($row->pack_qty ?? 0) ?: null,
-                'pack_price' => (float) ($row->pack_price ?? 0) ?: null,
-                'unit_price' => (float) ($row->unit_price ?? 0) ?: null,
-                'is_prepared' => (bool) ($row->is_prepared ?? false),
-                'description' => $row->notes ?: null,
-                'is_active' => true,
-            ];
+            $attributes = $this->ingredientAttributes($row);
 
             $existing = InventoryItem::query()
                 ->where('source_ingredient_id', $row->id)
@@ -255,6 +268,31 @@ class MasterMenuMigrationService
         return ['dipindahkan' => $inserted, 'dilewati' => $skipped];
     }
 
+    /**
+     * Kolom resep untuk satu baris recipes sumber (tanpa source_recipe_id).
+     *
+     * @return array<string, mixed>
+     */
+    public function recipeAttributes(object $row): array
+    {
+        return [
+            'name' => trim((string) $row->name),
+            'jenis' => ($row->jenis ?? 'utama') === 'sub' ? Recipe::JENIS_SUB : Recipe::JENIS_UTAMA,
+            'kategori' => $row->kategori ?: null,
+            'yield_qty' => (float) ($row->yield_qty ?? 1) ?: 1,
+            'yield_unit' => $row->yield_unit ?: 'porsi',
+            'ohc_pct' => (float) ($row->ohc_pct ?? 0.40),
+            'profit_pct' => (float) ($row->profit_pct ?? 0.25),
+            'target_price' => $row->target_price,
+            'snapshot_hpp' => $row->snapshot_hpp,
+            'snapshot_ohc' => $row->snapshot_ohc,
+            'snapshot_profit' => $row->snapshot_profit,
+            'notes' => $row->notes,
+            'source_sheet' => $row->source_sheet,
+            'is_active' => true,
+        ];
+    }
+
     /** @return array<string, int> */
     protected function migrateRecipes(): array
     {
@@ -262,22 +300,7 @@ class MasterMenuMigrationService
         $updated = 0;
 
         foreach ($this->source->table('recipes')->orderBy('id')->cursor() as $row) {
-            $attributes = [
-                'name' => trim((string) $row->name),
-                'jenis' => ($row->jenis ?? 'utama') === 'sub' ? Recipe::JENIS_SUB : Recipe::JENIS_UTAMA,
-                'kategori' => $row->kategori ?: null,
-                'yield_qty' => (float) ($row->yield_qty ?? 1) ?: 1,
-                'yield_unit' => $row->yield_unit ?: 'porsi',
-                'ohc_pct' => (float) ($row->ohc_pct ?? 0.40),
-                'profit_pct' => (float) ($row->profit_pct ?? 0.25),
-                'target_price' => $row->target_price,
-                'snapshot_hpp' => $row->snapshot_hpp,
-                'snapshot_ohc' => $row->snapshot_ohc,
-                'snapshot_profit' => $row->snapshot_profit,
-                'notes' => $row->notes,
-                'source_sheet' => $row->source_sheet,
-                'is_active' => true,
-            ];
+            $attributes = $this->recipeAttributes($row);
 
             $existing = Recipe::query()->where('source_recipe_id', $row->id)->first();
 
@@ -295,6 +318,27 @@ class MasterMenuMigrationService
         }
 
         return ['baru' => $created, 'diperbarui' => $updated];
+    }
+
+    /**
+     * Kolom baris resep untuk satu baris recipe_items sumber.
+     *
+     * @return array<string, mixed>
+     */
+    public function recipeItemAttributes(object $row, int $recipeId, ?int $inventoryItemId, ?int $refRecipeId): array
+    {
+        return [
+            'recipe_id' => $recipeId,
+            'sort_order' => (int) ($row->sort_order ?? 0),
+            'section' => $row->section,
+            'inventory_item_id' => $inventoryItemId,
+            'ref_recipe_id' => $refRecipeId,
+            'raw_name' => trim((string) $row->raw_name),
+            'qty' => (float) ($row->qty ?? 0),
+            'unit' => $row->unit,
+            'unit_price_snapshot' => $row->unit_price_snapshot,
+            'notes' => $row->notes,
+        ];
     }
 
     /** @return array<string, int> */
@@ -332,18 +376,7 @@ class MasterMenuMigrationService
                 $unmatched++;
             }
 
-            RecipeItem::query()->create([
-                'recipe_id' => $recipeId,
-                'sort_order' => (int) ($row->sort_order ?? 0),
-                'section' => $row->section,
-                'inventory_item_id' => $inventoryItemId,
-                'ref_recipe_id' => $refRecipeId,
-                'raw_name' => trim((string) $row->raw_name),
-                'qty' => (float) ($row->qty ?? 0),
-                'unit' => $row->unit,
-                'unit_price_snapshot' => $row->unit_price_snapshot,
-                'notes' => $row->notes,
-            ]);
+            RecipeItem::query()->create($this->recipeItemAttributes($row, $recipeId, $inventoryItemId, $refRecipeId));
 
             $inserted++;
         }

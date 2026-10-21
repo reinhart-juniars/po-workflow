@@ -178,6 +178,7 @@ class Navigation
                     ['label' => 'Menu Utama & Sub Menu', 'route' => 'filament.menu.resources.recipes.index', 'can' => 'recipe.view'],
                     ['label' => 'Pencocokan Menu', 'route' => 'filament.menu.pages.pencocokan-menu', 'can' => 'recipe.view'],
                     ['label' => 'Pekerjaan Menu', 'route' => 'filament.menu.pages.pekerjaan-menu', 'can' => 'recipe.view'],
+                    ['label' => 'Impor Resep MMR', 'route' => 'filament.menu.pages.impor-resep-mmr', 'can' => 'recipe.manage'],
                 ],
                 'HPP & OHC' => [
                     ['label' => 'Konversi Satuan', 'route' => 'filament.menu.resources.inventory-unit-conversions.index', 'can' => 'recipe.view'],

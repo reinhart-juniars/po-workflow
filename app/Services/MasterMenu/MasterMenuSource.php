@@ -52,6 +52,17 @@ class MasterMenuSource
         return DB::connection(self::CONNECTION);
     }
 
+    /**
+     * Tutup koneksi ke berkas sumber.
+     *
+     * Berkas unggahan dihapus setelah dipakai; selama koneksinya masih
+     * terbuka, Windows mengunci berkas itu dan penghapusannya gagal diam-diam.
+     */
+    public function disconnect(): void
+    {
+        DB::purge(self::CONNECTION);
+    }
+
     public function table(string $table): \Illuminate\Database\Query\Builder
     {
         return $this->connection()->table($table);
