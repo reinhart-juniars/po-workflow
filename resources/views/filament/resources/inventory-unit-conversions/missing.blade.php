@@ -64,9 +64,15 @@
                             <td class="py-2 pr-4 text-right">{{ number_format($row['line_count'], 0, ',', '.') }}</td>
                             <td class="py-2 pr-4 text-right">{{ number_format($row['recipe_count'], 0, ',', '.') }}</td>
                             <td class="py-2 text-right">
-                                <x-filament::link :href="$this->createUrl($row)" size="sm">
-                                    Buat aturan
-                                </x-filament::link>
+                                {{-- Baris tanpa satuan tidak punya satuan asal untuk dijembatani:
+                                     yang diisi satuan di baris resepnya, bukan aturan. --}}
+                                @if ($row['from_unit'] === '')
+                                    {{ ($this->isiSatuanAction)(['item' => $row['inventory_item_id']]) }}
+                                @else
+                                    <x-filament::link :href="$this->createUrl($row)" size="sm">
+                                        Buat aturan
+                                    </x-filament::link>
+                                @endif
                             </td>
                         </tr>
                     @empty

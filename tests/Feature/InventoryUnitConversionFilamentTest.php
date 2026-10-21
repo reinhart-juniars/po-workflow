@@ -280,3 +280,72 @@ it('menunjukkan aturan tersimpan yang belum nyambung di halaman butuh aturan', f
         ->assertDontSee('Ayam Fillet')
         ->assertDontSee('Perbaiki aturan');
 });
+
+it('menerima satuan custom yang diketik sendiri dan menyamakan ejaan satuan baku', function () {
+    Livewire::test(CreateInventoryUnitConversion::class)
+        ->fillForm([
+            'inventory_item_id' => $this->ayam->id,
+            'from_unit' => 'sachet',
+            'to_unit' => 'pcs',
+            'factor' => 10,
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    Livewire::test(CreateInventoryUnitConversion::class)
+        ->fillForm([
+            'inventory_item_id' => $this->ayam->id,
+            'from_unit' => 'pcs',
+            'to_unit' => 'gr',
+            'factor' => 250,
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    expect(InventoryUnitConversion::query()->orderBy('id')->get()->map->summary()->all())
+        ->toBe(['1 sachet = 10 pcs', '1 pcs = 250 gram']);
+});
+
+it('mengisi satuan baris resep yang kosong dari halaman butuh aturan', function () {
+    $resep = Recipe::query()->create([
+        'name' => 'Ayam Goreng', 'jenis' => Recipe::JENIS_UTAMA, 'yield_qty' => 1, 'yield_unit' => 'porsi',
+        'ohc_pct' => 0.40, 'profit_pct' => 0.25,
+    ]);
+    $tanpaSatuan = RecipeItem::query()->create(['recipe_id' => $resep->id, 'inventory_item_id' => $this->ayam->id, 'raw_name' => 'ayam', 'qty' => 1, 'unit' => null]);
+
+    // Mengisi satuan berarti mengubah resep: accounting (hanya lihat resep) tidak mendapat aksinya.
+    Livewire::test(MissingUnitConversions::class)->assertActionHidden('isiSatuan');
+
+    Role::findOrCreate('menu', 'web');
+    $menu = User::factory()->create(['is_active' => true, 'force_password_change' => false]);
+    $menu->assignRole('menu');
+    $this->actingAs($menu);
+
+    // Baris "-" tidak bisa dibereskan dengan aturan; yang ditawarkan mengisi satuannya.
+    Livewire::test(MissingUnitConversions::class)
+        ->assertSee('Ayam Fillet')
+        ->assertSee('Isi satuan resep')
+        ->assertDontSee('Buat aturan')
+        ->callAction('isiSatuan', data: ['unit' => 'pcs'], arguments: ['item' => $this->ayam->id])
+        ->assertHasNoActionErrors()
+        ->assertNotified('1 baris resep Ayam Fillet kini bersatuan pcs');
+
+    expect($tanpaSatuan->fresh()->unit)->toBe('pcs');
+
+    // Satuan sama dengan satuan harga: baris langsung terhitung, keluar dari daftar.
+    Livewire::test(MissingUnitConversions::class)->assertDontSee('Ayam Fillet');
+
+    // Kontrol positif: satuan yang beda dari satuan harga memunculkan pasangan baru untuk diberi aturan.
+    $lain = RecipeItem::query()->create(['recipe_id' => $resep->id, 'inventory_item_id' => $this->ayam->id, 'raw_name' => 'ayam', 'qty' => 200, 'unit' => '']);
+
+    Livewire::test(MissingUnitConversions::class)
+        ->callAction('isiSatuan', data: ['unit' => 'gr'], arguments: ['item' => $this->ayam->id])
+        ->assertHasNoActionErrors();
+
+    expect($lain->fresh()->unit)->toBe('gram');
+
+    Livewire::test(MissingUnitConversions::class)
+        ->assertSee('Ayam Fillet')
+        ->assertSee('Buat aturan')
+        ->assertDontSee('Isi satuan resep');
+});

@@ -7,6 +7,7 @@ use App\Support\Units\Unit;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Aturan konversi satuan: 1 from_unit = factor to_unit.
@@ -105,20 +106,23 @@ class InventoryUnitConversion extends Model
     }
 
     /**
-     * Pilihan satuan untuk form, termasuk satuan lepas yang sudah ada di data.
+     * Saran satuan untuk isian bebas di form aturan: satuan baku registri
+     * ditambah satuan yang sudah dipakai di baris resep dan item inventaris
+     * (ikat, batang, lembar, ...), ditulis dalam ejaan bakunya.
      *
-     * @return array<string, array<string, string>|string>
+     * @return list<string>
      */
-    public static function unitOptions(?string ...$current): array
+    public static function unitSuggestions(): array
     {
-        $options = Unit::groupedOptions();
+        $used = DB::table('recipe_items')->whereNotNull('unit')->where('unit', '!=', '')->distinct()->pluck('unit')
+            ->merge(DB::table('inventory_items')->whereNotNull('unit')->where('unit', '!=', '')->distinct()->pluck('unit'));
 
-        foreach ($current as $value) {
-            if (filled($value) && Unit::tryFromAlias($value) === null) {
-                $options['Satuan Lain'][$value] = $value;
-            }
-        }
-
-        return $options;
+        return collect(Unit::cases())->map(fn (Unit $unit) => $unit->value)
+            ->merge($used->map(fn ($unit) => Unit::canonical((string) $unit)))
+            ->filter(fn (?string $unit) => filled($unit) && $unit !== 'All')
+            ->unique(fn (string $unit) => mb_strtolower($unit))
+            ->sort(SORT_NATURAL | SORT_FLAG_CASE)
+            ->values()
+            ->all();
     }
 }
