@@ -55,7 +55,7 @@
             <table class="data-table" id="js-customers-table">
                 <thead>
                     <tr>
-                        <th class="min-w-[220px]">Nama</th>
+                        <th class="min-w-[160px]">Nama</th>
                         <th>Kontak</th>
                         <th class="whitespace-nowrap">Order terakhir</th>
                         <th class="whitespace-nowrap text-right">PO {{ \App\Services\CustomerInsightService::RECENT_DAYS }} hr</th>
@@ -82,11 +82,13 @@
                                     @endunless
                                 </div>
                             </td>
-                            <td class="max-w-[260px] text-slate-600">
+                            {{-- Alamat boleh dua baris: `truncate` (satu baris) membuat alamat
+                                 panjang melebarkan tabel sampai harus digeser ke samping. --}}
+                            <td class="min-w-[160px] text-slate-600">
                                 @if ($customer->phone)
                                     <div class="whitespace-nowrap">{{ $customer->phone }}</div>
                                 @endif
-                                <div class="truncate text-xs text-slate-500" title="{{ $customer->address }}">{{ $customer->address ?: '–' }}</div>
+                                <div class="line-clamp-2 text-xs text-slate-500" title="{{ $customer->address }}">{{ $customer->address ?: '–' }}</div>
                             </td>
                             <td class="whitespace-nowrap">
                                 @if ($last)

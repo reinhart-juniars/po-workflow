@@ -196,6 +196,7 @@ class ProductionOrderResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->weight('medium')
+                    ->wrap()
                     ->description(fn (ProductionOrder $record) => $record->title),
 
                 TextColumn::make('production_date')
@@ -248,9 +249,11 @@ class ProductionOrderResource extends Resource
                     ->label('Form Kebutuhan')
                     ->icon('heroicon-m-clipboard-document-list')
                     ->color('gray')
+                    ->iconButton()
+                    ->tooltip('Form Kebutuhan')
                     ->url(fn (ProductionOrder $record) => static::getUrl('kebutuhan', ['record' => $record])),
 
-                Tables\Actions\EditAction::make()->label('Edit'),
+                Tables\Actions\EditAction::make()->label('Edit')->iconButton()->tooltip('Edit'),
             ])
             ->defaultSort('production_date', 'desc');
     }

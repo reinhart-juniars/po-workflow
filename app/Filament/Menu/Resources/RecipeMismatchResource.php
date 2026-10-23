@@ -130,6 +130,8 @@ class RecipeMismatchResource extends Resource
                     ->label('Buat Bahan')
                     ->icon('heroicon-m-plus-circle')
                     ->color('gray')
+                    ->iconButton()
+                    ->tooltip('Buat Bahan')
                     ->visible(fn (RecipeMismatch $record) => ! $record->isResolved())
                     ->fillForm(fn (RecipeMismatch $record) => [
                         'name' => $record->raw_name,
@@ -183,6 +185,8 @@ class RecipeMismatchResource extends Resource
                     ->label('Abaikan')
                     ->icon('heroicon-m-eye-slash')
                     ->color('gray')
+                    ->iconButton()
+                    ->tooltip('Abaikan')
                     ->visible(fn (RecipeMismatch $record) => ! $record->isResolved())
                     ->form([
                         Forms\Components\TextInput::make('note')

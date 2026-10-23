@@ -108,6 +108,20 @@
   box-shadow: var(--sh-shadow-sm);
 }
 
+/* Mode ringkas (lihat partials/app-bar): tab lain tinggal ikon. */
+.sh-appbar.is-compact .sh-tab:not(.is-active) {
+  padding-inline: 10px;
+}
+
+.sh-appbar.is-compact .sh-tab:not(.is-active) span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 .sh-tab.is-active svg {
   opacity: 1;
   color: var(--sh-brand);
@@ -638,6 +652,9 @@
 .sh-table th:first-child, .sh-table td:first-child { padding-left: 0; width: 100%; }
 .sh-table th:last-child, .sh-table td:last-child { padding-right: 0; }
 .sh-table th:not(:first-child), .sh-table td:not(:first-child) { white-space: nowrap; }
+/* Teks panjang tanpa spasi (SKU, kode) di kolom selain pertama: boleh patah
+   supaya tabel tidak melebar dan harus digeser ke samping. */
+.sh-table td.sh-wrap { white-space: normal; overflow-wrap: anywhere; }
 .sh-table .text-right, .sh-table [class*="text-right"] { text-align: right; font-variant-numeric: tabular-nums; }
 .sh-table tfoot td { border-top: 1px solid var(--sh-line); border-bottom: 0; font-weight: 600; }
 /* Badge Filament memotong teksnya (truncate). Di sh-table kolom pertama

@@ -196,7 +196,10 @@
         @apply mt-1 text-xs leading-relaxed text-slate-500;
     }
 
-    input:not([type="checkbox"]):not([type="radio"]),
+    /* :not(.sr-only): selector ini (0,2,1) mengalahkan .sr-only (0,1,0), jadi
+       input file tersembunyi di tombol "Import Excel" ikut w-full + px-3,
+       melebar selebar layar, dan membuat halaman bisa digeser ke samping. */
+    input:not([type="checkbox"]):not([type="radio"]):not(.sr-only),
     select,
     textarea {
         @apply w-full rounded-lg border-slate-950/10 px-3 py-1.5 text-sm leading-6 text-slate-950 shadow-sm placeholder:text-slate-400 focus:border-brand-600 focus:ring-1 focus:ring-brand-600;
