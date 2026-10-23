@@ -48,7 +48,7 @@
                     @forelse ($rows as $row)
                         <tr>
                             <td class="font-medium">{{ $row['name'] }}</td>
-                            <td class="text-gray-500">{{ $row['sku'] ?: '-' }}</td>
+                            <td class="sh-wrap text-gray-500">{{ $row['sku'] ?: '-' }}</td>
                             <td class="text-right">{{ $rupiah($row['base_price']) }}</td>
                             <td>{{ $row['has_recipe'] ? 'Ada' : 'Belum' }}</td>
                             <td>{{ $tgl($row['last_produced']) ?? 'Belum pernah' }}</td>

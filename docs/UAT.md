@@ -60,7 +60,7 @@ Legenda kolom "Wajib": W = wajib untuk serah terima, O = opsional/dicatat saja.
 | # | Langkah | Hasil yang diharapkan | W/O | ✓/✗ | Catatan |
 |---|---|---|---|---|---|
 | D1 | Admin App → SPK → buat slot dari PO draft | Pesan sukses menyebut SPK Produksi SPKP-… ikut tersusun; di Inventory → SPK Produksi ada baris per item PO, produk tanpa resep ditandai | W | | |
-| D1a | Production App → Dashboard → tombol "Form Kebutuhan SPKP-…" (atau "Susun Form Kebutuhan" untuk slot lama) | Membuka Form Kebutuhan slot itu di Inventory; di SPK Produksi kolom "Slot SPK & PO" menautkan balik ke PO di Admin App | W | | |
+| D1a | Production App → Dashboard → "Lihat detail" pada PO; lalu Inventory → SPK Produksi → buka Form Kebutuhan slot itu | Production App hanya menampilkan detail PO (tanpa tombol Form Kebutuhan); Form Kebutuhan dibuka tim inventory di Inventory App; di SPK Produksi kolom "Slot SPK & PO" menautkan balik ke PO di Admin App | W | | |
 | D2 | Edit SPK → Segarkan dari PO setelah PO berubah | Baris mengikuti PO; baris manual tidak hilang | W | | |
 | D3 | Lembar Kerja → Salin dari Template Menu | Pekerjaan per resep terisi; bisa ubah PIC/jam | W | | |
 | D4 | Plating | Komponen per menu tampil; Cetak PDF terunduh | W | | |

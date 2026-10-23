@@ -308,19 +308,30 @@ class RecipeResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->wrap()
-                    ->description(fn (Recipe $record) => $record->kategori),
+                    // Kolom Jenis hanya tampil di layar lebar (lihat di bawah); di
+                    // tab campuran sub-menu tetap ditandai lewat keterangan ini.
+                    ->description(fn (Recipe $record, $livewire) => collect([
+                        $record->jenis === Recipe::JENIS_SUB && ! static::tabHasSingleJenis($livewire) ? 'Sub-Menu' : null,
+                        $record->kategori,
+                    ])->filter()->implode(' · ')),
 
                 TextColumn::make('jenis')
                     ->label('Jenis')
                     ->badge()
                     ->color(fn (?string $state) => $state === Recipe::JENIS_SUB ? 'gray' : 'primary')
                     ->formatStateUsing(fn (?string $state) => Recipe::jenisOptions()[$state] ?? $state)
-                    ->sortable(),
+                    ->sortable()
+                    // Di tab Menu Utama / Sub-Menu isinya pasti sama semua, dan di
+                    // laptop (<1536px) tempatnya dipakai kolom lain supaya tabel
+                    // tidak perlu digeser ke samping.
+                    ->visibleFrom('2xl')
+                    ->hidden(fn ($livewire) => static::tabHasSingleJenis($livewire)),
 
                 TextColumn::make('items_count')
                     ->label('Baris')
                     ->counts('items')
-                    ->alignRight(),
+                    ->alignRight()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 // HPP tidak tersimpan sebagai kolom: angkanya harus selalu
                 // mengikuti harga bahan terbaru, bukan angka yang membeku.
@@ -339,6 +350,7 @@ class RecipeResource extends Resource
                     ->state(fn (Recipe $record) => static::costOf($record)['total_biaya'])
                     ->money('IDR', locale: 'id')
                     ->alignRight()
+                    ->visibleFrom('2xl')
                     ->toggleable(),
 
                 TextColumn::make('harga_jual')
@@ -374,6 +386,7 @@ class RecipeResource extends Resource
                     ->limitList(2)
                     ->expandableLimitedList()
                     ->placeholder('Belum dipetakan')
+                    ->wrap()
                     ->searchable()
                     ->toggleable(),
 
@@ -420,9 +433,11 @@ class RecipeResource extends Resource
                     ->label('Analisa HPP')
                     ->icon('heroicon-m-calculator')
                     ->color('gray')
+                    ->iconButton()
+                    ->tooltip('Analisa HPP')
                     ->url(fn (Recipe $record) => static::getUrl('hpp', ['record' => $record])),
 
-                Tables\Actions\EditAction::make()->label('Edit'),
+                Tables\Actions\EditAction::make()->label('Edit')->iconButton()->tooltip('Edit'),
 
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\Action::make('pindah_jenis')
@@ -440,17 +455,35 @@ class RecipeResource extends Resource
             ->defaultSort('name');
     }
 
+    /** Tab daftar yang isinya satu jenis saja (lihat ListRecipes::getTabs). */
+    protected static function tabHasSingleJenis(mixed $livewire): bool
+    {
+        return in_array($livewire->activeTab ?? null, ['utama', 'sub', 'belum_dipetakan'], true);
+    }
+
     /** @var array<int, array<string, mixed>> Hitungan HPP per resep dalam satu request. */
     protected static array $costCache = [];
+
+    /** Aplikasi pemilik $costCache: satu instance = satu request (atau satu test). */
+    protected static ?\WeakReference $costCacheOwner = null;
 
     /**
      * Hitungan HPP sebuah resep, sekali per request: beberapa kolom tabel
      * membaca hasil yang sama dan resep berlapis mahal dihitung ulang.
      *
+     * Properti static bertahan sepanjang proses PHP, jadi cache dikosongkan
+     * begitu instance aplikasinya berganti. Tanpa itu, test berikutnya dalam
+     * satu proses (id resep mulai lagi dari 1) membaca HPP resep test lain.
+     *
      * @return array<string, mixed>
      */
     public static function costOf(Recipe $recipe): array
     {
+        if (static::$costCacheOwner?->get() !== app()) {
+            static::$costCache = [];
+            static::$costCacheOwner = \WeakReference::create(app());
+        }
+
         return static::$costCache[$recipe->id] ??= app(RecipeCostService::class)->cost($recipe);
     }
 

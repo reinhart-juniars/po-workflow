@@ -69,6 +69,8 @@ it('membuka aplikasi inventory untuk peran inventory sesuai izin bawaannya, dan 
         ->and($gudang->can('recipe.manage'))->toBeFalse()
         ->and($gudang->can('requisition.check'))->toBeTrue()
         ->and($gudang->can('production.manage'))->toBeFalse()
+        // 23 Okt 2026: boleh membuat SPK Produksi untuk slot lama, tanpa mengelolanya.
+        ->and($gudang->can('production.from_slot'))->toBeTrue()
         ->and($gudang->can('requisition.approve'))->toBeTrue()
         ->and($gudang->can('production.complete'))->toBeFalse();
 

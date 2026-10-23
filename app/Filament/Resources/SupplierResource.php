@@ -146,6 +146,7 @@ class SupplierResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->weight('semibold')
+                    ->wrap()
                     ->description(fn (Supplier $record) => $record->contact_person),
 
                 TextColumn::make('phone')
@@ -157,7 +158,10 @@ class SupplierResource extends Resource
                     ->label('Link / Website')
                     ->searchable()
                     ->placeholder('-')
-                    ->limit(30)
+                    // Tampil tanpa skema (https://, www.) supaya kolom tidak memaksa
+                    // tabel digeser; link lengkapnya tetap di tooltip dan href.
+                    ->formatStateUsing(fn (?string $state) => preg_replace('#^https?://(www\.)?#i', '', (string) $state))
+                    ->limit(24)
                     ->tooltip(fn (Supplier $record) => $record->website)
                     ->color('primary')
                     // Hanya link http(s) yang tersimpan (lihat Supplier::normalizeWebsite).
@@ -170,12 +174,14 @@ class SupplierResource extends Resource
 
                 TextColumn::make('purchases_sum_total_value')
                     ->label('Total Pembelian')
+                    ->wrapHeader()
                     ->money('IDR', locale: 'id')
                     ->placeholder('-')
                     ->sortable(),
 
                 TextColumn::make('purchases_max_transaction_date')
                     ->label('Beli Terakhir')
+                    ->wrapHeader()
                     ->date('d M Y')
                     ->placeholder('Belum pernah')
                     ->sortable(),
@@ -210,9 +216,11 @@ class SupplierResource extends Resource
                     ->preload(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make()->label('Edit'),
+                Tables\Actions\EditAction::make()->label('Edit')->iconButton()->tooltip('Edit'),
                 Tables\Actions\DeleteAction::make()
                     ->label('Hapus')
+                    ->iconButton()
+                    ->tooltip('Hapus')
                     // Supplier yang sudah bertransaksi dinonaktifkan saja; FK
                     // di database juga menolak penghapusannya.
                     ->before(function (Supplier $record, Tables\Actions\DeleteAction $action) {

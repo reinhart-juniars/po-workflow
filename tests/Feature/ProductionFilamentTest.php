@@ -84,6 +84,57 @@ it('menyusun spk produksi dari slot spk lewat daftar', function () {
         ->and((float) $order->lines[0]->qty)->toBe(40.0);
 });
 
+it('membolehkan gudang membuat spk produksi untuk slot lama tanpa menimpa yang sudah ada', function () {
+    Role::findOrCreate('inventory', 'web');
+    $gudang = User::factory()->create(['is_active' => true, 'force_password_change' => false]);
+    $gudang->assignRole('inventory');
+    $this->actingAs($gudang);
+
+    // Slot lama tanpa SPK Produksi: gudang bisa menyusunnya, lalu diarahkan ke
+    // Form Kebutuhan (bukan Edit SPK, yang tidak boleh ia ubah).
+    Livewire::test(ProductionOrderResource\Pages\ListProductionOrders::class)
+        ->assertActionVisible('dari_spk')
+        ->callAction('dari_spk', ['spk_id' => $this->spk->id])
+        ->assertHasNoActionErrors()
+        ->assertRedirect(ProductionOrderResource::getUrl('kebutuhan', ['record' => ProductionOrder::query()->firstWhere('spk_id', $this->spk->id)]));
+
+    $order = ProductionOrder::query()->firstWhere('spk_id', $this->spk->id);
+    expect($order)->not->toBeNull()
+        ->and($order->lines)->toHaveCount(1);
+
+    // Slot yang sudah punya SPK Produksi: tidak boleh disegarkan oleh gudang,
+    // walau baris SPK-nya sudah diubah produksi.
+    $order->lines()->update(['qty' => 55]);
+
+    Livewire::test(ProductionOrderResource\Pages\ListProductionOrders::class)
+        ->callAction('dari_spk', ['spk_id' => $this->spk->id]);
+
+    expect((float) $order->fresh()->lines[0]->qty)->toBe(55.0)
+        ->and(ProductionOrder::query()->where('spk_id', $this->spk->id)->count())->toBe(1);
+
+    // Kontrol: admin (production.manage) tetap bisa menyegarkan dari PO.
+    $this->actingAs($this->user);
+    Livewire::test(ProductionOrderResource\Pages\ListProductionOrders::class)
+        ->callAction('dari_spk', ['spk_id' => $this->spk->id])
+        ->assertHasNoActionErrors();
+
+    expect((float) $order->fresh()->lines[0]->qty)->toBe(40.0);
+});
+
+it('menyembunyikan buat dari slot spk dari peran tanpa izin', function () {
+    Role::findOrCreate('accounting', 'web');
+    $accounting = User::factory()->create(['is_active' => true, 'force_password_change' => false]);
+    $accounting->assignRole('accounting');
+    $this->actingAs($accounting);
+
+    // Accounting boleh membuka daftar SPK Produksi, tapi tidak menyusunnya.
+    Livewire::test(ProductionOrderResource\Pages\ListProductionOrders::class)
+        ->assertOk()
+        ->assertActionHidden('dari_spk');
+
+    expect(ProductionOrder::query()->where('spk_id', $this->spk->id)->exists())->toBeFalse();
+});
+
 it('menjalankan form kebutuhan dari susun sampai spk ditutup lewat halaman', function () {
     $order = app(\App\Services\ProductionOrderService::class)->generateFromSpk($this->spk, $this->user->id);
 

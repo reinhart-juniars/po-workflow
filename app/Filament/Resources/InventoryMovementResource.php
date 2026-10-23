@@ -55,7 +55,8 @@ class InventoryMovementResource extends Resource
                 TextColumn::make('item.name')
                     ->label('Bahan')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->wrap(),
 
                 TextColumn::make('type')
                     ->label('Jenis')

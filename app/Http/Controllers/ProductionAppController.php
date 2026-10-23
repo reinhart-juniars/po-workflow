@@ -23,7 +23,7 @@ class ProductionAppController extends Controller
         $allPos = PurchaseOrder::with([
             'customer',
             'area',
-            'spks' => fn ($q) => $q->orderBy('scheduled_at', 'asc')->with('productionOrder'),
+            'spks' => fn ($q) => $q->orderBy('scheduled_at', 'asc'),
         ])
             ->where('status', 'in_progress')
             ->orderBy('po_number')
@@ -35,24 +35,6 @@ class ProductionAppController extends Controller
             ->values();
 
         return view('productionapp.dashboard', compact('pos', 'allPos', 'scheduleFilter'));
-    }
-
-    /**
-     * Susun SPK Produksi (modul inventory) dari slot SPK yang belum punya --
-     * untuk slot yang dibuat sebelum integrasi. Lalu buka Form Kebutuhannya.
-     */
-    public function createProductionOrder(\App\Models\Spk $spk)
-    {
-        abort_unless(auth()->user()?->can('production.manage'), 403);
-
-        try {
-            $order = app(\App\Services\ProductionOrderService::class)->generateFromSpk($spk, auth()->id());
-        } catch (\Throwable $e) {
-            return back()->with('error', 'SPK Produksi belum bisa disusun: '.$e->getMessage());
-        }
-
-        return redirect()->route('filament.admin.resources.production-orders.kebutuhan', ['record' => $order])
-            ->with('success', "SPK Produksi {$order->number} tersusun dari {$spk->spk_code}.");
     }
 
     public function show(PurchaseOrder $po)

@@ -16,8 +16,8 @@ use Spatie\Permission\Models\Role;
 /**
  * Rantai Admin -> Production -> Inventory: slot SPK yang dibuat admin
  * langsung menjadi SPK Produksi (modul inventory) lengkap dengan barisnya,
- * Production App menautkan ke Form Kebutuhannya, dan SPK Produksi menautkan
- * balik ke PO di Admin App.
+ * Production App hanya menampilkan detail PO (Form Kebutuhan dipegang tim
+ * inventory), dan SPK Produksi menautkan balik ke PO di Admin App.
  */
 function pengguna(string $role): User
 {
@@ -70,7 +70,7 @@ it('menyusun spk produksi otomatis saat admin membuat slot spk', function () {
         ->and($order->production_date->toDateString())->toBe('2026-09-20');
 });
 
-it('menautkan production app ke form kebutuhan, dan menyusunnya untuk slot lama', function () {
+it('hanya memberi detail PO di production app, tanpa form kebutuhan', function () {
     ['po' => $po, 'admin' => $admin] = poDraft();
     $produksi = pengguna('production');
 
@@ -79,42 +79,25 @@ it('menautkan production app ke form kebutuhan, dan menyusunnya untuk slot lama'
     $spk->purchaseOrders()->attach($po->id);
     $po->update(['status' => 'in_progress']);
 
+    // Form Kebutuhan dipegang tim inventory (Inventory App), bukan produksi.
     $this->actingAs($produksi)->get(route('productionapp.dashboard'))
         ->assertOk()
-        ->assertSee('Susun Form Kebutuhan')
-        ->assertSee(route('productionapp.spk.production-order', $spk), false);
+        ->assertSee($po->po_number)
+        ->assertSee(route('productionapp.orders.show', $po), false)
+        ->assertDontSee('Form Kebutuhan');
 
-    $this->actingAs($produksi)->post(route('productionapp.spk.production-order', $spk))
-        ->assertRedirect(route('filament.admin.resources.production-orders.kebutuhan', ['record' => $spk->fresh()->productionOrder]));
-
-    // Setelah tersusun, dashboard menautkan ke Form Kebutuhan-nya.
-    $this->actingAs($produksi)->get(route('productionapp.dashboard'))
-        ->assertOk()
-        ->assertSee('Form Kebutuhan '.$spk->fresh()->productionOrder->number)
-        ->assertDontSee('Susun Form Kebutuhan');
-
-    // Menyusun dua kali tidak menggandakan: generateFromSpk bersifat upsert.
-    $this->actingAs($produksi)->post(route('productionapp.spk.production-order', $spk))->assertRedirect();
-    expect(ProductionOrder::query()->where('spk_id', $spk->id)->count())->toBe(1);
-});
-
-it('menolak penyusunan oleh peran tanpa izin kelola produksi, tetapi tetap menampilkan tautan lihat', function () {
-    ['po' => $po, 'admin' => $admin] = poDraft();
-    $spk = Spk::query()->create(['scheduled_at' => '2026-09-20 07:00:00', 'slot_type' => 'fixed_07', 'status' => 'in_process', 'responsible_user_id' => $admin->id]);
-    $spk->purchaseOrders()->attach($po->id);
-
-    // Owner tanpa production.manage (dicabut) tidak bisa menyusun; owner utuh bisa.
-    $owner = pengguna('owner');
-    Role::findByName('owner', 'web')->revokePermissionTo('production.manage');
-    app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
-
-    $this->actingAs($owner->fresh())->post(route('productionapp.spk.production-order', $spk))->assertForbidden();
+    // Jalan pintas lama untuk menyusun SPK Produksi dari production app sudah tidak ada.
+    $this->actingAs($produksi)->post('/production-app/spk/'.$spk->id.'/production-order')->assertNotFound();
     expect(ProductionOrder::query()->where('spk_id', $spk->id)->exists())->toBeFalse();
 
-    Role::findByName('owner', 'web')->givePermissionTo('production.manage');
-    app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
-    $this->actingAs($owner->fresh())->post(route('productionapp.spk.production-order', $spk))->assertRedirect();
-    expect(ProductionOrder::query()->where('spk_id', $spk->id)->exists())->toBeTrue();
+    // Setelah SPK Produksinya tersusun pun, dashboard tetap hanya menautkan ke detail PO.
+    $order = app(\App\Services\ProductionOrderService::class)->generateFromSpk($spk, $admin->id);
+
+    $this->actingAs($produksi)->get(route('productionapp.dashboard'))
+        ->assertOk()
+        ->assertSee(route('productionapp.orders.show', $po), false)
+        ->assertDontSee('Form Kebutuhan')
+        ->assertDontSee(route('filament.admin.resources.production-orders.kebutuhan', ['record' => $order]), false);
 });
 
 it('menautkan spk produksi balik ke po di admin app', function () {

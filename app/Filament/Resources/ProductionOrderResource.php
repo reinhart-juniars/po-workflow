@@ -196,6 +196,7 @@ class ProductionOrderResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->weight('medium')
+                    ->wrap()
                     ->description(fn (ProductionOrder $record) => $record->title),
 
                 TextColumn::make('production_date')
@@ -248,9 +249,11 @@ class ProductionOrderResource extends Resource
                     ->label('Form Kebutuhan')
                     ->icon('heroicon-m-clipboard-document-list')
                     ->color('gray')
+                    ->iconButton()
+                    ->tooltip('Form Kebutuhan')
                     ->url(fn (ProductionOrder $record) => static::getUrl('kebutuhan', ['record' => $record])),
 
-                Tables\Actions\EditAction::make()->label('Edit'),
+                Tables\Actions\EditAction::make()->label('Edit')->iconButton()->tooltip('Edit'),
             ])
             ->defaultSort('production_date', 'desc');
     }
@@ -258,17 +261,25 @@ class ProductionOrderResource extends Resource
     /**
      * Aksi "Buat dari slot SPK": memilih slot jadwal lalu menyusun barisnya
      * dari item PO. Dipakai di daftar dan bisa diulang untuk menyegarkan.
+     *
+     * Pemegang production.manage boleh memilih slot mana pun (termasuk
+     * menyegarkan). Pemegang production.from_slot saja (gudang) hanya boleh
+     * slot yang belum punya SPK Produksi, supaya SPK yang sedang dikerjakan
+     * produksi tidak ikut tertimpa.
      */
     public static function generateFromSpkAction(): \Filament\Actions\Action
     {
+        $bolehSegarkan = fn (): bool => (bool) auth()->user()?->can('production.manage');
+
         return \Filament\Actions\Action::make('dari_spk')
-            ->authorize('production.manage')
+            ->authorize(fn () => $bolehSegarkan() || auth()->user()?->can('production.from_slot'))
             ->label('Buat dari Slot SPK')
             ->icon('heroicon-m-arrow-path')
             ->form([
                 Forms\Components\Select::make('spk_id')
                     ->label('Slot SPK po-workflow')
                     ->options(fn () => Spk::query()
+                        ->when(! $bolehSegarkan(), fn ($query) => $query->whereDoesntHave('productionOrder'))
                         ->orderByDesc('scheduled_at')
                         ->limit(200)
                         ->get()
@@ -279,9 +290,21 @@ class ProductionOrderResource extends Resource
                     ->native(false)
                     ->helperText('Item PO pada slot ini menjadi baris menu lewat resep produknya. Produk tanpa resep tetap masuk sebagai baris manual yang ditandai.'),
             ])
-            ->action(function (array $data) {
+            ->action(function (array $data) use ($bolehSegarkan) {
+                $spk = Spk::query()->findOrFail($data['spk_id']);
+
+                // Ditolak di server juga, bukan hanya disaring di pilihan.
+                if (! $bolehSegarkan() && $spk->productionOrder()->exists()) {
+                    Notification::make()->danger()
+                        ->title('Slot ini sudah punya SPK Produksi')
+                        ->body('Menyegarkan SPK Produksi yang sudah ada hanya bisa dilakukan tim produksi/admin.')
+                        ->send();
+
+                    return;
+                }
+
                 try {
-                    $order = app(ProductionOrderService::class)->generateFromSpk(Spk::query()->findOrFail($data['spk_id']), auth()->id());
+                    $order = app(ProductionOrderService::class)->generateFromSpk($spk, auth()->id());
                 } catch (Throwable $e) {
                     Notification::make()->danger()->title('Gagal menyusun SPK Produksi')->body($e->getMessage())->send();
 
@@ -296,7 +319,8 @@ class ProductionOrderResource extends Resource
                     ->body($order->lines->count().' baris.'.($manual > 0 ? " {$manual} produk belum punya resep dan tidak ikut dihitung kebutuhannya." : ''))
                     ->send();
 
-                return redirect(static::getUrl('edit', ['record' => $order]));
+                // Gudang tidak boleh mengubah SPK slot, jadi langsung ke Form Kebutuhannya.
+                return redirect(static::getUrl($bolehSegarkan() ? 'edit' : 'kebutuhan', ['record' => $order]));
             });
     }
 

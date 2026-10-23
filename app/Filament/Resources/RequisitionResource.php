@@ -44,10 +44,12 @@ class RequisitionResource extends Resource
                 TextColumn::make('productionOrder.number')
                     ->label('SPK Produksi')
                     ->searchable()
+                    ->wrap()
                     ->description(fn (Requisition $record) => $record->productionOrder?->title),
 
                 TextColumn::make('productionOrder.production_date')
                     ->label('Tanggal Produksi')
+                    ->wrapHeader()
                     ->date('d/m/Y')
                     ->sortable(),
 
@@ -70,11 +72,13 @@ class RequisitionResource extends Resource
 
                 TextColumn::make('approvedBy.name')
                     ->label('Disetujui oleh')
+                    ->wrapHeader()
                     ->placeholder('-')
                     ->toggleable(),
 
                 TextColumn::make('checkedBy.name')
                     ->label('Diperiksa oleh')
+                    ->wrapHeader()
                     ->placeholder('-')
                     ->toggleable(),
             ])

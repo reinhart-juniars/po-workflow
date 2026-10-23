@@ -103,7 +103,6 @@
       <a href="{{ route('productionapp.orders.show', $po->id) }}" class="btn-primary mt-4 w-full">
         Lihat Detail
       </a>
-      @include('productionapp.partials.form-kebutuhan-link', ['spk' => $spk, 'compact' => false])
     </article>
   @empty
     <div class="section-card text-sm text-slate-500">
@@ -140,16 +139,15 @@
               : null;
           @endphp
           <tr>
-            <td class="font-mono text-xs">{{ $po->po_number }}</td>
+            <td class="whitespace-nowrap font-mono text-xs">{{ $po->po_number }}</td>
             <td>{{ $po->customer->name ?? '-' }}</td>
             <td>{{ $po->area->name ?? '-' }}</td>
             <td>{{ $schedule ? $schedule->format('d/m/Y') : '-' }}</td>
             <td>{{ $schedule ? $schedule->format('H:i') : '-' }}</td>
-            <td class="space-x-3 whitespace-nowrap">
+            <td class="whitespace-nowrap">
               <a href="{{ route('productionapp.orders.show', $po->id) }}" class="text-sm font-semibold text-brand-600 hover:text-brand-500">
                 Lihat detail
               </a>
-              @include('productionapp.partials.form-kebutuhan-link', ['spk' => $spk, 'compact' => true])
             </td>
           </tr>
         @empty
