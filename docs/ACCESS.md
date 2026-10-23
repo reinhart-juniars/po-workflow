@@ -19,6 +19,7 @@ policy membuat build merah).
 | `recipe.view` / `recipe.manage` | Aplikasi Menu: Menu Utama & Sub Menu, rincian HPP, Pencocokan Menu, Pekerjaan Menu, Bahan Belum Cocok (tautkan/buat/abaikan), import/export resep. Konversi Satuan terbuka untuk `inventory.*` **atau** `recipe.*` |
 | `production.view` / `production.manage` | SPK Produksi (buat dari slot, segarkan, siap, batalkan), Form Kebutuhan (susun, isi, simpan), Lembar Kerja, Plating, Pelaksana |
 | `production.complete` | Tutup SPK (posting pemakaian & penyesuaian ke kartu stok) |
+| `production.from_slot` | SPK Produksi › **Buat dari Slot SPK**, hanya untuk slot yang belum punya SPK Produksi (slot lama); tidak menyegarkan yang sudah ada. Sesudahnya langsung ke Form Kebutuhan |
 | `requisition.approve` | Setujui Form Kebutuhan |
 | `requisition.check` | Penerimaan barang di Form Kebutuhan (Diterima/Ditolak/Harga Beli/supplier) dan Periksa (posting saldo awal & pembelian ke kartu stok, membuat Pembelian Bahan Baku + satu Tagihan Pembelian berikut hutangnya). Juga melengkapi & mengajukan Tagihan Pembelian dan mencatat Belanja Lepas |
 | `purchase.pay` | Accounting › Tagihan Pembelian: bayar (kas keluar sebagai pelunasan hutang), jadikan hutang supplier, atau kembalikan ke gudang; menerima lonceng tagihan baru |
@@ -71,6 +72,13 @@ gudang *Periksa* → produksi *Tutup SPK*; tiap perpindahan mengirim notifikasi 
 `requisition.approve` dan `notification.price` pindah ke `inventory`. `access:sync` (jalan di
 setiap deploy) memindahkan pemegang peran lama ke `inventory` lalu menghapus perannya
 (`ModuleAccess::RETIRED_ROLES`). Izin baru untuk `inventory` ikut masuk tanpa `--reset`.
+
+**Revisi 23 Okt 2026 — Form Kebutuhan dipegang gudang.** Production App hanya menampilkan
+detail PO; tombol Form Kebutuhan dan "Susun Form Kebutuhan" di sana dihapus. Untuk slot SPK lama
+yang belum punya SPK Produksi, `inventory` mendapat `production.from_slot`: *Buat dari Slot SPK*
+hanya menawarkan slot tanpa SPK Produksi, server menolak slot yang sudah punya, dan sesudahnya
+membuka Form Kebutuhan (gudang tidak mengubah SPK slot). Menyegarkan dari PO tetap
+`production.manage`. Izin baru ini masuk lewat `access:sync` biasa saat deploy, tanpa `--reset`.
 
 Peran **`marketing`** hanya membuka aplikasi Blade Marketing (`/marketing-app`): Katalog Foto
 Menu dan centang menu yang tampil di website. Tanpa izin modul apa pun. Admin/sales yang juga
