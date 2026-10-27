@@ -29,6 +29,7 @@
     .catalog-website.is-busy, .catalog-website-category.is-busy { opacity: .6; pointer-events: none; }
     .catalog-website-category { width: 100%; margin-top: 4px; font-size: 12px; padding: 5px 8px; border-radius: 8px; }
     .catalog-website-category.is-missing { border-color: #f59e0b; background: #fffbeb; }
+    .catalog-website-note { margin-top: 4px; font-size: 11.5px; line-height: 1.35; color: #92400e; }
     .catalog-actions { display: flex; align-items: center; gap: 4px; margin-top: auto; padding-top: 8px; }
     .catalog-actions form { flex: 1; min-width: 0; }
     .catalog-badge { position: absolute; top: 8px; left: 8px; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 999px; background: rgba(15, 23, 42, 0.75); color: #fff; }
@@ -64,7 +65,7 @@
              'options' => ['ada' => 'Sudah ada foto', 'belum' => 'Belum ada foto'],
              'value' => $filter === 'semua' ? null : $filter],
             ['type' => 'select', 'name' => 'website', 'label' => 'Website', 'placeholder' => 'Semua',
-             'options' => ['tampil' => 'Tampil di website', 'tanpa-kategori' => 'Dicentang, belum ada kategori', 'tidak' => 'Tidak tampil'],
+             'options' => ['tampil' => 'Tampil di website', 'tanpa-kategori' => 'Dicentang, tidak ikut terbit', 'tidak' => 'Tidak tampil'],
              'value' => $website === 'semua' ? null : $website],
             ['type' => 'select', 'name' => 'aktif', 'label' => 'Status Menu', 'placeholder' => 'Hanya menu aktif',
              'options' => ['0' => 'Termasuk menu nonaktif'], 'value' => $activeOnly ? null : '0'],
@@ -133,6 +134,13 @@
                                     <option value="{{ $key }}" @selected($product->website_category === $key)>{{ $category['title'] }}</option>
                                 @endforeach
                             </select>
+                            {{-- Kategori lama milik halaman lain (tanda Menu 3S berubah / pemetaan website lama): tidak ada di pilihan, jadi disebut di sini. --}}
+                            @if ($product->show_on_website && filled($product->website_category) && ! \App\Support\WebsiteCatalog::fits($product, $product->website_category))
+                                <p class="catalog-website-note" data-website-note>
+                                    Kategori lama: {{ \App\Support\WebsiteCatalog::title($product->website_category) ?? $product->website_category }}, milik halaman lain.
+                                    Pilih kategori baru, atau minta tim menu ubah tanda Menu 3S.
+                                </p>
+                            @endif
                             <p class="catalog-sku-error mt-1" data-website-card-error hidden></p>
                             <noscript><button type="submit" class="btn-ghost mt-1 text-xs">Simpan</button></noscript>
                         @else
@@ -262,6 +270,9 @@
                 category.value = category.dataset.previous = body.website_category || '';
                 label.classList.toggle('is-on', body.show_on_website);
                 category.classList.remove('is-missing');
+                form.querySelector('[data-website-note]')?.remove();
+                const stale = document.querySelector('[data-website-warnings-stale]');
+                if (stale) stale.hidden = false;
                 document.querySelectorAll('[data-website-count]').forEach((el) => { el.textContent = body.on_website; });
             } catch (error) {
                 if (toggle) checkbox.checked = !checkbox.checked;

@@ -50,7 +50,7 @@ it('membangun panduan pengguna pdf dari sumber html', function () {
     // v3.1.2 (revisi meeting 14 Okt): Rencana Masak sampai Barang Sisa, harga
     // lapak, saran rincian dari HPP resep, Laporan Stok, dan Terbitkan ke Website
     // -- dengan label yang sama persis dengan tombol di layar.
-    expect($html)->toContain('Versi 3.1.2')
+    expect($html)->toContain('Versi 3.2')
         ->toContain('15. Rencana Masak: stok siap untuk lapak')
         ->toContain('Ambil dari stok siap (Rencana Masak)')
         ->toContain('Tutup Stok Siap')
@@ -61,11 +61,14 @@ it('membangun panduan pengguna pdf dari sumber html', function () {
         ->toContain('Export Laporan Stok')
         ->toContain('Export Data Master')
         ->toContain('Terbitkan ke Website')
-        ->toContain('Dicentang, belum ada kategori')
+        ->toContain('Dicentang, tidak ikut terbit')
         // Laporan stok gudang diimpor lewat pratinjau, bukan Import Excel.
         ->toContain('Impor Laporan Stok Gudang')
         ->toContain('Mirip — pilih dulu')
-        ->toContain('Ini laporan stok gudang');
+        ->toContain('Ini laporan stok gudang')
+        // v3.2: terbit ke website selalu lewat pratinjau.
+        ->toContain('Pratinjau Website')
+        ->toContain('Menu berubah sejak pratinjau dibuka');
     expect(base_path('docs/panduan/img/alur-rencana-masak.jpg'))->toBeFile();
 
     @unlink($output);

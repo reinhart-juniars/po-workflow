@@ -127,6 +127,12 @@ class Product extends Model
             if ($product->wasChanged('sku')) {
                 app(\App\Services\SkuChangeNotifier::class)->skuChanged($product, $product->getOriginal('sku'), $product->sku);
             }
+
+            // Halaman website ikut tanda Menu 3S: marketing diberi tahu bila menu
+            // yang tampil di website pindah halaman atau dinonaktifkan.
+            if ($product->wasChanged('is_3s') || $product->wasChanged('active')) {
+                app(\App\Services\WebsiteMenuWarnings::class)->productUpdated($product);
+            }
         });
     }
 

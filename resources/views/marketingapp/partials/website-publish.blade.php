@@ -25,17 +25,14 @@
             <a href="{{ $websiteStatus['url'] }}" target="_blank" rel="noopener" class="underline">Lihat website</a>
         </p>
     </div>
-    <form method="POST" action="{{ route('marketingapp.website.publish') }}"
-          onsubmit="return confirm('Terbitkan {{ $onWebsite }} menu ke website sekarang? Website diperbarui dalam ±1–2 menit.')">
-        @csrf
-        <button type="submit" class="btn-primary"
-                @disabled(! $websiteStatus['configured'] || $websiteStatus['cooldown'] > 0)
-                @if ($websiteStatus['cooldown'] > 0) title="Website sedang diperbarui. Coba lagi dalam {{ $websiteStatus['cooldown'] }} detik." @endif>
-            @svg('heroicon-m-globe-alt', 'h-4 w-4')
-            Terbitkan ke Website
-        </button>
-    </form>
+    {{-- Terbit selalu lewat pratinjau: menu dicek dulu sebelum tampil di website. --}}
+    <a href="{{ route('marketingapp.website.preview') }}" class="btn-primary">
+        @svg('heroicon-m-eye', 'h-4 w-4')
+        Pratinjau &amp; Terbitkan
+    </a>
 </section>
+
+@include('marketingapp.partials.website-warnings', ['warnings' => $websiteStatus['warnings']])
 
 @once
     @push('styles')
