@@ -13,10 +13,12 @@ class WebsitePublish extends Model
 
     public const STATUS_FAILED = 'gagal';
 
-    protected $fillable = ['user_id', 'status', 'menu_count', 'feed_version', 'error'];
+    protected $fillable = ['user_id', 'status', 'menu_count', 'feed_version', 'snapshot', 'error'];
 
     protected $casts = [
         'menu_count' => 'integer',
+        // Isi WebsiteMenuFeed::build() saat diterbitkan; dibaca skrip build website.
+        'snapshot' => 'array',
     ];
 
     public function user(): BelongsTo

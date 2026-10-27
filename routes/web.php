@@ -36,6 +36,7 @@ use App\Http\Controllers\SalesAppController;
 use App\Http\Controllers\SuperadminBackupController;
 use App\Http\Controllers\SuperadminDashboardController;
 use App\Http\Controllers\UserProfileController;
+use App\Http\Controllers\WebsitePreviewController;
 use App\Http\Controllers\WebsitePublishController;
 use Illuminate\Support\Facades\Route;
 
@@ -314,6 +315,7 @@ Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:marketin
         Route::delete('/catalog/{product}/photo', [MenuCatalogController::class, 'destroyPhoto'])->name('catalog.photo.destroy');
         Route::patch('/catalog/{product}/website', [MenuCatalogController::class, 'updateWebsite'])->name('catalog.website');
         Route::patch('/catalog/{product}/sku', [MenuCatalogController::class, 'updateSku'])->name('catalog.sku');
+        Route::get('/website/preview', [WebsitePreviewController::class, 'show'])->name('website.preview');
         Route::post('/website/publish', [WebsitePublishController::class, 'store'])->name('website.publish');
     });
 

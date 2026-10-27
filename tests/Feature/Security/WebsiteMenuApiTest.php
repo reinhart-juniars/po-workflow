@@ -28,6 +28,16 @@ function menuApi(array $attributes = []): Product
     ], $attributes));
 }
 
+/** Simulasikan tombol Terbitkan: snapshot menu saat ini menjadi yang dibaca website. */
+function terbitkanSnapshot(): void
+{
+    $feed = app(\App\Services\WebsiteMenuFeed::class)->build();
+    \App\Models\WebsitePublish::query()->create([
+        'status' => \App\Models\WebsitePublish::STATUS_SENT, 'menu_count' => $feed['total'],
+        'feed_version' => $feed['version'], 'snapshot' => $feed,
+    ]);
+}
+
 function fotoMenu(Product $product, int $width = 1600, int $height = 1200): void
 {
     $path = 'menu-photos/'.$product->id.'-'.uniqid().'.jpg';
@@ -37,6 +47,7 @@ function fotoMenu(Product $product, int $width = 1600, int $height = 1200): void
 
 it('menolak permintaan tanpa token yang benar, dan menerima token yang benar', function () {
     menuApi();
+    terbitkanSnapshot();
 
     $this->getJson(route('api.website.menu'))->assertUnauthorized();
     $this->getJson(route('api.website.menu'), ['Authorization' => 'Bearer salah'])->assertUnauthorized();
@@ -62,6 +73,7 @@ it('menyusun menu terbit per brand dan kategori dengan SKU sebagai nama', functi
     fotoMenu($rawon);
     menuApi(['name' => 'MENU TERSEMBUNYI', 'sku' => 'Tersembunyi', 'show_on_website' => false]);
     menuApi(['name' => 'MENU NONAKTIF', 'sku' => 'Nonaktif', 'active' => false]);
+    terbitkanSnapshot();
 
     $response = $this->getJson(route('api.website.menu'), ['Authorization' => 'Bearer token-rahasia-uji'])->assertOk();
 
@@ -99,6 +111,7 @@ it('memberi foto 560x420 WebP hanya untuk menu yang terbit', function () {
     fotoMenu($terbit, 900, 1200); // foto potret: dipotong tengah, tidak gepeng
     $internal = menuApi(['name' => 'MENU INTERNAL', 'sku' => 'Menu Internal', 'show_on_website' => false]);
     fotoMenu($internal);
+    terbitkanSnapshot();
     $auth = ['Authorization' => 'Bearer token-rahasia-uji'];
 
     $response = $this->get(route('api.website.menu.photo', $terbit), $auth)
@@ -118,4 +131,27 @@ it('memberi foto 560x420 WebP hanya untuk menu yang terbit', function () {
     fotoMenu($terbit->fresh());
     $this->get(route('api.website.menu.photo', $terbit), $auth)->assertOk();
     expect(Storage::disk('local')->files(\App\Services\WebsiteMenuFeed::PHOTO_CACHE_DIR))->toHaveCount(1);
+});
+
+it('menyajikan snapshot terbitan terakhir, bukan data yang sedang disunting', function () {
+    $auth = ['Authorization' => 'Bearer token-rahasia-uji'];
+    $menu = menuApi();
+
+    // Belum pernah terbit: 404, skrip build website mempertahankan menu lama.
+    $this->getJson(route('api.website.menu'), $auth)->assertNotFound()
+        ->assertJsonPath('message', 'Menu belum pernah diterbitkan dari 3S ONE.');
+
+    terbitkanSnapshot();
+
+    // Disunting sesudah terbit: website tetap membaca versi terbitan.
+    $menu->update(['sku' => 'Nasi Ayam Teriyaki Baru']);
+    menuApi(['name' => 'NASI JINGGO 12K', 'sku' => 'Nasi Jinggo']);
+
+    $this->getJson(route('api.website.menu'), $auth)->assertOk()
+        ->assertJsonPath('total', 1)
+        ->assertJsonPath('brands.0.categories.1.items.0.name', 'Nasi Ayam Teriyaki');
+
+    // Kontrol positif: setelah diterbitkan lagi, isi baru yang keluar.
+    terbitkanSnapshot();
+    $this->getJson(route('api.website.menu'), $auth)->assertOk()->assertJsonPath('total', 2);
 });

@@ -91,7 +91,7 @@
   <div class="sub">Business Control System</div>
   <p style="margin-top: 24pt; font-size: 14pt;">Panduan Pengguna</p>
   <p class="muted">Satu sistem untuk pesanan, produksi, stok, dan keuangan<br>W3S Catering</p>
-  <div class="meta">Versi 3.1.2 &middot; pembaruan 15 Oktober 2026</div>
+  <div class="meta">Versi 3.2 &middot; pembaruan 27 Oktober 2026</div>
 </div>
 
 <!-- ============ DAFTAR ISI ============ -->
@@ -565,10 +565,24 @@
     <tr><td><b>Warung Wuenak Poll</b> (menu non-3S)</td><td>Nasi Box Wuenak Poll · Menu Ayam · Menu Telur &amp; Sayur · Menu Ikan &amp; Seafood · Nasi Goreng, Mie &amp; Bihun · Internasional &amp; Rice Bowl</td></tr>
     <tr><td><b>Kuliner Tradisional 3S</b> (menu bertanda 3S)</td><td>Nasi Premium &amp; Signature · Frozen Food · Tumpeng &amp; Hidangan Acara</td></tr>
   </table>
-  <p class="small muted">Halaman brand mengikuti tanda <i>3S</i> menu di Master Menu. Menu yang dicentang <i>Tampil di website</i> tetapi belum diberi kategori <b>tidak ikut terbit</b>; kotaknya ditandai, dan saringan <b>Dicentang, belum ada kategori</b> (ikon corong) menampilkan semuanya.</p>
+  <p class="small muted">Halaman brand mengikuti tanda <i>3S</i> menu di Master Menu. Menu yang dicentang <i>Tampil di website</i> tetapi belum diberi kategori, atau kategorinya milik halaman lain, <b>tidak ikut terbit</b>; kotaknya ditandai, dan saringan <b>Dicentang, tidak ikut terbit</b> (ikon corong) menampilkan semuanya.</p>
 
-  <h3>Terbitkan ke Website <span class="new">BARU</span></h3>
-  <p>Di atas Katalog dan Dashboard Marketing ada kotak <b>Website</b>. Labelnya menunjukkan keadaan website:</p>
+  <h3>Peringatan menu website <span class="new">BARU</span></h3>
+  <p>Tanda <i>3S</i> dan status aktif menu dikelola tim menu di Master Menu, sedangkan kategori website dikelola marketing. Bila keduanya tidak cocok, menu tidak ikut terbit. Supaya tidak hilang diam-diam, aplikasi Marketing memberi tahu dua cara:</p>
+  <ul>
+    <li><b>Kotak peringatan kuning</b> di Dashboard, Katalog, dan Pratinjau Website: <i>… menu dicentang Tampil di website, tetapi tidak akan ikut terbit</i>. Kotak ini tetap tampil sampai semua menunya dibetulkan. Klik nama masalahnya untuk melihat daftar menunya; tombol <b>Tampilkan menunya di Katalog</b> membuka saringan <i>Dicentang, tidak ikut terbit</i>.</li>
+    <li><b>Lonceng</b> saat tim menu mengubah tanda 3S atau menonaktifkan menu yang sedang tampil di website: <i>Menu website pindah halaman: …</i> atau <i>Menu website dinonaktifkan: …</i>.</li>
+  </ul>
+  <table class="grid" style="page-break-inside: avoid;">
+    <tr><th style="width: 34%">Masalah</th><th>Saran perbaikan</th></tr>
+    <tr><td><b>Kategori milik halaman lain</b></td><td>Tanda 3S menunya berbeda dengan halaman kategorinya. Pilih kategori baru di Katalog (menu pindah halaman), atau minta tim menu mengubah tanda 3S di Master Menu bila halamannya yang benar adalah yang lama.</td></tr>
+    <tr><td><b>Belum diberi kategori website</b></td><td>Pilih kategorinya di Katalog.</td></tr>
+    <tr><td><b>Belum punya SKU</b></td><td>Isi SKU di Katalog atau Master Menu.</td></tr>
+    <tr><td><b>Menu nonaktif di Master Menu</b></td><td>Lepas centang <i>Tampil di website</i>, atau minta tim menu mengaktifkannya lagi.</td></tr>
+  </table>
+
+  <h3>Pratinjau &amp; Terbitkan ke Website <span class="new">BARU</span></h3>
+  <p>Website <b>tidak</b> berubah sendiri saat foto, SKU, atau kategori diubah di Katalog. Perubahan baru tampil ke pelanggan setelah diperiksa di <b>Pratinjau Website</b> lalu diterbitkan dari sana. Di atas Katalog dan Dashboard Marketing ada kotak <b>Website</b>. Labelnya menunjukkan keadaan website:</p>
   <table class="grid" style="page-break-inside: avoid;">
     <tr><th style="width: 34%">Label</th><th>Artinya</th></tr>
     <tr><td><b>Sudah terbaru</b> (hijau)</td><td>Isi website sama dengan data menu di 3S ONE.</td></tr>
@@ -577,10 +591,20 @@
   </table>
   <ol>
     <li>Selesaikan dulu perubahan di Katalog (foto, SKU, centang, kategori). Tidak perlu menerbitkan setiap kali satu menu diubah.</li>
-    <li>Tekan <b>Terbitkan ke Website</b>, lalu <b>OK</b> pada pertanyaan <i>Terbitkan … menu ke website sekarang?</i>.</li>
-    <li>Website diperbarui dalam ±1–2 menit. Kotak Website mencatat <i>Terakhir diterbitkan … oleh …</i>; tautan <b>Lihat website</b> membukanya.</li>
+    <li>Tekan <b>Pratinjau &amp; Terbitkan</b> di kotak Website (atau menu <b>Marketing › Pratinjau Website</b>).</li>
+    <li>Periksa pratinjaunya. Menu tampil per halaman (Warung Wuenak Poll, Kuliner Tradisional 3S) dan per kategori, persis seperti di website, dengan tanda:
+      <ul>
+        <li>kotak ringkasan: <i>… baru</i>, <i>… hilang dari website</i>, <i>… ganti nama</i>, <i>… pindah kategori</i>, <i>… foto baru</i> dibanding terbitan terakhir;</li>
+        <li>kartu menu berbingkai oranye dengan label <b>Baru</b> / <b>Ganti nama</b> (nama lama dicoret di bawahnya) / <b>Pindah kategori</b> / <b>Foto baru</b>;</li>
+        <li>tabel <b>Akan hilang dari website</b>: menu yang dilepas centangnya sejak terbitan terakhir;</li>
+        <li>tabel <b>Dicentang tetapi tidak ikut terbit</b>, beserta alasannya (nonaktif, belum ber-SKU, belum berkategori, atau kategori bukan milik halamannya).</li>
+      </ul>
+    </li>
+    <li>Bila ada yang salah, kembali ke Katalog, betulkan, lalu buka pratinjau lagi.</li>
+    <li>Bila sudah benar, tekan <b>Terbitkan ke Website</b> di pratinjau, lalu <b>OK</b>. Website diperbarui dalam ±1–2 menit. Kotak Website mencatat <i>Terakhir diterbitkan … oleh …</i>; tautan <b>Lihat website</b> membukanya.</li>
   </ol>
-  <p class="small muted">Setelah menekan Terbitkan, tombol beristirahat sekitar 2 menit supaya website tidak dibangun ulang berkali-kali. Menu nonaktif, tanpa SKU, atau tanpa kategori tidak ikut terbit. Website tetap tampil walau 3S ONE sedang tidak bisa diakses, karena yang terbit adalah salinan.</p>
+  <div class="tip"><b>Yang terbit = yang dilihat.</b> Bila menu diubah (oleh Anda atau rekan) setelah pratinjau dibuka, tombol Terbitkan menolak dengan pesan <i>Menu berubah sejak pratinjau dibuka</i>. Muat ulang pratinjaunya, periksa, lalu terbitkan lagi.</div>
+  <p class="small muted">Setelah menekan Terbitkan, tombol beristirahat sekitar 2 menit supaya website tidak dibangun ulang berkali-kali. Menu nonaktif, tanpa SKU, tanpa kategori, atau berkategori halaman lain tidak ikut terbit (lihat <i>Peringatan menu website</i>). Website tetap tampil walau 3S ONE sedang tidak bisa diakses, karena yang terbit adalah salinan.</p>
 
   <p><b>Langkah menyiapkan satu menu untuk website:</b></p>
   <ol>
@@ -590,7 +614,7 @@
     <li>Centang <b>Tampil di website</b>. Tersimpan saat itu juga, tanpa tombol Simpan.</li>
     <li>Pilih <b>Kategori website</b> di kartu yang sama (mis. <i>Menu Ayam</i>). Tanpa kategori, menunya belum terbit.</li>
     <li>Kembali ke <b>Dashboard</b>: menu yang tampil di website tetapi belum berfoto ada di daftar <i>Perlu Foto Dulu</i>. Targetnya daftar itu kosong.</li>
-    <li>Tekan <b>Terbitkan ke Website</b> bila semua perubahan hari itu sudah selesai.</li>
+    <li>Bila semua perubahan hari itu sudah selesai, buka <b>Pratinjau Website</b>, periksa, lalu <b>Terbitkan ke Website</b>.</li>
   </ol>
 
   <h3 style="page-break-before: always; margin-top: 0;">Sales</h3>
@@ -1337,7 +1361,7 @@
     <tr><td><b>12</b></td><td>Admin</td><td><b>Marketing › Katalog Foto Menu</b>: unggah foto menu, mulai dari yang paling laku, lalu centang menu yang tampil di website. Boleh bertahap — foto langsung dari HP pun aman karena sistem mengecilkannya sendiri.</td><td>Filter "Belum ada foto" makin pendek tiap minggu.</td></tr>
     <tr><td><b>13</b></td><td>Admin</td><td><span class="new">BARU</span> Isi <b>Harga Lapak</b> di Master Menu untuk menu yang dijual ke lapak (boleh lewat kolom <i>harga_lapak</i> di Excel), lalu centang <b>Lapak</b> di data customer lapak.</td><td>PO untuk customer lapak otomatis memilih harga Lapak.</td></tr>
     <tr><td><b>14</b></td><td>Gudang</td><td><span class="new">BARU</span> Impor Excel rencana masak minggu berjalan di <b>Impor Rencana Masak</b>. Cocokkan sekali semua menu berstatus <i>Pilih menu</i>; minggu berikutnya pilihan itu sudah diingat. Menu berstatus <i>Tanpa resep</i> diserahkan ke tim Menu.</td><td>Impor minggu kedua hampir semuanya <i>Cocok</i> / <i>Cocok (diingat)</i>.</td></tr>
-    <tr><td><b>15</b></td><td>Marketing</td><td><span class="new">BARU</span> Beri <b>Kategori website</b> pada setiap menu yang dicentang tampil di website (saringan <i>Dicentang, belum ada kategori</i>).</td><td>Saringan itu kosong; siap diterbitkan begitu website tersambung.</td></tr>
+    <tr><td><b>15</b></td><td>Marketing</td><td><span class="new">BARU</span> Beri <b>Kategori website</b> pada setiap menu yang dicentang tampil di website (saringan <i>Dicentang, tidak ikut terbit</i>).</td><td>Saringan itu kosong dan tidak ada kotak peringatan kuning; siap diterbitkan begitu website tersambung.</td></tr>
   </table>
   <div class="tip"><b>Tiga angka penanda sistem siap:</b> Bahan Belum Cocok = 0, Konversi Belum Diatur = 0, dan kartu Profit menu keseluruhan menampilkan angka. Selama salah satu belum tercapai, laporan HPP dari resep belum bisa dipercaya — laporan lain (kas, penjualan, pengiriman) tetap berjalan normal.</div>
   <div class="warn">Jangan menunggu semua 400-an menu selesai untuk mulai memakai Form Kebutuhan. Form Kebutuhan bekerja per SPK dan hanya membutuhkan resep menu yang ada di SPK itu. Mulailah dengan menu yang sering dimasak; menu langka menyusul.</div>
@@ -1368,7 +1392,7 @@
     <tr><td>Gudang</td><td><b>Opname Bahan</b> untuk bahan yang mahal atau sering susut (ayam, daging, minyak).</td></tr>
     <tr><td>Tim Menu</td><td>Lihat <b>Bahan Belum Cocok</b> dan <b>Konversi Belum Diatur</b> — resep baru sering menambah satu-dua baris. Jaga tetap 0. Kerjakan Pencocokan Menu untuk menu baru dari Admin.</td></tr>
     <tr><td>Accounting</td><td>Buka tab <b>Hutang supplier</b> di Tagihan Pembelian dan <b>Monitoring Hutang</b>: bayar yang jatuh tempo minggu ini.</td></tr>
-    <tr><td>Marketing</td><td>Tambah foto di <b>Katalog Foto Menu</b>, centang menu yang tampil di website beserta kategorinya, lalu <b>Terbitkan ke Website</b> bila label kotak Website <i>Ada perubahan belum diterbitkan</i>.</td></tr>
+    <tr><td>Marketing</td><td>Tambah foto di <b>Katalog Foto Menu</b>, centang menu yang tampil di website beserta kategorinya, lalu buka <b>Pratinjau Website</b> dan <b>Terbitkan ke Website</b> bila label kotak Website <i>Ada perubahan belum diterbitkan</i>.</td></tr>
     <tr><td>Gudang</td><td><b>Export Laporan Stok</b> (Item Inventaris) untuk laporan stok mingguan; bandingkan dengan hitungan fisik, catat selisihnya lewat <b>Opname Bahan</b>.</td></tr>
   </table>
   <h3 style="margin-top: 10pt;">Setiap bulan</h3>
@@ -1434,7 +1458,8 @@
     <tr><td>Customer lapak</td><td>Customer bertanda <i>Lapak</i>; item PO-nya otomatis memakai harga Lapak.</td></tr>
     <tr><td>Laporan Stok</td><td>Ekspor Excel format gudang: stok awal, masuk, keluar, harga, mutasi, sisa, value per barang, dalam lembar Bahan Baku / Kemasan / Inventaris.</td></tr>
     <tr><td>Kategori website</td><td>Kelompok menu di halaman website (mis. Menu Ayam, Tumpeng &amp; Hidangan Acara), mengikuti brand menu: Warung Wuenak Poll atau Kuliner Tradisional 3S.</td></tr>
-    <tr><td>Terbitkan ke Website</td><td>Tombol di aplikasi Marketing yang memperbarui isi menu website dari data 3S ONE.</td></tr>
+    <tr><td>Pratinjau Website</td><td>Halaman di aplikasi Marketing yang menampilkan menu persis seperti yang akan terbit, beserta perubahannya dari terbitan terakhir.</td></tr>
+    <tr><td>Terbitkan ke Website</td><td>Tombol di Pratinjau Website yang memperbarui isi menu website dari data 3S ONE.</td></tr>
   </table>
 </div>
 

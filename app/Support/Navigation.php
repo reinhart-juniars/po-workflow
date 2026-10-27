@@ -206,6 +206,7 @@ class Navigation
                 ],
                 'Katalog' => [
                     ['label' => 'Katalog Foto Menu', 'route' => 'marketingapp.catalog.index', 'match' => 'marketingapp.catalog.*', 'icon' => 'heroicon-o-photo'],
+                    ['label' => 'Pratinjau Website', 'route' => 'marketingapp.website.preview', 'icon' => 'heroicon-o-eye'],
                 ],
             ],
             'production' => [

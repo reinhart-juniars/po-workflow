@@ -7,17 +7,27 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use RuntimeException;
 
-/** Bagian C: tombol "Terbitkan ke Website" di aplikasi Marketing. */
+/**
+ * Bagian C: tombol "Terbitkan ke Website" di halaman Pratinjau Website.
+ *
+ * feed_version wajib: terbit hanya lewat pratinjau, dan hanya versi yang
+ * sedang dilihat (lihat WebsitePublisher::publish).
+ */
 class WebsitePublishController extends Controller
 {
     public function store(Request $request, WebsitePublisher $publisher): RedirectResponse
     {
+        $data = $request->validate(
+            ['feed_version' => ['required', 'string', 'size:40']],
+            ['feed_version.required' => 'Buka Pratinjau Website dulu, lalu terbitkan dari sana.'],
+        );
+
         try {
-            $publish = $publisher->publish($request->user(), $request->ip());
+            $publish = $publisher->publish($request->user(), $request->ip(), $data['feed_version']);
         } catch (RuntimeException $e) {
-            return back()->with('error', $e->getMessage());
+            return redirect()->route('marketingapp.website.preview')->with('error', $e->getMessage());
         }
 
-        return back()->with('success', $publish->menu_count.' menu dikirim ke website. Website diperbarui dalam ±1–2 menit.');
+        return redirect()->route('marketingapp.website.preview')->with('success', $publish->menu_count.' menu dikirim ke website. Website diperbarui dalam ±1–2 menit.');
     }
 }
