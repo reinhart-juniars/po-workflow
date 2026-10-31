@@ -341,9 +341,9 @@ it('menampilkan jumlah dengan 2 desimal tanpa menggeser nilai asli saat resep di
             $qty = collect($state['items'])->pluck('qty')->all();
             expect($qty)->toBe(['0.08', '40']);
         })
-        // Label baris terlipat memakai format Indonesia.
-        ->assertSee('0,08 gram gula')
-        ->assertSee('40 gram beras');
+        // Kolom jumlah baris terlipat memakai format Indonesia.
+        ->assertSeeInOrder(['gula', '0,08 gram'])
+        ->assertSeeInOrder(['beras', '40 gram']);
 
     // Simpan tanpa mengubah apa pun: nilai asli tetap.
     $page->call('save')->assertHasNoFormErrors();

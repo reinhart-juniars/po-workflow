@@ -163,11 +163,11 @@ it('menolak pembayaran di periode yang sudah ditutup dan akun kas nonaktif', fun
     app(PurchaseBillService::class)->submit($bill, null);
     $nonaktif = CashAccount::query()->create(['name' => 'Kas Lama', 'type' => 'cash', 'is_active' => false]);
     $kas = kasTagihan();
-    PeriodClosing::query()->create(['period_month' => today()->subMonth()->month, 'period_year' => today()->subMonth()->year, 'closed_at' => now(), 'closed_by' => penggunaTagihan('owner')->id]);
+    PeriodClosing::query()->create(['period_month' => today()->subMonthNoOverflow()->month, 'period_year' => today()->subMonthNoOverflow()->year, 'closed_at' => now(), 'closed_by' => penggunaTagihan('owner')->id]);
 
     expect(fn () => app(PurchaseBillService::class)->pay($bill->fresh(), ['cash_account_id' => $nonaktif->id, 'paid_on' => today()->toDateString()], null))
         ->toThrow(ValidationException::class, 'Akun kas');
-    expect(fn () => app(PurchaseBillService::class)->pay($bill->fresh(), ['cash_account_id' => $kas->id, 'paid_on' => today()->subMonth()->toDateString()], null))
+    expect(fn () => app(PurchaseBillService::class)->pay($bill->fresh(), ['cash_account_id' => $kas->id, 'paid_on' => today()->subMonthNoOverflow()->toDateString()], null))
         ->toThrow(ValidationException::class, 'sudah ditutup');
 
     // Kontrol positif: akun aktif, periode terbuka -> lolos.

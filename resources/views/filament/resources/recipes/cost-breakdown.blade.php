@@ -79,8 +79,36 @@
                         <th class="py-2 text-right font-medium">Total</th>
                     </tr>
                 </thead>
+                @php
+                    // Dikelompokkan per Kelompok (komponen) seperti Master Menu
+                    // Revamp: semua baris satu kelompok dalam satu blok, blok urut
+                    // kemunculan pertama, baris tanpa kelompok di bawah.
+                    $groupRuns = [];
+                    foreach ($cost['lines'] as $line) {
+                        $name = (string) ($line['section'] ?? '');
+                        $groupRuns[$name] ??= ['name' => $name, 'lines' => [], 'total' => 0.0];
+                        $groupRuns[$name]['lines'][] = $line;
+                        $groupRuns[$name]['total'] += (float) $line['line_total'];
+                    }
+                    if (isset($groupRuns[''])) {
+                        $ungrouped = $groupRuns[''];
+                        unset($groupRuns['']);
+                        $groupRuns[''] = $ungrouped;
+                    }
+                    $showGroups = collect($groupRuns)->contains(fn ($run) => $run['name'] !== '');
+                @endphp
                 <tbody>
-                    @forelse ($cost['lines'] as $line)
+                    @foreach ($groupRuns as $run)
+                        @if ($showGroups)
+                            <tr class="border-b border-gray-200" style="background: #ebeefb">
+                                <td class="py-2 pr-4 font-semibold" colspan="4">
+                                    {{ $run['name'] !== '' ? $run['name'] : 'Tanpa kelompok' }}
+                                    <span class="text-xs font-normal text-gray-500">· {{ count($run['lines']) }} baris</span>
+                                </td>
+                                <td class="py-2 text-right font-semibold">{{ $rupiah($run['total']) }}</td>
+                            </tr>
+                        @endif
+                    @foreach ($run['lines'] as $line)
                         <tr @class([
                             'border-b border-gray-100 dark:border-gray-800',
                             'bg-danger-50 dark:bg-danger-500/10' => $line['issue'] !== null,
@@ -102,13 +130,15 @@
                             </td>
                             <td class="py-2 text-right">{{ $rupiah($line['line_total']) }}</td>
                         </tr>
-                    @empty
+                    @endforeach
+                    @endforeach
+                    @if ($cost['lines'] === [])
                         <tr>
                             <td colspan="5" class="py-6 text-center text-gray-500 dark:text-gray-400">
                                 Resep ini belum punya rincian bahan.
                             </td>
                         </tr>
-                    @endforelse
+                    @endif
                 </tbody>
                 @if ($cost['lines'])
                     <tfoot>

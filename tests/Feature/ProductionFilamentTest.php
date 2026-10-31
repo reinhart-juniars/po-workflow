@@ -182,6 +182,7 @@ it('menjalankan form kebutuhan dari susun sampai spk ditutup lewat halaman', fun
     // Periksa memakai isian yang belum disimpan itu.
     // Cara pembayaran & alasan tolak ikut diisi di halaman yang sama.
     $bayar = bayarTunai($requisition->fresh());
+    App\Models\ProductionWorker::query()->create(['name' => 'Bu Sri', 'is_inspector' => true]);
     Livewire::test(ProductionOrderResource\Pages\RequisitionForm::class, ['record' => $order->id])
         ->fillForm([
             'payment_type' => 'cash',
@@ -189,7 +190,7 @@ it('menjalankan form kebutuhan dari susun sampai spk ditutup lewat halaman', fun
             'cash_account_id' => $bayar['cash_account']->id,
             'lines' => [['id' => $line->id, 'received_qty' => 0.5, 'rejected_reason' => 'kemasan sobek', 'purchase_price' => 13000]],
         ])
-        ->callAction('periksa')
+        ->callAction('periksa', ['inspector_name' => 'Bu Sri'])
         ->assertHasNoActionErrors();
     expect($requisition->fresh()->status)->toBe(Requisition::STATUS_CHECKED)
         ->and((float) $line->fresh()->received_qty)->toBe(0.5)

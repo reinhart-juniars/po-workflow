@@ -26,6 +26,7 @@ use App\Models\User;
 use App\Services\BalanceSheetService;
 use App\Services\SalesActualService;
 use App\Services\SalesReportService;
+use App\Support\Settings\Settings;
 use App\Support\UiLabel;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -1683,7 +1684,27 @@ class AccountingAppController extends Controller
             ->orderBy('name', 'asc')
             ->paginate(20);
 
-        return view('accountingapp.master-categories.index', compact('categories'));
+        $wealthReductionStart = (string) app(Settings::class)->get('wealth_reduction.accounting_start');
+
+        return view('accountingapp.master-categories.index', compact('categories', 'wealthReductionStart'));
+    }
+
+    /**
+     * Tanggal mulai kategori "Mengurangi Kekayaan" (mis. Biaya Marketing).
+     * Diatur di sini, di samping kategorinya, bukan di Pengaturan Inventory;
+     * perubahannya tercatat di Audit Log lewat Settings::set().
+     */
+    public function categoriesSettingsUpdate(Request $request)
+    {
+        $data = $request->validate([
+            'wealth_reduction_accounting_start' => ['required', 'date_format:Y-m-d'],
+        ]);
+
+        app(Settings::class)->set('wealth_reduction.accounting_start', $data['wealth_reduction_accounting_start'], $request->user()?->id);
+
+        return redirect()
+            ->route('accountingapp.categories.index')
+            ->with('success', 'Tanggal berlaku kategori Mengurangi Kekayaan disimpan.');
     }
 
     public function categoriesStore(Request $request)

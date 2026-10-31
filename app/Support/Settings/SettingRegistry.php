@@ -28,8 +28,13 @@ class SettingRegistry
     /** Tanggal, disimpan sebagai teks Y-m-d. */
     public const TYPE_DATE = 'date';
 
+    /** Aplikasi tempat pengaturan diubah; tanpa kunci `app` = Inventory. */
+    public const APP_INVENTORY = 'inventory';
+
+    public const APP_ACCOUNTING = 'accounting';
+
     /**
-     * @return array<string, array{group: string, label: string, type: string, default: mixed, help?: string, options?: array<string, string>, min?: int|float, max?: int|float}>
+     * @return array<string, array{app?: string, group: string, label: string, type: string, default: mixed, help?: string, options?: array<string, string>, min?: int|float, max?: int|float}>
      */
     public static function all(): array
     {
@@ -148,7 +153,11 @@ class SettingRegistry
                 'default' => '2026-10-01',
                 'help' => 'Retur yang masuk Barang Sisa sejak tanggal ini dinilai sebesar HPP menunya dan tercatat sebagai persediaan di Neraca & Laba Rugi. Retur sebelumnya tidak diubah supaya laporan bulan yang sudah dilaporkan tidak bergeser.',
             ],
+            // Diatur dari Accounting › Kategori Pengeluaran (revisi 31 Okt
+            // 2026), bukan dari Pengaturan Inventory: pemilik kategorinya
+            // accounting.
             'wealth_reduction.accounting_start' => [
+                'app' => self::APP_ACCOUNTING,
                 'group' => 'Laporan Keuangan',
                 'label' => 'Kategori "Mengurangi Kekayaan" berlaku mulai',
                 'type' => self::TYPE_DATE,
@@ -176,18 +185,28 @@ class SettingRegistry
         return array_key_exists($key, self::all());
     }
 
-    /** @return array{group: string, label: string, type: string, default: mixed, help?: string, options?: array<string, string>, min?: int|float, max?: int|float} */
+    /** @return array{app?: string, group: string, label: string, type: string, default: mixed, help?: string, options?: array<string, string>, min?: int|float, max?: int|float} */
     public static function definition(string $key): array
     {
         return self::all()[$key] ?? throw new InvalidArgumentException("Pengaturan '{$key}' tidak terdaftar.");
     }
 
-    /** @return array<string, list<string>> grup => kunci */
-    public static function grouped(): array
+    /** Aplikasi tempat sebuah pengaturan diubah. */
+    public static function appOf(string $key): string
+    {
+        return self::definition($key)['app'] ?? self::APP_INVENTORY;
+    }
+
+    /** @return array<string, list<string>> grup => kunci, hanya milik satu aplikasi */
+    public static function grouped(string $app = self::APP_INVENTORY): array
     {
         $groups = [];
 
         foreach (self::all() as $key => $definition) {
+            if (($definition['app'] ?? self::APP_INVENTORY) !== $app) {
+                continue;
+            }
+
             $groups[$definition['group']][] = $key;
         }
 

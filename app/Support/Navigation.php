@@ -165,7 +165,7 @@ class Navigation
                     ['label' => 'SPK Produksi', 'route' => 'filament.admin.resources.production-orders.index', 'can' => 'production.view'],
                     ['label' => 'Form Kebutuhan', 'route' => 'filament.admin.resources.requisitions.index', 'can' => 'production.view'],
                     ['label' => 'Kartu Stok', 'route' => 'filament.admin.resources.inventory-movements.index', 'can' => 'ledger.view'],
-                    ['label' => 'Pelaksana', 'route' => 'filament.admin.resources.production-workers.index', 'can' => 'production.view'],
+                    ['label' => 'Pelaksana & Pemeriksa', 'route' => 'filament.admin.resources.production-workers.index', 'can' => 'production.view'],
                 ],
             ],
             // Aplikasi Menu (panel Filament /menu): resep & biaya menu. Harga

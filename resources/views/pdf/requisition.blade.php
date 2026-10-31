@@ -4,15 +4,29 @@
     <meta charset="UTF-8">
     <title>{{ $requisition->number }}</title>
     @include('pdf._production-style')
+    {{-- Dua belas kolom angka tidak muat di A4 tegak: kertasnya mendatar
+         (ProductionDocumentService) dan lebar kolom dikunci supaya kolom
+         Bahan tidak terjepit menjadi satu kata per baris. --}}
+    <style>
+        .req { table-layout: fixed; }
+        .req thead { display: table-header-group; }
+        .req tr { page-break-inside: avoid; }
+        .req td { word-wrap: break-word; }
+        .req .fill { min-width: 0; width: 90%; }
+    </style>
 </head>
 <body>
 @php
     $order = $requisition->productionOrder;
-    $qty = fn ($v) => $v === null ? '' : rtrim(rtrim(number_format((float) $v, 4, ',', '.'), '0'), ',');
+    // Yang dicetak bisa sebagian bahan saja (pilihan di tombol Cetak):
+    // bahan yang stoknya masih cukup tidak perlu ikut di kertas belanja.
+    $lines = $lines ?? $requisition->lines;
+    $totalLines = $requisition->lines->count();
+    $qty = fn ($v) => $v === null ? '' : rtrim(rtrim(number_format((float) $v, 3, ',', '.'), '0'), ',');
     $rupiah = fn ($v) => $v === null ? '' : number_format((float) $v, 0, ',', '.');
-    $totalBeli = $requisition->lines->sum(fn ($l) => (float) ($l->purchase_qty ?? 0) * (float) ($l->unit_price ?? 0));
+    $totalBeli = $lines->sum(fn ($l) => (float) ($l->purchase_qty ?? 0) * (float) ($l->unit_price ?? 0));
     $sudahDiterima = ! $requisition->isDraft();
-    $totalAktual = $requisition->lines->sum(fn ($l) => $l->purchaseValue() + $l->damagedValue());
+    $totalAktual = $lines->sum(fn ($l) => $l->purchaseValue() + $l->damagedValue());
 @endphp
 
 <h1>Form Kebutuhan, Stok &amp; Pembelian Barang</h1>
@@ -22,29 +36,32 @@
     Produksi tanggal <b>{{ $order->production_date->format('d/m/Y') }}</b>
     @if ($order->production_time) jam {{ $order->production_time }} @endif
     · Status form: <b>{{ $requisition->statusLabel() }}</b>
+    @if ($lines->count() < $totalLines)
+        · Dicetak <b>{{ $lines->count() }}</b> dari {{ $totalLines }} bahan
+    @endif
 </div>
 
-<table>
+<table class="req">
     <thead>
         <tr>
-            <th style="width: 24px">No</th>
-            <th>Bahan</th>
-            <th style="width: 48px">Satuan</th>
-            <th class="right" style="width: 64px">Kebutuhan</th>
-            <th class="right" style="width: 64px">Stok Awal</th>
-            <th class="right" style="width: 64px">Beli</th>
-            <th class="right" style="width: 56px">Diterima</th>
-            <th class="right" style="width: 56px">Ditolak</th>
-            <th class="right" style="width: 64px">Harga</th>
-            <th class="right" style="width: 72px">{{ $sudahDiterima ? 'Nilai' : 'Perkiraan' }}</th>
-            <th class="right" style="width: 64px">Pemakaian</th>
-            <th class="right" style="width: 56px">Sisa</th>
+            <th style="width: 3%">No</th>
+            <th style="width: 21%">Bahan</th>
+            <th style="width: 6%">Satuan</th>
+            <th class="right" style="width: 8%">Kebutuhan</th>
+            <th class="right" style="width: 7.5%">Stok Awal</th>
+            <th class="right" style="width: 7.5%">Beli</th>
+            <th class="right" style="width: 7.5%">Diterima</th>
+            <th class="right" style="width: 7.5%">Ditolak</th>
+            <th class="right" style="width: 7%">Harga</th>
+            <th class="right" style="width: 9%">{{ $sudahDiterima ? 'Nilai' : 'Perkiraan' }}</th>
+            <th class="right" style="width: 8%">Pemakaian</th>
+            <th class="right" style="width: 8%">Sisa</th>
         </tr>
     </thead>
     <tbody>
-        @foreach ($requisition->lines as $i => $line)
+        @foreach ($lines as $i => $line)
             <tr>
-                <td class="center">{{ $i + 1 }}</td>
+                <td class="center">{{ $loop->iteration }}</td>
                 <td>{{ $line->name }}@if ($line->notes)<br><span class="muted">{{ $line->notes }}</span>@endif</td>
                 <td>{{ $line->unit }}</td>
                 <td class="right">{{ $qty($line->required_qty) }}</td>
@@ -54,7 +71,7 @@
                 <td class="right">
                     {!! $line->received_qty === null ? '<span class="fill"></span>' : $qty($line->rejectedQty()) !!}
                     @if ($line->rejectedQty() > 0 && $line->rejected_reason)
-                        <br><span class="muted">{{ $line->rejected_reason }}{{ $line->rejected_treatment === \App\Models\RequisitionLine::REJECT_PAID ? ' · dibayar' : '' }}</span>
+                        <br><span class="muted" style="white-space: normal">{{ $line->rejected_reason }}{{ $line->rejected_treatment === \App\Models\RequisitionLine::REJECT_PAID ? ' · dibayar' : '' }}</span>
                     @endif
                 </td>
                 <td class="right">{{ $rupiah($sudahDiterima ? $line->purchasePrice() : $line->unit_price) }}</td>
@@ -72,7 +89,9 @@
                     ? ' (ditagihkan '.$tagihan->number.($requisition->supplier_name ? ' · '.$requisition->supplier_name : '').')'
                     : ($requisition->supplier_name ? ' ('.$requisition->supplier_name.')' : '');
             @endphp
-            <td colspan="9" class="right">{{ $sudahDiterima ? 'Total pembelian' : 'Perkiraan total pembelian' }}{{ $bayar }}</td>
+            <td colspan="9" class="right">
+                {{ $sudahDiterima ? 'Total pembelian' : 'Perkiraan total pembelian' }}{{ $lines->count() < $totalLines ? ' bahan yang dicetak' : '' }}{{ $bayar }}
+            </td>
             <td class="right">{{ $rupiah($sudahDiterima ? $totalAktual : $totalBeli) }}</td>
             <td colspan="2"></td>
         </tr>
@@ -92,9 +111,19 @@
             <div class="line">{{ $requisition->approvedBy?->name ?? '' }}<br><span class="muted">{{ $requisition->approved_at?->format('d/m/Y') }}</span></div>
         </td>
         <td>
+            {{-- Pemeriksa fisik barang (bukan pengguna sistem); akun yang
+                 mencatatnya disebut di bawah namanya. --}}
             <div class="muted">Diperiksa (barang dibeli)</div>
             <div style="height: 40px"></div>
-            <div class="line">{{ $requisition->checkedBy?->name ?? '' }}<br><span class="muted">{{ $requisition->checked_at?->format('d/m/Y') }}</span></div>
+            <div class="line">
+                {{ $requisition->inspector_name ?: ($requisition->checkedBy?->name ?? '') }}<br>
+                <span class="muted">
+                    {{ $requisition->checked_at?->format('d/m/Y') }}
+                    @if ($requisition->inspector_name && $requisition->checkedBy)
+                        · dicatat {{ $requisition->checkedBy->name }}
+                    @endif
+                </span>
+            </div>
         </td>
     </tr>
 </table>

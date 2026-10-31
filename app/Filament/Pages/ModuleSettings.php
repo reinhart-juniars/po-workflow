@@ -55,17 +55,22 @@ class ModuleSettings extends Page implements HasForms
 
     public function mount(): void
     {
-        $this->form->fill(self::toState(app(Settings::class)->all()));
+        $this->form->fill(self::toState(self::inventoryValues()));
     }
 
     public function form(Form $form): Form
     {
         $sections = [];
 
+        // Dilipat bawaan supaya halaman tidak perlu digulir panjang; judul
+        // seksi menyebut isinya, buka yang perlu diubah saja.
         foreach (SettingRegistry::grouped() as $group => $keys) {
             $sections[] = Section::make($group)
+                ->description(count($keys).' pengaturan')
                 ->schema(array_map(fn (string $key) => self::field($key), $keys))
-                ->columns(2);
+                ->columns(2)
+                ->collapsible()
+                ->collapsed();
         }
 
         return $form->schema($sections)->statePath('data');
@@ -96,7 +101,17 @@ class ModuleSettings extends Page implements HasForms
         }
 
         Notification::make()->success()->title('Pengaturan tersimpan')->send();
-        $this->form->fill(self::toState(app(Settings::class)->all()));
+        $this->form->fill(self::toState(self::inventoryValues()));
+    }
+
+    /** @return array<string, mixed> nilai berlaku pengaturan milik aplikasi Inventory */
+    protected static function inventoryValues(): array
+    {
+        return array_filter(
+            app(Settings::class)->all(),
+            fn (string $key) => SettingRegistry::appOf($key) === SettingRegistry::APP_INVENTORY,
+            ARRAY_FILTER_USE_KEY,
+        );
     }
 
     protected static function field(string $key): TextInput|Toggle|Select|DatePicker
@@ -138,7 +153,8 @@ class ModuleSettings extends Page implements HasForms
         foreach ($state as $name => $value) {
             $key = str_replace('__', '.', $name);
 
-            if (SettingRegistry::has($key)) {
+            // Pengaturan aplikasi lain tidak bisa diselundupkan lewat halaman ini.
+            if (SettingRegistry::has($key) && SettingRegistry::appOf($key) === SettingRegistry::APP_INVENTORY) {
                 $values[$key] = $value;
             }
         }

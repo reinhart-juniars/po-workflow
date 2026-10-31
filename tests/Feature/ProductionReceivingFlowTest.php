@@ -187,9 +187,21 @@ it('membiarkan satu orang inventory menyetujui, memeriksa, dan mengajukan tagiha
         ->and($requisition->fresh()->approved_by)->toBe($orang->id);
 
     $service->recordReceipt($tepung->fresh(), 2, null, null, 12000);
-    Livewire::test(RequisitionForm::class, ['record' => $order->id])->callAction('periksa');
+
+    // Akun yang sama tidak boleh menjadi "pemeriksa" tanpa nama: pemeriksa
+    // fisiknya orang lain (tanpa akun) yang dipilih dari master.
+    App\Models\ProductionWorker::query()->create(['name' => 'Pak Slamet', 'is_executor' => false, 'is_inspector' => true, 'is_active' => true]);
+    Livewire::test(RequisitionForm::class, ['record' => $order->id])
+        ->callAction('periksa', ['inspector_name' => null])
+        ->assertHasActionErrors(['inspector_name' => 'required']);
+    expect($requisition->fresh()->isApproved())->toBeTrue();
+
+    Livewire::test(RequisitionForm::class, ['record' => $order->id])
+        ->callAction('periksa', ['inspector_name' => 'Pak Slamet'])
+        ->assertHasNoActionErrors();
     expect($requisition->fresh()->isChecked())->toBeTrue()
-        ->and($requisition->fresh()->checked_by)->toBe($orang->id);
+        ->and($requisition->fresh()->checked_by)->toBe($orang->id)
+        ->and($requisition->fresh()->inspector_name)->toBe('Pak Slamet');
 
     $tagihan = PurchaseBill::query()->sole();
     Livewire::test(App\Filament\Resources\PurchaseBillResource\Pages\EditPurchaseBill::class, ['record' => $tagihan->getRouteKey()])

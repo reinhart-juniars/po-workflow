@@ -5,6 +5,7 @@ namespace App\Filament\Resources\ProductionOrderResource\Pages;
 use App\Filament\Resources\ProductionOrderResource;
 use App\Filament\Resources\SupplierResource;
 use App\Models\ProductionOrder;
+use App\Models\ProductionWorker;
 use App\Models\Requisition;
 use App\Models\RequisitionLine;
 use App\Services\ProductionCompletionService;
@@ -12,8 +13,11 @@ use App\Services\ProductionDocumentService;
 use App\Services\ProductionOrderService;
 use App\Services\RequisitionService;
 use Filament\Actions;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
@@ -168,7 +172,7 @@ class RequisitionForm extends Page implements HasForms
         if (! $this->getOrder()->isCompleted()) {
             return $this->getOrder()->canBeManagedBy($user)
                 ? ['color' => 'info', 'text' => 'Meja produksi: barang sudah masuk kartu stok. Setelah produksi, isi Pemakaian Aktual dan Sisa Stok bila dihitung, lalu Tutup SPK.']
-                : ['color' => 'gray', 'text' => 'Diperiksa '.($requisition->checkedBy?->name ?? '').'; menunggu produksi menutup SPK.'];
+                : ['color' => 'gray', 'text' => 'Diperiksa '.$this->inspectorLabel($requisition).'; menunggu produksi menutup SPK.'];
         }
 
         return ['color' => 'success', 'text' => 'SPK sudah ditutup; pemakaian sudah dicatat ke kartu stok.'];
@@ -436,14 +440,33 @@ class RequisitionForm extends Page implements HasForms
                 ->icon('heroicon-m-truck')
                 ->color('success')
                 ->visible(fn () => $this->getRequisition()?->isApproved() ?? false)
-                ->requiresConfirmation()
+                ->modalHeading('Periksa barang masuk')
                 ->modalDescription('Menandai barang sudah diterima & diperiksa. Jumlah Diterima (= Beli bila kosong) dicatat ke kartu stok dengan harga beli, pembelian bahan baku dibuat otomatis dan dikumpulkan menjadi satu Tagihan Pembelian (hutang sampai accounting membayar), dan barang ditolak yang tetap dibayar masuk Kerugian Barang Rusak. Langkah ini tidak bisa diulang.')
-                ->action(function () {
+                ->modalSubmitActionLabel('Periksa')
+                // Gudang dipegang satu akun: yang mengajukan, menyetujui, dan
+                // mencatat bisa orang yang sama. Pemeriksa fisiknya orang lain
+                // tanpa akun, dipilih dari master Pelaksana & Pemeriksa.
+                ->form([
+                    Select::make('inspector_name')
+                        ->label('Nama pemeriksa barang')
+                        ->options(fn () => ProductionWorker::inspectorOptions())
+                        // Hanya nama di master; nama baru lewat "+" (createOptionForm).
+                        ->in(fn () => array_keys(ProductionWorker::inspectorOptions()))
+                        ->searchable()
+                        ->required()
+                        ->native(false)
+                        ->helperText('Orang yang memeriksa fisik barang datang. Yang mencatat ke sistem tetap akun Anda.')
+                        ->createOptionForm([
+                            TextInput::make('name')->label('Nama')->required()->maxLength(255),
+                        ])
+                        ->createOptionUsing(fn (array $data) => static::registerInspector((string) $data['name'])),
+                ])
+                ->action(function (array $data) {
                     // Isian "Diterima" yang belum disimpan ikut dibawa.
                     $this->save();
 
                     try {
-                        app(RequisitionService::class)->check($this->getRequisition(), auth()->id());
+                        app(RequisitionService::class)->check($this->getRequisition(), auth()->id(), $data['inspector_name'] ?? null);
                     } catch (Throwable $e) {
                         Notification::make()->danger()->title('Gagal memeriksa')->body($e->getMessage())->send();
 
@@ -494,11 +517,29 @@ class RequisitionForm extends Page implements HasForms
             // Aksi sekunder dikelompokkan supaya bilah tombol tidak melebar
             // melampaui layar laptop (1366px) dan mendorong judul ke dua baris.
             Actions\ActionGroup::make([
+                // Pilih bahan yang dicetak: mencetak ulang bahan yang stoknya
+                // masih ada hanya memboroskan kertas belanja.
                 Actions\Action::make('cetak')
                     ->label('Cetak Form')
                     ->icon('heroicon-m-printer')
                     ->visible(fn () => $this->getRequisition() !== null)
-                    ->action(fn () => app(ProductionDocumentService::class)->requisitionPdf($this->getRequisition())),
+                    ->modalHeading('Cetak Form Kebutuhan')
+                    ->modalDescription('Centang bahan yang ikut dicetak. Bawaannya bahan yang masih perlu dibeli.')
+                    ->modalSubmitActionLabel('Cetak PDF')
+                    ->modalWidth('3xl')
+                    ->fillForm(fn () => ['lines' => app(ProductionDocumentService::class)->defaultPrintLineIds($this->getRequisition())])
+                    ->form([
+                        CheckboxList::make('lines')
+                            ->label('Bahan')
+                            ->options(fn () => $this->printLineOptions())
+                            ->descriptions(fn () => $this->printLineDescriptions())
+                            ->columns(2)
+                            ->searchable()
+                            ->bulkToggleable()
+                            ->required()
+                            ->validationMessages(['required' => 'Pilih minimal satu bahan untuk dicetak.']),
+                    ])
+                    ->action(fn (array $data) => app(ProductionDocumentService::class)->requisitionPdf($this->getRequisition(), array_map('intval', (array) $data['lines']))),
 
                 Actions\Action::make('kembali')
                     ->label('Buka SPK Produksi')
@@ -510,6 +551,59 @@ class RequisitionForm extends Page implements HasForms
                 ->color('gray')
                 ->button(),
         ];
+    }
+
+    /** @return array<int, string> pilihan baris di modal Cetak */
+    public function printLineOptions(): array
+    {
+        return $this->getRequisition()?->lines->mapWithKeys(fn (RequisitionLine $line) => [$line->id => $line->name])->all() ?? [];
+    }
+
+    /** @return array<int, string> keterangan singkat tiap baris: kebutuhan, stok, beli */
+    public function printLineDescriptions(): array
+    {
+        return $this->getRequisition()?->lines->mapWithKeys(fn (RequisitionLine $line) => [
+            $line->id => 'Butuh '.static::qty($line->required_qty)
+                .' · stok '.($line->opening_stock_qty === null ? '-' : static::qty($line->opening_stock_qty))
+                .' · beli '.($line->purchase_qty === null ? '-' : static::qty($line->purchase_qty))
+                .' '.$line->unit,
+        ])->all() ?? [];
+    }
+
+    /** "Budi (dicatat Andi)", atau nama akun saja untuk form lama tanpa pemeriksa. */
+    public function inspectorLabel(Requisition $requisition): string
+    {
+        $recorder = $requisition->checkedBy?->name;
+
+        if (blank($requisition->inspector_name)) {
+            return (string) $recorder;
+        }
+
+        return $requisition->inspector_name.($recorder ? ' (dicatat '.$recorder.')' : '');
+    }
+
+    /**
+     * Nama pemeriksa baru dari modal Periksa masuk ke master supaya muncul
+     * lagi lain kali. Nama yang sudah ada (sebagai pelaksana) cukup ditandai
+     * pemeriksa, bukan digandakan.
+     */
+    public static function registerInspector(string $name): string
+    {
+        $name = trim($name);
+        $worker = ProductionWorker::query()->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])->first();
+
+        if ($worker) {
+            $worker->update(['is_inspector' => true, 'is_active' => true]);
+
+            return $worker->name;
+        }
+
+        return ProductionWorker::query()->create([
+            'name' => $name,
+            'is_executor' => false,
+            'is_inspector' => true,
+            'is_active' => true,
+        ])->name;
     }
 
     public static function qty(mixed $value): string

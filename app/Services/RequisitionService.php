@@ -440,7 +440,11 @@ class RequisitionService
         );
     }
 
-    public function check(Requisition $requisition, ?int $userId = null): Requisition
+    /**
+     * @param  string|null  $inspectorName  Pemeriksa fisik barang (bukan pengguna
+     *                                      sistem); $userId adalah yang mencatatnya.
+     */
+    public function check(Requisition $requisition, ?int $userId = null, ?string $inspectorName = null): Requisition
     {
         if (! $requisition->isApproved()) {
             throw new RuntimeException('Form '.$requisition->number.' belum disetujui, atau sudah diperiksa.');
@@ -452,7 +456,9 @@ class RequisitionService
             throw new RuntimeException('Belum bisa diperiksa: '.implode(' ', $blockers));
         }
 
-        return DB::transaction(function () use ($requisition, $userId) {
+        $inspectorName = filled($inspectorName) ? trim($inspectorName) : null;
+
+        return DB::transaction(function () use ($requisition, $userId, $inspectorName) {
             $order = $requisition->productionOrder;
             $date = $order->production_date->toDateString();
             $lines = $requisition->lines()->get();
@@ -520,6 +526,7 @@ class RequisitionService
                 'status' => Requisition::STATUS_CHECKED,
                 'checked_by' => $userId,
                 'checked_at' => now(),
+                'inspector_name' => $inspectorName,
             ]);
 
             $this->notify(
