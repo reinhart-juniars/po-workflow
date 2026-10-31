@@ -48,6 +48,21 @@ class RecipeCostService
     }
 
     /**
+     * Hitungan satu baris resep yang mungkin belum disimpan -- dipakai form
+     * resep untuk menampilkan harga & total per baris selagi diisi.
+     *
+     * Memo sub-resep dipertahankan antar pemanggilan supaya resep dengan 40
+     * baris tidak menghitung ulang sub-menu yang sama 40 kali.
+     *
+     * @param  int|null  $recipeId  Resep pemilik baris (mencegah rujukan ke diri sendiri).
+     * @return array<string, mixed> sama dengan satu elemen `lines` pada cost()
+     */
+    public function previewLine(RecipeItem $item, ?int $recipeId = null): array
+    {
+        return $this->lineCost($item, $recipeId ? [$recipeId] : []);
+    }
+
+    /**
      * Kebutuhan bahan untuk memproduksi sejumlah hasil.
      *
      * @param  float  $quantity  Jumlah yang ingin diproduksi, dalam satuan hasil resep.
@@ -348,6 +363,7 @@ class RecipeCostService
         $line = [
             'item_id' => $item->id,
             'raw_name' => $item->raw_name,
+            'section' => filled($item->section) ? trim((string) $item->section) : null,
             'qty' => $qty,
             'unit' => $item->unit,
             'source' => 'unmatched',

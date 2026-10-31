@@ -76,9 +76,12 @@ class RequisitionResource extends Resource
                     ->placeholder('-')
                     ->toggleable(),
 
-                TextColumn::make('checkedBy.name')
+                // Pemeriksa fisik barang; akun yang mencatat sebagai keterangan.
+                TextColumn::make('inspector_name')
                     ->label('Diperiksa oleh')
                     ->wrapHeader()
+                    ->state(fn (Requisition $record) => $record->inspector_name ?: $record->checkedBy?->name)
+                    ->description(fn (Requisition $record) => $record->inspector_name && $record->checkedBy ? 'dicatat '.$record->checkedBy->name : null)
                     ->placeholder('-')
                     ->toggleable(),
             ])

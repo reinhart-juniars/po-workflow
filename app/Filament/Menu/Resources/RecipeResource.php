@@ -4,9 +4,11 @@ namespace App\Filament\Menu\Resources;
 
 use App\Filament\Menu\Resources\RecipeResource\Pages;
 use App\Models\InventoryItem;
+use App\Models\InventoryUnitConversion;
 use App\Models\Product;
 use App\Models\Recipe;
 use App\Models\RecipeItem;
+use App\Services\IngredientUnitConverter;
 use App\Services\RecipeCostService;
 use App\Support\PriceInput;
 use App\Support\Settings\Settings;
@@ -166,8 +168,12 @@ class RecipeResource extends Resource
                     ->schema([
                         // Baris terlipat secara bawaan: resep bisa punya 40+ bahan, dan
                         // yang dibutuhkan saat membuka menu biasanya hanya daftarnya.
+                        // Ditampilkan seperti Master Menu Revamp: dikelompokkan per
+                        // Kelompok (komponen) dengan subtotalnya, tiap baris
+                        // menunjukkan jumlah, harga satuan, total, dan sumbernya.
                         Forms\Components\Repeater::make('items')
                             ->label('')
+                            ->view('filament.menu.recipe-items-repeater')
                             ->relationship()
                             ->orderColumn('sort_order')
                             ->reorderable()
@@ -194,17 +200,24 @@ class RecipeResource extends Resource
                                     ->required()
                                     ->step('any')
                                     ->default(0)
+                                    ->live(onBlur: true)
                                     ->formatStateUsing(fn ($state) => $state === null ? null : static::formatQty($state, '.'))
                                     ->dehydrateStateUsing(fn ($state, ?RecipeItem $record) => $record !== null && (float) $state === (float) static::formatQty($record->qty, '.')
                                         ? $record->qty
                                         : $state),
 
+                                // Pilihan satuan dibatasi pada satuan yang bisa dihitung ke
+                                // satuan harga bahan / satuan hasil sub-menu (registri +
+                                // Konversi Satuan yang sudah diinput). Satuan lain hanya
+                                // membuat baris tidak terhitung.
                                 Forms\Components\Select::make('unit')
                                     ->label('Satuan')
                                     ->searchable()
                                     ->native(false)
+                                    ->live()
                                     ->formatStateUsing(fn ($state) => Unit::canonical($state))
-                                    ->options(fn (Get $get) => static::unitOptions($get('unit'))),
+                                    ->options(fn (Get $get) => static::lineUnitOptions($get('inventory_item_id'), $get('ref_recipe_id'), $get('unit')))
+                                    ->helperText(fn (Get $get) => static::lineUnitHint($get('inventory_item_id'), $get('ref_recipe_id'), $get('unit'))),
 
                                 Forms\Components\Select::make('inventory_item_id')
                                     ->label('Bahan')
@@ -216,6 +229,13 @@ class RecipeResource extends Resource
                                     ->afterStateUpdated(function ($state, Set $set, Get $get) {
                                         if ($state && blank($get('raw_name'))) {
                                             $set('raw_name', (string) InventoryItem::query()->whereKey($state)->value('name'));
+                                        }
+
+                                        // Baris baru tanpa satuan langsung memakai satuan harga
+                                        // bahannya; satuan yang sudah diisi tidak ditimpa, karena
+                                        // mengganti satuan diam-diam berarti mengganti takaran.
+                                        if ($state && blank($get('unit'))) {
+                                            $set('unit', Unit::canonical(InventoryItem::query()->whereKey($state)->value('unit')));
                                         }
                                     }),
 
@@ -245,6 +265,9 @@ class RecipeResource extends Resource
                                     ->label('Kelompok')
                                     ->maxLength(255)
                                     ->placeholder('mis. Bumbu Halus')
+                                    ->datalist(fn (Get $get) => static::sectionSuggestions($get('../../items')))
+                                    ->live(onBlur: true)
+                                    ->helperText('Komponen tempat bahan ini dikelompokkan, mis. Ayam Balado atau Sambal.')
                                     ->columnSpan(2),
 
                                 Forms\Components\TextInput::make('notes')
@@ -558,6 +581,177 @@ class RecipeResource extends Resource
         }
 
         return $options;
+    }
+
+    /**
+     * Satuan tujuan sebuah baris: satuan harga bahan, atau satuan hasil
+     * sub-menu. Null bila baris belum menunjuk keduanya.
+     *
+     * @return array{unit: string, item_id: int|null, label: string, note: string}|null
+     */
+    protected static function lineTarget(mixed $itemId, mixed $recipeId): ?array
+    {
+        if (filled($itemId)) {
+            $item = InventoryItem::query()->find((int) $itemId, ['id', 'name', 'unit']);
+
+            return $item && filled($item->unit)
+                ? ['unit' => (string) Unit::canonical($item->unit), 'item_id' => $item->id, 'label' => 'satuan harga '.$item->name, 'note' => 'satuan harga bahan']
+                : null;
+        }
+
+        if (filled($recipeId)) {
+            $recipe = Recipe::query()->find((int) $recipeId, ['id', 'name', 'yield_unit']);
+
+            return $recipe && filled($recipe->yield_unit)
+                ? ['unit' => (string) Unit::canonical($recipe->yield_unit), 'item_id' => null, 'label' => 'satuan hasil '.$recipe->name, 'note' => 'satuan hasil sub-menu']
+                : null;
+        }
+
+        return null;
+    }
+
+    /**
+     * Satuan yang bisa dihitung ke satuan tujuan baris, beserta bacaannya
+     * ("gram — 1 kg = 1000 gram", "ikat — 1 ikat = 100 gram"). Kandidatnya
+     * satuan registri ditambah satuan pada aturan Konversi Satuan yang berlaku
+     * untuk bahan itu; yang tidak tersambung tidak ditawarkan.
+     *
+     * @return array<string, string> satuan => bacaan
+     */
+    public static function convertibleUnits(string $target, ?int $itemId, string $targetNote = 'satuan harga'): array
+    {
+        $converter = app(IngredientUnitConverter::class);
+
+        $candidates = collect([$target])
+            ->merge(array_map(fn (Unit $unit) => $unit->value, Unit::cases()))
+            ->merge(InventoryUnitConversion::query()->applicableTo($itemId)->get(['from_unit', 'to_unit'])
+                ->flatMap(fn (InventoryUnitConversion $rule) => [$rule->from_unit, $rule->to_unit]))
+            ->map(fn ($unit) => Unit::canonical((string) $unit))
+            ->filter()
+            ->unique(fn (string $unit) => mb_strtolower($unit));
+
+        $options = [];
+
+        foreach ($candidates as $unit) {
+            if ($unit === $target) {
+                $options[$unit] = $unit.' — '.$targetNote;
+
+                continue;
+            }
+
+            $perUnit = $converter->convert(1.0, $unit, $target, $itemId);
+
+            if ($perUnit === null || $perUnit <= 0) {
+                continue;
+            }
+
+            // Dibaca dari sisi yang angkanya >= 1: "1 kg = 1000 gram", bukan "1 gram = 0,001 kg".
+            $options[$unit] = $unit.' — '.($perUnit >= 1
+                ? '1 '.$unit.' = '.static::formatQty($perUnit).' '.$target
+                : '1 '.$target.' = '.static::formatQty(1 / $perUnit).' '.$unit);
+        }
+
+        return $options;
+    }
+
+    /**
+     * Pilihan satuan sebuah baris resep. Bila baris sudah menunjuk bahan atau
+     * sub-menu, hanya satuan yang bisa dihitung yang ditawarkan; satuan lama
+     * yang tidak terhitung tetap tampil (ditandai) supaya isinya tidak hilang.
+     *
+     * @return array<string, array<string, string>|string>
+     */
+    public static function lineUnitOptions(mixed $itemId, mixed $recipeId, ?string $current): array
+    {
+        $target = static::lineTarget($itemId, $recipeId);
+
+        if ($target === null) {
+            return static::unitOptions($current);
+        }
+
+        $options = ['Bisa dihitung' => static::convertibleUnits($target['unit'], $target['item_id'], $target['note'])];
+        $current = Unit::canonical($current);
+
+        if (filled($current) && ! array_key_exists($current, $options['Bisa dihitung'])) {
+            $options['Satuan sekarang — tidak terhitung'] = [$current => $current.' — tidak bisa dihitung'];
+        }
+
+        return $options;
+    }
+
+    /** Keterangan di bawah pilihan satuan: satuan tujuannya, dan peringatan bila tidak terhitung. */
+    public static function lineUnitHint(mixed $itemId, mixed $recipeId, ?string $current): ?string
+    {
+        $target = static::lineTarget($itemId, $recipeId);
+
+        if ($target === null) {
+            return null;
+        }
+
+        $current = Unit::canonical($current);
+
+        if (filled($current) && ! app(IngredientUnitConverter::class)->canConvert($current, $target['unit'], $target['item_id'])) {
+            return 'Satuan "'.$current.'" tidak bisa dihitung ke '.$target['label'].' ('.$target['unit'].'). '
+                .'Pilih salah satu satuan di daftar, atau tambahkan aturannya di Konversi Satuan.';
+        }
+
+        return 'Dihitung ke '.$target['label'].' ('.$target['unit'].'). Hanya satuan yang sudah punya konversi yang ditawarkan.';
+    }
+
+    /**
+     * Kelompok yang sudah dipakai di resep ini, sebagai saran isian.
+     *
+     * @return list<string>
+     */
+    public static function sectionSuggestions(mixed $items): array
+    {
+        return collect(is_array($items) ? $items : [])
+            ->pluck('section')
+            ->map(fn ($section) => trim((string) $section))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /** @var RecipeCostService|null Satu instance per request: memo sub-menu dipakai bersama semua baris. */
+    protected static ?RecipeCostService $previewService = null;
+
+    /** @var \WeakReference|null Aplikasi pemilik (lihat costOf). */
+    protected static ?\WeakReference $previewOwner = null;
+
+    /**
+     * Harga satuan, total, sumber, dan masalah satu baris form resep -- dari
+     * isian form (belum tentu tersimpan), memakai perhitungan HPP yang sama.
+     *
+     * @param  array<string, mixed>  $state
+     * @return array<string, mixed>
+     */
+    public static function linePreview(array $state, ?int $recipeId = null): array
+    {
+        if (static::$previewOwner?->get() !== app()) {
+            static::$previewService = null;
+            static::$previewOwner = \WeakReference::create(app());
+        }
+
+        $service = static::$previewService ??= app(RecipeCostService::class);
+
+        $item = new RecipeItem([
+            'raw_name' => (string) ($state['raw_name'] ?? ''),
+            'section' => $state['section'] ?? null,
+            'inventory_item_id' => filled($state['inventory_item_id'] ?? null) ? (int) $state['inventory_item_id'] : null,
+            'ref_recipe_id' => filled($state['ref_recipe_id'] ?? null) ? (int) $state['ref_recipe_id'] : null,
+            'qty' => is_numeric($state['qty'] ?? null) ? (float) $state['qty'] : 0,
+            'unit' => Unit::canonical($state['unit'] ?? null),
+            'unit_price_snapshot' => is_numeric($state['unit_price_snapshot'] ?? null) ? (float) $state['unit_price_snapshot'] : null,
+        ]);
+
+        $line = $service->previewLine($item, $recipeId);
+        $line['linked_name'] = $item->inventory_item_id
+            ? $item->inventoryItem()->value('name')
+            : ($item->ref_recipe_id ? $item->refRecipe()->value('name') : null);
+
+        return $line;
     }
 
     /**

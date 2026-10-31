@@ -60,6 +60,36 @@
     </form>
   </div>
 
+  {{-- Pindahan dari Pengaturan Inventory (revisi 31 Okt 2026): tanggal ini
+       milik kategori "Mengurangi Kekayaan", jadi diatur di samping kategorinya. --}}
+  <div class="section-card mb-6">
+    <h2 class="panel-title mb-1">Kategori "Mengurangi Kekayaan" berlaku mulai</h2>
+    <p class="mb-4 text-sm text-gray-600">
+      Pengeluaran berkategori Mengurangi Kekayaan (mis. Biaya Marketing) sejak tanggal ini tidak masuk Laba Rugi
+      dan menjadi pengurang Kekayaan di Neraca. Sebelum tanggal ini tetap dihitung beban, supaya Laba Rugi yang
+      sudah dilaporkan tidak bergeser. Setiap perubahan tercatat di Audit Log.
+    </p>
+    <form method="POST" action="{{ route('accountingapp.categories.settings') }}"
+          class="flex flex-col gap-3 md:flex-row md:items-end">
+      @csrf
+      @method('PUT')
+
+      <div class="md:w-64">
+        <label class="form-label" for="wealth_reduction_accounting_start">Berlaku mulai</label>
+        <input type="date" id="wealth_reduction_accounting_start" name="wealth_reduction_accounting_start"
+               value="{{ old('wealth_reduction_accounting_start', $wealthReductionStart) }}"
+               class="form-control" required>
+        @error('wealth_reduction_accounting_start')
+          <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+        @enderror
+      </div>
+
+      <div>
+        <button type="submit" class="btn-primary whitespace-nowrap">Simpan Tanggal</button>
+      </div>
+    </form>
+  </div>
+
   <div class="table-card">
     <div class="table-card-head">Daftar Kategori Pengeluaran</div>
 

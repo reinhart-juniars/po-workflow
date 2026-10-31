@@ -12,7 +12,10 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-/** Pelaksana dapur untuk lembar kerja; bukan pengguna sistem. */
+/**
+ * Pelaksana dapur (lembar kerja) dan pemeriksa barang masuk (Form Kebutuhan
+ * › Periksa) dalam satu daftar; keduanya bukan pengguna sistem.
+ */
 class ProductionWorkerResource extends Resource
 {
     use \App\Filament\Concerns\InInventoryPanel;
@@ -23,13 +26,13 @@ class ProductionWorkerResource extends Resource
 
     protected static ?string $navigationGroup = 'Produksi';
 
-    protected static ?string $navigationLabel = 'Pelaksana';
+    protected static ?string $navigationLabel = 'Pelaksana & Pemeriksa';
 
     protected static ?int $navigationSort = 60;
 
     protected static ?string $modelLabel = 'Pelaksana';
 
-    protected static ?string $pluralModelLabel = 'Pelaksana';
+    protected static ?string $pluralModelLabel = 'Pelaksana & Pemeriksa';
 
     public static function form(Form $form): Form
     {
@@ -39,6 +42,16 @@ class ProductionWorkerResource extends Resource
                 ->required()
                 ->maxLength(255)
                 ->unique(ignoreRecord: true),
+
+            Forms\Components\Toggle::make('is_executor')
+                ->label('Pelaksana dapur')
+                ->helperText('Muncul di pilihan PIC lembar kerja SPK Produksi.')
+                ->default(true),
+
+            Forms\Components\Toggle::make('is_inspector')
+                ->label('Pemeriksa barang masuk')
+                ->helperText('Muncul di pilihan pemeriksa saat Form Kebutuhan diperiksa. Pemeriksa tidak perlu punya akun; user inventory yang mencatat.')
+                ->default(false),
 
             Forms\Components\Toggle::make('is_active')
                 ->label('Aktif')
@@ -51,7 +64,23 @@ class ProductionWorkerResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name')->label('Nama')->searchable()->sortable(),
+                TextColumn::make('tugas')
+                    ->label('Tugas')
+                    ->state(fn (ProductionWorker $record) => array_values(array_filter([
+                        $record->is_executor ? 'Pelaksana' : null,
+                        $record->is_inspector ? 'Pemeriksa' : null,
+                    ])))
+                    ->badge()
+                    ->color(fn (string $state) => $state === 'Pemeriksa' ? 'info' : 'gray')
+                    ->placeholder('-'),
                 IconColumn::make('is_active')->label('Aktif')->boolean(),
+            ])
+            ->filters([
+                Tables\Filters\TernaryFilter::make('is_inspector')
+                    ->label('Pemeriksa')
+                    ->placeholder('Semua')
+                    ->trueLabel('Pemeriksa saja')
+                    ->falseLabel('Bukan pemeriksa'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make()->label('Edit'),

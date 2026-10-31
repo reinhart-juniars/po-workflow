@@ -794,3 +794,61 @@ select.sh-grid-input { padding-right: 24px; appearance: none; background-image: 
 .sh-plate-slots li { display: flex; gap: 8px; min-height: 26px; align-items: center; border-bottom: 1px dashed #e2e8f0; }
 .sh-plate-slots li:last-child { border-bottom: 0; }
 .sh-plate-slots li span { width: 18px; color: #94a3b8; font-variant-numeric: tabular-nums; }
+
+/* ---------- Rincian Bahan resep (gaya Master Menu Revamp) ----------
+   View: filament/menu/recipe-items-repeater. Baris dikelompokkan per Kelompok
+   dengan subtotal; kolom = bahan, jumlah, harga satuan, total, sumber. Padding
+   kepala tabel menyamakan lebar pegangan seret (kiri) dan tombol baris (kanan). */
+.sh-rcp-head, .sh-rcp-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 112px 124px 124px 108px;
+  gap: 0 12px;
+  align-items: start;
+}
+.sh-rcp-head {
+  padding: 0 78px 0 46px;
+  font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--sh-ink-3);
+}
+.sh-rcp-row { flex: 1 1 auto; min-width: 0; font-size: 13px; line-height: 20px; color: var(--sh-ink-2); }
+.sh-rcp-head .num, .sh-rcp-row .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.sh-rcp-name { display: flex; flex-direction: column; min-width: 0; }
+.sh-rcp-raw { font-weight: 600; color: var(--sh-ink); overflow-wrap: anywhere; }
+.sh-rcp-sub { font-size: 12px; line-height: 16px; color: var(--sh-ink-3); }
+.sh-rcp-issue { font-size: 12px; line-height: 16px; color: var(--sh-danger); white-space: normal; }
+.sh-rcp-total { font-weight: 600; color: var(--sh-ink); }
+.sh-rcp-src {
+  display: inline-block; padding: 0 8px; border-radius: 999px;
+  border: 1px solid var(--sh-line); background: var(--sh-bg);
+  font-size: 11px; font-weight: 600; line-height: 20px; color: var(--sh-ink-2); white-space: nowrap;
+}
+.sh-rcp-src.is-recipe { border-color: var(--sh-brand-100); background: var(--sh-brand-50); color: var(--sh-brand-700); }
+.sh-rcp-src.is-snapshot { border-color: #fde68a; background: #fffbeb; color: #92400e; }
+.sh-rcp-src.is-unmatched { border-color: #fecdd3; background: #fff1f2; color: #be123c; }
+.sh-rcp-item.is-issue { box-shadow: inset 3px 0 0 var(--sh-danger), var(--sh-shadow-sm); }
+.sh-rcp-group {
+  display: flex; align-items: baseline; gap: 12px;
+  margin-top: 10px; padding: 8px 12px;
+  border-radius: 10px; background: var(--sh-brand-50);
+}
+.sh-rcp-group:first-child { margin-top: 0; }
+.sh-rcp-group-name { font-size: 14px; font-weight: 700; color: var(--sh-ink); }
+.sh-rcp-group-meta { font-size: 12px; color: var(--sh-ink-3); }
+.sh-rcp-group-meta .is-bad { color: var(--sh-danger); }
+.sh-rcp-group-total { margin-left: auto; font-weight: 700; color: var(--sh-ink); font-variant-numeric: tabular-nums; }
+.sh-rcp-foot {
+  display: flex; justify-content: space-between; gap: 12px;
+  padding: 10px 12px; border-top: 1px solid var(--sh-line);
+  font-size: 14px; font-weight: 600; color: var(--sh-ink); font-variant-numeric: tabular-nums;
+}
+@media (max-width: 1023px) {
+  /* Laptop sempit / tablet: harga satuan dan sumber disembunyikan, total tetap. */
+  .sh-rcp-head, .sh-rcp-row { grid-template-columns: minmax(0, 1fr) 96px 112px; }
+  .sh-rcp-head > :nth-child(3), .sh-rcp-head > :nth-child(5),
+  .sh-rcp-row > :nth-child(3), .sh-rcp-row > :nth-child(5) { display: none; }
+}
+@media (max-width: 640px) {
+  .sh-rcp-head { display: none; }
+  .sh-rcp-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .sh-rcp-row > :nth-child(2) { display: none; }
+}

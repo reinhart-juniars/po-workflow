@@ -485,6 +485,8 @@ Route::middleware(['web', 'auth', 'ensure.role:accounting|owner|superadmin'])
         Route::post('/purchase-bills/{purchaseBill}/return', [AccountingPurchaseBillController::class, 'returnToInventory'])->name('purchase-bills.return');
         Route::get('/master-categories', [AccountingAppController::class, 'categoriesIndex'])->name('categories.index');
         Route::post('/master-categories', [AccountingAppController::class, 'categoriesStore'])->name('categories.store');
+        // Didaftarkan sebelum {category} supaya "pengaturan" tidak dibaca sebagai id kategori.
+        Route::put('/master-categories/pengaturan', [AccountingAppController::class, 'categoriesSettingsUpdate'])->name('categories.settings');
         Route::put('/master-categories/{category}', [AccountingAppController::class, 'categoriesUpdate'])->name('categories.update');
         Route::delete('/master-categories/{category}', [AccountingAppController::class, 'categoriesDestroy'])->name('categories.destroy');
         Route::resource('cash-accounts', CashAccountController::class)->except(['show']);

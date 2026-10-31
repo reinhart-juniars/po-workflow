@@ -58,6 +58,23 @@ menggantikan HPP residual opname dengan pemakaian bahan riil dari resep × produ
 - **Satu bahasa visual** untuk Blade, kedua panel, dan halaman masuk (portal korporat, tanpa data contoh);
   angka & penyimpangan di [`docs/DESIGN.md`](docs/DESIGN.md).
 
+## Revisi user 31 Okt 2026
+
+- **Pengaturan Inventory** dilipat per seksi (klik judul untuk membuka). Tanggal berlaku kategori
+  "Mengurangi Kekayaan" (mis. Biaya Marketing) pindah ke **Accounting › Kategori Pengeluaran**;
+  `SettingRegistry` menandai pemilik tiap pengaturan lewat kunci `app`.
+- **Pemeriksa barang masuk**: master Inventory › **Pelaksana & Pemeriksa** (satu orang bisa pelaksana
+  dapur, pemeriksa, atau keduanya). Periksa Form Kebutuhan wajib memilih nama pemeriksa
+  (`requisitions.inspector_name`); akun yang mencatat tetap `checked_by`. PDF menulis
+  "Pak X · dicatat Y".
+- **Cetak Form Kebutuhan** mendatar (A4 landscape, kolom tidak terpotong) dan hanya bahan yang
+  dicentang; bawaannya bahan yang masih perlu dibeli.
+- **Resep (aplikasi Menu)**: Rincian Bahan dan Analisa HPP dikelompokkan per Kelompok/komponen seperti
+  Master Menu Revamp (subtotal per kelompok; tiap baris: jumlah, harga satuan, total, sumber, masalah).
+  Pilihan satuan baris hanya satuan yang bisa dihitung ke satuan harga bahan / hasil sub-menu
+  (registri + Konversi Satuan), lengkap dengan bacaannya ("ikat — 1 ikat = 100 gram"); satuan lama
+  yang tidak terhitung tetap tampil bertanda.
+
 ## Barang Sisa, Barang Hilang & Susut Bahan (revisi Owner, v3.1)
 
 - **Barang Sisa** (aplikasi Sales › Barang Sisa): retur Sales Actual yang disubmit tidak lagi otomatis

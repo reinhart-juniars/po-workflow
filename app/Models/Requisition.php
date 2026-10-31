@@ -43,6 +43,7 @@ class Requisition extends Model
         'rejection_reason',
         'checked_by',
         'checked_at',
+        'inspector_name',
         'notes',
         'payment_type',
         'expense_category_id',

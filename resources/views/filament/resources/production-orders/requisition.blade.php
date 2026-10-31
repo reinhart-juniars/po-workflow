@@ -25,7 +25,7 @@
             <div class="sh-kpi-lines">
                 <div>Diajukan: {{ $requisition?->submittedBy?->name ?? '-' }} {{ $requisition?->submitted_at?->format('d/m H:i') }}</div>
                 <div>Disetujui: {{ $requisition?->approvedBy?->name ?? '-' }} {{ $requisition?->approved_at?->format('d/m H:i') }}</div>
-                <div>Diperiksa: {{ $requisition?->checkedBy?->name ?? '-' }} {{ $requisition?->checked_at?->format('d/m H:i') }}</div>
+                <div>Diperiksa: {{ $requisition ? ($this->inspectorLabel($requisition) ?: '-') : '-' }} {{ $requisition?->checked_at?->format('d/m H:i') }}</div>
             </div>
         </div>
 
