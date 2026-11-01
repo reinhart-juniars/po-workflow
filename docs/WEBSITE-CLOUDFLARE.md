@@ -2,7 +2,11 @@
 
 Untuk: yang memegang akun domain dan server (Reinhart). Bagian C, v3.2.
 
-## Kondisi sekarang (dicek 21 Okt 2026)
+> **Status 1 Nov 2026: tahap A–D selesai.** Nameserver `gigi.ns.cloudflare.com` + `ricardo.ns.cloudflare.com`;
+> `www` dan apex di Cloudflare Pages (apex 301 ke www lewat Redirect Rule `apex ke www`); `3sone` dan `nav`
+> DNS only. Sisa: lepas domain di Vercel (D5), hapus `vercel.json` (D6). Tabel di bawah = kondisi sebelum pindah.
+
+## Kondisi sebelum pindah (dicek 21 Okt 2026)
 
 | Apa | Di mana |
 |---|---|
@@ -10,6 +14,7 @@ Untuk: yang memegang akun domain dan server (Reinhart). Bagian C, v3.2.
 | `w3scatering.com` | A `216.198.79.1` → Vercel |
 | `www.w3scatering.com` | CNAME → `…vercel-dns-017.com` → Vercel |
 | `3sone.w3scatering.com` | A `159.65.11.190` → **server 3S ONE (DigitalOcean)** |
+| `nav.w3scatering.com` | CNAME → `597a47d06272050e.vercel-dns-017.com` → Vercel, dialihkan ke `portal-w3s.vercel.app` (proyek Vercel lain, tetap di Vercel) |
 | Email (MX), TXT | tidak ada |
 | Kode website | folder `w3s-landing/` di repo `reinhart-juniars/po-workflow` |
 
@@ -112,9 +117,11 @@ Dua rahasia. Keduanya **tidak pernah** ditulis di chat, di repo, atau di screens
    | A | `3sone` | `159.65.11.190` | **DNS only (awan abu-abu)** |
    | A | `@` | `216.198.79.1` | DNS only (sementara, masih Vercel) |
    | CNAME | `www` | `…vercel-dns-017.com` (sesuai hasil pindai) | DNS only (sementara) |
+   | CNAME | `nav` | `597a47d06272050e.vercel-dns-017.com` | DNS only (tetap ke Vercel) |
 
    - `3sone` **wajib DNS only**. Server 3S ONE tidak disiapkan di belakang proxy Cloudflare, dan sertifikat HTTPS-nya (certbot) diperpanjang langsung ke server.
-   - Bila ada catatan lain di Rumahweb yang tidak terpindai, tambahkan manual. Bandingkan dengan *Rumahweb › Domain › Kelola DNS*.
+   - Pindaian Cloudflare **tidak menangkap** subdomain: saat pindah 1 Nov 2026 hanya `@` dan `www` yang terpindai, dan semuanya disetel *Proxied*. `3sone` dan `nav` ditambah manual, semua toggle dimatikan.
+   - Patokannya *Rumahweb › Domain › Kelola DNS*, bukan hasil `nslookup` (subdomain tidak bisa didaftar dari luar).
 3. Cloudflare menampilkan **dua nameserver** (mis. `xxx.ns.cloudflare.com`). Salin.
 4. Rumahweb: login client area › **Domain** › `w3scatering.com` › **Nameserver** › ganti keempat nameserver Rumahweb dengan dua nameserver Cloudflare › Simpan.
 5. Tunggu email *"w3scatering.com is now active on Cloudflare"* (biasanya 1–24 jam). Selama menunggu tidak ada yang putus, karena isi catatannya sama di kedua tempat.
