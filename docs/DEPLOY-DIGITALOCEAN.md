@@ -1094,7 +1094,27 @@ Grafik CPU/RAM ada di halaman Droplet; peringatan Uptime (§2) masuk ke email ka
 
 ### 14.2 Gladi pindah (±27 Oktober)
 
-Urutan §14.3 langkah 5–6 dijalankan terhadap `po_workflow_staging`, dengan dump v2 hari itu:
+Urutan §14.3 langkah 5–6 dijalankan terhadap `po_workflow_staging`, dengan dump v2 hari itu.
+
+Dua pemeriksaan dulu (ditemukan saat pindah 1 November 2026):
+
+```bash
+# 1. Koneksi mysql_staging memakai DB_DATABASE + "_staging" kecuali diatur sendiri.
+#    Selama DB_DATABASE=po_workflow_latihan, artisan mencari po_workflow_latihan_staging.
+php artisan config:show database.connections.mysql_staging.database   # harus: po_workflow_staging
+grep -q '^DB_DATABASE_STAGING=' .env || echo 'DB_DATABASE_STAGING=po_workflow_staging' >> .env
+
+# 2. MASTER_MENU_DB_PATH yang masih tertinggal membuat validate-migration membandingkan
+#    dengan app.db awal Oktober -> ERROR palsu "Jumlah bahan/resep sumber vs tujuan" karena
+#    tim menambah bahan dan resep selama Oktober. Hapus barisnya (CUTOVER.md §11 baris 11).
+sed -i '/^MASTER_MENU_DB_PATH=/d' .env
+
+php artisan optimize
+```
+
+Kalau validate-migration tetap menyebut *SELISIH — jalankan ulang inventory:migrate-master-menu*,
+**jangan** ikuti sarannya: itu menimpa pemetaan Oktober. Artinya `MASTER_MENU_DB_PATH` masih
+terbaca; ulangi pemeriksaan 2.
 
 ```bash
 mysql -e "DROP DATABASE po_workflow_staging; CREATE DATABASE po_workflow_staging CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
@@ -1122,8 +1142,22 @@ daripada di malam pindah.
 
 1. **Umumkan**: input terakhir di v2 jam X. Setelah itu semua input di v3.1.
 2. **Tutup v3.1 latihan**: `cd /var/www/po-workflow && php artisan down --retry=60`.
-3. **Dump akhir v2** (§8.1, server lama) dan bawa ke Droplet. Simpan juga salinannya di laptop
-   terenkripsi atau Spaces: ini arsip v2 terakhir.
+3. **Bekukan v2, lalu dump akhir** (server lama). Bekukan **sebelum** dump, supaya tidak ada input
+   yang masuk di antara dump dan pembekuan:
+
+   ```bash
+   cd FOLDER_APLIKASI_V2 && php artisan down --secret=TOKEN_ACAK
+   mysqldump --single-transaction --routines --no-tablespaces -u USER_V2 -p po_workflow \
+     | gzip > ~/v2-AKHIR-$(date +%F).sql.gz
+   zcat ~/v2-AKHIR-*.sql.gz | tail -1        # harus: -- Dump completed on ...
+   cd .. && tar czf ~/v2-kode-$(date +%F).tar.gz --exclude="$(basename FOLDER_APLIKASI_V2)/vendor" \
+     --exclude="$(basename FOLDER_APLIKASI_V2)/node_modules" "$(basename FOLDER_APLIKASI_V2)"   # kode + .env V2
+   chmod 600 ~/v2-*.gz
+   ```
+
+   Bawa dump ke Droplet (§8.1) dan sebut **nama berkasnya lengkap** di langkah berikutnya, jangan
+   `v2-*.sql.gz`: di server lama bisa tertinggal dump percobaan kosong (20 byte). Simpan kedua berkas
+   di laptop dalam arsip terenkripsi (7-Zip AES-256) atau Spaces: ini arsip v2 terakhir.
 4. **Bekukan Master Menu Revamp**: ganti nama foldernya di laptop klien jadi
    `Master Menu Revamp.FROZEN` (jangan dihapus).
 5. **Buat database resmi** dan arahkan aplikasi ke sana:
@@ -1146,6 +1180,9 @@ daripada di malam pindah.
    php artisan inventory:validate-migration
    ```
 
+   Tabel carry harus sama dengan gladi §14.2, dan baris `Tujuan` harus `po_workflow` (bukan
+   staging). Peringatan validate-migration boleh ada; error tidak.
+
 7. `php artisan optimize && sudo systemctl reload php8.3-fpm && php artisan up`
 8. **Pengaturan Inventory** (Owner):
    - *Barang Sisa dihitung sebagai persediaan mulai* → **1 November 2026**;
@@ -1156,9 +1193,9 @@ daripada di malam pindah.
 10. **Saldo awal stok**: gudang menghitung fisik bahan utama dan mengisinya di Inventory ›
     Opname Bahan. Hitungan pertama tiap bahan menjadi saldo awal Kartu Stok. Bahan lain mendapat
     saldo awal dari kolom Stok Awal Form Kebutuhan pertamanya.
-11. **Bekukan v2** di server lama: `php artisan down --secret=TOKEN_ACAK`. Semua orang melihat
-    halaman perawatan; Owner masih bisa melihat lewat `https://ALAMAT_V2/TOKEN_ACAK`. Biarkan
-    server lama hidup 3 bulan, lalu matikan setelah dump akhir terbukti bisa dipulihkan.
+11. **v2 tetap beku** (sudah di langkah 3). Semua orang melihat halaman perawatan; Owner masih bisa
+    melihat lewat `https://ALAMAT_V2/TOKEN_ACAK`. Biarkan server lama hidup 3 bulan, lalu matikan
+    setelah dump akhir terbukti bisa dipulihkan.
 12. **Umumkan**: v3.1 resmi; password = password v2 masing-masing (akun yang dibuat di v3.1
     memakai password v3.1-nya).
 13. Database `po_workflow_latihan` disimpan 3 bulan sebagai arsip, lalu dihapus. Hapus dump lama
