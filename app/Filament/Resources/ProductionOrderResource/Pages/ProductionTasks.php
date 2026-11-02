@@ -41,7 +41,19 @@ class ProductionTasks extends Page implements HasForms
     public function mount(int|string $record): void
     {
         $this->record = $this->resolveRecord($record);
-        $this->form->fill();
+        $this->fillFromRecord();
+    }
+
+    /**
+     * Isi form dari baris tersimpan.
+     *
+     * Harus fill([]), bukan fill(): tanpa state, Filament hanya mengisi nilai
+     * bawaan dan tidak memuat repeater berelasi -- form tampil kosong, dan
+     * menekan Simpan di form kosong itu menghapus seluruh baris yang ada.
+     */
+    protected function fillFromRecord(): void
+    {
+        $this->form->fill([]);
     }
 
     public function getTitle(): string
@@ -147,7 +159,7 @@ class ProductionTasks extends Page implements HasForms
                         ->body($count === 0 ? 'Menu di SPK ini belum punya template kerja, atau sudah disalin.' : null)
                         ->send();
 
-                    $this->form->fill();
+                    $this->fillFromRecord();
                 }),
 
             Actions\Action::make('excel')
