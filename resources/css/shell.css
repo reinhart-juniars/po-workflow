@@ -530,6 +530,11 @@
    jarak sama dengan layouts/shell (px-6 pt-5). */
 .sh-fi-search { flex: none; padding: 20px 24px 0; }
 
+/* Ruang di bawah menu terakhir = layouts/shell (nav pb-8, 32px). Kelas pb-8 di
+   override view sidebar tidak ada di CSS Filament (hanya py-8 yang dikompilasi),
+   jadi tanpa ini menu terakhir menempel ke dasar layar saat digulir habis. */
+.fi-sidebar .fi-sidebar-nav { padding-bottom: 32px; }
+
 /* Sidebar panel = sidebar layouts/shell: putih dengan garis kanan slate-200
    (Filament bawaannya transparan di atas kanvas slate-50, tanpa garis). */
 @media (min-width: 1024px) {
