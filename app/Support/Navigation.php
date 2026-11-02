@@ -163,6 +163,7 @@ class Navigation
                     ['label' => 'Rencana Masak', 'route' => 'filament.admin.pages.rencana-masak', 'can' => 'production.view'],
                     ['label' => 'Impor Rencana Masak', 'route' => 'filament.admin.pages.impor-rencana-masak', 'can' => 'plan.manage'],
                     ['label' => 'SPK Produksi', 'route' => 'filament.admin.resources.production-orders.index', 'can' => 'production.view'],
+                    ['label' => 'Rekap Lembar Kerja', 'route' => 'filament.admin.pages.rekap-lembar-kerja', 'can' => 'production.view'],
                     ['label' => 'Form Kebutuhan', 'route' => 'filament.admin.resources.requisitions.index', 'can' => 'production.view'],
                     ['label' => 'Kartu Stok', 'route' => 'filament.admin.resources.inventory-movements.index', 'can' => 'ledger.view'],
                     ['label' => 'Pelaksana & Pemeriksa', 'route' => 'filament.admin.resources.production-workers.index', 'can' => 'production.view'],

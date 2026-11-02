@@ -65,6 +65,12 @@ class ProductionDocumentService
         return ($toBuy->isEmpty() ? $requisition->lines : $toBuy)->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
     }
 
+    /** @param  array<string, mixed>  $recap  Hasil WorkSheetRecapService::forDate(). */
+    public function workSheetRecapPdf(array $recap): StreamedResponse
+    {
+        return $this->stream('pdf.work-sheet-recap', ['recap' => $recap], 'rekap-lembar-kerja-'.$recap['date']->format('Ymd').'.pdf');
+    }
+
     /** @param  string  $tampilan  global (satu tabel) | kartu (komponen per menu) */
     public function platingPdf(ProductionOrder $order, string $tampilan = 'global'): StreamedResponse
     {

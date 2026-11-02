@@ -137,7 +137,7 @@ it('mengekspor breakdown bahan dan lembar kerja ke Excel', function () {
         ->and($menu[1][0])->toBe('Gorengan')
         ->and(trim($menu[2][0]))->toBe('Minyak Goreng');
 
-    expect((new ProductionTasksExport($order))->collection()->first())->toBe([1, 'Mia', 'Gorengan', 'goreng', 'adonan', '2 kg', '']);
+    expect((new ProductionTasksExport($order))->collection()->first())->toBe([1, 'Mia', 'Gorengan', 'goreng', 'adonan', '2 kg', 'H-1 · Sen 14/09', '']);
 
     // Admin mengunduh Excel breakdown dari Detail PO.
     $this->actingAs(penggunaParitas('admin'))
