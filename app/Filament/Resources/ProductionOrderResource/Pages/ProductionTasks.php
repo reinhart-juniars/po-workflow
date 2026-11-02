@@ -4,6 +4,7 @@ namespace App\Filament\Resources\ProductionOrderResource\Pages;
 
 use App\Filament\Resources\ProductionOrderResource;
 use App\Models\ProductionOrder;
+use App\Models\ProductionTask;
 use App\Models\ProductionWorker;
 use App\Services\ProductionOrderService;
 use Filament\Actions;
@@ -86,12 +87,17 @@ class ProductionTasks extends Page implements HasForms
                     ->reorderable()
                     ->addActionLabel('Tambah Pekerjaan')
                     ->defaultItems(0)
-                    ->itemLabel(fn (array $state) => trim(($state['task'] ?? '').' '.($state['object'] ?? '').' '.($state['quantity_text'] ?? '')) ?: 'Pekerjaan baru')
+                    ->itemLabel(function (array $state) {
+                        $text = trim(($state['task'] ?? '').' '.($state['object'] ?? '').' '.($state['quantity_text'] ?? '')) ?: 'Pekerjaan baru';
+                        $days = (int) ($state['days_before'] ?? ProductionTask::DEFAULT_DAYS_BEFORE);
+
+                        return $text.' · '.($days === 0 ? 'H' : 'H-'.$days);
+                    })
                     ->schema([
                         TextInput::make('task')
                             ->label('Pekerjaan')
                             ->placeholder('potong / goreng / rebus')
-                            ->datalist(fn () => \App\Models\ProductionTask::taskOptions())
+                            ->datalist(fn () => ProductionTask::taskOptions())
                             ->maxLength(255)
                             ->required(),
 
@@ -120,11 +126,21 @@ class ProductionTasks extends Page implements HasForms
                             ->searchable()
                             ->native(false),
 
+                        // Persiapan (potong, buat sambal) boleh dimajukan ke H-2 / H-3;
+                        // Rekap Lembar Kerja mengumpulkan baris per tanggal kerja ini.
+                        Select::make('days_before')
+                            ->label('Dikerjakan')
+                            ->options(ProductionTask::dayOptions($order->production_date))
+                            ->default(ProductionTask::DEFAULT_DAYS_BEFORE)
+                            ->selectablePlaceholder(false)
+                            ->required()
+                            ->native(false),
+
                         Toggle::make('is_done')
                             ->label('Selesai')
                             ->inline(false),
                     ])
-                    ->columns(6),
+                    ->columns(7),
             ])
             ->model($order)
             ->statePath('data');
@@ -170,6 +186,14 @@ class ProductionTasks extends Page implements HasForms
                     new \App\Exports\ProductionTasksExport($order),
                     'lembar-kerja-'.$order->number.'.xlsx'
                 )),
+
+            Actions\Action::make('rekap')
+                ->label('Rekap Harian')
+                ->icon('heroicon-m-queue-list')
+                ->color('gray')
+                ->url(fn () => \App\Filament\Pages\WorkSheetRecap::getUrl([
+                    'tanggal' => $order->production_date?->copy()->subDays(ProductionTask::DEFAULT_DAYS_BEFORE)->toDateString(),
+                ])),
 
             Actions\Action::make('simpan')
                 ->authorize('production.manage')

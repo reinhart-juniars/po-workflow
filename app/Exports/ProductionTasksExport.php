@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\ProductionOrder;
+use App\Models\ProductionTask;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -17,7 +18,7 @@ class ProductionTasksExport implements FromCollection, ShouldAutoSize, WithHeadi
 
     public function headings(): array
     {
-        return ['No.', 'PIC (Pelaksana)', 'Yang Dikerjakan (Menu)', 'Apa yang Dikerjakan', 'Objek', 'Jumlah', 'Selesai'];
+        return ['No.', 'PIC (Pelaksana)', 'Yang Dikerjakan (Menu)', 'Apa yang Dikerjakan', 'Objek', 'Jumlah', 'Dikerjakan', 'Selesai'];
     }
 
     public function collection(): Collection
@@ -35,6 +36,7 @@ class ProductionTasksExport implements FromCollection, ShouldAutoSize, WithHeadi
                 $task->task,
                 $task->object,
                 $task->quantity_text,
+                $this->order->production_date ? ProductionTask::dayOptions($this->order->production_date)[(int) $task->days_before] ?? null : null,
                 $task->is_done ? 'Ya' : '',
             ]);
     }

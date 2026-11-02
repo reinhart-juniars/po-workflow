@@ -15,7 +15,7 @@
 <h1>SPK Produksi {{ $order->number }}</h1>
 <div class="meta">
     <b>{{ $order->title }}</b><br>
-    Dikerjakan tanggal <b>{{ $order->production_date->format('d/m/Y') }}</b>
+    Tanggal SPK (H) <b>{{ $order->production_date->format('d/m/Y') }}</b>
     @if ($order->production_time) jam <b>{{ $order->production_time }}</b> @endif
     · Status: {{ $order->statusLabel() }}
     @if ($order->spk) · Slot {{ $order->spk->spk_code }} @endif
@@ -88,6 +88,7 @@
                 <th>Pekerjaan</th>
                 <th style="width: 120px">Menu</th>
                 <th style="width: 90px">Pelaksana</th>
+                <th style="width: 80px">Dikerjakan</th>
                 <th style="width: 40px" class="center">Selesai</th>
             </tr>
         </thead>
@@ -98,6 +99,7 @@
                     <td>{{ $task->summary() }}</td>
                     <td class="muted">{{ $task->menu_label }}</td>
                     <td>{{ $task->worker_name }}</td>
+                    <td>{{ \App\Models\ProductionTask::dayOptions($order->production_date)[(int) $task->days_before] ?? '' }}</td>
                     <td class="center">{{ $task->is_done ? '✓' : '' }}</td>
                 </tr>
             @endforeach
