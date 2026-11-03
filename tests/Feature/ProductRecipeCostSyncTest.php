@@ -257,3 +257,32 @@ it('mengunci Harga Lapak dari resep di Admin dan import, tetapi Harga Jual tetap
     ])->assertSessionHasNoErrors()->assertRedirect();
     expect((float) $manual->fresh()->lapak_price)->toBe(4000.0);
 });
+
+it('menyalin harga menu asal v2 ke Harga Lapak tanpa mengosongkan Harga Jual', function () {
+    $migration = require database_path('migrations/2026_11_03_100001_copy_v2_prices_to_lapak_price.php');
+
+    $buat = function (string $sku, float $harga, ?float $lapak, ?string $origin) {
+        $product = Product::query()->create(['name' => $sku, 'sku' => $sku, 'unit' => 'porsi', 'base_price' => $harga, 'lapak_price' => $lapak, 'active' => true]);
+        $product->forceFill(['origin' => $origin])->saveQuietly();
+
+        return $product;
+    };
+
+    $v2 = $buat('ALACARTE-DORI-20K', 20000, null, Product::ORIGIN_V2);
+    $v2Berlapak = $buat('V2-BERLAPAK', 15000, 13000, Product::ORIGIN_V2);
+    $v2Nol = $buat('V2-NOL', 0, null, Product::ORIGIN_V2);
+    $baru = $buat('BARU-3SONE', 25000, null, null);
+
+    $migration->up();
+
+    expect((float) $v2->fresh()->lapak_price)->toBe(20000.0)
+        ->and((float) $v2->fresh()->base_price)->toBe(20000.0)
+        ->and((float) $v2Berlapak->fresh()->lapak_price)->toBe(13000.0)
+        ->and($v2Nol->fresh()->lapak_price)->toBeNull()
+        // Menu buatan 3S ONE: harganya memang harga jual.
+        ->and($baru->fresh()->lapak_price)->toBeNull();
+
+    $migration->down();
+    expect($v2->fresh()->lapak_price)->toBeNull()
+        ->and((float) $v2Berlapak->fresh()->lapak_price)->toBe(13000.0);
+});
