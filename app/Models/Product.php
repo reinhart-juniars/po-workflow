@@ -98,7 +98,15 @@ class Product extends Model
         // model yang sama melihat recipe_id masih "berubah" dan berulang.
         static::saved(function (self $product) {
             if ($product->wasChanged('recipe_id') || ($product->wasRecentlyCreated && $product->recipe_id !== null)) {
-                app(\App\Services\ProductRecipeCostSync::class)->queueProduct($product->id);
+                $sync = app(\App\Services\ProductRecipeCostSync::class);
+                $sync->queueProduct($product->id);
+
+                // Produk lain di resep lama & baru ikut dihitung ulang: harga lapak
+                // hanya mengikuti target bila resepnya dipakai satu produk, jadi
+                // menautkan/melepas satu varian mengubah status varian lainnya.
+                foreach (array_filter([$product->getOriginal('recipe_id'), $product->recipe_id]) as $recipeId) {
+                    $sync->queueRecipe((int) $recipeId);
+                }
             }
         });
 
@@ -159,6 +167,44 @@ class Product extends Model
     public function costFollowsRecipe(): bool
     {
         return $this->cost_source === self::COST_RECIPE;
+    }
+
+    /**
+     * Harga Jual Target resep tertaut, yang menjadi Harga Lapak menu ini.
+     *
+     * Null -- harga lapak tetap diisi admin -- bila belum tertaut, resepnya
+     * tanpa target, atau resepnya dipakai beberapa produk: varian 10K dan 12K
+     * boleh berbagi resep, tetapi targetnya hanya satu angka, sehingga varian
+     * yang lebih murah akan mendapat harga lapak di atas harga jualnya.
+     */
+    public function lapakTargetFromRecipe(): ?float
+    {
+        $recipe = $this->recipe_id === null ? null : ($this->relationLoaded('recipe') ? $this->recipe : $this->recipe()->first());
+
+        if ($recipe?->target_price === null || $this->recipeIsShared()) {
+            return null;
+        }
+
+        return round((float) $recipe->target_price, 2);
+    }
+
+    /** Resep tertautnya juga dipakai produk lain (varian harga). */
+    public function recipeIsShared(): bool
+    {
+        $recipe = $this->recipe_id === null ? null : ($this->relationLoaded('recipe') ? $this->recipe : $this->recipe()->first());
+
+        if (! $recipe) {
+            return false;
+        }
+
+        // products_count dimuat lewat withCount di daftar & sinkron; sisanya dihitung.
+        return ($recipe->products_count ?? $recipe->products()->count()) > 1;
+    }
+
+    /** Harga lapak diatur tim menu lewat resep, terkunci di Admin App. */
+    public function lapakFollowsRecipe(): bool
+    {
+        return $this->lapakTargetFromRecipe() !== null;
     }
 
     public function recordPriceHistory(?string $reason = null): void

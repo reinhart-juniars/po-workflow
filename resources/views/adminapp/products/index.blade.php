@@ -292,7 +292,12 @@
                             <td class="text-right tabular-nums whitespace-nowrap">
                                 <div><span class="rp">Rp</span>{{ number_format($product->base_price, 0, ',', '.') }}</div>
                                 @if ($product->lapak_price !== null)
-                                    <div class="text-[10px] font-semibold text-amber-700">Lapak Rp {{ number_format($product->lapak_price, 0, ',', '.') }}</div>
+                                    <div class="text-[10px] font-semibold text-amber-700">
+                                        Lapak Rp {{ number_format($product->lapak_price, 0, ',', '.') }}
+                                        @if ($product->lapakFollowsRecipe())
+                                            <span title="Dari Harga Jual Target resep (aplikasi Menu)">· resep</span>
+                                        @endif
+                                    </div>
                                 @endif
                                 @if (!empty($product->price_last_changed_at) && ($product->price_histories_count ?? 0) > 1)
                                     @php

@@ -149,6 +149,11 @@ class ProductsImport implements SkipsEmptyRows, ToCollection, WithHeadingRow
             unset($payload['raw_material_cost'], $payload['overhead_cost']);
         }
 
+        // Begitu pula harga lapak yang mengikuti Harga Jual Target resep.
+        if ($product?->lapakFollowsRecipe()) {
+            unset($payload['lapak_price']);
+        }
+
         return $payload;
     }
 
