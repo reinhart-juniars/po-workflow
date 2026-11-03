@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\DB;
  * HPP (Bahan Baku) & OHC produk diturunkan dari resepnya di aplikasi Menu.
  *
  * Revisi 7 Okt 2026: tim menu mengatur resep dan biayanya; admin hanya
- * mengatur harga jual dan melihat profit. Aturannya:
+ * mengatur harga jual dan melihat profit. Sejak 3 Nov 2026 Harga Jual Target
+ * resep juga menjadi Harga Lapak produknya (lapakPriceChanges). Aturannya:
  *
  *   Bahan Baku produk = HPP resep per satuan hasil × faktor satuan produk
  *   OHC produk        = OHC resep per satuan hasil × faktor satuan produk
@@ -94,10 +95,13 @@ class ProductRecipeCostSync
     public function syncProduct(Product $product): string
     {
         $result = $this->evaluate($product);
+        $lapak = $this->lapakPriceChanges($product);
 
         if ($result['state'] !== Product::COST_RECIPE) {
-            if ($product->costFollowsRecipe()) {
-                $product->forceFill(['cost_source' => Product::COST_MANUAL])->saveQuietly();
+            $changes = $lapak + ($product->costFollowsRecipe() ? ['cost_source' => Product::COST_MANUAL] : []);
+
+            if ($changes !== []) {
+                $product->forceFill($changes)->saveQuietly();
             }
 
             return $result['state'];
@@ -106,7 +110,7 @@ class ProductRecipeCostSync
         Product::$historyReason = 'HPP & OHC dari resep "'.$product->recipe?->name.'" (aplikasi Menu).';
 
         try {
-            $product->forceFill([
+            $product->forceFill($lapak + [
                 'raw_material_cost' => $result['raw_material_cost'],
                 'overhead_cost' => $result['overhead_cost'],
                 'cost_source' => Product::COST_RECIPE,
@@ -117,6 +121,29 @@ class ProductRecipeCostSync
         }
 
         return Product::COST_RECIPE;
+    }
+
+    /**
+     * Harga Lapak produk = Harga Jual Target resepnya (revisi 3 Nov 2026).
+     *
+     * Harga jual yang ditetapkan tim menu di aplikasi Menu adalah harga untuk
+     * lapak owner; harga jual umum ke customer tetap ditentukan admin. Tidak
+     * bergantung pada bersih-tidaknya hitungan HPP: targetnya angka yang
+     * diketik tim menu, bukan hasil hitungan. Resep tanpa target tidak
+     * menyentuh harga lapak yang diisi admin, begitu pula resep yang dipakai
+     * beberapa varian (lihat Product::lapakTargetFromRecipe).
+     *
+     * @return array<string, float>
+     */
+    protected function lapakPriceChanges(Product $product): array
+    {
+        $target = $product->lapakTargetFromRecipe();
+
+        if ($target === null || ($product->lapak_price !== null && (float) $product->lapak_price === $target)) {
+            return [];
+        }
+
+        return ['lapak_price' => $target];
     }
 
     /**
@@ -186,7 +213,7 @@ class ProductRecipeCostSync
         $rest = array_diff($products, $done);
 
         if ($rest !== []) {
-            Product::query()->whereKey($rest)->with('recipe')->get()
+            Product::query()->whereKey($rest)->with(['recipe' => fn ($query) => $query->withCount('products')])->get()
                 ->each(function (Product $product) use (&$tally) {
                     $tally[$this->syncProduct($product)]++;
                 });
@@ -214,7 +241,7 @@ class ProductRecipeCostSync
 
         Product::query()
             ->where(fn ($q) => $q->whereNotNull('recipe_id')->orWhere('cost_source', Product::COST_RECIPE))
-            ->with('recipe')
+            ->with(['recipe' => fn ($query) => $query->withCount('products')])
             ->chunkById(200, function (Collection $products) use (&$tally) {
                 foreach ($products as $product) {
                     $tally[$this->syncProduct($product)]++;
@@ -237,7 +264,7 @@ class ProductRecipeCostSync
         }
 
         DB::transaction(function () use ($recipeIds, &$tally) {
-            Product::query()->whereIn('recipe_id', $recipeIds)->with('recipe')->get()
+            Product::query()->whereIn('recipe_id', $recipeIds)->with(['recipe' => fn ($query) => $query->withCount('products')])->get()
                 ->each(function (Product $product) use (&$tally) {
                     $tally[$this->syncProduct($product)]++;
                 });

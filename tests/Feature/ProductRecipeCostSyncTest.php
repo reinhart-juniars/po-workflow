@@ -165,3 +165,124 @@ it('menyinkronkan otomatis di akhir request saat resep disimpan lewat HTTP', fun
 
     expect((float) $data['product']->fresh()->overhead_cost)->toBe(300.0);
 });
+
+it('menjadikan Harga Jual Target resep sebagai Harga Lapak produk tanpa menyentuh Harga Jual', function () {
+    $data = siapkanProduksi();
+    $product = $data['product'];
+    $product->update(['base_price' => 15000, 'lapak_price' => null]);
+
+    $data['recipe']->update(['target_price' => 12000]);
+    sinkron();
+
+    expect((float) $product->fresh()->lapak_price)->toBe(12000.0)
+        ->and((float) $product->fresh()->base_price)->toBe(15000.0);
+
+    // Target diubah tim menu -> harga lapak ikut.
+    $data['recipe']->update(['target_price' => 13500]);
+    sinkron();
+    expect((float) $product->fresh()->lapak_price)->toBe(13500.0);
+});
+
+it('tidak memakai target resep untuk varian harga yang berbagi resep', function () {
+    $data = siapkanProduksi();
+    $data['product']->update(['base_price' => 12000, 'lapak_price' => null]);
+
+    // Varian 10K berbagi resep dengan varian 12K; targetnya hanya satu angka (12.000).
+    $varian = Product::query()->create(['name' => 'GORENGAN 10K', 'sku' => 'GORENGAN-10K-B', 'unit' => 'porsi', 'base_price' => 10000, 'active' => true, 'recipe_id' => $data['recipe']->id]);
+    $data['recipe']->update(['target_price' => 12000]);
+    sinkron();
+
+    expect($varian->fresh()->lapak_price)->toBeNull()
+        ->and($data['product']->fresh()->lapak_price)->toBeNull()
+        ->and($varian->fresh()->lapakFollowsRecipe())->toBeFalse();
+
+    // Kontrol positif: varian dilepas -> resep tinggal satu produk -> harga lapaknya ikut target.
+    $varian->update(['recipe_id' => null]);
+    sinkron();
+    expect((float) $data['product']->fresh()->lapak_price)->toBe(12000.0);
+});
+
+it('mengikuti target walau hitungan HPP resep belum lengkap, dan membiarkan harga lapak admin bila resep tanpa target', function () {
+    $data = siapkanProduksi();
+    RecipeItem::query()->create(['recipe_id' => $data['recipe']->id, 'raw_name' => 'garam misterius', 'qty' => 5, 'unit' => 'gram']);
+    $data['product']->update(['lapak_price' => 9000]);
+
+    // Tanpa target: harga lapak isian admin tetap.
+    sinkron();
+    expect((float) $data['product']->fresh()->lapak_price)->toBe(9000.0)
+        ->and($data['product']->fresh()->lapakFollowsRecipe())->toBeFalse();
+
+    // Kontrol positif: begitu target diisi, harga lapak ikut walau HPP masih tertahan.
+    $data['recipe']->update(['target_price' => 11000]);
+    sinkron();
+
+    expect($data['product']->fresh())
+        ->cost_source->toBe(Product::COST_MANUAL)
+        ->and((float) $data['product']->fresh()->lapak_price)->toBe(11000.0);
+});
+
+it('mengunci Harga Lapak dari resep di Admin dan import, tetapi Harga Jual tetap diisi admin', function () {
+    $data = siapkanProduksi();
+    $data['recipe']->update(['target_price' => 12000]);
+    sinkron();
+    $product = $data['product']->fresh();
+    $admin = adminMenu();
+
+    $this->actingAs($admin)->get(route('adminapp.products.edit', $product))->assertOk()
+        ->assertSee('Dari Harga Jual Target resep', false);
+
+    $this->actingAs($admin)->get(route('adminapp.products.index'))->assertOk()
+        ->assertSee('Lapak Rp 12.000')
+        ->assertSee('· resep');
+
+    $this->actingAs($admin)->put(route('adminapp.products.update', $product), [
+        'sku' => 'GORENGAN-10K', 'name' => $product->name, 'unit' => $product->unit,
+        'base_price' => 16000, 'lapak_price' => 1, 'active' => 1,
+    ])->assertSessionHasNoErrors()->assertRedirect();
+
+    expect((float) $product->fresh()->base_price)->toBe(16000.0)
+        ->and((float) $product->fresh()->lapak_price)->toBe(12000.0);
+
+    (new ProductsImport)->commitRows([
+        ['data' => ['id' => $product->id, 'name' => $product->name, 'unit' => $product->unit, 'base_price' => 17000, 'lapak_price' => 2]],
+    ]);
+    expect((float) $product->fresh()->lapak_price)->toBe(12000.0)
+        ->and((float) $product->fresh()->base_price)->toBe(17000.0);
+
+    // Kontrol positif: menu tanpa resep tetap bebas diisi harga lapaknya oleh admin.
+    $manual = $data['tanpaResep'];
+    $this->actingAs($admin)->put(route('adminapp.products.update', $manual), [
+        'sku' => 'ES-TEH', 'name' => $manual->name, 'unit' => $manual->unit,
+        'base_price' => 5000, 'lapak_price' => 4000, 'active' => 1,
+    ])->assertSessionHasNoErrors()->assertRedirect();
+    expect((float) $manual->fresh()->lapak_price)->toBe(4000.0);
+});
+
+it('menyalin harga menu asal v2 ke Harga Lapak tanpa mengosongkan Harga Jual', function () {
+    $migration = require database_path('migrations/2026_11_03_100001_copy_v2_prices_to_lapak_price.php');
+
+    $buat = function (string $sku, float $harga, ?float $lapak, ?string $origin) {
+        $product = Product::query()->create(['name' => $sku, 'sku' => $sku, 'unit' => 'porsi', 'base_price' => $harga, 'lapak_price' => $lapak, 'active' => true]);
+        $product->forceFill(['origin' => $origin])->saveQuietly();
+
+        return $product;
+    };
+
+    $v2 = $buat('ALACARTE-DORI-20K', 20000, null, Product::ORIGIN_V2);
+    $v2Berlapak = $buat('V2-BERLAPAK', 15000, 13000, Product::ORIGIN_V2);
+    $v2Nol = $buat('V2-NOL', 0, null, Product::ORIGIN_V2);
+    $baru = $buat('BARU-3SONE', 25000, null, null);
+
+    $migration->up();
+
+    expect((float) $v2->fresh()->lapak_price)->toBe(20000.0)
+        ->and((float) $v2->fresh()->base_price)->toBe(20000.0)
+        ->and((float) $v2Berlapak->fresh()->lapak_price)->toBe(13000.0)
+        ->and($v2Nol->fresh()->lapak_price)->toBeNull()
+        // Menu buatan 3S ONE: harganya memang harga jual.
+        ->and($baru->fresh()->lapak_price)->toBeNull();
+
+    $migration->down();
+    expect($v2->fresh()->lapak_price)->toBeNull()
+        ->and((float) $v2Berlapak->fresh()->lapak_price)->toBe(13000.0);
+});

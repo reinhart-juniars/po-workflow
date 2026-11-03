@@ -114,11 +114,24 @@
                         <p class="mt-1 text-xs text-slate-500">Profit otomatis = harga jual - (bahan baku + overhead).</p>
                     </div>
 
+                    {{-- Menu bertaut resep bertarget: harga lapak = Harga Jual Target resep, diatur tim menu. --}}
+                    @php
+                        $lapakFromRecipe = $product->exists && $product->lapakFollowsRecipe();
+                    @endphp
                     <div>
                         <label for="lapak_price" class="mb-1.5 block">Harga Lapak</label>
                         <input id="lapak_price" type="number" step="0.01" min="0" name="lapak_price"
-                            value="{{ old('lapak_price', $product->lapak_price) }}" placeholder="Kosong = pakai harga jual">
-                        <p class="mt-1 text-xs text-slate-500">Harga khusus lapak. Dipilih per item saat membuat PO; otomatis untuk customer lapak.</p>
+                            value="{{ old('lapak_price', $product->lapak_price) }}" placeholder="Kosong = pakai harga jual"
+                            @if ($lapakFromRecipe) readonly aria-readonly="true" class="is-locked" @endif>
+                        <p class="mt-1 text-xs text-slate-500">
+                            @if ($lapakFromRecipe)
+                                Dari Harga Jual Target resep <b>{{ $product->recipe?->name }}</b> (aplikasi Menu). Diubah oleh tim menu.
+                            @elseif ($product->exists && $product->recipe?->target_price !== null && $product->recipeIsShared())
+                                Resep <b>{{ $product->recipe->name }}</b> dipakai beberapa varian, jadi Harga Jual Target-nya tidak dipakai di sini. Isi harga lapak varian ini sendiri.
+                            @else
+                                Harga khusus lapak. Dipilih per item saat membuat PO; otomatis untuk customer lapak.
+                            @endif
+                        </p>
                     </div>
                 </div>
             </div>

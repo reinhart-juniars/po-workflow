@@ -19,7 +19,7 @@ class AdminProductController extends Controller
         $q = trim((string) $request->query('q', ''));
 
         $products = Product::query()
-            ->with('recipe:id,name')
+            ->with(['recipe' => fn ($query) => $query->select('id', 'name', 'target_price')->withCount('products')])
             ->withMax('priceHistories as price_last_changed_at', 'effective_from')
             ->withCount('priceHistories')
             ->when($q !== '', function ($query) use ($q) {
@@ -85,6 +85,12 @@ class AdminProductController extends Controller
         // request yang dirakit sendiri tidak bisa menimpanya.
         if ($product->costFollowsRecipe()) {
             unset($data['raw_material_cost'], $data['overhead_cost']);
+        }
+
+        // Harga lapak menu bertaut resep = Harga Jual Target resepnya, diatur
+        // tim menu (revisi 3 Nov 2026). Dijaga dengan cara yang sama.
+        if ($product->lapakFollowsRecipe()) {
+            unset($data['lapak_price']);
         }
         $data['active'] = $request->boolean('active');
         $data['is_3s'] = $request->boolean('is_3s');
