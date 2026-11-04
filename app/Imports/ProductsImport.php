@@ -206,7 +206,7 @@ class ProductsImport implements SkipsEmptyRows, ToCollection, WithHeadingRow
         $name = $this->stringValue($row, ['nama_menu', 'name', 'nama']);
         $unit = $this->stringValue($row, ['satuan', 'unit']);
         $sku = $this->stringValue($row, ['sku']);
-        $basePriceRaw = $this->cellValue($row, ['harga_jual', 'base_price']);
+        $basePriceRaw = $this->cellValue($row, ['harga_non_lapak', 'harga_jual', 'base_price']);
         $rawMaterialRaw = $this->cellValue($row, ['bahan_baku', 'raw_material_cost']);
         $overheadRaw = $this->cellValue($row, ['overhead_cost', 'overhead']);
         $activeRaw = $this->cellValue($row, ['aktif', 'active']);
@@ -235,7 +235,7 @@ class ProductsImport implements SkipsEmptyRows, ToCollection, WithHeadingRow
             throw new \RuntimeException("Baris {$excelRow}: kolom satuan wajib diisi.");
         }
 
-        $basePrice = $this->parseNumber($basePriceRaw, 'harga jual', $excelRow, false);
+        $basePrice = $this->parseNumber($basePriceRaw, 'harga non lapak', $excelRow, false);
         $rawMaterialCost = $this->parseNumber($rawMaterialRaw, 'bahan baku', $excelRow, false);
         $overheadCost = $this->parseNumber($overheadRaw, 'overhead cost', $excelRow, false);
         // Kolom harga lapak hanya dipakai bila ada di berkas: template lama (tanpa

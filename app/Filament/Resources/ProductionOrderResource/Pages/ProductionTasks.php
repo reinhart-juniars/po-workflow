@@ -131,7 +131,7 @@ class ProductionTasks extends Page implements HasForms
                         Select::make('days_before')
                             ->label('Dikerjakan')
                             ->options(ProductionTask::dayOptions($order->production_date))
-                            ->default(ProductionTask::DEFAULT_DAYS_BEFORE)
+                            ->default($order->defaultTaskDaysBefore())
                             ->selectablePlaceholder(false)
                             ->required()
                             ->native(false),

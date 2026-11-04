@@ -319,7 +319,7 @@ class Product extends Model
 
     /**
      * Tingkat harga yang benar-benar berlaku untuk menu ini: harga lapak hanya
-     * bila menu punya harga lapak; selain itu harga normal.
+     * bila menu punya harga lapak; selain itu harga non lapak (base_price).
      */
     public function effectivePriceTier(?string $tier): string
     {
@@ -328,7 +328,7 @@ class Product extends Model
             : PurchaseOrderItem::TIER_NORMAL;
     }
 
-    /** Harga jual menu untuk tingkat harga tertentu (normal / lapak). */
+    /** Harga menu untuk tingkat harga tertentu: lapak, atau non lapak (TIER_NORMAL). */
     public function priceForTier(?string $tier): float
     {
         return $this->effectivePriceTier($tier) === PurchaseOrderItem::TIER_LAPAK

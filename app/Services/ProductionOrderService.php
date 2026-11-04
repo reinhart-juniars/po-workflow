@@ -290,6 +290,7 @@ class ProductionOrderService
                     'task' => $template->task,
                     'object' => $template->object,
                     'quantity_text' => $template->quantity_text,
+                    'days_before' => $order->defaultTaskDaysBefore(),
                 ]);
 
                 $created++;

@@ -54,7 +54,7 @@ class ModuleAccess
         'requisition.check' => 'Periksa form kebutuhan (barang dibeli)',
         'ledger.view' => 'Lihat kartu stok dan perbandingan HPP',
         'settings.manage' => 'Ubah pengaturan modul',
-        'notification.price' => 'Terima notifikasi perubahan harga bahan & harga jual menu',
+        'notification.price' => 'Terima notifikasi perubahan harga bahan & harga menu',
         'notification.profit' => 'Terima notifikasi profit menu keluar dari batas',
         'purchase.pay' => 'Bayar / jadikan hutang / kembalikan Tagihan Pembelian dari gudang (Accounting)',
     ];

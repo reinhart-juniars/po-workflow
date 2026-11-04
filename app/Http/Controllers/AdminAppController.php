@@ -499,7 +499,7 @@ class AdminAppController extends Controller
 
     /**
      * Tingkat harga bawaan item PO yang tidak memilih sendiri: harga lapak untuk
-     * customer yang ditandai lapak, harga normal untuk yang lain.
+     * customer yang ditandai lapak, harga non lapak untuk yang lain.
      */
     protected function defaultPriceTier(int $customerId): string
     {

@@ -31,7 +31,7 @@ class MenuMatchingExport implements WithMultipleSheets
     public const HEADINGS = [
         'produk_id',
         'nama_produk',
-        'harga_jual',
+        'harga_non_lapak',
         'aktif',
         'porsi_90_hari',
         'status_sekarang',
@@ -73,7 +73,7 @@ class MenuMatchingExport implements WithMultipleSheets
                 return [
                     'produk_id' => $product->id,
                     'nama_produk' => $product->name,
-                    'harga_jual' => (float) $product->base_price,
+                    'harga_non_lapak' => (float) $product->base_price,
                     'aktif' => $product->active ? 'ya' : 'tidak',
                     'porsi_90_hari' => (float) $product->porsi_terjual,
                     'status_sekarang' => $labels[$status],

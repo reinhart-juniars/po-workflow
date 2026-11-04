@@ -6,6 +6,8 @@
     $tgl = fn ($v) => $v ? \Illuminate\Support\Carbon::parse($v)->translatedFormat('D, d M Y') : '-';
     $requisitionLabels = \App\Models\Requisition::statusOptions();
     $days = $this->getDays();
+    // Tanggal dikerjakan per tanggal rencana, untuk kolom di tabel stok siap.
+    $dikerjakan = $days->mapWithKeys(fn ($day) => [$day['date'] => $day['plans']->map(fn ($plan) => $plan->workDate()?->toDateString())->unique()->map($tgl)->implode(', ')]);
 @endphp
 
 <x-filament-panels::page>
@@ -44,7 +46,8 @@
             <table class="sh-table">
                 <thead>
                     <tr>
-                        <th>Tanggal</th>
+                        <th>Tanggal Rencana</th>
+                        <th>Dikerjakan</th>
                         <th>Menu (resep)</th>
                         <th class="text-right">Disiapkan</th>
                         <th class="text-right">Terdistribusi</th>
@@ -55,13 +58,14 @@
                     @forelse ($stock as $row)
                         <tr wire:key="stok-{{ $row['date'] }}-{{ $row['recipe_id'] }}">
                             <td>{{ $tgl($row['date']) }}</td>
+                            <td>{{ $dikerjakan[$row['date']] ?? '-' }}</td>
                             <td class="font-medium">{{ $row['recipe'] }}</td>
                             <td class="text-right">{{ $qty($row['planned']) }}</td>
                             <td class="text-right">{{ $qty($row['distributed']) }}</td>
                             <td @class(['text-right font-semibold', 'text-danger-600' => $row['remaining'] < 0, 'text-warning-600' => $row['remaining'] > 0])>{{ $qty($row['remaining']) }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="py-6 text-center text-gray-500">Belum ada Rencana Masak di rentang ini.</td></tr>
+                        <tr><td colspan="6" class="py-6 text-center text-gray-500">Belum ada Rencana Masak di rentang ini.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -91,7 +95,11 @@
                             <td>
                                 @foreach ($day['plans'] as $plan)
                                     <a class="text-primary-600 hover:underline" href="{{ \App\Filament\Resources\ProductionOrderResource::getUrl('edit', ['record' => $plan]) }}">{{ $plan->number }}</a>
-                                    <span class="text-xs text-gray-500">({{ $plan->statusLabel() }})</span>@if (! $loop->last), @endif
+                                    <span class="text-xs text-gray-500">({{ $plan->statusLabel() }})</span>
+                                    <div class="text-xs text-gray-500">
+                                        Dikerjakan {{ $tgl($plan->workDate()) }}
+                                        {{ ($this->changeWorkDateAction)(['plan' => $plan->id]) }}
+                                    </div>
                                 @endforeach
                             </td>
                             <td>
@@ -131,6 +139,7 @@
                    class="rounded-lg border border-gray-200 px-3 py-1.5 hover:bg-gray-50 dark:border-white/10 dark:hover:bg-white/5">
                     <span class="font-semibold">{{ $plan->number }}</span>
                     &middot; {{ $tgl($plan->production_date) }}
+                    &middot; dikerjakan {{ $tgl($plan->workDate()) }}
                     &middot; {{ $plan->requisition ? ($requisitionLabels[$plan->requisition->status] ?? $plan->requisition->status) : 'Form belum disusun' }}
                 </a>
             @empty

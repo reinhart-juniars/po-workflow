@@ -30,8 +30,8 @@ class ProductsExport implements FromCollection, ShouldAutoSize, WithHeadings, Wi
             'bahan_baku',
             'overhead_cost',
             'profit',
-            'harga_jual',
             'harga_lapak',
+            'harga_non_lapak',
             'menu_3s',
             'aktif',
         ];
@@ -48,8 +48,8 @@ class ProductsExport implements FromCollection, ShouldAutoSize, WithHeadings, Wi
             $product->raw_material_cost !== null ? (float) $product->raw_material_cost : null,
             $product->overhead_cost !== null ? (float) $product->overhead_cost : null,
             $product->profit !== null ? (float) $product->profit : null,
-            (float) $product->base_price,
             $product->lapak_price !== null ? (float) $product->lapak_price : null,
+            (float) $product->base_price,
             $product->is_3s ? 1 : 0,
             $product->active ? 1 : 0,
         ];

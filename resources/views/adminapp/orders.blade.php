@@ -227,8 +227,8 @@
           <div class="col-span-2">
             <label class="block text-xs text-gray-600 mb-1">Harga</label>
             <select id="itemTier" class="w-full border rounded px-2 py-2 text-sm">
-              <option value="normal">Normal</option>
               <option value="lapak">Lapak</option>
+              <option value="normal" selected>Non Lapak</option>
             </select>
           </div>
 
@@ -525,7 +525,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             const prodName = opt.textContent.trim();
-            // Menu tanpa harga lapak tetap memakai harga normal (server menerapkan aturan yang sama).
+            // Menu tanpa harga lapak tetap memakai harga non lapak (server menerapkan aturan yang sama).
             const lapakPrice = opt.getAttribute('data-lapak-price');
             const tier     = itemTier && itemTier.value === 'lapak' && lapakPrice ? 'lapak' : 'normal';
             const price    = parseFloat(tier === 'lapak' ? lapakPrice : (opt.getAttribute('data-price') || '0'));

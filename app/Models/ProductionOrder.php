@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Helpers\AutoNumberHelper;
 use App\Support\Settings\Settings;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -32,6 +33,7 @@ class ProductionOrder extends Model
         'spk_id',
         'is_ready_stock',
         'production_date',
+        'work_date',
         'production_time',
         'status',
         'notes',
@@ -46,6 +48,7 @@ class ProductionOrder extends Model
     protected $casts = [
         'is_ready_stock' => 'boolean',
         'production_date' => 'date',
+        'work_date' => 'date',
         'completed_at' => 'datetime',
     ];
 
@@ -59,7 +62,51 @@ class ProductionOrder extends Model
             if (empty($order->status)) {
                 $order->status = self::STATUS_DRAFT;
             }
+
+            if ($order->is_ready_stock && $order->work_date === null && $order->production_date !== null) {
+                $order->work_date = $order->production_date->copy()->subDays(ProductionTask::DEFAULT_DAYS_BEFORE);
+            }
         });
+
+        // Baris Lembar Kerja yang mengikuti tanggal dikerjakan rencana ikut bergeser;
+        // baris yang sengaja dimajukan sendiri (H-n lain) tidak disentuh.
+        static::updated(function (self $order) {
+            if (! $order->wasChanged(['work_date', 'production_date'])) {
+                return;
+            }
+
+            $before = $order->replicate();
+            $before->production_date = $order->getOriginal('production_date');
+            $before->work_date = $order->getOriginal('work_date');
+
+            $old = $before->defaultTaskDaysBefore();
+            $new = $order->defaultTaskDaysBefore();
+
+            if ($old !== $new) {
+                $order->tasks()->where('days_before', $old)->update(['days_before' => $new]);
+            }
+        });
+    }
+
+    /**
+     * Tanggal dapur mengerjakan: berbeda dari tanggal rencana/SPK, yang mengikuti
+     * tanggal kirim PO. Rencana lama tanpa isian dianggap H-1, kebiasaan dapur.
+     */
+    public function workDate(): ?CarbonInterface
+    {
+        return $this->work_date ?? $this->production_date?->copy()->subDays(ProductionTask::DEFAULT_DAYS_BEFORE);
+    }
+
+    /** H-n bawaan baris Lembar Kerja SPK ini, dibatasi pada pilihan H s/d H-7. */
+    public function defaultTaskDaysBefore(): int
+    {
+        $work = $this->workDate();
+
+        if ($work === null || $this->production_date === null) {
+            return ProductionTask::DEFAULT_DAYS_BEFORE;
+        }
+
+        return max(0, min(ProductionTask::MAX_DAYS_BEFORE, (int) $work->diffInDays($this->production_date)));
     }
 
     /** @return array<string, string> */

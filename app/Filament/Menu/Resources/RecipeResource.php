@@ -135,7 +135,7 @@ class RecipeResource extends Resource
                             ->minValue(0)
                             // Revisi 3 Nov 2026: harga yang ditetapkan tim menu adalah
                             // harga lapak; harga jual umum ditentukan admin.
-                            ->helperText('Bila diisi, angka inilah yang dipakai menilai profit, dan otomatis menjadi Harga Lapak produk yang tertaut di Admin App › Master Menu (bila resep ini dipakai satu produk saja; varian harga yang berbagi resep diisi admin). Harga jual umum tetap diisi admin.'),
+                            ->helperText('Bila diisi, angka inilah yang dipakai menilai profit, dan otomatis menjadi Harga Lapak produk yang tertaut di Admin App › Master Menu (bila resep ini dipakai satu produk saja; varian harga yang berbagi resep diisi admin). Harga Non Lapak diisi admin.'),
 
                         // Disimpan sebagai pecahan (0,40) tetapi diisi sebagai
                         // persen, karena begitulah angkanya dibicarakan. Nilai
