@@ -180,8 +180,8 @@
                         <div class="md:col-span-2">
                             <label class="mb-1 block text-xs text-slate-500">Harga</label>
                             <select name="items[{{ $idx }}][price_tier]" class="tier-select">
-                                <option value="normal" @selected(old("items.$idx.price_tier", $item->price_tier) === 'normal')>Normal</option>
                                 <option value="lapak" @selected(old("items.$idx.price_tier", $item->price_tier) === 'lapak')>Lapak</option>
+                                <option value="normal" @selected(old("items.$idx.price_tier", $item->price_tier) === 'normal')>Non Lapak</option>
                             </select>
                         </div>
 
@@ -303,7 +303,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const tierSelect = row.querySelector('.tier-select');
             const opt = select ? select.selectedOptions[0] : null;
-            // Menu tanpa harga lapak tetap memakai harga normal (sama dengan aturan server).
+            // Menu tanpa harga lapak tetap memakai harga non lapak (sama dengan aturan server).
             const lapakPrice = opt ? opt.dataset.lapakPrice : '';
             const price = opt
                 ? parseFloat((tierSelect && tierSelect.value === 'lapak' && lapakPrice) ? lapakPrice : (opt.dataset.price || 0))
@@ -371,8 +371,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="md:col-span-2">
                     <label class="mb-1 block text-xs text-slate-500">Harga</label>
                     <select name="items[${idx}][price_tier]" class="tier-select">
-                        <option value="normal" ${defaultTier === 'normal' ? 'selected' : ''}>Normal</option>
                         <option value="lapak" ${defaultTier === 'lapak' ? 'selected' : ''}>Lapak</option>
+                        <option value="normal" ${defaultTier === 'normal' ? 'selected' : ''}>Non Lapak</option>
                     </select>
                 </div>
                 <div class="md:col-span-2">

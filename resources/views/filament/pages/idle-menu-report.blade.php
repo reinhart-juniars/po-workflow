@@ -38,7 +38,7 @@
                     <tr>
                         <th>Menu</th>
                         <th>SKU</th>
-                        <th class="text-right">Harga Jual</th>
+                        <th class="text-right">Harga Non Lapak</th>
                         <th>Resep</th>
                         <th>Terakhir Diproduksi</th>
                         <th>Terakhir Terjual</th>

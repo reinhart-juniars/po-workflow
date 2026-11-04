@@ -49,7 +49,7 @@
 
             @php
                 // HPP & OHC dari resep (aplikasi Menu) terkunci di sini; admin
-                // mengatur harga jual dan melihat profitnya.
+                // mengatur harga non lapak dan melihat profitnya.
                 $fromRecipe = $product->costFollowsRecipe();
                 $costStatus ??= null;
                 $recipeUrl ??= null;
@@ -107,13 +107,6 @@
                         </div>
                     </div>
 
-                    <div>
-                        <label for="base_price" class="mb-1.5 block">Harga Jual</label>
-                        <input id="base_price" type="number" step="0.01" min="0" name="base_price"
-                            value="{{ old('base_price', $product->base_price) }}" required>
-                        <p class="mt-1 text-xs text-slate-500">Profit otomatis = harga jual - (bahan baku + overhead).</p>
-                    </div>
-
                     {{-- Menu bertaut resep bertarget: harga lapak = Harga Jual Target resep, diatur tim menu. --}}
                     @php
                         $lapakFromRecipe = $product->exists && $product->lapakFollowsRecipe();
@@ -121,7 +114,7 @@
                     <div>
                         <label for="lapak_price" class="mb-1.5 block">Harga Lapak</label>
                         <input id="lapak_price" type="number" step="0.01" min="0" name="lapak_price"
-                            value="{{ old('lapak_price', $product->lapak_price) }}" placeholder="Kosong = pakai harga jual"
+                            value="{{ old('lapak_price', $product->lapak_price) }}" placeholder="Kosong = pakai harga non lapak"
                             @if ($lapakFromRecipe) readonly aria-readonly="true" class="is-locked" @endif>
                         <p class="mt-1 text-xs text-slate-500">
                             @if ($lapakFromRecipe)
@@ -132,6 +125,13 @@
                                 Harga khusus lapak. Dipilih per item saat membuat PO; otomatis untuk customer lapak.
                             @endif
                         </p>
+                    </div>
+
+                    <div>
+                        <label for="base_price" class="mb-1.5 block">Harga Non Lapak</label>
+                        <input id="base_price" type="number" step="0.01" min="0" name="base_price"
+                            value="{{ old('base_price', $product->base_price) }}" required>
+                        <p class="mt-1 text-xs text-slate-500">Diisi admin, untuk customer non lapak. Profit otomatis = harga non lapak - (bahan baku + overhead).</p>
                     </div>
                 </div>
             </div>
@@ -163,7 +163,7 @@
             <div>
                 <h2 class="section-title text-base">Riwayat Harga</h2>
                 <p class="section-subtitle">
-                    Semua perubahan harga jual & cost tercatat di sini. Transaksi PO/penjualan lama tetap pakai snapshot
+                    Semua perubahan harga non lapak & cost tercatat di sini. Transaksi PO/penjualan lama tetap pakai snapshot
                     harga saat itu, jadi mengubah harga master tidak akan mengubah laporan periode sebelumnya.
                 </p>
             </div>
@@ -176,7 +176,7 @@
                             <th class="px-3 py-2 text-right">Bahan Baku</th>
                             <th class="px-3 py-2 text-right">Overhead</th>
                             <th class="px-3 py-2 text-right">Profit</th>
-                            <th class="px-3 py-2 text-right">Harga Jual</th>
+                            <th class="px-3 py-2 text-right">Harga Non Lapak</th>
                             <th class="px-3 py-2">Diubah Oleh</th>
                             <th class="px-3 py-2">Catatan</th>
                         </tr>

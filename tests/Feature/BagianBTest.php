@@ -76,7 +76,7 @@ it('mengirim lonceng saat harga jual menu berubah, dan lonceng itu terbaca di he
     $this->actingAs($admin);
     $product->update(['base_price' => 17000]);
 
-    expect(lonceng($owner)->first())->toBe('Harga jual NASI KUNING naik 13.3%')
+    expect(lonceng($owner)->first())->toBe('Harga non lapak NASI KUNING naik 13.3%')
         ->and(lonceng($admin))->toHaveCount(0);
 
     // Lonceng di header Blade (Owner app): badge 1, judul tampil, "Buka" menandai dibaca lalu ke halaman menu.
@@ -84,7 +84,7 @@ it('mengirim lonceng saat harga jual menu berubah, dan lonceng itu terbaca di he
         ->assertOk()
         ->assertSee('class="sh-bell"', false)
         ->assertSee('sh-bell-badge', false)
-        ->assertSee('Harga jual NASI KUNING naik 13.3%');
+        ->assertSee('Harga non lapak NASI KUNING naik 13.3%');
 
     $id = DatabaseNotification::query()->where('notifiable_id', $owner->id)->value('id');
     $this->actingAs($owner)->get(route('notifications.open', $id))->assertRedirect(route('adminapp.products.edit', $product));

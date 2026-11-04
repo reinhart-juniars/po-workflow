@@ -21,7 +21,7 @@ class IdleMenusExport implements FromCollection, ShouldAutoSize, WithHeadings, W
 
     public function headings(): array
     {
-        return ['SKU', 'Menu', 'Satuan', 'Harga Jual', 'Punya Resep', 'Terakhir Diproduksi', 'Terakhir Terjual'];
+        return ['SKU', 'Menu', 'Satuan', 'Harga Non Lapak', 'Punya Resep', 'Terakhir Diproduksi', 'Terakhir Terjual'];
     }
 
     /** @param  array<string, mixed>  $row */

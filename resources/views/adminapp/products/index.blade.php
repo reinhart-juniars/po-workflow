@@ -126,7 +126,7 @@
                             <th class="text-right">Bahan Baku</th>
                             <th class="text-right">Overhead</th>
                             <th class="text-right">Profit Baru</th>
-                            <th class="text-right">Harga Jual</th>
+                            <th class="text-right">Harga Non Lapak</th>
                             <th>Kategori</th>
                             <th>Aktif</th>
                         </tr>
@@ -290,15 +290,15 @@
                                 </div>
                             </td>
                             <td class="text-right tabular-nums whitespace-nowrap">
-                                <div><span class="rp">Rp</span>{{ number_format($product->base_price, 0, ',', '.') }}</div>
                                 @if ($product->lapak_price !== null)
-                                    <div class="text-[10px] font-semibold text-amber-700">
-                                        Lapak Rp {{ number_format($product->lapak_price, 0, ',', '.') }}
+                                    <div class="font-semibold text-amber-700">
+                                        <span class="text-[10px]">Lapak</span> <span class="rp">Rp</span>{{ number_format($product->lapak_price, 0, ',', '.') }}
                                         @if ($product->lapakFollowsRecipe())
-                                            <span title="Dari Harga Jual Target resep (aplikasi Menu)">· resep</span>
+                                            <span class="text-[10px]" title="Dari Harga Jual Target resep (aplikasi Menu)">· resep</span>
                                         @endif
                                     </div>
                                 @endif
+                                <div class="text-xs text-slate-600"><span class="text-[10px]">Non Lapak</span> <span class="rp">Rp</span>{{ number_format($product->base_price, 0, ',', '.') }}</div>
                                 @if (!empty($product->price_last_changed_at) && ($product->price_histories_count ?? 0) > 1)
                                     @php
                                         $lastChangedAt = \Carbon\Carbon::parse($product->price_last_changed_at);

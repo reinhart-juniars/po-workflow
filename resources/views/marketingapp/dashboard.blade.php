@@ -51,7 +51,7 @@
                         <tr>
                             <th>SKU (nama di website)</th>
                             <th>Menu</th>
-                            <th class="text-right">Harga Jual</th>
+                            <th class="text-right">Harga Non Lapak</th>
                         </tr>
                     </thead>
                     <tbody>

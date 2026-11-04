@@ -57,7 +57,7 @@
                         <th>Satuan</th>
                         <th class="text-right">Bahan Baku (HPP)</th>
                         <th class="text-right">Overhead Cost (OHC)</th>
-                        <th class="text-right">Harga Jual</th>
+                        <th class="text-right">Harga Non Lapak</th>
                         <th class="text-right">Dipakai di PO Item</th>
                         <th>Aksi</th>
                     </tr>

@@ -232,8 +232,7 @@ it('mengunci Harga Lapak dari resep di Admin dan import, tetapi Harga Jual tetap
         ->assertSee('Dari Harga Jual Target resep', false);
 
     $this->actingAs($admin)->get(route('adminapp.products.index'))->assertOk()
-        ->assertSee('Lapak Rp 12.000')
-        ->assertSee('· resep');
+        ->assertSeeInOrder(['Lapak', '12.000', '· resep', 'Non Lapak']);
 
     $this->actingAs($admin)->put(route('adminapp.products.update', $product), [
         'sku' => 'GORENGAN-10K', 'name' => $product->name, 'unit' => $product->unit,

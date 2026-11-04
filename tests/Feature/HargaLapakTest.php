@@ -1,5 +1,7 @@
 <?php
 
+use App\Exports\ProductsExport;
+use App\Imports\ProductsImport;
 use App\Models\Area;
 use App\Models\CashAccount;
 use App\Models\Customer;
@@ -10,7 +12,7 @@ use App\Models\User;
 use Spatie\Permission\Models\Role;
 
 /**
- * Revisi v3.1: menu punya harga normal dan harga lapak. Admin memilih per
+ * Revisi v3.1: menu punya harga non lapak (dulu "harga jual"/"normal") dan harga lapak. Admin memilih per
  * item PO; customer lapak otomatis memakai harga lapak, dan menu tanpa harga
  * lapak tetap memakai harga normal. Harga selalu dihitung server dari Master
  * Menu, bukan dari angka yang dikirim form.
@@ -121,4 +123,41 @@ it('menyimpan harga lapak dari Master Menu dan Excel', function () {
     ])->assertSessionHasNoErrors();
     expect($nasi->fresh()->lapak_price)->toBeNull()
         ->and($nasi->fresh()->priceForTier(PurchaseOrderItem::TIER_LAPAK))->toBe(15000.0);
+});
+
+it('menamai harga di PO dan Master Menu sebagai Lapak dan Non Lapak', function () {
+    $admin = siapkanHargaLapak()['admin'];
+    $menu = Product::query()->create(['name' => 'NASI UJI LABEL', 'sku' => 'NASI-UJI-LABEL', 'unit' => 'porsi', 'base_price' => 25000, 'lapak_price' => 20000, 'active' => true]);
+
+    // Form PO: nilai yang dikirim tetap lapak/normal, hanya namanya yang berubah.
+    $this->actingAs($admin)->get(route('adminapp.orders.index'))->assertOk()
+        ->assertSeeInOrder(['<option value="lapak">Lapak</option>', '<option value="normal" selected>Non Lapak</option>'], false)
+        ->assertDontSee('>Normal</option>', false);
+
+    // Master Menu: Harga Lapak lebih dulu, label Harga Jual tidak dipakai lagi.
+    $this->actingAs($admin)->get(route('adminapp.products.edit', $menu))->assertOk()
+        ->assertSeeInOrder(['Harga Lapak', 'Harga Non Lapak'])
+        ->assertDontSee('>Harga Jual</label>', false);
+
+    // Harga Non Lapak tetap kolom yang dipakai customer non lapak.
+    expect($menu->priceForTier(PurchaseOrderItem::TIER_NORMAL))->toBe(25000.0)
+        ->and($menu->priceForTier(PurchaseOrderItem::TIER_LAPAK))->toBe(20000.0);
+});
+
+it('membaca kolom Excel harga_non_lapak dan berkas lama berkolom harga_jual', function () {
+    $menu = Product::query()->create(['name' => 'NASI UJI IMPOR', 'sku' => 'NASI-UJI-IMPOR', 'unit' => 'porsi', 'base_price' => 10000, 'active' => true]);
+
+    $impor = fn (array $baris) => (new ProductsImport)->collection(collect([collect($baris + ['id' => $menu->id, 'nama_menu' => $menu->name, 'satuan' => 'porsi'])]));
+
+    $impor(['harga_non_lapak' => 26000, 'harga_lapak' => 21000]);
+    expect((float) $menu->fresh()->base_price)->toBe(26000.0)
+        ->and((float) $menu->fresh()->lapak_price)->toBe(21000.0);
+
+    // Berkas ekspor lama masih beredar; harga lapak yang sudah ada tidak terhapus.
+    $impor(['harga_jual' => 27000]);
+    expect((float) $menu->fresh()->base_price)->toBe(27000.0)
+        ->and((float) $menu->fresh()->lapak_price)->toBe(21000.0);
+
+    expect((new ProductsExport(Product::query()->get()))->headings())->toContain('harga_lapak', 'harga_non_lapak')
+        ->not->toContain('harga_jual');
 });
