@@ -100,7 +100,17 @@ class ProductRecipeCostSync
         if ($result['state'] !== Product::COST_RECIPE) {
             $changes = $lapak + ($product->costFollowsRecipe() ? ['cost_source' => Product::COST_MANUAL] : []);
 
-            if ($changes !== []) {
+            if ($lapak !== []) {
+                // Harga lapak menentukan profit: lewat save() supaya profit dihitung
+                // ulang dan tercatat di riwayat harga.
+                Product::$historyReason = 'Harga Lapak dari Harga Jual Target resep "'.$product->recipe?->name.'" (aplikasi Menu).';
+
+                try {
+                    $product->forceFill($changes)->save();
+                } finally {
+                    Product::$historyReason = null;
+                }
+            } elseif ($changes !== []) {
                 $product->forceFill($changes)->saveQuietly();
             }
 

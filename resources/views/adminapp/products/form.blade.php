@@ -131,7 +131,7 @@
                         <label for="base_price" class="mb-1.5 block">Harga Non Lapak</label>
                         <input id="base_price" type="number" step="0.01" min="0" name="base_price"
                             value="{{ old('base_price', $product->base_price) }}" required>
-                        <p class="mt-1 text-xs text-slate-500">Diisi admin, untuk customer non lapak. Profit otomatis = harga non lapak - (bahan baku + overhead).</p>
+                        <p class="mt-1 text-xs text-slate-500">Diisi admin, untuk customer non lapak. Tidak memengaruhi profit.</p>
                     </div>
                 </div>
             </div>
@@ -163,7 +163,7 @@
             <div>
                 <h2 class="section-title text-base">Riwayat Harga</h2>
                 <p class="section-subtitle">
-                    Semua perubahan harga non lapak & cost tercatat di sini. Transaksi PO/penjualan lama tetap pakai snapshot
+                    Semua perubahan harga & cost tercatat di sini. Transaksi PO/penjualan lama tetap pakai snapshot
                     harga saat itu, jadi mengubah harga master tidak akan mengubah laporan periode sebelumnya.
                 </p>
             </div>
@@ -176,6 +176,7 @@
                             <th class="px-3 py-2 text-right">Bahan Baku</th>
                             <th class="px-3 py-2 text-right">Overhead</th>
                             <th class="px-3 py-2 text-right">Profit</th>
+                            <th class="px-3 py-2 text-right">Harga Lapak</th>
                             <th class="px-3 py-2 text-right">Harga Non Lapak</th>
                             <th class="px-3 py-2">Diubah Oleh</th>
                             <th class="px-3 py-2">Catatan</th>
@@ -214,6 +215,9 @@
                                     {{ $history->profit !== null ? 'Rp ' . number_format((float) $history->profit, 0, ',', '.') : '-' }}
                                 </td>
                                 <td class="px-3 py-2 align-top text-right">
+                                    {{ $history->lapak_price !== null ? 'Rp ' . number_format((float) $history->lapak_price, 0, ',', '.') : '-' }}
+                                </td>
+                                <td class="px-3 py-2 align-top text-right">
                                     Rp {{ number_format((float) $history->base_price, 0, ',', '.') }}
                                     @if ($priceDelta !== null && abs($priceDelta) > 0.001)
                                         <div class="text-xs {{ $priceDelta > 0 ? 'text-rose-600' : 'text-emerald-600' }}">
@@ -239,6 +243,7 @@
     <script>
         (() => {
             const basePriceInput = document.getElementById('base_price');
+            const lapakPriceInput = document.getElementById('lapak_price');
             const rawMaterialInput = document.getElementById('raw_material_cost');
             const overheadInput = document.getElementById('overhead_cost');
             const profitInput = document.getElementById('profit');
@@ -280,25 +285,29 @@
                     return;
                 }
 
-                if ((basePriceInput.value || '').trim() === '') {
+                // Dasar profit = Harga Lapak; kosong berarti memakai Harga Non Lapak
+                // (Product::profitPrice).
+                const priceValue = (lapakPriceInput?.value || '').trim() !== '' ? lapakPriceInput.value : basePriceInput.value;
+
+                if ((priceValue || '').trim() === '') {
                     profitInput.value = '';
                     syncPercentText(profitPercentText, null);
                     syncPercentText(marginPercentText, null);
                     return;
                 }
 
-                const basePrice = toNumber(basePriceInput.value);
+                const price = toNumber(priceValue);
                 const totalCost = toNumber(rawMaterialInput?.value) + toNumber(overheadInput?.value);
-                const profit = basePrice - totalCost;
+                const profit = price - totalCost;
                 const profitPercent = totalCost > 0 ? (profit / totalCost) * 100 : null;
-                const marginPercent = basePrice > 0 ? (profit / basePrice) * 100 : null;
+                const marginPercent = price > 0 ? (profit / price) * 100 : null;
 
                 profitInput.value = profit.toFixed(2);
                 syncPercentText(profitPercentText, profitPercent);
                 syncPercentText(marginPercentText, marginPercent);
             };
 
-            [basePriceInput, rawMaterialInput, overheadInput].forEach((input) => {
+            [basePriceInput, lapakPriceInput, rawMaterialInput, overheadInput].forEach((input) => {
                 input?.addEventListener('input', syncProfit);
             });
 

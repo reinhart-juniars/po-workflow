@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Auth;
  * Bagian B.1 -- Notifikasi Perubahan Harga.
  *
  * Lapisan di atas histori harga yang sudah ada: setiap kali harga beli bahan
- * (InventoryItem) atau harga non lapak menu (Product) berubah, pemegang izin
+ * (InventoryItem) atau harga lapak / non lapak menu (Product) berubah, pemegang izin
  * `notification.price` menerima lonceng berisi angka lama -> baru, persen
  * perubahan, dan sumbernya (panel, import, atau nomor Form Kebutuhan).
  * Pelaku perubahan sendiri tidak diberi tahu.
@@ -47,7 +47,7 @@ class PriceChangeNotifier
         $this->scheduleProfitCheck();
     }
 
-    public function productPriceChanged(Product $product, ?float $old, ?float $new): void
+    public function productPriceChanged(Product $product, ?float $old, ?float $new, string $label = 'Harga non lapak'): void
     {
         if ($old === null || $new === null || abs($old - $new) < 0.005) {
             return;
@@ -58,7 +58,7 @@ class PriceChangeNotifier
 
         Notify::permission(
             'notification.price',
-            'Harga non lapak '.$product->name.' '.$arah.($pct !== null ? ' '.$pct.'%' : ''),
+            $label.' '.$product->name.' '.$arah.($pct !== null ? ' '.$pct.'%' : ''),
             Notify::rupiah($old).' → '.Notify::rupiah($new).' per '.$product->unit
                 .($product->sku ? ' · SKU '.$product->sku : '').'.',
             route('adminapp.products.edit', $product),

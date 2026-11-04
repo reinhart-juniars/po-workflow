@@ -13,6 +13,7 @@ class ProductPriceHistory extends Model
     protected $fillable = [
         'product_id',
         'base_price',
+        'lapak_price',
         'raw_material_cost',
         'overhead_cost',
         'profit',
@@ -23,6 +24,7 @@ class ProductPriceHistory extends Model
 
     protected $casts = [
         'base_price' => 'decimal:2',
+        'lapak_price' => 'decimal:2',
         'raw_material_cost' => 'decimal:2',
         'overhead_cost' => 'decimal:2',
         'profit' => 'decimal:2',

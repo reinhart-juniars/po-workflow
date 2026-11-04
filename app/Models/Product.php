@@ -82,11 +82,7 @@ class Product extends Model
             $product->raw_material_cost = static::normalizeMoney($product->raw_material_cost);
             $product->overhead_cost = static::normalizeMoney($product->overhead_cost);
 
-            $product->profit = round(
-                (float) $product->base_price
-                - ((float) ($product->raw_material_cost ?? 0) + (float) ($product->overhead_cost ?? 0)),
-                2
-            );
+            $product->profit = $product->calculateProfit();
         });
 
         static::created(function (self $product) {
@@ -111,7 +107,7 @@ class Product extends Model
         });
 
         static::updated(function (self $product) {
-            $tracked = ['base_price', 'raw_material_cost', 'overhead_cost', 'profit'];
+            $tracked = ['base_price', 'lapak_price', 'raw_material_cost', 'overhead_cost', 'profit'];
 
             foreach ($tracked as $column) {
                 if ($product->wasChanged($column)) {
@@ -121,13 +117,16 @@ class Product extends Model
                 }
             }
 
-            // Bagian B.1: lonceng perubahan harga jual menu.
-            if ($product->wasChanged('base_price')) {
-                app(\App\Services\PriceChangeNotifier::class)->productPriceChanged(
-                    $product,
-                    $product->getOriginal('base_price') === null ? null : (float) $product->getOriginal('base_price'),
-                    $product->base_price === null ? null : (float) $product->base_price,
-                );
+            // Bagian B.1: lonceng perubahan harga menu.
+            foreach (['lapak_price' => 'Harga lapak', 'base_price' => 'Harga non lapak'] as $column => $label) {
+                if ($product->wasChanged($column)) {
+                    app(\App\Services\PriceChangeNotifier::class)->productPriceChanged(
+                        $product,
+                        $product->getOriginal($column) === null ? null : (float) $product->getOriginal($column),
+                        $product->{$column} === null ? null : (float) $product->{$column},
+                        $label,
+                    );
+                }
             }
 
             // SKU = nama menu di website: admin dan marketing sama-sama boleh
@@ -211,6 +210,7 @@ class Product extends Model
     {
         $this->priceHistories()->create([
             'base_price' => $this->base_price,
+            'lapak_price' => $this->lapak_price,
             'raw_material_cost' => $this->raw_material_cost,
             'overhead_cost' => $this->overhead_cost,
             'profit' => $this->profit,
@@ -242,10 +242,20 @@ class Product extends Model
         return round(max(0, $number), 2);
     }
 
+    /**
+     * Harga yang menjadi dasar profit & margin menu: Harga Lapak (revisi user
+     * 4 Nov 2026). Mengganti Harga Non Lapak tidak boleh menggeser profit. Menu
+     * tanpa harga lapak memakai Harga Non Lapak, sama seperti aturan harga PO.
+     */
+    public function profitPrice(): float
+    {
+        return (float) ($this->lapak_price ?? $this->base_price ?? 0);
+    }
+
     public function calculateProfit(): float
     {
         return round(
-            (float) $this->base_price
+            $this->profitPrice()
             - ((float) ($this->raw_material_cost ?? 0) + (float) ($this->overhead_cost ?? 0)),
             2
         );
