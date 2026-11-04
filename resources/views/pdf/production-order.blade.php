@@ -15,7 +15,8 @@
 <h1>SPK Produksi {{ $order->number }}</h1>
 <div class="meta">
     <b>{{ $order->title }}</b><br>
-    Tanggal SPK (H) <b>{{ $order->production_date->format('d/m/Y') }}</b>
+    {{ $order->is_ready_stock ? 'Tanggal Rencana (H)' : 'Tanggal SPK (H)' }} <b>{{ $order->production_date->format('d/m/Y') }}</b>
+    @if ($order->is_ready_stock) · Dikerjakan tanggal <b>{{ $order->workDate()?->format('d/m/Y') }}</b> @endif
     @if ($order->production_time) jam <b>{{ $order->production_time }}</b> @endif
     · Status: {{ $order->statusLabel() }}
     @if ($order->spk) · Slot {{ $order->spk->spk_code }} @endif

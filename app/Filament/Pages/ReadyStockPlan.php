@@ -9,6 +9,7 @@ use App\Services\ReadyStockService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
@@ -129,6 +130,38 @@ class ReadyStockPlan extends Page implements HasForms
                         ? 'Sisa '.rtrim(rtrim(number_format((float) $closing->leftover_qty, 2, ',', '.'), '0'), ',').' porsi masuk Barang Sisa.'
                         : 'Semua porsi sudah terdistribusi; tidak ada Barang Sisa.')
                     ->send();
+            });
+    }
+
+    /** Ubah tanggal dikerjakan satu rencana langsung dari halaman ini. */
+    public function changeWorkDateAction(): Action
+    {
+        $plan = fn (array $arguments) => ProductionOrder::query()->readyStock()->findOrFail($arguments['plan']);
+
+        return Action::make('changeWorkDate')
+            ->label('Ubah')
+            ->link()
+            ->size('xs')
+            ->visible(fn (array $arguments) => $plan($arguments)->isEditable() && $plan($arguments)->canBeManagedBy(auth()->user()))
+            ->modalHeading(fn (array $arguments) => 'Dikerjakan tanggal berapa? '.$plan($arguments)->number)
+            ->modalDescription(fn (array $arguments) => 'Rencana untuk '.$plan($arguments)->production_date->translatedFormat('l, d F Y').'.')
+            ->modalWidth('md')
+            ->modalSubmitActionLabel('Simpan')
+            ->fillForm(fn (array $arguments) => [
+                'production_date' => $plan($arguments)->production_date->toDateString(),
+                'work_date' => $plan($arguments)->workDate()?->toDateString(),
+            ])
+            ->form([
+                Hidden::make('production_date'),
+                ProductionOrderResource::workDateField(),
+            ])
+            ->action(function (array $data, array $arguments) use ($plan) {
+                $order = $plan($arguments);
+                abort_unless($order->isEditable() && $order->canBeManagedBy(auth()->user()), 403);
+
+                $order->update(['work_date' => $data['work_date'], 'updated_by' => auth()->id()]);
+
+                Notification::make()->success()->title('Tanggal dikerjakan disimpan')->send();
             });
     }
 

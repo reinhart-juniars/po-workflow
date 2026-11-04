@@ -6,6 +6,7 @@ use App\Filament\Menu\Resources\RecipeResource;
 use App\Filament\Resources\ProductionOrderResource\Pages;
 use App\Models\ProductionOrder;
 use App\Models\ProductionOrderLine;
+use App\Models\ProductionTask;
 use App\Models\Requisition;
 use App\Models\Spk;
 use App\Services\ProductionOrderService;
@@ -18,6 +19,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Carbon;
 use Throwable;
 
 /**
@@ -65,11 +67,35 @@ class ProductionOrderResource extends Resource
                             ->placeholder('mis. SPK PRA 9 Juni'),
 
                         Forms\Components\DatePicker::make('production_date')
-                            ->label('Tanggal Produksi')
+                            ->label(fn (Get $get) => $get('is_ready_stock') ? 'Tanggal Rencana' : 'Tanggal Produksi')
+                            ->helperText(fn (Get $get) => $get('is_ready_stock') ? 'PO yang dikirim tanggal ini bisa mengambil porsinya.' : null)
                             ->required()
                             ->default(now())
                             ->native(false)
-                            ->displayFormat('d/m/Y'),
+                            ->displayFormat('d/m/Y')
+                            ->live()
+                            // Jarak H-n dipertahankan saat tanggal rencana digeser.
+                            ->afterStateUpdated(function (?string $state, ?string $old, Get $get, Set $set) {
+                                if (! $get('is_ready_stock') || blank($state)) {
+                                    return;
+                                }
+
+                                $days = filled($old) && filled($get('work_date'))
+                                    ? (int) Carbon::parse($get('work_date'))->diffInDays(Carbon::parse($old))
+                                    : ProductionTask::DEFAULT_DAYS_BEFORE;
+
+                                $set('work_date', Carbon::parse($state)->subDays($days)->toDateString());
+                            }),
+
+                        static::workDateField()
+                            ->visible(fn (Get $get) => (bool) $get('is_ready_stock'))
+                            ->default(fn () => now()->subDays(ProductionTask::DEFAULT_DAYS_BEFORE)->toDateString())
+                            // Rencana lama belum menyimpan tanggalnya; form menampilkan bawaan H-1.
+                            ->afterStateHydrated(function (Forms\Components\DatePicker $component, ?string $state, ?ProductionOrder $record) {
+                                if (blank($state) && $record) {
+                                    $component->state($record->workDate()?->toDateString());
+                                }
+                            }),
 
                         Forms\Components\TextInput::make('production_time')
                             ->label('Jam Mulai')
@@ -105,6 +131,7 @@ class ProductionOrderResource extends Resource
                             ->label('Rencana Masak (stok siap untuk didistribusikan ke PO)')
                             ->helperText('Porsi rencana ini diambil admin lewat centang "Ambil dari stok siap" di PO bertanggal kirim sama. Sisa yang tidak terdistribusi menjadi Barang Sisa.')
                             ->default(fn () => ! auth()->user()?->can('production.manage'))
+                            ->live()
                             ->disabled(fn (?ProductionOrder $record) => $record !== null || ! auth()->user()?->can('production.manage'))
                             ->dehydrated(fn (?ProductionOrder $record) => $record === null)
                             ->columnSpanFull(),
@@ -203,7 +230,9 @@ class ProductionOrderResource extends Resource
                     ->label('Tanggal')
                     ->date('d/m/Y')
                     ->sortable()
-                    ->description(fn (ProductionOrder $record) => $record->production_time),
+                    ->description(fn (ProductionOrder $record) => $record->is_ready_stock
+                        ? 'Dikerjakan '.$record->workDate()?->format('d/m/Y')
+                        : $record->production_time),
 
                 TextColumn::make('lines_count')
                     ->label('Menu')
@@ -256,6 +285,27 @@ class ProductionOrderResource extends Resource
                 Tables\Actions\EditAction::make()->label('Edit')->iconButton()->tooltip('Edit'),
             ])
             ->defaultSort('production_date', 'desc');
+    }
+
+    /**
+     * Isian "Dikerjakan Tanggal" Rencana Masak: rencana tanggal 5 dimasak tanggal 4.
+     * Paling awal H-7 dan tidak boleh sesudah tanggal rencana, sama dengan pilihan
+     * H-n di Lembar Kerja.
+     */
+    public static function workDateField(): Forms\Components\DatePicker
+    {
+        return Forms\Components\DatePicker::make('work_date')
+            ->label('Dikerjakan Tanggal')
+            ->helperText('Hari dapur memasak rencana ini. Bawaannya sehari sebelum tanggal rencana.')
+            ->required()
+            ->native(false)
+            ->displayFormat('d/m/Y')
+            ->maxDate(fn (Get $get, ?ProductionOrder $record) => ($get('production_date') ?: $record?->production_date)
+                ? Carbon::parse($get('production_date') ?: $record->production_date)
+                : null)
+            ->minDate(fn (Get $get, ?ProductionOrder $record) => ($get('production_date') ?: $record?->production_date)
+                ? Carbon::parse($get('production_date') ?: $record->production_date)->subDays(ProductionTask::MAX_DAYS_BEFORE)
+                : null);
     }
 
     /**
