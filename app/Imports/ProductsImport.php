@@ -99,7 +99,7 @@ class ProductsImport implements SkipsEmptyRows, ToCollection, WithHeadingRow
                 'action' => $product ? 'update' : 'create',
                 'matched_id' => $product?->id,
                 'data' => $data,
-                'profit' => $this->calculateProfit($data),
+                'profit' => $this->calculateProfit($data, $product),
             ];
         }
 
@@ -172,10 +172,16 @@ class ProductsImport implements SkipsEmptyRows, ToCollection, WithHeadingRow
         return $payload;
     }
 
-    protected function calculateProfit(array $data): float
+    protected function calculateProfit(array $data, ?Product $product = null): float
     {
+        // Dasar yang sama dengan Product::profitPrice(). Berkas tanpa kolom harga lapak,
+        // atau menu yang lapaknya mengikuti resep, memakai harga lapak yang tersimpan.
+        $lapak = array_key_exists('lapak_price', $data) && ! $product?->lapakFollowsRecipe()
+            ? $data['lapak_price']
+            : $product?->lapak_price;
+
         return round(
-            (float) $data['base_price']
+            (float) ($lapak ?? $data['base_price'])
             - ((float) ($data['raw_material_cost'] ?? 0) + (float) ($data['overhead_cost'] ?? 0)),
             2
         );

@@ -69,7 +69,7 @@ class ProfitGuardService
             }
 
             $c = $this->costs->cost($recipe);
-            $price = (float) $product->base_price > 0 ? (float) $product->base_price : (float) $c['harga_jual_dipakai'];
+            $price = $product->profitPrice() > 0 ? $product->profitPrice() : (float) $c['harga_jual_dipakai'];
             $biaya = (float) $c['total_biaya'];
 
             // Hanya resep yang perhitungannya bersih: bahan belum tertaut atau

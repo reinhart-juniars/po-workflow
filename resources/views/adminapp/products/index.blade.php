@@ -212,11 +212,11 @@
                 <tbody>
                     @forelse($products as $product)
                         @php
-                            $basePrice = (float) ($product->base_price ?? 0);
+                            $profitPrice = $product->profitPrice();
                             $productProfit = (float) ($product->profit ?? 0);
                             $totalCost = (float) ($product->raw_material_cost ?? 0) + (float) ($product->overhead_cost ?? 0);
                             $profitPercent = $totalCost > 0 ? ($productProfit / $totalCost) * 100 : null;
-                            $marginPercent = $basePrice > 0 ? ($productProfit / $basePrice) * 100 : null;
+                            $marginPercent = $profitPrice > 0 ? ($productProfit / $profitPrice) * 100 : null;
                             $profitLow = $profitPercent !== null && $profitPercent < 25;
                             $marginLow = $marginPercent !== null && $marginPercent < 25;
                             $profitColor = $profitPercent === null
@@ -344,7 +344,8 @@
         <div class="px-4 py-2 text-[10px] text-slate-500 border-t border-slate-100">
             <strong>Modal</strong>: baris atas = Bahan Baku, baris bawah (redup) = Overhead Cost (OHC) &nbsp;·&nbsp;
             <strong>Profit %</strong> = Profit / (BB+OHC) &nbsp;·&nbsp;
-            <strong>Margin</strong> = Profit / Harga &nbsp;·&nbsp;
+            <strong>Profit</strong> &amp; <strong>Margin</strong> dihitung dari Harga Lapak (kosong = Harga Non Lapak) &nbsp;·&nbsp;
+            <strong>Margin</strong> = Profit / Harga Lapak &nbsp;·&nbsp;
             Merah jika &lt; 25%.
         </div>
     </section>
