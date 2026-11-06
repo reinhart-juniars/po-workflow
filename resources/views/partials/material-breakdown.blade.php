@@ -4,12 +4,15 @@
   hanya memakai kelas dari resources/css/shell.css (CSS Filament tidak memuat
   utilitas responsif Tailwind aplikasi).
 
-  Variabel: $breakdown (hasil service), $matchUrl (Pencocokan Menu, boleh null).
+  Variabel: $breakdown (hasil service), $matchUrl (Pencocokan Menu, boleh null),
+  $standalone (opsional, halaman Tarik Resep: bukan dari pesanan/SPK, rincian
+  terbuka semua dan dikelompokkan per bagian resep seperti SPK PRA di MMR).
 --}}
 @php
     $qty = fn ($v) => rtrim(rtrim(number_format((float) $v, 2, ',', '.'), '0'), ',') ?: '0';
     $rp = fn ($v) => 'Rp '.number_format((float) $v, 0, ',', '.');
     $s = $breakdown['summary'];
+    $standalone = $standalone ?? false;
 @endphp
 
 <div class="sh-bd">
@@ -59,62 +62,15 @@
         </div>
     @endif
 
-    <h3 class="sh-bd-title">Rekap bahan &amp; stok</h3>
-    <p class="sh-bd-note">
-        Perlu Beli = Kebutuhan − Stok Sistem (saldo Kartu Stok hari ini). Stok belum dikurangi pesanan lain yang belum diproduksi,
-        dan Stok Awal fisik tetap diisi dapur di Form Kebutuhan.
-    </p>
-    <div class="sh-grid-wrap">
-        <table class="sh-grid sh-bd-recap">
-            <colgroup>
-                <col>
-                <col style="width: 110px">
-                <col style="width: 110px">
-                <col style="width: 110px">
-                <col style="width: 70px">
-                <col style="width: 120px">
-                <col style="width: 30%">
-            </colgroup>
-            <thead>
-                <tr>
-                    <th>Bahan</th>
-                    <th class="num">Kebutuhan</th>
-                    <th class="num">Stok Sistem</th>
-                    <th class="num">Perlu Beli</th>
-                    <th>Satuan</th>
-                    <th class="num">Est. Biaya Beli</th>
-                    <th>Dipakai oleh</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($breakdown['recap'] as $row)
-                    <tr>
-                        <td><div class="sh-grid-name" title="{{ $row['name'] }}">{{ $row['name'] }}</div></td>
-                        <td class="num">{{ $qty($row['qty']) }}</td>
-                        <td class="num">
-                            @if ($row['stock'] === null)
-                                <span class="sh-grid-muted" title="Belum ada gerakan di Kartu Stok">belum tercatat</span>
-                            @else
-                                {{ $qty($row['stock']) }}
-                            @endif
-                        </td>
-                        <td class="num {{ $row['to_buy'] > 0 ? 'sh-grid-bad' : 'sh-grid-muted' }}">{{ $row['to_buy'] > 0 ? $qty($row['to_buy']) : 'cukup' }}</td>
-                        <td class="sh-grid-muted">{{ $row['unit'] }}</td>
-                        <td class="num">{{ $row['to_buy'] > 0 ? $rp($row['to_buy_cost']) : '–' }}</td>
-                        <td><div class="sh-grid-name sh-grid-muted" title="{{ implode(', ', $row['menus']) }}">{{ implode(', ', $row['menus']) }}</div></td>
-                    </tr>
-                @empty
-                    <tr><td colspan="7" class="sh-grid-muted" style="padding: 16px 0">Belum ada bahan yang bisa dihitung — menu di pesanan ini belum punya resep.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+    @unless ($standalone)
+        @include('partials.material-breakdown-recap')
+    @endunless
 
     @if ($breakdown['menus'] !== [])
         <h3 class="sh-bd-title">Rincian per menu</h3>
         <div class="sh-bd-menus">
             @foreach ($breakdown['menus'] as $menu)
-                <details class="sh-bd-menu">
+                <details class="sh-bd-menu" @if ($standalone) open @endif>
                     <summary>
                         <span class="sh-bd-menu-name">{{ $menu['label'] }}</span>
                         <span class="sh-bd-menu-meta">
@@ -137,7 +93,8 @@
                             @endif
                             Susunan resep untuk {{ $qty($menu['qty']) }} {{ $menu['unit'] }}; jumlah dalam satuan takaran resep.
                         </p>
-                        @if ($subCount > 0)
+                        {{-- Skrip tombol ini tidak jalan bila partial muncul lewat Livewire; di Tarik Resep semua sudah terbuka. --}}
+                        @if ($subCount > 0 && ! $standalone)
                             <button type="button" class="sh-tree-toggle" data-tree-toggle>Buka semua sub-menu</button>
                         @endif
                     </div>
@@ -161,6 +118,10 @@
                 </details>
             @endforeach
         </div>
+    @endif
+
+    @if ($standalone)
+        @include('partials.material-breakdown-recap')
     @endif
 </div>
 

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ProductionOrderResource\Pages;
 
+use App\Filament\Pages\RecipePull;
 use App\Filament\Resources\ProductionOrderResource;
 use App\Models\ProductionOrder;
 use Filament\Actions;
@@ -15,6 +16,13 @@ class ListProductionOrders extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            // Cukup butuh angka bahannya? Tidak perlu menyusun SPK.
+            Actions\Action::make('tarik_resep')
+                ->label('Tarik Resep')
+                ->icon('heroicon-m-calculator')
+                ->color('gray')
+                ->visible(fn () => RecipePull::canAccess())
+                ->url(fn () => RecipePull::getUrl()),
             ProductionOrderResource::generateFromSpkAction(),
             Actions\CreateAction::make()->label(auth()->user()?->can('production.manage') ? 'Susun Manual' : 'Buat Rencana Masak'),
         ];

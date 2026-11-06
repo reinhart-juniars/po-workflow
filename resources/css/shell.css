@@ -754,6 +754,7 @@ select.sh-grid-input { padding-right: 24px; appearance: none; background-image: 
   font-variant-numeric: tabular-nums; color: var(--sh-ink-2);
 }
 .sh-tree-row .num { text-align: right; }
+.sh-tree-section { padding: 10px 0 2px calc(var(--depth, 0) * 22px); font-size: 12px; font-weight: 600; color: var(--sh-ink-2); }
 .sh-tree-head { min-height: 30px; font-size: 12px; font-weight: 500; color: var(--sh-ink-3); }
 .sh-tree-row.is-leaf .sh-tree-name { padding-left: 22px; }
 .sh-tree-node > summary { cursor: pointer; list-style: none; transition: background-color 140ms ease; }
