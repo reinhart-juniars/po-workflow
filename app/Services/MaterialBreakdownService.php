@@ -81,6 +81,48 @@ class MaterialBreakdownService
     }
 
     /**
+     * Breakdown resep pilihan tanpa dokumen apa pun (halaman Tarik Resep):
+     * jumlahnya bebas, tidak ada SPK yang dibuat dan tidak ada stok yang
+     * bergerak. Resep yang sama dipilih dua kali digabung jumlahnya. Jumlah
+     * dibaca dalam satuan hasil resep itu sendiri.
+     *
+     * Resep yang tidak ada / sudah nonaktif tidak dibuang diam-diam: masuk
+     * daftar `missing`, sama seperti menu tanpa resep di SPK.
+     *
+     * @param  iterable<array{recipe_id: int|string, qty: int|float|string}>  $selections
+     */
+    public function forRecipes(iterable $selections): array
+    {
+        $totals = [];
+
+        foreach ($selections as $selection) {
+            $id = (int) $selection['recipe_id'];
+            $totals[$id] = ($totals[$id] ?? 0.0) + (float) $selection['qty'];
+        }
+
+        $recipes = Recipe::query()
+            ->where('is_active', true)
+            ->whereIn('id', array_keys($totals))
+            ->get()
+            ->keyBy('id');
+
+        $lines = collect($totals)
+            ->map(function (float $qty, int $id) use ($recipes) {
+                $recipe = $recipes->get($id);
+
+                return [
+                    'label' => $recipe?->name ?? 'Resep #'.$id,
+                    'recipe' => $recipe,
+                    'qty' => $qty,
+                    'unit' => $recipe?->yield_unit ?: 'porsi',
+                ];
+            })
+            ->values();
+
+        return $this->build($lines);
+    }
+
+    /**
      * @param  Collection<int, array{label: string, recipe: ?Recipe, qty: float, unit: string}>  $lines
      * @return array{menus: list<array<string, mixed>>, recap: list<array<string, mixed>>, missing: list<array{label: string, qty: float, unit: string}>, issues: list<string>, summary: array<string, mixed>}
      */

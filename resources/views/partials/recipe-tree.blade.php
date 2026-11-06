@@ -3,16 +3,26 @@
   sub-menu sebagai <details> berpanah yang membuka rinciannya sendiri. Dipanggil
   rekursif dengan $depth + 1. Tanpa Alpine (cangkang Blade tidak memuatnya).
 
-  Variabel: $nodes, $depth (0 = baris langsung milik menu), $qty, $rp (formatter).
+  Variabel: $nodes, $depth (0 = baris langsung milik menu), $qty, $rp (formatter),
+  $standalone (opsional, Tarik Resep: sub-menu terbuka, baris dikelompokkan per bagian resep).
 --}}
-@foreach ($nodes as $node)
+@php
+    $groups = ($standalone ?? false)
+        ? collect($nodes)->groupBy(fn ($node) => (string) ($node['section'] ?? ''))
+        : ['' => $nodes];
+@endphp
+@foreach ($groups as $section => $groupNodes)
+@if ((string) $section !== '')
+    <div class="sh-tree-section" style="--depth: {{ $depth }}">{{ $section }}</div>
+@endif
+@foreach ($groupNodes as $node)
     @php
         $cost = $node['cost'] === null ? '–' : $rp($node['cost']);
         $flag = ! $node['complete'] ? ($node['issue'] ?? 'Ada rincian yang belum lengkap.') : null;
     @endphp
 
     @if ($node['kind'] === 'recipe' && $node['children'] !== [])
-        <details class="sh-tree-node" style="--depth: {{ $depth }}">
+        <details class="sh-tree-node" style="--depth: {{ $depth }}" @if ($standalone ?? false) open @endif>
             <summary class="sh-tree-row">
                 <span class="sh-tree-name">
                     <svg class="sh-tree-caret" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd"/></svg>
@@ -44,4 +54,5 @@
             <span class="num">{{ $cost }}</span>
         </div>
     @endif
+@endforeach
 @endforeach
