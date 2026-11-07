@@ -274,6 +274,14 @@ class ProductionOrderResource extends Resource
                     ->options(ProductionOrder::statusOptions()),
             ])
             ->actions([
+                Tables\Actions\Action::make('spk_pra')
+                    ->label('Lembar SPK PRA')
+                    ->icon('heroicon-m-document-text')
+                    ->color('gray')
+                    ->iconButton()
+                    ->tooltip('Lembar SPK PRA')
+                    ->url(fn (ProductionOrder $record) => static::getUrl('spk-pra', ['record' => $record])),
+
                 Tables\Actions\Action::make('kebutuhan')
                     ->label('Form Kebutuhan')
                     ->icon('heroicon-m-clipboard-document-list')
@@ -383,6 +391,7 @@ class ProductionOrderResource extends Resource
             'pekerjaan' => Pages\ProductionTasks::route('/{record}/pekerjaan'),
             'plating' => Pages\PlatingSheet::route('/{record}/plating'),
             'bahan' => Pages\MaterialBreakdown::route('/{record}/bahan'),
+            'spk-pra' => Pages\SpkPraSheet::route('/{record}/spk-pra'),
             'edit' => Pages\EditProductionOrder::route('/{record}/edit'),
         ];
     }

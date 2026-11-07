@@ -858,3 +858,32 @@ select.sh-grid-input { padding-right: 24px; appearance: none; background-image: 
   .sh-rcp-row { grid-template-columns: minmax(0, 1fr) auto; }
   .sh-rcp-row > :nth-child(2) { display: none; }
 }
+
+/* Lembar SPK PRA (per menu, seperti berkas yang dikirim ke produksi). */
+.sh-pra-intro { font-size: 13px; color: var(--sh-ink-3); }
+.sh-pra-intro b { color: var(--sh-ink); }
+.sh-pra { display: flex; flex-direction: column; gap: 12px; }
+.sh-pra-menu { padding: 12px 16px; border: 1px solid var(--sh-line); border-radius: 10px; background: var(--sh-surface); }
+.sh-pra-menu-head { display: flex; align-items: center; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--sh-line); }
+.sh-pra-no { flex: none; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 6px; background: var(--sh-ink); color: #fff; font-size: 12px; font-weight: 700; line-height: 22px; text-align: center; }
+.sh-pra-title { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; color: var(--sh-ink); }
+.sh-pra-qty { flex: none; font-size: 13px; font-weight: 600; color: var(--sh-ink); font-variant-numeric: tabular-nums; }
+.sh-pra-component { padding-top: 6px; }
+.sh-pra-row { display: flex; align-items: center; gap: 8px; min-height: 26px; font-size: 13px; color: var(--sh-ink-2); font-variant-numeric: tabular-nums; }
+.sh-pra-row:not(.is-head) { padding-left: 16px; }
+.sh-pra-name { flex: 1; min-width: 0; }
+.sh-pra-row.is-head .sh-pra-name { font-weight: 600; color: var(--sh-ink); }
+.sh-pra-edit { padding: 0; border: 0; background: none; font-size: 13px; font-weight: 600; color: var(--sh-brand-700); text-align: left; cursor: pointer; }
+.sh-pra-row.is-head .sh-pra-edit { min-width: 0; margin-right: auto; }
+.sh-pra-edit:hover { text-decoration: underline; }
+.sh-pra-edit:focus-visible { outline: 2px solid var(--sh-brand-600); outline-offset: 2px; }
+.sh-pra-edit.is-quiet { font-size: 12px; font-weight: 500; }
+.sh-pra-num { flex: none; width: 80px; text-align: right; font-weight: 500; color: var(--sh-ink); }
+.sh-pra-unit { flex: none; width: 56px; color: var(--sh-ink-3); }
+.sh-pra-tag { flex: none; padding: 0 6px; border-radius: 6px; background: #fffbeb; color: #b45309; font-size: 11px; line-height: 18px; }
+.sh-pra-note { flex: none; padding: 0 6px; border-radius: 6px; background: var(--sh-brand-50); color: var(--sh-brand-700); font-size: 11px; line-height: 18px; }
+.sh-pra-hidden { margin-top: 8px; padding-top: 6px; border-top: 1px dashed var(--sh-line); font-size: 12px; color: var(--sh-ink-3); }
+@media (max-width: 640px) {
+  .sh-pra-num { width: 60px; }
+  .sh-pra-unit { width: 44px; }
+}

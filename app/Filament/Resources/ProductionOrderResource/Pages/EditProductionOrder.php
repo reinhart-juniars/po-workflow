@@ -33,6 +33,12 @@ class EditProductionOrder extends EditRecord
                     $this->redirect(ProductionOrderResource::getUrl('kebutuhan', ['record' => $order]));
                 }),
 
+            Actions\Action::make('spk_pra')
+                ->label('Lembar SPK PRA')
+                ->icon('heroicon-m-document-text')
+                ->color('gray')
+                ->url(ProductionOrderResource::getUrl('spk-pra', ['record' => $order])),
+
             Actions\Action::make('kebutuhan')
                 ->label('Form Kebutuhan')
                 ->icon('heroicon-m-clipboard-document-list')
