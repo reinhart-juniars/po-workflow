@@ -21,6 +21,16 @@ class ProductionDocumentService
         protected PlatingService $plating,
     ) {}
 
+    /**
+     * Lembar SPK PRA untuk dicetak atau dikirim ke produksi.
+     *
+     * @param  array{order: ProductionOrder, menus: list<array<string, mixed>>}  $sheet
+     */
+    public function spkPraPdf(array $sheet, string $filename): StreamedResponse
+    {
+        return $this->stream('pdf.spk-pra', ['sheet' => $sheet], $filename);
+    }
+
     public function productionOrderPdf(ProductionOrder $order): StreamedResponse
     {
         $order->loadMissing(['lines.recipe', 'tasks']);

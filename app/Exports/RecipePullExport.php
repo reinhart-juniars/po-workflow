@@ -31,7 +31,8 @@ class RecipePullExport extends MaterialBreakdownExport
                 $rows[] = ['', '', 'catatan: '.$issue];
             }
 
-            $rows[] = [];
+            // Harus berisi satu sel: baris [] dibuang Laravel Excel.
+            $rows[] = [''];
         }
 
         foreach ($this->breakdown['missing'] as $menu) {
