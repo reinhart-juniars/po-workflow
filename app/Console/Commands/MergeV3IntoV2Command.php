@@ -22,8 +22,11 @@ class MergeV3IntoV2Command extends Command
 {
     private const SOURCE_CONNECTION = 'merge_v3_source';
 
+    private const BASE_CONNECTION = 'merge_v3_base';
+
     protected $signature = 'cutover:merge-v3
         {--from-database= : Nama database V3 yang sedang dipakai (mis. po_workflow)}
+        {--base-database= : Database berisi dump V2 saat V3 dibangun (titik pisah), untuk menggabung menu per kolom}
         {--database= : Koneksi tujuan; default koneksi aktif}
         {--since='.MergeV3IntoV2::DEFAULT_SINCE.' : Tanggal V2 dan V3 mulai berjalan terpisah}
         {--dry-run : Jalankan seluruh proses lalu batalkan, untuk melihat dampaknya dulu}
@@ -64,7 +67,20 @@ class MergeV3IntoV2Command extends Command
         ));
         DB::purge(self::SOURCE_CONNECTION);
 
+        $baseName = trim((string) $this->option('base-database'));
+
+        if ($baseName !== '') {
+            Config::set('database.connections.'.self::BASE_CONNECTION, array_merge(
+                Config::get('database.connections.'.$targetName),
+                ['database' => $baseName],
+            ));
+            DB::purge(self::BASE_CONNECTION);
+        } else {
+            $this->warn('Tanpa --base-database: menu yang disentuh V3 diambil utuh dari V3 (perubahan V2 di menu yang sama tertimpa).');
+        }
+
         $this->line("V3 (dibaca) : {$from}");
+        $this->line('Titik pisah : '.($baseName ?: '-'));
         $this->line('Tujuan      : '.$target->getDatabaseName());
 
         $dryRun = (bool) $this->option('dry-run');
@@ -78,7 +94,12 @@ class MergeV3IntoV2Command extends Command
         }
 
         try {
-            $result = (new MergeV3IntoV2(DB::connection(self::SOURCE_CONNECTION), $target, (string) $this->option('since')))->run($dryRun);
+            $result = (new MergeV3IntoV2(
+                DB::connection(self::SOURCE_CONNECTION),
+                $target,
+                (string) $this->option('since'),
+                $baseName !== '' ? DB::connection(self::BASE_CONNECTION) : null,
+            ))->run($dryRun);
         } catch (Throwable $e) {
             $this->newLine();
             $this->error('Gagal, tidak ada yang tersimpan: '.$e->getMessage());
@@ -86,6 +107,7 @@ class MergeV3IntoV2Command extends Command
             return self::FAILURE;
         } finally {
             DB::purge(self::SOURCE_CONNECTION);
+            DB::purge(self::BASE_CONNECTION);
         }
 
         $this->newLine();

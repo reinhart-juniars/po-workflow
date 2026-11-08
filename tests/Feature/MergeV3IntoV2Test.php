@@ -52,6 +52,17 @@ function v3(): Connection
     return DB::connection('v3_uji');
 }
 
+/** Titik pisah: dump V2 saat V3 dibangun (hanya menu yang dibaca). */
+function gabungTitikPisah(): string
+{
+    $path = tempnam(sys_get_temp_dir(), 'base_').'.sqlite';
+    copy(DB::connection('v3_uji')->getDatabaseName(), $path);
+    config(['database.connections.base_uji' => array_merge(config('database.connections.sqlite'), ['database' => $path])]);
+    DB::purge('base_uji');
+
+    return $path;
+}
+
 /** Baris dari dump V2 31 Okt: identik di kedua database. */
 function gabungKeDuanya(string $table, array $rows): void
 {
@@ -83,11 +94,14 @@ function gabungSkenario(): string
     gabungKeDuanya('areas', [['id' => 1, 'name' => 'Surabaya'] + $t]);
     gabungKeDuanya('customers', [['id' => 7, 'name' => 'MELYANA WBM', 'area_id' => 1] + $t]);
     gabungKeDuanya('inventory_items', [['id' => 22, 'name' => 'Bahan Baku', 'unit' => 'All', 'category' => 'bahan_baku', 'is_active' => 1] + $t]);
-    gabungKeDuanya('products', [
+    $menuDump = [
         ['id' => 10, 'name' => 'NASI GORENG MERAH 10K', 'sku' => 'NASGOR-MERAH', 'base_price' => 10000, 'raw_material_cost' => 5000] + $t,
         ['id' => 11, 'name' => 'ES TEH', 'sku' => 'ES-TEH', 'base_price' => 5000, 'raw_material_cost' => 1000] + $t,
         ['id' => 12, 'name' => 'NASI CAMPUR 12K', 'sku' => 'NASI-CAMPUR', 'base_price' => 12000, 'raw_material_cost' => 6000] + $t,
-    ]);
+    ];
+    gabungKeDuanya('products', $menuDump);
+    // Titik pisah = keadaan dump 31 Okt (disalin sebelum kedua sistem berubah).
+    $GLOBALS['gabung_base'] = gabungTitikPisah();
 
     // --- Hanya di V3 sejak Oktober (dibawa carry 1 Nov) ---
     v3()->table('users')->insert(['id' => 2, 'name' => 'sisil', 'email' => '', 'password' => 'hash-v3-sisil'] + $t);
@@ -114,7 +128,11 @@ function gabungSkenario(): string
 
     // Sales actual Oktober yang snapshot HPP-nya kosong: Analisa HPP membaca HPP menu.
     $saId = DB::table('sales_actuals')->insertGetId(['sales_date' => '2026-10-15', 'customer_id' => 7, 'status' => 'submitted', 'submitted_at' => '2026-10-15 10:00:00'] + $t);
-    DB::table('sales_actual_items')->insert(['sales_actual_id' => $saId, 'product_id' => 10, 'item_name' => 'NASI GORENG MERAH 10K', 'qty_actual' => 4, 'subtotal_actual' => 40000, 'raw_material_cost' => null, 'overhead_cost' => null] + $t);
+    DB::table('sales_actual_items')->insert([
+        ['sales_actual_id' => $saId, 'product_id' => 10, 'item_name' => 'NASI GORENG MERAH 10K', 'qty_actual' => 4, 'subtotal_actual' => 40000, 'raw_material_cost' => null, 'overhead_cost' => null] + $t,
+        // ES TEH: OHC menu kosong di V2 (terhitung 0), diisi tim menu di V3.
+        ['sales_actual_id' => $saId, 'product_id' => 11, 'item_name' => 'ES TEH', 'qty_actual' => 2, 'subtotal_actual' => 10000, 'raw_material_cost' => null, 'overhead_cost' => null] + $t,
+    ]);
 
     // --- Dikerjakan V3 selama 1–7 Nov (hanya sumber) ---
     v3()->table('inventory_items')->insert([
@@ -139,6 +157,7 @@ function gabungSkenario(): string
     // Menu: harga & resep diubah tim menu (V3 menang), ES TEH tidak disentuh V3 (V2 tetap).
     v3()->table('products')->where('id', 10)->update(['base_price' => 12000, 'raw_material_cost' => 5687.84, 'recipe_id' => 5, 'updated_at' => '2026-11-03 10:00:00']);
     v3()->table('products')->where('id', 12)->update(['base_price' => 14000, 'updated_at' => '2026-11-05 10:00:00']);
+    v3()->table('products')->where('id', 11)->update(['overhead_cost' => 800, 'updated_at' => '2026-11-06 10:00:00']);
     // Menu baru V3: dua sama dengan menu baru V2 (ID bentrok), satu benar-benar baru.
     v3()->table('products')->insert([
         ['id' => 13, 'name' => 'BISTIK LIDAH 125K', 'sku' => 'BISTIK-LIDAH-125K', 'base_price' => 125000, 'raw_material_cost' => 60000] + $nov('5'),
@@ -163,7 +182,7 @@ function gabungSkenario(): string
 
 function gabungJalankan(string $path, array $options = [])
 {
-    return artisan('cutover:merge-v3', array_merge(['--from-database' => $path, '--force' => true], $options));
+    return artisan('cutover:merge-v3', array_merge(['--from-database' => $path, '--base-database' => $GLOBALS['gabung_base'], '--force' => true], $options));
 }
 
 it('menempelkan pekerjaan V3 ke database V2 final tanpa menimpa transaksi V2', function () {
@@ -185,11 +204,15 @@ it('menempelkan pekerjaan V3 ke database V2 final tanpa menimpa transaksi V2', f
     expect((float) $nasgor->base_price)->toBe(12000.0)
         ->and((float) $nasgor->raw_material_cost)->toBe(5687.84)
         ->and($nasgor->recipe_id)->toBe(5)
+        // ES TEH: harga dinaikkan V2, OHC diisi V3 -> keduanya dipakai.
         ->and((float) DB::table('products')->find(11)->base_price)->toBe(6000.0)
+        // NASI CAMPUR: harga diubah keduanya -> V3 menang.
         ->and((float) DB::table('products')->find(12)->base_price)->toBe(14000.0);
 
     // HPP menu baru dari V3 tidak menggeser Hitungan Oktober: snapshot kosong diisi HPP V2.
-    expect((float) DB::table('sales_actual_items')->where('product_id', 10)->value('raw_material_cost'))->toBe(5000.0);
+    expect((float) DB::table('sales_actual_items')->where('product_id', 10)->value('raw_material_cost'))->toBe(5000.0)
+        ->and((float) DB::table('sales_actual_items')->where('product_id', 11)->value('overhead_cost'))->toBe(0.0)
+        ->and((float) DB::table('products')->find(11)->overhead_cost)->toBe(800.0);
 
     // Menu dobel digabung ke ID V2 (nama & harga dari V3); menu V2 yang ID-nya bentrok utuh.
     expect(DB::table('products')->find(13)->name)->toBe('NASI KATSU SAOS SAMBEL')
@@ -221,7 +244,7 @@ it('melaporkan menu yang diubah di kedua sistem dan PO yang diinput dua kali', f
     $path = gabungSkenario();
 
     gabungJalankan($path)
-        ->expectsOutputToContain('Menu diubah di V2 dan V3')
+        ->expectsOutputToContain('NASI CAMPUR 12K (base_price)')
         ->expectsOutputToContain('PO-20261101-0001 = V2 PO-20261101-0001')
         ->assertSuccessful();
 });
@@ -274,4 +297,14 @@ it('berhenti bila PO V3 sudah diproses', function () {
 
     gabungJalankan($path)->expectsOutputToContain('hanya PO draft')->assertFailed();
     expect(DB::table('purchase_orders')->count())->toBe(2);
+});
+
+it('tanpa titik pisah mengambil utuh menu yang disentuh V3', function () {
+    $path = gabungSkenario();
+
+    gabungJalankan($path, ['--base-database' => ''])->expectsOutputToContain('Tanpa --base-database')->assertSuccessful();
+
+    // Harga ES TEH dari V2 tertimpa harga V3 karena V3 mengubah OHC-nya; inilah alasan titik pisah dipakai.
+    expect((float) DB::table('products')->find(11)->base_price)->toBe(5000.0)
+        ->and((float) DB::table('products')->find(11)->overhead_cost)->toBe(800.0);
 });

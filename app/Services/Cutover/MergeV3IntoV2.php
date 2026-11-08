@@ -96,6 +96,7 @@ class MergeV3IntoV2
         private Connection $source,
         private Connection $target,
         private string $since = self::DEFAULT_SINCE,
+        private ?Connection $base = null,
     ) {}
 
     /**
@@ -474,28 +475,33 @@ class MergeV3IntoV2
         $filled = 0;
 
         foreach (['raw_material_cost', 'overhead_cost'] as $column) {
+            // HPP menu V2 yang kosong berarti 0 di Analisa HPP V2 (COALESCE ..., 0);
+            // dikunci 0 supaya HPP yang baru diisi tim menu di V3 tidak ikut terbaca.
             $filled += $this->target->table('sales_actual_items')
                 ->whereNull($column)
                 ->whereNotNull('product_id')
-                ->whereExists(fn ($query) => $query->selectRaw('1')->from('products')
-                    ->whereColumn('products.id', 'sales_actual_items.product_id')
-                    ->whereNotNull("products.{$column}"))
-                ->update([$column => $this->target->raw("(select products.{$column} from products where products.id = sales_actual_items.product_id)")]);
+                ->update([$column => $this->target->raw("coalesce((select products.{$column} from products where products.id = sales_actual_items.product_id), 0)")]);
         }
 
         $this->record('Snapshot HPP sales actual', $filled, $filled, 'kolom kosong diisi HPP menu V2 sebelum HPP V3 dipasang');
     }
 
     /**
-     * Menu yang disentuh V3 sejak tanggal pisah: seluruh kolomnya dari V3 (V3
-     * menang untuk resep, harga, HPP). Menu yang tidak disentuh V3 tetap versi
-     * V2. Menu baru V3 dicocokkan ke menu baru V2 yang namanya sama (urutan kata
-     * boleh beda); bila tidak ada, dibuat baru.
+     * Menu yang ada di kedua sistem digabung per kolom terhadap titik pisah
+     * ($base = dump V2 saat V3 dibangun): kolom yang diubah V3 memakai V3, kolom
+     * yang hanya diubah V2 tetap V2, diubah keduanya memakai V3 (V3 menang untuk
+     * resep, harga, HPP) dan dilaporkan. Kolom yang tidak ada di titik pisah
+     * (fitur 3S ONE) selalu dari V3. Tanpa $base: menu yang disentuh V3 sejak
+     * tanggal pisah diambil utuh dari V3.
+     *
+     * Menu baru V3 dicocokkan ke menu baru V2 yang namanya sama (urutan kata
+     * boleh beda) dan mengambil seluruh kolom V3; bila tidak ada, dibuat baru.
      */
     private function mergeProducts(): void
     {
         $target = $this->target->table('products')->get()->keyBy('id');
         $newInTarget = $target->filter(fn ($row) => (string) $row->created_at >= $this->since);
+        $baseRows = $this->base ? $this->base->table('products')->get()->keyBy('id') : collect();
         $updated = 0;
         $merged = [];
         $created = [];
@@ -528,29 +534,104 @@ class MergeV3IntoV2
             }
 
             $this->productMap[$product->id] = $match->id;
+            $row = collect((array) $product)->except(['id', 'created_at'])->all();
 
-            if ((string) $product->updated_at < $this->since && $match->id === $product->id) {
-                continue; // tidak disentuh V3: versi V2 tetap berlaku
+            if ($match->id === $product->id) {
+                $row = $this->productChangesFromV3($product, $match, $baseRows->get($product->id), $conflicts);
             }
 
-            if ((string) $match->updated_at >= $this->since && $match->id === $product->id) {
-                $conflicts[] = $product->name;
+            if ($row === []) {
+                continue;
             }
 
-            $row = collect((array) $product)->except(['id', 'created_at', 'sku'])->all();
-            $this->target->table('products')->where('id', $match->id)->update($row);
-            $wantedSku[$match->id] = $product->sku;
+            if (array_key_exists('sku', $row)) {
+                $wantedSku[$match->id] = $row['sku'];
+                unset($row['sku']);
+            }
+
+            if ($row !== []) {
+                $this->target->table('products')->where('id', $match->id)->update($row);
+            }
+
             $updated++;
         }
 
         $skuChanged = $this->applySkus($wantedSku);
 
         if ($conflicts) {
-            $this->warnings[] = 'Menu diubah di V2 dan V3 sejak '.$this->since.', dipakai versi V3 (periksa harganya): '.self::list($conflicts);
+            $this->warnings[] = 'Menu diubah di V2 dan V3 sejak '.$this->since.', dipakai versi V3 (periksa): '.self::list($conflicts);
         }
 
         $this->record('Menu jual', $this->source->table('products')->count(), $updated + count($created),
             "{$updated} diperbarui dari V3; digabung: ".(self::list($merged) ?: '-').'; baru: '.(self::list($created) ?: '-')."; {$skuChanged} SKU diperbarui");
+    }
+
+    /**
+     * Kolom menu yang diambil dari V3 untuk menu yang sama di kedua sistem.
+     *
+     * @param  list<string>  $conflicts
+     * @return array<string, mixed>
+     */
+    private function productChangesFromV3(object $v3, object $v2, ?object $base, array &$conflicts): array
+    {
+        $columns = collect((array) $v3)->except(['id', 'created_at', 'updated_at']);
+
+        if ($this->base === null || $base === null) {
+            if ((string) $v3->updated_at < $this->since) {
+                return []; // tidak disentuh V3: versi V2 tetap berlaku
+            }
+
+            if ((string) $v2->updated_at >= $this->since) {
+                $conflicts[] = $v3->name;
+            }
+
+            return $columns->put('updated_at', $v3->updated_at)->all();
+        }
+
+        $baseValues = (array) $base;
+        $changes = [];
+        $clashes = [];
+
+        foreach ($columns as $column => $value) {
+            if (! array_key_exists($column, $baseValues)) {
+                if (! self::same($value, $v2->{$column} ?? null)) {
+                    $changes[$column] = $value; // fitur 3S ONE: milik V3
+                }
+
+                continue;
+            }
+
+            if (self::same($value, $baseValues[$column])) {
+                continue; // V3 tidak mengubah kolom ini: versi V2 berlaku
+            }
+
+            if (! self::same($v2->{$column}, $baseValues[$column]) && ! self::same($v2->{$column}, $value)) {
+                $clashes[] = $column;
+            }
+
+            if (! self::same($v2->{$column}, $value)) {
+                $changes[$column] = $value;
+            }
+        }
+
+        if ($clashes) {
+            $conflicts[] = "{$v3->name} (".implode(', ', $clashes).')';
+        }
+
+        if ($changes !== []) {
+            $changes['updated_at'] = max((string) $v3->updated_at, (string) $v2->updated_at);
+        }
+
+        return $changes;
+    }
+
+    private static function same(mixed $a, mixed $b): bool
+    {
+        if (is_numeric($a) && is_numeric($b)) {
+            return abs((float) $a - (float) $b) < 0.0001;
+        }
+
+        return (string) $a === (string) $b && ($a === null) === ($b === null);
     }
 
     /**
