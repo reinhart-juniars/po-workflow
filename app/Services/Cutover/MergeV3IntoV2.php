@@ -117,6 +117,7 @@ class MergeV3IntoV2
                 $this->mergeInventoryItems();
                 $this->copyVerbatimTables(productLinked: false);
                 $this->mergeSettings();
+                $this->freezeSalesActualCostSnapshots();
                 $this->mergeProducts();
                 $this->copyVerbatimTables(productLinked: true);
                 $this->mergeProductPriceHistories();
@@ -461,6 +462,29 @@ class MergeV3IntoV2
     // ------------------------------------------------------------------
     // Menu
     // ------------------------------------------------------------------
+
+    /**
+     * Analisa HPP memakai HPP menu saat ini untuk item sales actual yang
+     * snapshot HPP-nya kosong. Sebelum HPP menu dari V3 dipasang, snapshot
+     * kosong diisi HPP menu V2 -- angka yang dipakai V2 saat melapor -- supaya
+     * BB/OHC Hitungan bulan yang sudah dilaporkan tidak bergeser.
+     */
+    private function freezeSalesActualCostSnapshots(): void
+    {
+        $filled = 0;
+
+        foreach (['raw_material_cost', 'overhead_cost'] as $column) {
+            $filled += $this->target->table('sales_actual_items')
+                ->whereNull($column)
+                ->whereNotNull('product_id')
+                ->whereExists(fn ($query) => $query->selectRaw('1')->from('products')
+                    ->whereColumn('products.id', 'sales_actual_items.product_id')
+                    ->whereNotNull("products.{$column}"))
+                ->update([$column => $this->target->raw("(select products.{$column} from products where products.id = sales_actual_items.product_id)")]);
+        }
+
+        $this->record('Snapshot HPP sales actual', $filled, $filled, 'kolom kosong diisi HPP menu V2 sebelum HPP V3 dipasang');
+    }
 
     /**
      * Menu yang disentuh V3 sejak tanggal pisah: seluruh kolomnya dari V3 (V3

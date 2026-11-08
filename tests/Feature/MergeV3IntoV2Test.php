@@ -112,6 +112,10 @@ function gabungSkenario(): string
         gabungPo(51, 'PO-20261107-0001', 8, '2026-11-07', 'completed', '2026-11-07 09:00:00'),
     ]);
 
+    // Sales actual Oktober yang snapshot HPP-nya kosong: Analisa HPP membaca HPP menu.
+    $saId = DB::table('sales_actuals')->insertGetId(['sales_date' => '2026-10-15', 'customer_id' => 7, 'status' => 'submitted', 'submitted_at' => '2026-10-15 10:00:00'] + $t);
+    DB::table('sales_actual_items')->insert(['sales_actual_id' => $saId, 'product_id' => 10, 'item_name' => 'NASI GORENG MERAH 10K', 'qty_actual' => 4, 'subtotal_actual' => 40000, 'raw_material_cost' => null, 'overhead_cost' => null] + $t);
+
     // --- Dikerjakan V3 selama 1–7 Nov (hanya sumber) ---
     v3()->table('inventory_items')->insert([
         ['id' => 100, 'parent_id' => 22, 'name' => 'Telur Ayam', 'unit' => 'kg', 'unit_price' => 30000, 'category' => 'bahan_baku', 'is_active' => 1] + $nov('2'),
@@ -183,6 +187,9 @@ it('menempelkan pekerjaan V3 ke database V2 final tanpa menimpa transaksi V2', f
         ->and($nasgor->recipe_id)->toBe(5)
         ->and((float) DB::table('products')->find(11)->base_price)->toBe(6000.0)
         ->and((float) DB::table('products')->find(12)->base_price)->toBe(14000.0);
+
+    // HPP menu baru dari V3 tidak menggeser Hitungan Oktober: snapshot kosong diisi HPP V2.
+    expect((float) DB::table('sales_actual_items')->where('product_id', 10)->value('raw_material_cost'))->toBe(5000.0);
 
     // Menu dobel digabung ke ID V2 (nama & harga dari V3); menu V2 yang ID-nya bentrok utuh.
     expect(DB::table('products')->find(13)->name)->toBe('NASI KATSU SAOS SAMBEL')
