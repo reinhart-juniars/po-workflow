@@ -9,13 +9,13 @@ use App\Http\Controllers\Concerns\ReportsDamagedInventoryLoss;
 use App\Http\Controllers\Concerns\ReportsHppDetails;
 use App\Models\CashOut;
 use App\Models\InventoryItem;
-use App\Models\OtherIncome;
 use App\Models\ProfitLossAdjustment;
 use App\Models\SalesActual;
 use App\Models\SalesActualItem;
 use App\Models\SalesDailyClosing;
 use App\Models\StockOpname;
 use App\Services\InventoryUsageService;
+use App\Services\OtherIncomeRecognitionService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -195,11 +195,21 @@ class ProfitLossReportController extends Controller
         $pengeluaranRows = $this->buildPengeluaranRows($dateFrom, $dateTo);
         $totalPengeluaran = round((float) collect($pengeluaranRows)->sum('amount'), 2);
 
-        $labaRugi = round($totalPenjualan - $bahanBakuTerpakai - $totalPengeluaran, 2);
+        // Pendapatan lain-lain (mis. ongkir) ikut ke laba supaya Laba = kenaikan Kekayaan di neraca
+        // (BalanceSheetService::calculateProfitForRange memakai aturan yang sama).
+        $pendapatanLainRows = $this->otherIncomeRowsByCategory($dateFrom, $dateTo)->values()->all();
+        $pendapatanLain = round((float) collect($pendapatanLainRows)->sum('amount'), 2);
+        $totalPendapatan = round($totalPenjualan + $pendapatanLain, 2);
+
+        // T-account: kiri = Penjualan + Pendapatan Lain; kanan = BB Terpakai + Pengeluaran + Laba.
+        $labaRugi = round($totalPendapatan - $bahanBakuTerpakai - $totalPengeluaran, 2);
         $totalCheck = round($bahanBakuTerpakai + $totalPengeluaran + $labaRugi, 2);
 
         return [
             'totalPenjualan' => $totalPenjualan,
+            'pendapatanLainRows' => $pendapatanLainRows,
+            'pendapatanLain' => $pendapatanLain,
+            'totalPendapatan' => $totalPendapatan,
             'bahanBakuLama' => $bahanBakuLama,
             'bahanBakuBaru' => $bahanBakuBaru,
             'sisaStok' => $sisaStok,
@@ -380,17 +390,7 @@ class ProfitLossReportController extends Controller
             ->whereDate('closing_date', '<=', $dateTo->toDateString())
             ->sum('discount_amount'), 2);
 
-        $incomeRows = OtherIncome::query()
-            ->with('category:id,name')
-            ->whereDate('income_date', '>=', $dateFrom->toDateString())
-            ->whereDate('income_date', '<=', $dateTo->toDateString())
-            ->get(['income_category_id', 'source_type', 'source_id', 'amount', 'description'])
-            ->reject(fn (OtherIncome $income) => $income->isGeneratedBySalesActual() || $this->isAdjustmentIncomeCategory($income))
-            ->groupBy(fn (OtherIncome $income) => $income->category?->name ?: 'Tanpa Kategori')
-            ->map(fn (Collection $rows, string $label) => [
-                'label' => $label,
-                'amount' => round((float) $rows->sum('amount'), 2),
-            ]);
+        $incomeRows = $this->otherIncomeRowsByCategory($dateFrom, $dateTo);
 
         $revenueAdjustmentRows = $this->buildProfitLossAdjustmentRows(
             $dateFrom,
@@ -521,9 +521,18 @@ class ProfitLossReportController extends Controller
         ];
     }
 
-    protected function isAdjustmentIncomeCategory(OtherIncome $income): bool
+    /**
+     * Pendapatan lain per kategori (ongkir dsb.) dengan aturan yang sama persis dengan neraca
+     * (lihat OtherIncomeRecognitionService).
+     */
+    protected function otherIncomeRowsByCategory(Carbon $dateFrom, Carbon $dateTo): Collection
     {
-        return strcasecmp(trim((string) ($income->category?->name ?? '')), 'Adjustment') === 0;
+        return app(OtherIncomeRecognitionService::class)
+            ->amountsByCategory($dateFrom, $dateTo)
+            ->map(fn (float $amount, string $label) => [
+                'label' => $label,
+                'amount' => $amount,
+            ]);
     }
 
     protected function isAdjustmentExpenseCategory(CashOut $expense): bool

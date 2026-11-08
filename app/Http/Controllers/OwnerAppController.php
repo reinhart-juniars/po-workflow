@@ -7,7 +7,9 @@ use App\Models\CashOut;
 use App\Models\DeliveryOrder;
 use App\Models\ExpenseCategory;
 use App\Models\OtherIncome;
+use App\Models\ProfitLossAdjustment;
 use App\Models\PurchaseOrder;
+use App\Models\SalesDailyClosing;
 use App\Models\Spk;
 use App\Models\User;
 use App\Support\UiLabel;
@@ -34,6 +36,21 @@ class OwnerAppController extends Controller
         '2026-05' => 20.2,
         '2026-06' => 19.1,
     ];
+
+    /**
+     * BB & OHC Hitungan tetap (Rp) per bulan, permintaan owner Okt 2026.
+     * Profit Hitungan = Penjualan (Laba Rugi) - BB - OHC, jadi Profit % mengikuti
+     * (tidak ditargetkan). Didahulukan dari HPP_HITUNGAN_TARGET_PERCENT & batas 4%.
+     */
+    private const HPP_HITUNGAN_FIXED_COST = [
+        '2026-09' => ['bb' => 107_433_030, 'ohc' => 45_010_660],
+    ];
+
+    /**
+     * Batas selisih Profit % Hitungan vs Real di Analisa HPP (keputusan owner, Okt 2026).
+     * Selisih asli tetap tersimpan di baris periode (original_gap_percent), tidak ditampilkan.
+     */
+    private const HPP_HITUNGAN_MAX_GAP_PERCENT = 4.0;
 
     /**
      * Dashboard ringkasan (boleh tetap pakai view lama kamu)
@@ -92,7 +109,13 @@ class OwnerAppController extends Controller
             ])
             ->get(['id', 'customer_id', 'due_date', 'total_amount', 'completed_at']);
 
-        $totalSales = round((float) (clone $salesQuery)->sum('total_amount'), 2);
+        // Total Penjualan = baris PENJUALAN di Laporan Laba Rugi (sales actual - diskon closing + koreksi),
+        // supaya dashboard, Laba Rugi & neraca memakai satu sumber. Pendapatan lain (ongkir dll.) ditampilkan terpisah.
+        $inventoryUsageService = app(\App\Services\InventoryUsageService::class);
+        $profitLossController = app(ProfitLossReportController::class);
+        $currentProfitLoss = $profitLossController->finalStyleProfitLossForRange($dateFrom->copy()->startOfDay(), $dateTo->copy()->endOfDay(), $inventoryUsageService);
+        $totalSales = round((float) $currentProfitLoss['totalPenjualan'], 2);
+        $totalShipping = round((float) $currentProfitLoss['pendapatanLain'], 2);
         // Ongkir dipisah ke OtherIncome (Penjualan Lain-Lain), jadi penerimaan PO di sini
         // cuma porsi principal supaya tidak double-count.
         $cashInFromOrders = round((float) (clone $cashInOrdersQuery)
@@ -124,33 +147,17 @@ class OwnerAppController extends Controller
         $avgDailySales = round($totalSales / $daysInRange, 2);
         $transactionCount = (clone $salesQuery)->count();
 
-        $previousSales = round((float) PurchaseOrder::query()
-            ->where('status', 'completed')
-            ->whereNotNull('completed_at')
-            ->whereBetween('completed_at', [
-                $previousDateFrom->copy()->startOfDay(),
-                $previousDateTo->copy()->endOfDay(),
-            ])
-            ->sum('total_amount'), 2);
+        $previousSales = round((float) $profitLossController->finalStyleProfitLossForRange(
+            $previousDateFrom->copy()->startOfDay(),
+            $previousDateTo->copy()->endOfDay(),
+            $inventoryUsageService
+        )['totalPenjualan'], 2);
 
         $growthVsPreviousMonth = $previousSales > 0
             ? round((($totalSales - $previousSales) / $previousSales) * 100, 2)
             : null;
 
         [$periods, $granularity] = $this->makeDashboardPeriods($dateFrom, $dateTo);
-
-        $salesByPeriod = $this->groupTotalsByPeriod(
-            PurchaseOrder::query()
-                ->where('status', 'completed')
-                ->whereNotNull('completed_at')
-                ->whereBetween('completed_at', [
-                    $dateFrom->copy()->startOfDay(),
-                    $dateTo->copy()->endOfDay(),
-                ]),
-            'completed_at',
-            'total_amount',
-            $granularity
-        );
 
         $expenseByPeriod = $this->groupTotalsByPeriod(
             CashOut::query()->whereBetween('expense_date', [
@@ -175,6 +182,8 @@ class OwnerAppController extends Controller
             'sales_actual_items.subtotal_actual',
             $granularity
         );
+
+        $salesByPeriod = $this->salesRevenueByPeriod($dateFrom, $dateTo, $granularity, $salesActualByPeriod);
 
         $salesVsExpenseChart = $this->buildLineChartPayload($periods, [
             [
@@ -353,6 +362,7 @@ class OwnerAppController extends Controller
             'granularityLabel' => $granularity === 'day' ? 'harian' : 'bulanan',
             'comparisonLabel' => $this->formatDateRangeLabel($previousDateFrom, $previousDateTo),
             'totalSales' => $totalSales,
+            'totalShipping' => $totalShipping,
             'totalCashIn' => $totalCashIn,
             'salesDeliveryValue' => $salesDeliveryValue,
             'salesActualValue' => $salesActualValue,
@@ -709,9 +719,6 @@ class OwnerAppController extends Controller
     {
         [$dateFrom, $dateTo] = $this->parseAnalysisDateRange($request);
 
-        $hppNames = ['bahan baku', 'kemasan'];
-        $excludedFromOhcNames = ['bahan baku', 'kemasan', 'inventaris'];
-
         $salesQuery = PurchaseOrder::query()
             ->where('status', 'completed')
             ->whereNotNull('completed_at')
@@ -721,6 +728,8 @@ class OwnerAppController extends Controller
             ]);
 
         $totalSales = round((float) (clone $salesQuery)->sum('total_amount'), 2);
+        // Total PO sudah termasuk ongkir; ditampilkan terpisah supaya beda dengan Sales Actual (barang saja) jelas.
+        $totalShipping = round((float) (clone $salesQuery)->sum('shipping_cost'), 2);
 
         $salesPerPeriod = (clone $salesQuery)
             ->selectRaw($this->monthPeriodSql('completed_at').' as period, COALESCE(SUM(total_amount), 0) as total_sales')
@@ -728,34 +737,16 @@ class OwnerAppController extends Controller
             ->get()
             ->mapWithKeys(fn ($row) => [$row->period => (float) $row->total_sales]);
 
-        $expenseTotals = CashOut::query()
-            ->leftJoin('expense_categories', 'expense_categories.id', '=', 'cash_outs.expense_category_id')
-            ->whereBetween('cash_outs.expense_date', [
-                $dateFrom->toDateString(),
-                $dateTo->toDateString(),
-            ])
-            ->selectRaw(
-                'COALESCE(SUM(CASE WHEN LOWER(expense_categories.name) IN (?, ?) THEN cash_outs.amount ELSE 0 END), 0) as hpp_real',
-                $hppNames
-            )
-            // Biaya "Mengurangi Kekayaan" (mis. Marketing) sejak tanggal mulai tidak
-            // ikut OHC Real, sama dengan Laba Rugi (lihat CashOut::inProfitAndLoss).
-            ->selectRaw(
-                "COALESCE(SUM(CASE WHEN LOWER(COALESCE(expense_categories.name, '')) NOT IN (?, ?, ?)"
-                    ." AND NOT (COALESCE(expense_categories.expense_mode, '') = ? AND cash_outs.expense_date >= ?)"
-                    .' THEN cash_outs.amount ELSE 0 END), 0) as ohc_real',
-                [...$excludedFromOhcNames, ExpenseCategory::MODE_WEALTH_REDUCTION, ExpenseCategory::wealthReductionStart()]
-            )
-            ->first();
-
-        // Profit Real + Bahan Baku Real diambil dari laporan Laba Rugi (versi "FinalStyle").
+        // Profit Real, Bahan Baku Real & OHC Real diambil dari laporan Laba Rugi (versi "FinalStyle").
         $inventoryUsageService = app(\App\Services\InventoryUsageService::class);
         $profitLossController = app(ProfitLossReportController::class);
         $totalFinalStyle = $profitLossController->finalStyleProfitLossForRange($dateFrom, $dateTo, $inventoryUsageService);
 
         // Bahan Baku Real = bahan baku terpakai (opening + pembelian - sisa stok), bukan nilai kas keluar.
         $totalHppReal = round((float) ($totalFinalStyle['bahanBakuTerpakai'] ?? 0), 2);
-        $totalOhcReal = round((float) ($expenseTotals->ohc_real ?? 0), 2);
+        // OHC Real = total PENGELUARAN di Laba Rugi. Pembelian aktiva tetap (Inventaris, Peralatan),
+        // pengurang kekayaan (Biaya Marketing) & Adjustment tidak ikut, supaya Selisih OHC sejalan dengan Profit Real.
+        $totalOhcReal = round((float) ($totalFinalStyle['totalPengeluaran'] ?? 0), 2);
 
         $salesActualTotals = DB::table('sales_actual_items')
             ->join('sales_actuals', 'sales_actuals.id', '=', 'sales_actual_items.sales_actual_id')
@@ -781,27 +772,6 @@ class OwnerAppController extends Controller
             ? round(($totalProfitReal / $totalProfitRealRevenue) * 100, 2)
             : null;
 
-        $expensePerPeriod = CashOut::query()
-            ->leftJoin('expense_categories', 'expense_categories.id', '=', 'cash_outs.expense_category_id')
-            ->whereBetween('cash_outs.expense_date', [
-                $dateFrom->toDateString(),
-                $dateTo->toDateString(),
-            ])
-            ->selectRaw($this->monthPeriodSql('cash_outs.expense_date').' as period')
-            ->selectRaw(
-                'COALESCE(SUM(CASE WHEN LOWER(expense_categories.name) IN (?, ?) THEN cash_outs.amount ELSE 0 END), 0) as hpp_real',
-                $hppNames
-            )
-            ->selectRaw(
-                "COALESCE(SUM(CASE WHEN LOWER(COALESCE(expense_categories.name, '')) NOT IN (?, ?, ?)"
-                    ." AND NOT (COALESCE(expense_categories.expense_mode, '') = ? AND cash_outs.expense_date >= ?)"
-                    .' THEN cash_outs.amount ELSE 0 END), 0) as ohc_real',
-                [...$excludedFromOhcNames, ExpenseCategory::MODE_WEALTH_REDUCTION, ExpenseCategory::wealthReductionStart()]
-            )
-            ->groupBy('period')
-            ->get()
-            ->keyBy('period');
-
         $salesActualPerPeriod = DB::table('sales_actual_items')
             ->join('sales_actuals', 'sales_actuals.id', '=', 'sales_actual_items.sales_actual_id')
             ->leftJoin('products', 'products.id', '=', 'sales_actual_items.product_id')
@@ -824,7 +794,6 @@ class OwnerAppController extends Controller
 
         while ($cursor->lte($lastPeriod)) {
             $periodKey = $cursor->format('Y-m');
-            $expenseRow = $expensePerPeriod->get($periodKey);
             $salesActualRow = $salesActualPerPeriod->get($periodKey);
             $periodSales = round((float) ($salesPerPeriod[$periodKey] ?? 0), 2);
             $periodRevenueActual = round((float) ($salesActualRow->revenue_actual ?? 0), 2);
@@ -841,29 +810,47 @@ class OwnerAppController extends Controller
 
             // Bahan Baku Real = bahan baku terpakai (opening + pembelian - sisa stok), bukan nilai kas keluar.
             $periodHppReal = round((float) ($periodFinalStyle['bahanBakuTerpakai'] ?? 0), 2);
-            $periodOhcReal = round((float) ($expenseRow->ohc_real ?? 0), 2);
-            $periodHppJual = round((float) ($salesActualRow->hpp_jual ?? 0), 2);
-            $periodOhcJual = round((float) ($salesActualRow->ohc_jual ?? 0), 2);
+            $periodOhcReal = round((float) ($periodFinalStyle['totalPengeluaran'] ?? 0), 2);
+            $snapshotHppJual = round((float) ($salesActualRow->hpp_jual ?? 0), 2);
+            $snapshotOhcJual = round((float) ($salesActualRow->ohc_jual ?? 0), 2);
+
+            $periodProfitReal = round((float) ($periodFinalStyle['labaRugi'] ?? 0), 2);
+            $periodProfitRealPercent = $this->percentOf($periodProfitReal, $periodPenjualanLR);
+
+            // Selisih Profit % (Hitungan - Real) murni dari snapshot, sebelum penyesuaian apa pun.
+            $snapshotProfitPercent = $this->percentOf($periodPenjualanLR - $snapshotHppJual - $snapshotOhcJual, $periodPenjualanLR);
+            $originalGapPercent = ($snapshotProfitPercent !== null && $periodProfitRealPercent !== null)
+                ? round($snapshotProfitPercent - $periodProfitRealPercent, 2)
+                : null;
+
             // Override manual Hitungan untuk bulan yang HPP-nya salah input (mis. Mei/Juni 2026).
             [$periodHppJual, $periodOhcJual] = $this->overrideHitunganCost(
                 $periodKey,
                 $periodPenjualanLR,
                 $periodHppReal,
                 $periodOhcReal,
-                $periodHppJual,
-                $periodOhcJual
+                $snapshotHppJual,
+                $snapshotOhcJual
             );
+            // Toleransi: Profit % Hitungan maksimal HPP_HITUNGAN_MAX_GAP_PERCENT poin di atas Real
+            // (input orderan mendadak sering telat, jadi snapshot Hitungan kurang lengkap).
+            // Bulan dengan target manual tidak dipotong lagi: target owner yang berlaku.
+            if (! array_key_exists($periodKey, self::HPP_HITUNGAN_TARGET_PERCENT)
+                && ! array_key_exists($periodKey, self::HPP_HITUNGAN_FIXED_COST)) {
+                [$periodHppJual, $periodOhcJual] = $this->capHitunganGap(
+                    $periodPenjualanLR,
+                    $periodProfitRealPercent,
+                    $periodHppJual,
+                    $periodOhcJual
+                );
+            }
+            $isAdjusted = abs($periodHppJual - $snapshotHppJual) >= 0.005 || abs($periodOhcJual - $snapshotOhcJual) >= 0.005;
+
             // Profit Hitungan = Penjualan (Laba Rugi) - BB Hitungan - OHC Hitungan.
             $periodProfitJual = round($periodPenjualanLR - $periodHppJual - $periodOhcJual, 2);
-            $periodProfitPercent = $periodPenjualanLR > 0 ? round(($periodProfitJual / $periodPenjualanLR) * 100, 2) : null;
+            $periodProfitPercent = $this->percentOf($periodProfitJual, $periodPenjualanLR);
             $periodSelisihBb = round($periodHppReal - $periodHppJual, 2);
             $periodSelisihOhc = round($periodOhcReal - $periodOhcJual, 2);
-
-            $periodProfitReal = round((float) ($periodFinalStyle['labaRugi'] ?? 0), 2);
-            $periodProfitRealRevenue = $periodPenjualanLR;
-            $periodProfitRealPercent = $periodProfitRealRevenue > 0
-                ? round(($periodProfitReal / $periodProfitRealRevenue) * 100, 2)
-                : null;
 
             $periodRows[] = [
                 'period' => $periodKey,
@@ -880,6 +867,8 @@ class OwnerAppController extends Controller
                 'profit_real' => $periodProfitReal,
                 'profit_percent' => $periodProfitPercent,
                 'profit_real_percent' => $periodProfitRealPercent,
+                'is_adjusted' => $isAdjusted,
+                'original_gap_percent' => $originalGapPercent,
             ];
 
             $cursor->addMonth();
@@ -901,6 +890,7 @@ class OwnerAppController extends Controller
             'dateFrom' => $dateFrom->toDateString(),
             'dateTo' => $dateTo->toDateString(),
             'totalSales' => $totalSales,
+            'totalShipping' => $totalShipping,
             'totalSalesActual' => $totalSalesActual,
             'totalHppReal' => $totalHppReal,
             'totalOhcReal' => $totalOhcReal,
@@ -913,7 +903,44 @@ class OwnerAppController extends Controller
             'totalProfitPercent' => $totalProfitPercent,
             'totalProfitRealPercent' => $totalProfitRealPercent,
             'periodRows' => $periodCollection,
+            'maxGapPercent' => self::HPP_HITUNGAN_MAX_GAP_PERCENT,
         ]);
+    }
+
+    /**
+     * Batasi Profit % Hitungan supaya tidak lebih dari HPP_HITUNGAN_MAX_GAP_PERCENT poin di atas
+     * Profit % Real. Kalau melebihi, total cost Hitungan dinaikkan sampai selisihnya tepat di batas:
+     *   Profit % target = Real % + batas  =>  cost Hitungan = Penjualan x (1 - target%).
+     * Kenaikan dibagi mengikuti proporsi BB/OHC Hitungan itu sendiri. Bulan dengan selisih
+     * <= batas (atau Hitungan di bawah Real) dikembalikan apa adanya.
+     *
+     * @return array{0: float, 1: float} [hppJual, ohcJual]
+     */
+    private function capHitunganGap(float $penjualan, ?float $realPercent, float $hppJual, float $ohcJual): array
+    {
+        $costTotal = $hppJual + $ohcJual;
+
+        if ($realPercent === null || $penjualan <= 0 || $costTotal <= 0) {
+            return [$hppJual, $ohcJual];
+        }
+
+        $hitunganPercent = (($penjualan - $costTotal) / $penjualan) * 100;
+
+        if ($hitunganPercent - $realPercent <= self::HPP_HITUNGAN_MAX_GAP_PERCENT) {
+            return [$hppJual, $ohcJual];
+        }
+
+        $requiredTotal = $penjualan * (1 - ($realPercent + self::HPP_HITUNGAN_MAX_GAP_PERCENT) / 100);
+
+        return [
+            round($requiredTotal * ($hppJual / $costTotal), 2),
+            round($requiredTotal * ($ohcJual / $costTotal), 2),
+        ];
+    }
+
+    private function percentOf(float $amount, float $base): ?float
+    {
+        return $base > 0 ? round(($amount / $base) * 100, 2) : null;
     }
 
     /**
@@ -923,6 +950,7 @@ class OwnerAppController extends Controller
      * Total cost Hitungan yang dibutuhkan dibagi ke BB & OHC MENGIKUTI PROPORSI REAL,
      * sehingga BB Hitungan otomatis DI BAWAH BB Real dan OHC Hitungan DI BAWAH OHC Real
      * (gap proporsional) -- standar cost selalu di bawah aktual, bukan di atasnya.
+     * Bulan di HPP_HITUNGAN_FIXED_COST langsung memakai BB & OHC tetap dari sana.
      * Bulan di luar daftar dikembalikan apa adanya.
      *
      * @return array{0: float, 1: float} [hppJual, ohcJual] setelah override
@@ -935,6 +963,12 @@ class OwnerAppController extends Controller
         float $hppJual,
         float $ohcJual
     ): array {
+        $fixed = self::HPP_HITUNGAN_FIXED_COST[$periodKey] ?? null;
+
+        if ($fixed !== null) {
+            return [round((float) $fixed['bb'], 2), round((float) $fixed['ohc'], 2)];
+        }
+
         $target = self::HPP_HITUNGAN_TARGET_PERCENT[$periodKey] ?? null;
         $realTotal = $bbReal + $ohcReal;
 
@@ -1031,6 +1065,39 @@ class OwnerAppController extends Controller
             ->orderBy('period_key')
             ->get()
             ->mapWithKeys(fn ($row) => [$row->period_key => round((float) $row->aggregate_total, 2)]);
+    }
+
+    /**
+     * Penjualan per periode dengan rumus baris PENJUALAN Laba Rugi:
+     * sales actual (submitted_at) - diskon closing (closing_date) + koreksi revenue/other income (adjustment_date).
+     * Jumlah semua periode = Total Penjualan di dashboard.
+     */
+    protected function salesRevenueByPeriod(Carbon $dateFrom, Carbon $dateTo, string $granularity, $salesActualByPeriod)
+    {
+        $discountByPeriod = $this->groupTotalsByPeriod(
+            SalesDailyClosing::query()->whereBetween('closing_date', [$dateFrom->toDateString(), $dateTo->toDateString()]),
+            'closing_date',
+            'discount_amount',
+            $granularity
+        );
+
+        $adjustmentByPeriod = $this->groupTotalsByPeriod(
+            ProfitLossAdjustment::query()
+                ->whereIn('statement_group', [ProfitLossAdjustment::GROUP_REVENUE, ProfitLossAdjustment::GROUP_OTHER_INCOME])
+                ->whereBetween('adjustment_date', [$dateFrom->toDateString(), $dateTo->toDateString()]),
+            'adjustment_date',
+            'amount',
+            $granularity
+        );
+
+        return collect($salesActualByPeriod->keys())
+            ->merge($discountByPeriod->keys())
+            ->merge($adjustmentByPeriod->keys())
+            ->unique()
+            ->mapWithKeys(fn ($key) => [$key => round(
+                (float) ($salesActualByPeriod[$key] ?? 0) - (float) ($discountByPeriod[$key] ?? 0) + (float) ($adjustmentByPeriod[$key] ?? 0),
+                2
+            )]);
     }
 
     protected function seriesValuesFromPeriods(array $periods, $map): array

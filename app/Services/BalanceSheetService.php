@@ -297,7 +297,10 @@ class BalanceSheetService
                 'completed_at',
                 'due_date',
                 'total_amount',
+                'shipping_cost',
             ])
+            // Ongkir diakui saat dibayar (lihat OtherIncomeRecognitionService), jadi piutang
+            // hanya memuat porsi barang; ongkirnya masuk kas + laba ketika PO dilunasi.
             ->map(function (PurchaseOrder $po) {
                 return [
                     'label' => ($po->customer?->name ?: $po->recipient_name ?: 'Piutang PO')
@@ -307,7 +310,7 @@ class BalanceSheetService
                         $po->completed_at ? 'PO selesai '.$po->completed_at->format('d-m-Y') : null,
                         $po->due_date ? 'Jatuh tempo '.$po->due_date->format('d-m-Y') : null,
                     ])->filter()->implode(' | '),
-                    'amount' => round((float) $po->total_amount, 2),
+                    'amount' => round((float) $po->total_amount - (float) ($po->shipping_cost ?? 0), 2),
                 ];
             }));
 
@@ -686,13 +689,7 @@ class BalanceSheetService
             ->sum('discount_amount'), 2);
         $salesRevenue = round($salesRevenue - $salesDiscountTotal, 2);
 
-        $otherIncomeTotal = round((float) OtherIncome::query()
-            ->with('category:id,name')
-            ->whereDate('income_date', '>=', $dateFrom->toDateString())
-            ->whereDate('income_date', '<=', $dateTo->toDateString())
-            ->get(['income_category_id', 'source_type', 'source_id', 'amount', 'description'])
-            ->reject(fn (OtherIncome $income) => $income->isGeneratedBySalesActual() || $this->isAdjustmentIncomeCategory($income))
-            ->sum('amount'), 2);
+        $otherIncomeTotal = app(OtherIncomeRecognitionService::class)->total($dateFrom, $dateTo);
 
         $operatingExpenseTotal = round((float) CashOut::query()
             ->with('category:id,name')
@@ -762,11 +759,6 @@ class BalanceSheetService
         $netProfit = round($salesRevenue + $otherIncomeTotal - $operatingExpenseTotal - $cogsTotal, 2);
 
         return [$netProfit, $inventoryWarnings->unique()->values()];
-    }
-
-    protected function isAdjustmentIncomeCategory(OtherIncome $income): bool
-    {
-        return strcasecmp(trim((string) ($income->category?->name ?? '')), 'Adjustment') === 0;
     }
 
     protected function isAdjustmentExpenseCategory(CashOut $expense): bool

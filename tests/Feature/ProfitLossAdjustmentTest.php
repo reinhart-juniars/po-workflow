@@ -23,6 +23,9 @@ afterEach(function () {
 });
 
 it('lets owner create historical profit loss adjustments and includes them in profit reports', function () {
+    // Adjustment beban tanpa kategori dihitung sejak 1 Nov 2026 (sebelumnya paritas V2).
+    Carbon::setTestNow(Carbon::parse('2026-12-07 10:00:00'));
+
     $user = User::factory()->create([
         'force_password_change' => false,
         'is_active' => true,
@@ -36,49 +39,49 @@ it('lets owner create historical profit loss adjustments and includes them in pr
 
     post(route('accountingapp.profit-loss-adjustments.store'), [
         '_token' => $token,
-        'adjustment_date' => '2026-04-30',
+        'adjustment_date' => '2026-11-30',
         'group' => ProfitLossAdjustment::GROUP_REVENUE,
-        'label' => 'Koreksi pendapatan April',
+        'label' => 'Koreksi pendapatan November',
         'amount' => 100000,
         'notes' => 'Data histori owner',
     ])->assertRedirect(route('accountingapp.profit-loss-adjustments.index'));
 
     post(route('accountingapp.profit-loss-adjustments.store'), [
         '_token' => $token,
-        'adjustment_date' => '2026-04-30',
+        'adjustment_date' => '2026-11-30',
         'group' => ProfitLossAdjustment::GROUP_COGS,
-        'label' => 'Koreksi HPP April',
+        'label' => 'Koreksi HPP November',
         'amount' => 25000,
         'notes' => 'Data histori owner',
     ])->assertRedirect(route('accountingapp.profit-loss-adjustments.index'));
 
     post(route('accountingapp.profit-loss-adjustments.store'), [
         '_token' => $token,
-        'adjustment_date' => '2026-04-30',
+        'adjustment_date' => '2026-11-30',
         'group' => ProfitLossAdjustment::GROUP_OPERATING_EXPENSE,
-        'label' => 'Koreksi beban April',
+        'label' => 'Koreksi beban November',
         'amount' => 5000,
         'notes' => 'Data histori owner',
     ])->assertRedirect(route('accountingapp.profit-loss-adjustments.index'));
 
     post(route('accountingapp.profit-loss-adjustments.store'), [
         '_token' => $token,
-        'adjustment_date' => '2026-04-30',
+        'adjustment_date' => '2026-11-30',
         'group' => ProfitLossAdjustment::GROUP_OTHER_INCOME,
-        'label' => 'Koreksi pendapatan lain April',
+        'label' => 'Koreksi pendapatan lain November',
         'amount' => -10000,
         'notes' => 'Data histori owner',
     ])->assertRedirect(route('accountingapp.profit-loss-adjustments.index'));
 
     get(route('accountingapp.reports.profit-loss', [
-        'date_from' => '2026-04-01',
-        'date_to' => '2026-04-30',
+        'date_from' => '2026-11-01',
+        'date_to' => '2026-11-30',
     ]))
         ->assertOk()
         // Adjustment pendapatan/HPP/pendapatan-lain diagregasi per grup di laporan
         // (sumAdjustmentsByGroup), jadi labelnya tidak dirender per baris. Hanya
         // adjustment beban operasional tanpa kategori yang tampil sebagai baris sendiri.
-        ->assertSeeText('Koreksi beban April')
+        ->assertSeeText('Koreksi beban November')
         // Laba Rugi yang ditampilkan (FinalStyle) harus ikut menghitung adjustment
         // beban operasional tanpa kategori; kalau tidak, Laba overstated 5.000.
         ->assertViewHas('profitLoss', function (array $profitLoss) {
@@ -96,12 +99,50 @@ it('lets owner create historical profit loss adjustments and includes them in pr
         });
 
     get(route('accountingapp.reports.balance-sheet', [
-        'report_date' => '2026-04-30',
+        'report_date' => '2026-11-30',
     ]))
         ->assertOk()
         ->assertViewHas('equityRows', function ($equityRows) {
             return (float) $equityRows->firstWhere('label', 'Laba Berjalan')['amount'] === 60000.0;
         });
+});
+
+it('keeps uncategorized operating adjustments before November 2026 out of the profit loss like V2', function () {
+    $user = User::factory()->create([
+        'force_password_change' => false,
+        'is_active' => true,
+    ]);
+    $user->assignRole('owner');
+
+    actingAs($user);
+
+    $token = 'profit-loss-adjustment-v2-parity';
+    session(['_token' => $token]);
+
+    foreach ([
+        [ProfitLossAdjustment::GROUP_REVENUE, 'Penjualan PO April', 100000],
+        [ProfitLossAdjustment::GROUP_OPERATING_EXPENSE, 'Salary April', 5000],
+    ] as [$group, $label, $amount]) {
+        post(route('accountingapp.profit-loss-adjustments.store'), [
+            '_token' => $token,
+            'adjustment_date' => '2026-04-30',
+            'group' => $group,
+            'label' => $label,
+            'amount' => $amount,
+        ])->assertRedirect(route('accountingapp.profit-loss-adjustments.index'));
+    }
+
+    // Kontrol positif: adjustment pendapatan bulan yang sama tetap terhitung, jadi
+    // laporan bekerja; hanya beban tanpa kategori yang (seperti V2) tidak ikut.
+    get(route('accountingapp.reports.profit-loss', [
+        'date_from' => '2026-04-01',
+        'date_to' => '2026-04-30',
+    ]))
+        ->assertOk()
+        ->assertDontSeeText('Salary April')
+        ->assertViewHas('profitLoss', fn (array $profitLoss) => (float) $profitLoss['totalPenjualan'] === 100000.0
+            && (float) $profitLoss['totalPengeluaran'] === 0.0
+            && (float) $profitLoss['labaRugi'] === 100000.0);
 });
 
 it('blocks current month profit loss adjustments', function () {

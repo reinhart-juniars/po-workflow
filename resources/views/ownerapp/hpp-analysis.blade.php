@@ -19,17 +19,17 @@
         <article class="stat-card">
             <p class="stat-label">Total Penjualan</p>
             <p class="stat-value text-brand-600">Rp {{ number_format($totalSales, 0, ',', '.') }}</p>
-            <p class="stat-meta">PO selesai pada periode terpilih</p>
+            <p class="stat-meta">PO selesai, termasuk ongkir Rp {{ number_format($totalShipping, 0, ',', '.') }}</p>
         </article>
         <article class="stat-card">
             <p class="stat-label">Bahan Baku Real</p>
             <p class="stat-value text-rose-600">Rp {{ number_format($totalHppReal, 0, ',', '.') }}</p>
-            <p class="stat-meta">Cash out Bahan Baku + Kemasan</p>
+            <p class="stat-meta">Bahan Baku + Kemasan terpakai (stok awal + pembelian − sisa stok)</p>
         </article>
         <article class="stat-card">
             <p class="stat-label">OHC Real</p>
             <p class="stat-value text-amber-600">Rp {{ number_format($totalOhcReal, 0, ',', '.') }}</p>
-            <p class="stat-meta">Cash out selain Bahan Baku, Kemasan, Inventaris</p>
+            <p class="stat-meta">Total Pengeluaran di Laporan Laba Rugi (tanpa aktiva tetap &amp; pengurang kekayaan)</p>
         </article>
         <article class="stat-card">
             <p class="stat-label">Selisih</p>

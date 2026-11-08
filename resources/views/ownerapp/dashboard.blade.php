@@ -33,7 +33,10 @@
             <p class="metric-value-compact">
                 <span class="whitespace-nowrap">Rp {{ number_format($totalSales, 0, ',', '.') }}</span>
             </p>
-            <p class="stat-meta">PO selesai pada periode ini</p>
+            <p class="stat-meta">
+                Sama dengan Laporan Laba Rugi, belum termasuk pendapatan lain-lain (ongkir dll.)
+                Rp {{ number_format($totalShipping, 0, ',', '.') }}
+            </p>
         </article>
 
         <article class="metric-panel">

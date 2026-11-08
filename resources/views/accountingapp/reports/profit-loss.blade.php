@@ -578,6 +578,13 @@
               <td class="value-cell">{{ $finalFormat((float) $profitLoss['totalPenjualan']) }}</td>
               <td class="value-cell"></td>
             </tr>
+            @foreach (($profitLoss['pendapatanLainRows'] ?? []) as $row)
+              <tr>
+                <td class="indent">{{ $row['label'] }}</td>
+                <td class="value-cell">{{ $finalFormat((float) $row['amount']) }}</td>
+                <td class="value-cell"></td>
+              </tr>
+            @endforeach
 
             <tr>
               <td class="indent">Bahan Baku Lama</td>
@@ -632,7 +639,7 @@
 
             <tr class="grand-total-row">
               <td class="label-cell">TOTAL</td>
-              <td class="value-cell">{{ $finalFormat((float) $profitLoss['totalPenjualan']) }}</td>
+              <td class="value-cell">{{ $finalFormat((float) ($profitLoss['totalPendapatan'] ?? $profitLoss['totalPenjualan'] ?? 0)) }}</td>
               <td class="value-cell">{{ $finalFormat((float) $profitLoss['total']) }}</td>
             </tr>
           </tbody>

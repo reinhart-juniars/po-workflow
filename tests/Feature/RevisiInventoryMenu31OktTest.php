@@ -83,7 +83,7 @@ it('tidak lagi menampilkan atau menyimpan tanggal Mengurangi Kekayaan di Pengatu
         ->assertNotified('Pengaturan tersimpan');
 
     expect(app(Settings::class)->get('recipe.default_ohc_pct'))->toBe(35.0)
-        ->and(app(Settings::class)->get('wealth_reduction.accounting_start'))->toBe('2026-10-01');
+        ->and(app(Settings::class)->get('wealth_reduction.accounting_start'))->toBe('2026-09-01');
 });
 
 it('mengatur tanggal Mengurangi Kekayaan dari Accounting › Kategori Pengeluaran', function () {
@@ -93,14 +93,14 @@ it('mengatur tanggal Mengurangi Kekayaan dari Accounting › Kategori Pengeluara
         ->get(route('accountingapp.categories.index'))
         ->assertOk()
         ->assertSee('Kategori "Mengurangi Kekayaan" berlaku mulai', false)
-        ->assertSee('value="2026-10-01"', false);
+        ->assertSee('value="2026-09-01"', false);
 
     // Tanggal tidak sah ditolak, nilai lama tetap.
     $this->actingAs($accounting)
         ->from(route('accountingapp.categories.index'))
         ->put(route('accountingapp.categories.settings'), ['wealth_reduction_accounting_start' => '31/12/2026'])
         ->assertSessionHasErrors('wealth_reduction_accounting_start');
-    expect(app(Settings::class)->get('wealth_reduction.accounting_start'))->toBe('2026-10-01');
+    expect(app(Settings::class)->get('wealth_reduction.accounting_start'))->toBe('2026-09-01');
 
     $this->actingAs($accounting)
         ->put(route('accountingapp.categories.settings'), ['wealth_reduction_accounting_start' => '2026-11-01'])
