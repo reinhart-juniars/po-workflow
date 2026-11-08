@@ -161,7 +161,9 @@ class SettingRegistry
                 'group' => 'Laporan Keuangan',
                 'label' => 'Kategori "Mengurangi Kekayaan" berlaku mulai',
                 'type' => self::TYPE_DATE,
-                'default' => '2026-10-01',
+                // 1 Sep 2026 = perilaku V2: Biaya Marketing September sudah
+                // di luar Laba Rugi pada angka yang dilaporkan ke owner.
+                'default' => '2026-09-01',
                 'help' => 'Pengeluaran berkategori Mengurangi Kekayaan (mis. Biaya Marketing) sejak tanggal ini tidak masuk Laba Rugi dan menjadi pengurang Kekayaan di Neraca. Sebelumnya tetap dihitung beban supaya Laba Rugi yang sudah dilaporkan tidak bergeser.',
             ],
             'document.production_prefix' => [

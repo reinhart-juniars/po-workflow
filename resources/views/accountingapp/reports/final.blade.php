@@ -354,6 +354,13 @@
                             <td class="value-cell">{{ $formatCurrency((float) $profitLoss['totalPenjualan']) }}</td>
                             <td class="value-cell"></td>
                         </tr>
+                        @foreach (($profitLoss['pendapatanLainRows'] ?? []) as $row)
+                            <tr>
+                                <td class="indent">{{ $row['label'] }}</td>
+                                <td class="value-cell">{{ $formatCurrency((float) $row['amount']) }}</td>
+                                <td class="value-cell"></td>
+                            </tr>
+                        @endforeach
 
                         <tr>
                             <td class="indent">Bahan Baku Lama</td>
@@ -421,7 +428,7 @@
                         {{-- ===== TOTAL (cek balance: kiri = kanan) ===== --}}
                         <tr class="grand-total-row">
                             <td class="label-cell">TOTAL</td>
-                            <td class="value-cell">{{ $formatCurrency((float) $profitLoss['totalPenjualan']) }}</td>
+                            <td class="value-cell">{{ $formatCurrency((float) ($profitLoss['totalPendapatan'] ?? $profitLoss['totalPenjualan'] ?? 0)) }}</td>
                             <td class="value-cell">{{ $formatCurrency((float) $profitLoss['total']) }}</td>
                         </tr>
                     </tbody>

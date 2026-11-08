@@ -9,6 +9,14 @@ use Illuminate\Support\Collection;
 trait BuildsOperatingExpenseAdjustments
 {
     /**
+     * Adjustment tanpa kategori baru dihitung sejak tanggal ini. Sebelumnya V2
+     * mengabaikannya (mis. beban Jan–Mar 2026 dari Excel), dan angka Laba Rugi
+     * s/d Oktober 2026 yang sudah dilaporkan ke owner dipertahankan persis V2
+     * (keputusan owner saat pindah V2 → V3, 8 Nov 2026).
+     */
+    public const STANDALONE_EXPENSE_ADJUSTMENT_START = '2026-11-01';
+
+    /**
      * Adjustment beban operasional yang TIDAK punya expense_category_id.
      *
      * Adjustment bercategory ditempel ke baris kategorinya (lihat
@@ -24,7 +32,7 @@ trait BuildsOperatingExpenseAdjustments
         return ProfitLossAdjustment::query()
             ->where('statement_group', ProfitLossAdjustment::GROUP_OPERATING_EXPENSE)
             ->whereNull('expense_category_id')
-            ->whereDate('adjustment_date', '>=', $dateFrom->toDateString())
+            ->whereDate('adjustment_date', '>=', max($dateFrom->toDateString(), self::STANDALONE_EXPENSE_ADJUSTMENT_START))
             ->whereDate('adjustment_date', '<=', $dateTo->toDateString())
             ->orderBy('adjustment_date')
             ->orderBy('id')
