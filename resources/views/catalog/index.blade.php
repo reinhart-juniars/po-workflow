@@ -88,7 +88,7 @@
                 </div>
                 <div class="catalog-body">
                     <div class="catalog-name">{{ $product->name }}</div>
-                    {{-- SKU = nama menu di website; bisa diganti di sini atau di Admin › Master Menu. --}}
+                    {{-- SKU = nama menu di website; bisa diganti di sini atau di Menu › Master Menu. --}}
                     <details class="catalog-sku-edit" data-sku-edit>
                         <summary title="Ganti SKU (nama menu di website)">
                             <span class="catalog-sku" data-sku-text>{{ $product->sku ?: 'Isi SKU' }}</span>
@@ -144,7 +144,7 @@
                             <p class="catalog-sku-error mt-1" data-website-card-error hidden></p>
                             <noscript><button type="submit" class="btn-ghost mt-1 text-xs">Simpan</button></noscript>
                         @else
-                            <label class="catalog-website is-disabled" title="SKU = nama menu di website. Isi SKU di Admin › Master Menu.">
+                            <label class="catalog-website is-disabled" title="SKU = nama menu di website. Isi SKU di Menu › Master Menu.">
                                 <input type="checkbox" disabled>
                                 Isi SKU dulu untuk tampil di website
                             </label>

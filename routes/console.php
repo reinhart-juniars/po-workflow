@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Schedule;
 // HPP & OHC produk dari resep: jaring pengaman harian sebelum cek profit.
 Schedule::command('menu:sync-product-costs')->dailyAt('06:15');
 Schedule::command('profit:check')->dailyAt('06:30');
+// Menu sisa V2 tanpa resep yang 90 hari tidak dipakai keluar dari pilihan PO.
+Schedule::command('menu:deactivate-unused')->dailyAt('05:45');
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());

@@ -1,6 +1,5 @@
 <?php
 
-use App\Imports\ProductsImport;
 use App\Models\Product;
 use App\Models\Recipe;
 use App\Models\RecipeItem;
@@ -114,9 +113,10 @@ it('mengunci HPP dan OHC di Admin untuk produk yang mengikuti resep, tapi harga 
     $product = $data['product']->fresh();
     $admin = adminMenu();
 
+    // Harga Menu admin: HPP & OHC hanya ditampilkan, satu-satunya isian = Harga Non Lapak.
     $this->actingAs($admin)->get(route('adminapp.products.edit', $product))->assertOk()
-        ->assertSee('HPP &amp; OHC mengikuti resep', false)
-        ->assertSee('readonly', false);
+        ->assertSee('name="base_price"', false)
+        ->assertDontSee('name="raw_material_cost"', false);
 
     $this->actingAs($admin)->put(route('adminapp.products.update', $product), [
         'sku' => 'GORENGAN-10K', 'name' => $product->name, 'unit' => $product->unit,
@@ -129,30 +129,15 @@ it('mengunci HPP dan OHC di Admin untuk produk yang mengikuti resep, tapi harga 
         ->and((float) $product->overhead_cost)->toBe(240.0)
         ->and((float) $product->profit)->toBe(14160.0);
 
-    // Kontrol positif: produk manual tetap bisa diubah biayanya oleh admin.
+    // Produk manual pun: HPP manual kini diisi tim menu, bukan admin.
     $manual = $data['tanpaResep'];
+    $before = $manual->fresh()->raw_material_cost;
     $this->actingAs($admin)->put(route('adminapp.products.update', $manual), [
         'sku' => 'ES-TEH', 'name' => $manual->name, 'unit' => $manual->unit,
         'base_price' => 5000, 'raw_material_cost' => 1500, 'overhead_cost' => 500, 'active' => 1,
     ])->assertSessionHasNoErrors()->assertRedirect();
-    expect((float) $manual->fresh()->raw_material_cost)->toBe(1500.0);
-});
-
-it('mengabaikan kolom HPP dan OHC di import Excel untuk produk yang mengikuti resep', function () {
-    $data = siapkanProduksi();
-    sinkron();
-    $product = $data['product']->fresh();
-    $manual = $data['tanpaResep'];
-
-    $import = new ProductsImport;
-    $import->commitRows([
-        ['data' => ['id' => $product->id, 'name' => $product->name, 'unit' => $product->unit, 'base_price' => 12000, 'raw_material_cost' => 5, 'overhead_cost' => 5]],
-        ['data' => ['id' => $manual->id, 'name' => $manual->name, 'unit' => $manual->unit, 'base_price' => 5000, 'raw_material_cost' => 1500, 'overhead_cost' => 500]],
-    ]);
-
-    expect((float) $product->fresh()->raw_material_cost)->toBe(600.0)
-        ->and((float) $product->fresh()->base_price)->toBe(12000.0)
-        ->and((float) $manual->fresh()->raw_material_cost)->toBe(1500.0);
+    expect($manual->fresh()->raw_material_cost)->toBe($before)
+        ->and((float) $manual->fresh()->base_price)->toBe(5000.0);
 });
 
 it('menyinkronkan otomatis di akhir request saat resep disimpan lewat HTTP', function () {
@@ -221,7 +206,7 @@ it('mengikuti target walau hitungan HPP resep belum lengkap, dan membiarkan harg
         ->and((float) $data['product']->fresh()->lapak_price)->toBe(11000.0);
 });
 
-it('mengunci Harga Lapak dari resep di Admin dan import, tetapi Harga Jual tetap diisi admin', function () {
+it('mengunci Harga Lapak dari resep di Admin, tetapi Harga Non Lapak tetap diisi admin', function () {
     $data = siapkanProduksi();
     $data['recipe']->update(['target_price' => 12000]);
     sinkron();
@@ -242,18 +227,9 @@ it('mengunci Harga Lapak dari resep di Admin dan import, tetapi Harga Jual tetap
     expect((float) $product->fresh()->base_price)->toBe(16000.0)
         ->and((float) $product->fresh()->lapak_price)->toBe(12000.0);
 
-    (new ProductsImport)->commitRows([
-        ['data' => ['id' => $product->id, 'name' => $product->name, 'unit' => $product->unit, 'base_price' => 17000, 'lapak_price' => 2]],
-    ]);
-    expect((float) $product->fresh()->lapak_price)->toBe(12000.0)
-        ->and((float) $product->fresh()->base_price)->toBe(17000.0);
-
-    // Kontrol positif: menu tanpa resep tetap bebas diisi harga lapaknya oleh admin.
+    // Kontrol positif: menu tanpa resep tetap bebas diisi harga lapaknya (oleh tim menu).
     $manual = $data['tanpaResep'];
-    $this->actingAs($admin)->put(route('adminapp.products.update', $manual), [
-        'sku' => 'ES-TEH', 'name' => $manual->name, 'unit' => $manual->unit,
-        'base_price' => 5000, 'lapak_price' => 4000, 'active' => 1,
-    ])->assertSessionHasNoErrors()->assertRedirect();
+    $manual->update(['lapak_price' => 4000]);
     expect((float) $manual->fresh()->lapak_price)->toBe(4000.0);
 });
 

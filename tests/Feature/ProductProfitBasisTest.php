@@ -1,6 +1,5 @@
 <?php
 
-use App\Imports\ProductsImport;
 use App\Models\InventoryItem;
 use App\Models\Product;
 use App\Models\Recipe;
@@ -54,8 +53,8 @@ it('tidak menggeser profit saat Harga Non Lapak diganti, tetapi mengikuti Harga 
     expect((float) $menu->fresh()->base_price)->toBe(30000.0)
         ->and((float) $menu->fresh()->profit)->toBe(8000.0);
 
-    // Kontrol positif: Harga Lapak yang diganti menggeser profit.
-    ubahMenu($menu->fresh(), ['lapak_price' => 22000]);
+    // Kontrol positif: Harga Lapak yang diganti (tim menu, aplikasi Menu) menggeser profit.
+    $menu->fresh()->update(['lapak_price' => 22000]);
     expect((float) $menu->fresh()->profit)->toBe(10000.0)
         ->and((float) $menu->fresh()->base_price)->toBe(30000.0);
 
@@ -124,21 +123,6 @@ it('membunyikan lonceng perubahan Harga Lapak dan Harga Non Lapak dengan namanya
     $judul = DatabaseNotification::query()->where('notifiable_id', $owner->id)->get()->map(fn ($n) => $n->data['title'])->all();
 
     expect($judul)->toContain('Harga lapak NASI UJI PROFIT naik 10%', 'Harga non lapak NASI UJI PROFIT naik 50%');
-});
-
-it('menghitung profit pratinjau impor dari Harga Lapak', function () {
-    $menu = menuProfit();
-
-    $pratinjau = function (array $baris) use ($menu) {
-        $import = new ProductsImport(commit: false);
-        $import->collection(collect([collect($baris + ['id' => $menu->id, 'nama_menu' => $menu->name, 'satuan' => 'porsi', 'bahan_baku' => 9000, 'overhead_cost' => 3000])]));
-
-        return $import->previewRows()[0]['profit'];
-    };
-
-    expect($pratinjau(['harga_non_lapak' => 30000, 'harga_lapak' => 21000]))->toBe(9000.0)
-        // Berkas tanpa kolom lapak: harga lapak tersimpan yang dipakai.
-        ->and($pratinjau(['harga_non_lapak' => 30000]))->toBe(8000.0);
 });
 
 it('menghitung ulang profit menu yang sudah ada lewat migrasi', function () {

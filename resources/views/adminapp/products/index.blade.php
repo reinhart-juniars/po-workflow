@@ -1,6 +1,6 @@
 @extends('layouts.adminapp')
 
-@section('title', 'Master Menu')
+@section('title', 'Harga Menu')
 
 @push('styles')
 <style>
@@ -44,13 +44,19 @@
 @section('content')
     <div class="page-toolbar">
         <div>
-            <h1 class="section-title">Master Menu</h1>
-            <p class="section-subtitle">Kelola data produk/menu yang digunakan pada purchase order.</p>
+            <h1 class="section-title">Harga Menu</h1>
+            <p class="section-subtitle">
+                Isi Harga Non Lapak tiap menu. Menu baru, nama, harga lapak, dan HPP diatur tim menu di aplikasi Menu
+                (Master Menu), jadi menu baru otomatis muncul di sini.
+            </p>
         </div>
         <div class="toolbar-actions">
-            <a href="{{ route('adminapp.products.create') }}" class="btn-primary">
-                + Tambah Menu Baru
-            </a>
+            @if ($priceMissingCount > 0 || $priceMissing)
+                <a href="{{ $priceMissing ? route('adminapp.products.index') : route('adminapp.products.index', ['harga' => 'kosong']) }}"
+                    class="{{ $priceMissing ? 'btn-primary' : 'btn-gray' }}">
+                    {{ $priceMissing ? 'Tampilkan semua menu' : 'Harga belum diisi ('.number_format($priceMissingCount, 0, ',', '.').')' }}
+                </a>
+            @endif
 
             <a href="{{ route('adminapp.products.export.excel') }}" class="btn-gray">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
@@ -61,133 +67,11 @@
                 </svg>
                 <span>Export Excel</span>
             </a>
-
-            {{-- Satu tombol seperti Import di panel Filament: pilih berkas lalu
-                 langsung terkirim ke pratinjau (belum di-commit). --}}
-            <form method="POST" action="{{ route('adminapp.products.import.excel') }}" enctype="multipart/form-data">
-                @csrf
-                <label class="btn-gray w-full cursor-pointer whitespace-nowrap focus-within:ring-2 focus-within:ring-brand-600 sm:w-auto">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" aria-hidden="true">
-                        <path d="M12 21V9" />
-                        <path d="m17 14-5-5-5 5" />
-                        <path d="M5 3h14" />
-                    </svg>
-                    <span data-import-label>Import Excel</span>
-                    <input type="file" name="excel_file" accept=".xlsx,.xls,.csv" class="sr-only" required data-auto-submit>
-                </label>
-            </form>
         </div>
     </div>
 
     @if (session('status'))
         <div class="flash-success mt-4">{{ session('status') }}</div>
-    @endif
-
-    @if (!empty($importPreview))
-        @php
-            $previewRows = $importPreview['rows'] ?? [];
-            $previewSummary = $importPreview['summary'] ?? ['created' => 0, 'updated' => 0, 'total' => 0];
-            $visiblePreviewRows = array_slice($previewRows, 0, 100);
-        @endphp
-
-        <section class="table-shell mt-4">
-            <div class="table-head">
-                <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                    <div>
-                        <div>Preview Import: {{ $importPreview['file_name'] ?? 'Excel' }}</div>
-                        <div class="mt-1 text-xs font-medium normal-case tracking-normal text-slate-500">
-                            {{ $previewSummary['created'] }} data baru, {{ $previewSummary['updated'] }} data update, total
-                            {{ $previewSummary['total'] }} baris. Data belum masuk database sebelum commit.
-                        </div>
-                    </div>
-                    <div class="flex flex-wrap gap-2">
-                        <form method="POST" action="{{ route('adminapp.products.import.excel.commit') }}">
-                            @csrf
-                            <button type="submit" class="btn-success whitespace-nowrap">Commit Import</button>
-                        </form>
-                        <form method="POST" action="{{ route('adminapp.products.import.excel.cancel') }}">
-                            @csrf
-                            <button type="submit" class="btn-outline whitespace-nowrap">Batalkan</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            <div class="data-table-wrap">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Baris</th>
-                            <th>Aksi</th>
-                            <th>ID Match</th>
-                            <th>SKU</th>
-                            <th>Nama Menu</th>
-                            <th>Satuan</th>
-                            <th class="text-right">Bahan Baku</th>
-                            <th class="text-right">Overhead</th>
-                            <th class="text-right">Profit Baru</th>
-                            <th class="text-right">Harga Non Lapak</th>
-                            <th>Kategori</th>
-                            <th>Aktif</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($visiblePreviewRows as $row)
-                            @php
-                                $data = $row['data'];
-                                $isUpdate = ($row['action'] ?? null) === 'update';
-                            @endphp
-                            <tr>
-                                <td>{{ $row['excel_row'] }}</td>
-                                <td>
-                                    @if ($isUpdate)
-                                        <span class="chip bg-sky-100 text-sky-700">Update</span>
-                                    @else
-                                        <span class="chip bg-emerald-100 text-emerald-700">Tambah Baru</span>
-                                    @endif
-                                </td>
-                                <td>{{ $row['matched_id'] ?? '-' }}</td>
-                                <td class="font-mono text-xs">{{ $data['sku'] ?? '-' }}</td>
-                                <td class="font-semibold text-slate-800">{{ $data['name'] }}</td>
-                                <td>{{ $data['unit'] }}</td>
-                                <td class="text-right">
-                                    {{ $data['raw_material_cost'] !== null ? 'Rp ' . number_format($data['raw_material_cost'], 0, ',', '.') : '-' }}
-                                </td>
-                                <td class="text-right">
-                                    {{ $data['overhead_cost'] !== null ? 'Rp ' . number_format($data['overhead_cost'], 0, ',', '.') : '-' }}
-                                </td>
-                                <td class="text-right">Rp {{ number_format($row['profit'] ?? 0, 0, ',', '.') }}</td>
-                                <td class="text-right">Rp {{ number_format($data['base_price'], 0, ',', '.') }}</td>
-                                <td>
-                                    @if (! empty($data['is_3s']))
-                                        <span class="chip bg-amber-100 text-amber-800">Menu 3S</span>
-                                    @else
-                                        <span class="chip bg-slate-100 text-slate-600">Retail</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    @if ($data['active'] === null)
-                                        -
-                                    @elseif($data['active'])
-                                        <span class="chip bg-emerald-100 text-emerald-700">Aktif</span>
-                                    @else
-                                        <span class="chip bg-slate-200 text-slate-700">Nonaktif</span>
-                                    @endif
-                                </td>
-                            </tr>
-                        @endforeach
-                        @if (count($previewRows) > count($visiblePreviewRows))
-                            <tr>
-                                <td colspan="12" class="py-4 text-center text-sm text-slate-500">
-                                    {{ count($previewRows) - count($visiblePreviewRows) }} baris lainnya disembunyikan dari
-                                    preview.
-                                </td>
-                            </tr>
-                        @endif
-                    </tbody>
-                </table>
-            </div>
-        </section>
     @endif
 
     <section class="table-shell mt-4">
@@ -299,6 +183,9 @@
                                     </div>
                                 @endif
                                 <div class="text-xs text-slate-600"><span class="text-[10px]">Non Lapak</span> <span class="rp">Rp</span>{{ number_format($product->base_price, 0, ',', '.') }}</div>
+                                @if ((float) $product->base_price <= 0)
+                                    <span class="mt-1 badge-soft-amber" title="Menu ini belum punya Harga Non Lapak">Harga belum diisi</span>
+                                @endif
                                 @if (!empty($product->price_last_changed_at) && ($product->price_histories_count ?? 0) > 1)
                                     @php
                                         $lastChangedAt = \Carbon\Carbon::parse($product->price_last_changed_at);
@@ -324,7 +211,7 @@
                                 @endif
                             </td>
                             <td>
-                                <x-row-action kind="edit" :href="route('adminapp.products.edit', $product)" />
+                                <x-row-action kind="edit" :href="route('adminapp.products.edit', $product)" label="Isi harga" />
                             </td>
                         </tr>
                     @empty

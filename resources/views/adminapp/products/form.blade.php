@@ -1,12 +1,24 @@
 @extends('layouts.adminapp')
 
-@section('title', $mode === 'create' ? 'Tambah Menu' : 'Edit Menu')
+@section('title', 'Harga Menu')
+
+@php
+    $rupiah = fn ($value) => $value === null ? '-' : 'Rp '.number_format((float) $value, 0, ',', '.');
+    $costStatus ??= null;
+    $recipeUrl ??= null;
+    $masterMenuUrl ??= null;
+@endphp
 
 @section('content')
     <div class="page-toolbar">
         <div>
-            <h1 class="section-title">{{ $mode === 'create' ? 'Tambah Menu Baru' : 'Edit Menu' }}</h1>
-            <p class="section-subtitle">Lengkapi informasi menu agar dapat digunakan pada order.</p>
+            <h1 class="section-title">{{ $product->name }}</h1>
+            <p class="section-subtitle">
+                Admin mengisi Harga Non Lapak. Data menu lainnya diatur tim menu di aplikasi Menu › Master Menu.
+                @if ($masterMenuUrl)
+                    <a href="{{ $masterMenuUrl }}" class="font-semibold underline">Buka di Master Menu</a>
+                @endif
+            </p>
         </div>
     </div>
 
@@ -20,136 +32,73 @@
         </div>
     @endif
 
-    <form method="POST"
-        action="{{ $mode === 'create' ? route('adminapp.products.store') : route('adminapp.products.update', $product) }}"
-        class="form-shell mt-4 space-y-5">
-        @csrf
-        @if ($mode === 'edit')
-            @method('PUT')
-        @endif
-
-        <div class="form-grid">
+    <section class="form-shell mt-4 space-y-4">
+        <dl class="grid grid-cols-2 gap-x-6 gap-y-3 text-sm md:grid-cols-4">
             <div>
-                <label for="sku" class="mb-1.5 block">SKU</label>
-                <input id="sku" type="text" name="sku" value="{{ old('sku', $product->sku) }}" required maxlength="100" autofocus
-                    placeholder="mis. Nasi Goreng Kampung">
-                <p class="mt-1 text-xs text-slate-500">SKU tampil sebagai nama menu di website. Tulis persis seperti yang ingin dilihat pelanggan.</p>
+                <dt class="text-xs text-slate-500">SKU</dt>
+                <dd class="font-medium text-slate-800">{{ $product->sku ?? '-' }}</dd>
             </div>
-
             <div>
-                <label for="name" class="mb-1.5 block">Nama Menu</label>
-                <input id="name" type="text" name="name" value="{{ old('name', $product->name) }}" required>
+                <dt class="text-xs text-slate-500">Satuan</dt>
+                <dd class="font-medium text-slate-800">{{ $product->unit }}</dd>
             </div>
-
-            <div class="md:col-span-2">
-                <label for="unit" class="mb-1.5 block">Satuan</label>
-                <input id="unit" type="text" name="unit" value="{{ old('unit', $product->unit ?? 'PORSI') }}"
-                    required>
+            <div>
+                <dt class="text-xs text-slate-500">Resep</dt>
+                <dd class="font-medium text-slate-800">
+                    @if ($product->recipe)
+                        {{ $product->recipe->name }}
+                        @if ($recipeUrl)
+                            · <a href="{{ $recipeUrl }}" class="underline">rincian HPP</a>
+                        @endif
+                    @else
+                        Tanpa resep
+                    @endif
+                </dd>
             </div>
-
-            @php
-                // HPP & OHC dari resep (aplikasi Menu) terkunci di sini; admin
-                // mengatur harga non lapak dan melihat profitnya.
-                $fromRecipe = $product->costFollowsRecipe();
-                $costStatus ??= null;
-                $recipeUrl ??= null;
-            @endphp
-            <div class="md:col-span-2">
-                @if ($fromRecipe)
-                    <div class="cost-source is-recipe mb-4">
-                        <p class="cost-source-title">HPP &amp; OHC mengikuti resep <b>{{ $product->recipe?->name }}</b></p>
-                        <p class="cost-source-note">
-                            Diatur tim menu di aplikasi Menu
-                            @if ($product->cost_synced_at)
-                                · diperbarui {{ $product->cost_synced_at->translatedFormat('d M Y H:i') }}
-                            @endif
-                            @if ($recipeUrl)
-                                · <a href="{{ $recipeUrl }}">Lihat rincian HPP</a>
-                            @endif
-                        </p>
-                    </div>
-                @elseif ($costStatus && $product->recipe_id && $costStatus['state'] === 'tertahan')
-                    <div class="cost-source is-held mb-4">
-                        <p class="cost-source-title">Masih manual: {{ $costStatus['reason'] }}</p>
-                        <p class="cost-source-note">Begitu hitungan resepnya lengkap di aplikasi Menu, HPP &amp; OHC menu ini otomatis mengikuti resep.</p>
-                    </div>
+            <div>
+                <dt class="text-xs text-slate-500">Status</dt>
+                <dd class="font-medium text-slate-800">
+                    {{ $product->active ? 'Aktif' : 'Nonaktif' }}{{ $product->is_3s ? ' · Menu 3S' : '' }}
+                </dd>
+            </div>
+            <div>
+                <dt class="text-xs text-slate-500">HPP Bahan Baku</dt>
+                <dd class="font-medium text-slate-800">{{ $rupiah($product->raw_material_cost) }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs text-slate-500">OHC</dt>
+                <dd class="font-medium text-slate-800">{{ $rupiah($product->overhead_cost) }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs text-slate-500">Harga Lapak</dt>
+                <dd class="font-medium text-slate-800">{{ $product->lapak_price === null ? 'Pakai Harga Non Lapak' : $rupiah($product->lapak_price) }}</dd>
+                @if ($product->lapakFollowsRecipe())
+                    <dd class="text-xs text-slate-500">Dari Harga Jual Target resep</dd>
                 @endif
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
-                    <div>
-                        <label for="raw_material_cost" class="mb-1.5 block">Bahan Baku</label>
-                        <input id="raw_material_cost" type="number" step="0.01" min="0" name="raw_material_cost"
-                            value="{{ old('raw_material_cost', $product->raw_material_cost) }}"
-                            @if ($fromRecipe) readonly aria-readonly="true" class="is-locked" @endif>
-                        <p class="mt-1 text-xs text-slate-500">{{ $fromRecipe ? 'Dari resep.' : 'Kosongkan jika belum ada data biaya bahan baku.' }}</p>
-                    </div>
-
-                    <div>
-                        <label for="overhead_cost" class="mb-1.5 block">Overhead Cost</label>
-                        <input id="overhead_cost" type="number" step="0.01" min="0" name="overhead_cost"
-                            value="{{ old('overhead_cost', $product->overhead_cost) }}"
-                            @if ($fromRecipe) readonly aria-readonly="true" class="is-locked" @endif>
-                        <p class="mt-1 text-xs text-slate-500">{{ $fromRecipe ? 'Dari resep (OHC % × HPP).' : 'Isi biaya operasional tambahan per menu bila ada.' }}</p>
-                    </div>
-
-                    <div>
-                        <label for="profit" class="mb-1.5 block">Profit</label>
-                        <input id="profit" type="number" step="0.01" value="{{ old('profit', $product->profit) }}"
-                            disabled class="bg-slate-100 text-slate-500 cursor-not-allowed">
-                        <div id="profit_subtitle" class="mt-1 space-y-0.5 text-xs font-semibold">
-                            <p>
-                                Profit =
-                                <span id="profit_percent" class="text-slate-500">-</span>
-                            </p>
-                            <p>
-                                Margin =
-                                <span id="margin_percent" class="text-slate-500">-</span>
-                            </p>
-                        </div>
-                    </div>
-
-                    {{-- Menu bertaut resep bertarget: harga lapak = Harga Jual Target resep, diatur tim menu. --}}
-                    @php
-                        $lapakFromRecipe = $product->exists && $product->lapakFollowsRecipe();
-                    @endphp
-                    <div>
-                        <label for="lapak_price" class="mb-1.5 block">Harga Lapak</label>
-                        <input id="lapak_price" type="number" step="0.01" min="0" name="lapak_price"
-                            value="{{ old('lapak_price', $product->lapak_price) }}" placeholder="Kosong = pakai harga non lapak"
-                            @if ($lapakFromRecipe) readonly aria-readonly="true" class="is-locked" @endif>
-                        <p class="mt-1 text-xs text-slate-500">
-                            @if ($lapakFromRecipe)
-                                Dari Harga Jual Target resep <b>{{ $product->recipe?->name }}</b> (aplikasi Menu). Diubah oleh tim menu.
-                            @elseif ($product->exists && $product->recipe?->target_price !== null && $product->recipeIsShared())
-                                Resep <b>{{ $product->recipe->name }}</b> dipakai beberapa varian, jadi Harga Jual Target-nya tidak dipakai di sini. Isi harga lapak varian ini sendiri.
-                            @else
-                                Harga khusus lapak. Dipilih per item saat membuat PO; otomatis untuk customer lapak.
-                            @endif
-                        </p>
-                    </div>
-
-                    <div>
-                        <label for="base_price" class="mb-1.5 block">Harga Non Lapak</label>
-                        <input id="base_price" type="number" step="0.01" min="0" name="base_price"
-                            value="{{ old('base_price', $product->base_price) }}" required>
-                        <p class="mt-1 text-xs text-slate-500">Diisi admin, untuk customer non lapak. Tidak memengaruhi profit.</p>
-                    </div>
-                </div>
             </div>
-        </div>
+            <div>
+                <dt class="text-xs text-slate-500">Profit (dari Harga Lapak)</dt>
+                <dd class="font-medium text-slate-800">{{ $rupiah($product->profit) }}</dd>
+            </div>
+        </dl>
 
-        <div class="flex flex-wrap items-center gap-6">
-            <label for="active" class="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
-                <input id="active" type="checkbox" name="active" value="1" @checked(old('active', $product->active ?? true))
-                    class="h-4 w-4 rounded border-slate-300 text-brand-500 focus:ring-brand-500/30">
-                Aktif
-            </label>
+        @if ($costStatus && $product->recipe_id && ! $product->costFollowsRecipe() && $costStatus['state'] === 'tertahan')
+            <div class="cost-source is-held">
+                <p class="cost-source-title">HPP masih manual: {{ $costStatus['reason'] }}</p>
+                <p class="cost-source-note">Begitu hitungan resepnya lengkap di aplikasi Menu, HPP &amp; OHC menu ini otomatis mengikuti resep.</p>
+            </div>
+        @endif
+    </section>
 
-            <label for="is_3s" class="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
-                <input id="is_3s" type="checkbox" name="is_3s" value="1" @checked(old('is_3s', $product->is_3s ?? false))
-                    class="h-4 w-4 rounded border-slate-300 text-amber-500 focus:ring-amber-500/30">
-                Menu 3S
-                <span class="text-xs font-normal text-slate-500">(Menu Premium)</span>
-            </label>
+    <form method="POST" action="{{ route('adminapp.products.update', $product) }}" class="form-shell mt-4 space-y-4">
+        @csrf
+        @method('PUT')
+
+        <div class="max-w-xs">
+            <label for="base_price" class="mb-1.5 block">Harga Non Lapak</label>
+            <input id="base_price" type="number" step="0.01" min="0" name="base_price"
+                value="{{ old('base_price', (float) $product->base_price > 0 ? $product->base_price : '') }}" required autofocus>
+            <p class="mt-1 text-xs text-slate-500">Harga untuk customer non lapak. Tidak memengaruhi profit.</p>
         </div>
 
         <div class="flex flex-wrap gap-2">
@@ -158,7 +107,7 @@
         </div>
     </form>
 
-    @if ($mode === 'edit' && $product->relationLoaded('priceHistories') && $product->priceHistories->isNotEmpty())
+    @if ($product->relationLoaded('priceHistories') && $product->priceHistories->isNotEmpty())
         <section class="form-shell mt-6 space-y-3">
             <div>
                 <h2 class="section-title text-base">Riwayat Harga</h2>
@@ -240,78 +189,4 @@
         </section>
     @endif
 
-    <script>
-        (() => {
-            const basePriceInput = document.getElementById('base_price');
-            const lapakPriceInput = document.getElementById('lapak_price');
-            const rawMaterialInput = document.getElementById('raw_material_cost');
-            const overheadInput = document.getElementById('overhead_cost');
-            const profitInput = document.getElementById('profit');
-            const profitPercentText = document.getElementById('profit_percent');
-            const marginPercentText = document.getElementById('margin_percent');
-
-            const toNumber = (value) => {
-                const parsed = Number.parseFloat(value || '0');
-
-                return Number.isFinite(parsed) ? parsed : 0;
-            };
-
-            const formatPercent = (value) => {
-                return `${value.toLocaleString('id-ID', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-            })}%`;
-            };
-
-            const syncPercentText = (element, value) => {
-                if (!element) {
-                    return;
-                }
-
-                element.classList.remove('text-emerald-600', 'text-rose-600', 'text-slate-500');
-
-                if (value === null) {
-                    element.textContent = '-';
-                    element.classList.add('text-slate-500');
-                    return;
-                }
-
-                element.textContent = formatPercent(value);
-                element.classList.add(value >= 25 ? 'text-emerald-600' : 'text-rose-600');
-            };
-
-            const syncProfit = () => {
-                if (!profitInput || !basePriceInput) {
-                    return;
-                }
-
-                // Dasar profit = Harga Lapak; kosong berarti memakai Harga Non Lapak
-                // (Product::profitPrice).
-                const priceValue = (lapakPriceInput?.value || '').trim() !== '' ? lapakPriceInput.value : basePriceInput.value;
-
-                if ((priceValue || '').trim() === '') {
-                    profitInput.value = '';
-                    syncPercentText(profitPercentText, null);
-                    syncPercentText(marginPercentText, null);
-                    return;
-                }
-
-                const price = toNumber(priceValue);
-                const totalCost = toNumber(rawMaterialInput?.value) + toNumber(overheadInput?.value);
-                const profit = price - totalCost;
-                const profitPercent = totalCost > 0 ? (profit / totalCost) * 100 : null;
-                const marginPercent = price > 0 ? (profit / price) * 100 : null;
-
-                profitInput.value = profit.toFixed(2);
-                syncPercentText(profitPercentText, profitPercent);
-                syncPercentText(marginPercentText, marginPercent);
-            };
-
-            [basePriceInput, lapakPriceInput, rawMaterialInput, overheadInput].forEach((input) => {
-                input?.addEventListener('input', syncProfit);
-            });
-
-            syncProfit();
-        })();
-    </script>
 @endsection

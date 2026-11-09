@@ -193,14 +193,14 @@ it('membolehkan marketing mengganti SKU langsung dari katalog dengan aturan yang
         ->assertSee(route('marketingapp.catalog.sku', $product), false);
 });
 
-it('memberi lonceng ke admin saat marketing mengganti SKU menu yang tampil di website, dan sebaliknya', function () {
+it('memberi lonceng ke tim menu saat marketing mengganti SKU menu yang tampil di website, dan sebaliknya', function () {
     $marketing = penggunaMarketing('marketing');
     $marketingLain = penggunaMarketing('marketing');
-    $admin = penggunaMarketing('admin');
+    $admin = penggunaMarketing('menu');
     $sales = penggunaMarketing('sales');
     $product = menuKatalog(['show_on_website' => true]);
 
-    // Marketing mengganti dari katalog -> admin (dan marketing lain) diberi tahu; pelaku dan sales tidak.
+    // Marketing mengganti dari katalog -> tim menu (dan marketing lain) diberi tahu; pelaku dan sales tidak.
     $this->actingAs($marketing)->patchJson(route('marketingapp.catalog.sku', $product), ['sku' => 'Nasi Kuning Komplit'])->assertOk();
 
     expect(loncengSku($admin))->toBe(['Nama menu di website diganti: Nasi Kuning Komplit'])
@@ -208,10 +208,12 @@ it('memberi lonceng ke admin saat marketing mengganti SKU menu yang tampil di we
         ->and(loncengSku($marketing))->toBe([])
         ->and(loncengSku($sales))->toBe([]);
 
-    // Admin mengganti dari Master Menu -> marketing diberi tahu; admin (pelaku) tidak bertambah.
-    $this->actingAs($admin)->put(route('adminapp.products.update', $product), [
-        'sku' => 'Nasi Kuning Istimewa', 'name' => 'Nasi Kuning', 'unit' => 'porsi', 'base_price' => 15000, 'active' => 1,
-    ])->assertSessionHasNoErrors();
+    // Tim menu mengganti dari Master Menu -> marketing diberi tahu; tim menu (pelaku) tidak bertambah.
+    \Livewire\Livewire::actingAs($admin)
+        ->test(\App\Filament\Menu\Resources\MasterMenuResource\Pages\EditMasterMenu::class, ['record' => $product->getRouteKey()])
+        ->fillForm(['sku' => 'Nasi Kuning Istimewa'])
+        ->call('save')
+        ->assertHasNoFormErrors();
 
     expect(loncengSku($marketing))->toBe(['Nama menu di website diganti: Nasi Kuning Istimewa'])
         ->and(loncengSku($admin))->toHaveCount(1);
@@ -219,7 +221,7 @@ it('memberi lonceng ke admin saat marketing mengganti SKU menu yang tampil di we
 
 it('tidak membunyikan lonceng untuk menu yang belum tampil di website, tapi tetap mencatat audit log', function () {
     $marketing = penggunaMarketing('marketing');
-    $admin = penggunaMarketing('admin');
+    $admin = penggunaMarketing('menu');
     $product = menuKatalog(['show_on_website' => false]);
 
     $this->actingAs($marketing)->patchJson(route('marketingapp.catalog.sku', $product), ['sku' => 'Nasi Kuning Komplit'])->assertOk();

@@ -76,23 +76,24 @@ it('menampilkan kotak peringatan dengan saran perbaikan di dashboard, katalog, d
 });
 
 it('memberi lonceng ke marketing saat tim menu memindah halaman atau menonaktifkan menu website', function () {
-    $admin = penggunaPeran('admin');
+    $admin = penggunaPeran('menu');
     $marketing = penggunaPeran('marketing');
     $menu = menuTampil();
     $belumTampil = menuTampil(['name' => 'NASI JINGGO 12K', 'sku' => 'Nasi Jinggo', 'show_on_website' => false]);
 
-    $form = fn (Product $product, array $overrides) => array_merge([
-        'sku' => $product->sku, 'name' => $product->name, 'unit' => 'porsi', 'base_price' => 12000, 'active' => 1,
-    ], $overrides);
+    // Tim menu menyimpan dari aplikasi Menu › Master Menu.
+    $simpan = fn (Product $product, array $isian) => \Livewire\Livewire::actingAs($admin)
+        ->test(\App\Filament\Menu\Resources\MasterMenuResource\Pages\EditMasterMenu::class, ['record' => $product->getRouteKey()])
+        ->fillForm($isian)
+        ->call('save')
+        ->assertHasNoFormErrors();
 
     // Menu yang tidak tampil di website tidak memicu lonceng.
-    $this->actingAs($admin)->put(route('adminapp.products.update', $belumTampil), $form($belumTampil, ['is_3s' => 1]))
-        ->assertSessionHasNoErrors();
+    $simpan($belumTampil, ['is_3s' => true]);
     expect($marketing->notifications()->count())->toBe(0);
 
     // Tanda 3S diubah di Master Menu: kategori lamanya milik halaman lain.
-    $this->actingAs($admin)->put(route('adminapp.products.update', $menu), $form($menu, ['is_3s' => 1]))
-        ->assertSessionHasNoErrors();
+    $simpan($menu, ['is_3s' => true]);
 
     $menu->refresh();
     expect($menu->is_3s)->toBeTrue()
@@ -106,8 +107,7 @@ it('memberi lonceng ke marketing saat tim menu memindah halaman atau menonaktifk
         ->and($admin->notifications()->count())->toBe(0);
 
     // Dinonaktifkan: lonceng kedua.
-    $this->actingAs($admin)->put(route('adminapp.products.update', $menu), $form($menu, ['is_3s' => 1, 'active' => 0]))
-        ->assertSessionHasNoErrors();
+    $simpan($menu->fresh(), ['active' => false]);
     expect($marketing->notifications()->count())->toBe(2)
         // Dua lonceng bisa berstempel waktu sama, jadi dicek isinya, bukan urutannya.
         ->and($marketing->notifications()->get()->pluck('data.title')->all())->toContain('Menu website dinonaktifkan: Nasi Ayam Teriyaki');

@@ -1,106 +1,66 @@
 <?php
 
-use App\Imports\ProductsImport;
+use App\Filament\Menu\Resources\MasterMenuResource\Pages\EditMasterMenu;
 use App\Models\Product;
 use App\Models\User;
-use Spatie\Permission\Models\Role;
+use App\Support\Access\ModuleAccess;
+use Livewire\Livewire;
 
 /**
- * Revisi klien: SKU Master Menu diketik manual, tidak dibuat otomatis dari
- * nama, karena SKU tampil sebagai nama menu di website.
+ * Revisi klien: SKU Master Menu diketik manual, tidak dibuat dari nama,
+ * karena SKU tampil sebagai nama menu di website. Sejak 9 Nov 2026 SKU diatur
+ * tim menu di aplikasi Menu › Master Menu (admin hanya mengisi harga).
  */
-function adminMasterMenu(): User
+function timMenuSku(): User
 {
-    Role::findOrCreate('admin', 'web');
+    ModuleAccess::sync();
     $user = User::factory()->create(['is_active' => true, 'force_password_change' => false]);
-    $user->assignRole('admin');
+    $user->assignRole('menu');
 
     return $user;
 }
 
-function formMenu(array $overrides = []): array
+function menuSku(array $overrides = []): Product
 {
-    return array_merge([
-        'sku' => 'Nasi Goreng Kampung',
-        'name' => 'Nasi Goreng 15K',
-        'unit' => 'porsi',
-        'base_price' => 15000,
-        'active' => 1,
-    ], $overrides);
+    return Product::query()->create(array_merge([
+        'name' => 'Nasi Capjay', 'sku' => 'NASI-CAPJAY-12K', 'unit' => 'porsi', 'base_price' => 12000, 'active' => true,
+    ], $overrides));
 }
 
-it('menyimpan SKU persis seperti yang diketik admin, bukan hasil dari nama menu', function () {
-    $this->actingAs(adminMasterMenu())
-        ->post(route('adminapp.products.store'), formMenu(['sku' => '  Nasi Goreng   Kampung ']))
-        ->assertRedirect(route('adminapp.products.index'))
-        ->assertSessionHasNoErrors();
+it('menyimpan SKU yang diketik tim menu, dirapikan spasinya tanpa mengubah huruf', function () {
+    $product = menuSku();
 
-    $product = Product::query()->sole();
-    // Spasi dirapikan, huruf besar/kecil dipertahankan; nama internal tetap kapital.
-    expect($product->sku)->toBe('Nasi Goreng Kampung')
-        ->and($product->name)->toBe('NASI GORENG 15K');
+    Livewire::actingAs(timMenuSku())
+        ->test(EditMasterMenu::class, ['record' => $product->getRouteKey()])
+        ->fillForm(['sku' => '  Nasi Capjay   Seafood '])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect($product->fresh()->sku)->toBe('Nasi Capjay Seafood')
+        ->and($product->fresh()->name)->toBe('NASI CAPJAY');
 });
 
-it('mewajibkan SKU dan menolak SKU yang sudah dipakai', function () {
-    $admin = adminMasterMenu();
+it('mewajibkan SKU dan menolak SKU yang sudah dipakai menu lain, tapi tidak bentrok dengan dirinya sendiri', function () {
+    $user = timMenuSku();
+    menuSku(['name' => 'Nasi Goreng', 'sku' => 'Nasi Goreng Kampung']);
+    $product = menuSku();
 
-    $this->actingAs($admin)->post(route('adminapp.products.store'), formMenu(['sku' => '']))
-        ->assertSessionHasErrors(['sku' => 'SKU wajib diisi. SKU dipakai sebagai nama menu di website.']);
-    $this->actingAs($admin)->post(route('adminapp.products.store'), formMenu(['sku' => '   ']))
-        ->assertSessionHasErrors('sku');
-    expect(Product::query()->count())->toBe(0);
+    Livewire::actingAs($user)->test(EditMasterMenu::class, ['record' => $product->getRouteKey()])
+        ->fillForm(['sku' => ''])
+        ->call('save')
+        ->assertHasFormErrors(['sku' => 'required']);
 
-    // Kontrol positif, lalu SKU yang sama untuk menu lain ditolak.
-    $this->actingAs($admin)->post(route('adminapp.products.store'), formMenu())->assertSessionHasNoErrors();
-    $this->actingAs($admin)->post(route('adminapp.products.store'), formMenu(['name' => 'Nasi Goreng 20K']))
-        ->assertSessionHasErrors(['sku' => 'SKU ini sudah dipakai menu lain.']);
-    expect(Product::query()->count())->toBe(1);
-});
+    Livewire::actingAs($user)->test(EditMasterMenu::class, ['record' => $product->getRouteKey()])
+        ->fillForm(['sku' => 'Nasi Goreng Kampung'])
+        ->call('save')
+        ->assertHasFormErrors(['sku' => 'unique']);
 
-it('membolehkan admin mengganti SKU menu lama dan menyimpan ulang tanpa bentrok dengan dirinya sendiri', function () {
-    $admin = adminMasterMenu();
-    $product = Product::query()->create(['name' => 'Nasi Capjay', 'sku' => 'NASI-CAPJAY-12K', 'unit' => 'porsi', 'base_price' => 12000, 'active' => true]);
+    // Kontrol positif: simpan ulang dengan SKU sendiri tidak dianggap duplikat.
+    Livewire::actingAs($user)->test(EditMasterMenu::class, ['record' => $product->getRouteKey()])
+        ->fillForm(['sku' => 'NASI-CAPJAY-12K', 'unit' => 'box'])
+        ->call('save')
+        ->assertHasNoFormErrors();
 
-    // Simpan tanpa mengubah SKU: tidak dianggap duplikat dirinya sendiri.
-    $this->actingAs($admin)->put(route('adminapp.products.update', $product), formMenu(['sku' => 'NASI-CAPJAY-12K', 'name' => 'Nasi Capjay', 'base_price' => 12000]))
-        ->assertSessionHasNoErrors();
-
-    $this->actingAs($admin)->put(route('adminapp.products.update', $product), formMenu(['sku' => 'Nasi Capjay Seafood', 'name' => 'Nasi Capjay', 'base_price' => 12000]))
-        ->assertSessionHasNoErrors();
-    expect($product->fresh()->sku)->toBe('Nasi Capjay Seafood');
-});
-
-it('menampilkan kolom SKU yang bisa diketik di form menu', function () {
-    $this->actingAs(adminMasterMenu())->get(route('adminapp.products.create'))
-        ->assertOk()
-        ->assertSee('name="sku"', false)
-        ->assertSee('SKU tampil sebagai nama menu di website')
-        ->assertDontSee('SKU dibuat otomatis');
-});
-
-it('import master menu: menu baru wajib membawa SKU, menu lama dicocokkan tanpa peduli huruf besar/kecil', function () {
-    $lama = Product::query()->create(['name' => 'Rawon', 'sku' => 'Rawon Daging', 'unit' => 'porsi', 'base_price' => 20000, 'active' => true]);
-
-    // Baris baru tanpa SKU ditolak -- sistem tidak lagi mengarang SKU.
-    $import = new ProductsImport(commit: false);
-    expect(fn () => $import->collection(collect([
-        collect(['nama_menu' => 'Soto Ayam', 'satuan' => 'porsi', 'harga_jual' => 18000, 'sku' => null]),
-    ])))->toThrow(RuntimeException::class, 'kolom SKU wajib diisi untuk menu baru');
-
-    // SKU kapital di file lama tetap menemukan menu yang sama; sel SKU kosong
-    // pada menu lama (dicocokkan lewat id) membiarkan SKU-nya.
-    $import = new ProductsImport;
-    $import->collection(collect([
-        collect(['sku' => 'RAWON DAGING', 'nama_menu' => 'Rawon', 'satuan' => 'porsi', 'harga_jual' => 22000]),
-        collect(['sku' => 'Soto Ayam Lamongan', 'nama_menu' => 'Soto Ayam', 'satuan' => 'porsi', 'harga_jual' => 18000]),
-    ]));
-
-    expect($import->summary())->toMatchArray(['created' => 1, 'updated' => 1])
-        ->and((float) $lama->fresh()->base_price)->toBe(22000.0)
-        ->and(Product::query()->where('sku', 'Soto Ayam Lamongan')->exists())->toBeTrue();
-
-    (new ProductsImport)->collection(collect([
-        collect(['id' => $lama->id, 'sku' => null, 'nama_menu' => 'Rawon', 'satuan' => 'porsi', 'harga_jual' => 23000]),
-    ]));
-    expect($lama->fresh()->sku)->toBe('RAWON DAGING');
+    expect($product->fresh()->sku)->toBe('NASI-CAPJAY-12K')
+        ->and($product->fresh()->unit)->toBe('box');
 });

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Filament\Menu\Resources\MasterMenuResource;
 use App\Models\AuditLog;
 use App\Models\Product;
 use App\Models\User;
@@ -11,17 +12,17 @@ use Illuminate\Support\Facades\Auth;
 /**
  * Penggantian SKU menu (= nama menu di website).
  *
- * Admin (Master Menu) dan marketing (Katalog Foto Menu) sama-sama boleh
- * mengganti SKU. Supaya tidak saling timpa tanpa tahu:
+ * Tim menu (aplikasi Menu › Master Menu) dan marketing (Katalog Foto Menu)
+ * sama-sama boleh mengganti SKU. Supaya tidak saling timpa tanpa tahu:
  * - setiap penggantian dicatat di audit log (SKU lama -> baru), apa pun jalurnya;
- * - bila menunya sedang tampil di website, admin dan marketing lain menerima
+ * - bila menunya sedang tampil di website, tim menu dan marketing lain menerima
  *   lonceng. Menu yang belum tampil tidak memicu lonceng, supaya merapikan
  *   ratusan SKU lama sebelum terbit tidak membanjiri lonceng.
  * Pelaku perubahan sendiri tidak diberi tahu.
  */
 class SkuChangeNotifier
 {
-    public const RECIPIENT_ROLES = ['admin', 'marketing'];
+    public const RECIPIENT_ROLES = ['menu', 'marketing'];
 
     public function skuChanged(Product $product, ?string $old, ?string $new): void
     {
@@ -56,11 +57,11 @@ class SkuChangeNotifier
         $body = 'SKU '.$old.' → '.$new.' ('.$product->name.')'
             .($actor ? ' oleh '.$actor->name : '').'. Nama ini yang tampil di website.';
 
-        // Tautan mengikuti aplikasi yang bisa dibuka penerima: admin ke Master
-        // Menu, marketing (tanpa peran admin) ke Katalog Foto Menu.
-        [$admins, $marketing] = $recipients->partition(fn (User $user) => $user->hasRole('admin'));
+        // Tautan mengikuti aplikasi yang bisa dibuka penerima: tim menu ke
+        // Master Menu, marketing (tanpa peran menu) ke Katalog Foto Menu.
+        [$menuTeam, $marketing] = $recipients->partition(fn (User $user) => $user->hasRole('menu'));
 
-        Notify::users($admins, $title, $body, route('adminapp.products.edit', $product), 'info', 'Buka menu');
+        Notify::users($menuTeam, $title, $body, MasterMenuResource::getUrl('edit', ['record' => $product]), 'info', 'Buka menu');
         Notify::users($marketing, $title, $body, route('marketingapp.catalog.index', ['q' => $new]), 'info', 'Buka katalog');
     }
 }

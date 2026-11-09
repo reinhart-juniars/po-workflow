@@ -62,6 +62,9 @@ class Recipe extends Model
         $queue = fn (self $recipe) => app(\App\Services\ProductRecipeCostSync::class)->queueRecipe($recipe->id);
         static::saved($queue);
         static::deleted($queue);
+
+        // Master Menu buatan resep ini ikut nama & status aktifnya.
+        static::updated(fn (self $recipe) => app(\App\Services\MasterMenuSync::class)->follow($recipe));
     }
 
     public static function normalizeName(?string $name): string
