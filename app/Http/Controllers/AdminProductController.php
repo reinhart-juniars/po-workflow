@@ -3,20 +3,27 @@
 namespace App\Http\Controllers;
 
 use App\Exports\ProductsExport;
+use App\Filament\Menu\Resources\MasterMenuResource;
 use App\Filament\Menu\Resources\RecipeResource;
-use App\Imports\ProductsImport;
 use App\Models\Product;
 use App\Services\ProductRecipeCostSync;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 
+/**
+ * Admin App › Harga Menu.
+ *
+ * Sejak 9 Nov 2026 menu dibuat dan diatur tim menu di aplikasi Menu (Master
+ * Menu, lihat MasterMenuSync). Admin tidak lagi membuat menu atau mengimpor
+ * Excel; di sini admin hanya mengisi Harga Non Lapak. Harga lapak, HPP, nama,
+ * SKU, dan status aktif hanya ditampilkan.
+ */
 class AdminProductController extends Controller
 {
-    private const IMPORT_PREVIEW_SESSION_KEY = 'products_import_preview';
-
     public function index(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
+        $priceMissing = $request->query('harga') === 'kosong';
 
         $products = Product::query()
             ->with(['recipe' => fn ($query) => $query->select('id', 'name', 'target_price')->withCount('products')])
@@ -29,183 +36,60 @@ class AdminProductController extends Controller
                         ->orWhere('sku', 'like', $like);
                 });
             })
+            ->when($priceMissing, fn ($query) => $query->where('active', true)->where(fn ($inner) => $inner->whereNull('base_price')->orWhere('base_price', '<=', 0)))
             ->orderBy('name')
             ->paginate(20)
             ->withQueryString();
-        $importPreview = session(self::IMPORT_PREVIEW_SESSION_KEY);
 
-        return view('adminapp.products.index', compact('products', 'importPreview', 'q'));
-    }
+        $priceMissingCount = Product::query()
+            ->where('active', true)
+            ->where(fn ($inner) => $inner->whereNull('base_price')->orWhere('base_price', '<=', 0))
+            ->count();
 
-    public function create()
-    {
-        $product = new Product;
-
-        return view('adminapp.products.form', [
-            'product' => $product,
-            'mode' => 'create',
-        ]);
-    }
-
-    public function store(Request $request)
-    {
-        $data = $this->validatedPayload($request);
-        $data['active'] = $request->boolean('active');
-        $data['is_3s'] = $request->boolean('is_3s');
-
-        Product::create($data);
-
-        return redirect()
-            ->route('adminapp.products.index')
-            ->with('status', 'Menu berhasil ditambahkan.');
+        return view('adminapp.products.index', compact('products', 'q', 'priceMissing', 'priceMissingCount'));
     }
 
     public function edit(Product $product, ProductRecipeCostSync $costs)
     {
         $product->load(['priceHistories.changedBy', 'recipe']);
+        $user = auth()->user();
 
         return view('adminapp.products.form', [
             'product' => $product,
-            'mode' => 'edit',
             // Asal HPP & OHC: dari resep (terkunci) atau manual, dengan alasan
             // bila resepnya belum bisa dipakai.
             'costStatus' => $costs->evaluate($product),
-            'recipeUrl' => $product->recipe_id && auth()->user()?->can('recipe.view')
+            'recipeUrl' => $product->recipe_id && $user?->can('recipe.view')
                 ? RecipeResource::getUrl('hpp', ['record' => $product->recipe_id])
+                : null,
+            'masterMenuUrl' => $user?->can('recipe.manage')
+                ? MasterMenuResource::getUrl('edit', ['record' => $product])
                 : null,
         ]);
     }
 
     public function update(Request $request, Product $product)
     {
-        $data = $this->validatedPayload($request, $product);
+        // Hanya Harga Non Lapak: kolom lain milik tim menu dan diabaikan
+        // walau ikut terkirim dari form yang dirakit sendiri.
+        $data = $request->validate([
+            'base_price' => ['required', 'numeric', 'min:0'],
+        ]);
 
-        // HPP & OHC menu yang mengikuti resep diatur tim menu di aplikasi
-        // Menu. Field-nya read-only di form; di sini dijaga juga supaya
-        // request yang dirakit sendiri tidak bisa menimpanya.
-        if ($product->costFollowsRecipe()) {
-            unset($data['raw_material_cost'], $data['overhead_cost']);
-        }
-
-        // Harga lapak menu bertaut resep = Harga Jual Target resepnya, diatur
-        // tim menu (revisi 3 Nov 2026). Dijaga dengan cara yang sama.
-        if ($product->lapakFollowsRecipe()) {
-            unset($data['lapak_price']);
-        }
-        $data['active'] = $request->boolean('active');
-        $data['is_3s'] = $request->boolean('is_3s');
-
-        $product->update($data);
+        $product->update(['base_price' => $data['base_price']]);
 
         return redirect()
             ->route('adminapp.products.index')
-            ->with('status', 'Menu berhasil diperbarui.');
+            ->with('status', 'Harga '.$product->name.' disimpan.');
     }
 
     public function exportExcel()
     {
-        $fileName = 'master_menu_'.now()->format('Ymd_His').'.xlsx';
+        $fileName = 'harga_menu_'.now()->format('Ymd_His').'.xlsx';
 
         return Excel::download(
             new ProductsExport(Product::query()->orderBy('name')->get()),
             $fileName
         );
-    }
-
-    public function importExcel(Request $request)
-    {
-        $request->validate([
-            'excel_file' => ['required', 'file', 'mimes:xlsx,xls,csv'],
-        ]);
-
-        try {
-            $import = new ProductsImport(commit: false);
-            Excel::import($import, $request->file('excel_file'));
-
-            $summary = $import->previewSummary();
-
-            if ($summary['total'] === 0) {
-                return redirect()
-                    ->route('adminapp.products.index')
-                    ->with('error', 'Import master menu gagal. File Excel tidak berisi data menu.');
-            }
-
-            session([
-                self::IMPORT_PREVIEW_SESSION_KEY => [
-                    'file_name' => $request->file('excel_file')->getClientOriginalName(),
-                    'rows' => $import->previewRows(),
-                    'summary' => $summary,
-                ],
-            ]);
-
-            $message = "Preview import siap. {$summary['created']} data baru dan {$summary['updated']} data update akan diproses setelah commit.";
-
-            return redirect()
-                ->route('adminapp.products.index')
-                ->with('success', $message);
-        } catch (\Throwable $exception) {
-            return redirect()
-                ->route('adminapp.products.index')
-                ->with('error', 'Import master menu gagal. '.$exception->getMessage());
-        }
-    }
-
-    public function commitImportExcel()
-    {
-        $preview = session(self::IMPORT_PREVIEW_SESSION_KEY);
-
-        if (! $preview || empty($preview['rows'])) {
-            return redirect()
-                ->route('adminapp.products.index')
-                ->with('error', 'Tidak ada preview import yang bisa di-commit. Upload file Excel dulu.');
-        }
-
-        try {
-            $import = new ProductsImport;
-            $import->commitRows($preview['rows']);
-            session()->forget(self::IMPORT_PREVIEW_SESSION_KEY);
-
-            $summary = $import->summary();
-            $message = "Import master menu berhasil di-commit. {$summary['created']} data baru ditambahkan dan {$summary['updated']} data diperbarui.";
-
-            return redirect()
-                ->route('adminapp.products.index')
-                ->with('success', $message);
-        } catch (\Throwable $exception) {
-            return redirect()
-                ->route('adminapp.products.index')
-                ->with('error', 'Commit import master menu gagal. '.$exception->getMessage());
-        }
-    }
-
-    public function cancelImportExcel()
-    {
-        session()->forget(self::IMPORT_PREVIEW_SESSION_KEY);
-
-        return redirect()
-            ->route('adminapp.products.index')
-            ->with('success', 'Preview import master menu dibatalkan.');
-    }
-
-    protected function validatedPayload(Request $request, ?Product $product = null): array
-    {
-        // SKU diketik admin (bukan dibuat dari nama) karena tampil sebagai nama
-        // menu di website. Dirapikan dulu supaya cek unik membandingkan bentuk
-        // yang benar-benar disimpan.
-        $request->merge(['sku' => Product::normalizeSku($request->input('sku'))]);
-        $sku = Product::skuValidation($product?->id);
-
-        return $request->validate([
-            ...$sku['rules'],
-            'name' => ['required', 'string', 'max:255'],
-            'unit' => ['required', 'string', 'max:50'],
-            'base_price' => ['required', 'numeric', 'min:0'],
-            // Kosong = menu ini tidak punya harga khusus lapak (item lapak memakai harga normal).
-            'lapak_price' => ['nullable', 'numeric', 'min:0'],
-            'raw_material_cost' => ['nullable', 'numeric', 'min:0'],
-            'overhead_cost' => ['nullable', 'numeric', 'min:0'],
-            'active' => ['nullable', 'boolean'],
-            'is_3s' => ['nullable', 'boolean'],
-        ], $sku['messages']);
     }
 }

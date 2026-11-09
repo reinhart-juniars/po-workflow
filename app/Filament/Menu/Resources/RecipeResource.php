@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\Recipe;
 use App\Models\RecipeItem;
 use App\Services\IngredientUnitConverter;
+use App\Services\MasterMenuSync;
 use App\Services\RecipeCostService;
 use App\Support\PriceInput;
 use App\Support\Settings\Settings;
@@ -83,7 +84,7 @@ class RecipeResource extends Resource
                         // dipakai beberapa varian harga), jadi bukan relasi
                         // BelongsTo yang bisa diserahkan ke ->relationship().
                         Forms\Components\Select::make('product_ids')
-                            ->label('Produk yang Dijual')
+                            ->label('Master Menu')
                             ->multiple()
                             ->options(fn () => Product::query()->orderBy('name')->pluck('name', 'id'))
                             ->searchable()
@@ -98,8 +99,9 @@ class RecipeResource extends Resource
                                 static::syncProducts($record, array_map('intval', (array) $component->getState()));
                             })
                             ->helperText(
-                                'Produk pada alur penjualan yang dimasak dengan resep ini -- varian harga '
-                                .'(10K/12K) boleh dipilih semuanya. Boleh dikosongkan selama pemetaannya belum disepakati.'
+                                'Menu di PO yang dimasak dengan resep ini. Kosongkan untuk menu baru: Master Menu '
+                                .'dibuat otomatis dengan nama resep ini saat disimpan. Pilih menu lama (V2) bila menu ini '
+                                .'sudah ada; varian harga (10K/12K) boleh dipilih semuanya.'
                             ),
 
                         Forms\Components\Toggle::make('is_active')
@@ -470,9 +472,28 @@ class RecipeResource extends Resource
                         ->icon('heroicon-m-arrows-right-left')
                         ->authorize('update')
                         ->requiresConfirmation()
-                        ->action(fn (Recipe $record) => $record->update([
-                            'jenis' => $record->jenis === Recipe::JENIS_SUB ? Recipe::JENIS_UTAMA : Recipe::JENIS_SUB,
-                        ])),
+                        ->action(function (Recipe $record) {
+                            $record->update([
+                                'jenis' => $record->jenis === Recipe::JENIS_SUB ? Recipe::JENIS_UTAMA : Recipe::JENIS_SUB,
+                            ]);
+
+                            // Jadi Menu Utama = dijual, jadi perlu Master Menu.
+                            app(MasterMenuSync::class)->ensureFor($record);
+                        }),
+
+                    // Menu Utama lama (mis. impor MMR) yang belum punya Master Menu.
+                    Tables\Actions\Action::make('buat_master_menu')
+                        ->label('Buat Master Menu')
+                        ->icon('heroicon-m-plus-circle')
+                        ->authorize('update')
+                        ->visible(fn (Recipe $record) => $record->jenis === Recipe::JENIS_UTAMA && ! $record->products()->exists())
+                        ->requiresConfirmation()
+                        ->modalDescription('Menu dengan nama resep ini dibuat di Master Menu dan langsung bisa dipilih di PO. Kalau menu ini sudah ada sebagai menu lama (V2), tautkan lewat Pencocokan Menu saja supaya tidak dobel.')
+                        ->action(function (Recipe $record) {
+                            app(MasterMenuSync::class)->ensureFor($record);
+
+                            \Filament\Notifications\Notification::make()->title('Master Menu dibuat')->success()->send();
+                        }),
 
                     Tables\Actions\DeleteAction::make()->label('Hapus'),
                 ]),

@@ -37,9 +37,15 @@ menggantikan HPP residual opname dengan pemakaian bahan riil dari resep × produ
   Tautan lama `/inventory/<resep...>` dialihkan 301.
 - **Supervisor Gudang digabung ke Inventory** (12 Okt): peran `inventory` kini juga menyetujui / menolak
   Form Kebutuhan; `access:sync` memindahkan pemegang peran lama otomatis.
-- **HPP & OHC di Admin › Master Menu ikut resep** bila hitungan resepnya bersih (`ProductRecipeCostSync`,
-  `products.cost_source`); field terkunci, import Excel mengabaikannya. Resep belum lengkap tetap manual
+- **HPP & OHC menu ikut resep** bila hitungan resepnya bersih (`ProductRecipeCostSync`,
+  `products.cost_source`); field terkunci. Resep belum lengkap tetap manual
   dengan alasan di form. `menu:sync-product-costs` dijadwalkan 06:15.
+- **Master Menu ikut tim menu** (9 Nov 2026): menu dibuat dan diatur di aplikasi Menu › Master Menu
+  (`MasterMenuResource`). Menu Utama yang dibuat/disimpan tanpa menu otomatis dibuatkan satu (`MasterMenuSync`,
+  `products.origin = menu`; nama & status aktifnya ikut resep), dan admin diberi lonceng untuk mengisi harga.
+  Admin App › **Harga Menu** hanya mengisi Harga Non Lapak (tanpa tambah menu / impor Excel). Menu yang belum
+  punya resep tidak bisa dipesan di PO kecuali ditandai *memang tanpa resep* (`Product::scopeOrderable`);
+  menu tanpa resep yang 90 hari tidak dipakai dinonaktifkan `menu:deactivate-unused` (05:45).
 - **Breakdown SPK Produksi bertingkat**: menu → sub menu → bahan, buka-tutup berpanah
   (`RecipeCostService::tree`, `partials/recipe-tree`).
 - **Purchasing — Tagihan Pembelian**: gudang tidak lagi memilih akun kas. Periksa Form Kebutuhan
@@ -152,6 +158,7 @@ Dokumen:
 | `access:sync {--reset}` | Sinkronkan izin modul ke peran |
 | `profit:check` | Periksa profit menu keseluruhan terhadap batas; lonceng bila berubah keadaan (dijadwalkan harian 06:30) |
 | `menu:sync-product-costs` | Hitung ulang HPP & OHC produk yang bertaut resep (dijadwalkan harian 06:15; perubahan resep/harga bahan sudah tersinkron otomatis) |
+| `menu:deactivate-unused {--dry-run}` | Nonaktifkan menu tanpa resep yang 90 hari tidak dipakai di PO / sales actual dan tidak diubah (dijadwalkan harian 05:45) |
 | `db:clone-to-staging` | Salin database kerja ke `po_workflow_staging` |
 | `po:audit-cash-in {--fix}` | Audit data kas PO lama |
 

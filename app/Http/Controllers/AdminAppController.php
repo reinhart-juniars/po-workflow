@@ -79,11 +79,6 @@ class AdminAppController extends Controller
             ->orderBy('name')
             ->get();
 
-        // (kalau kamu juga mau master produk buat detail item)
-        $products = Product::where('active', true)
-            ->orderBy('name')
-            ->get('id', 'name', 'phone');
-
         $poDraft = PurchaseOrder::with(['customer', 'area'])
             ->whereDate('created_at', $today)
             ->where('status', 'draft')
@@ -99,7 +94,9 @@ class AdminAppController extends Controller
         $areas = Area::orderBy('name')
             ->pluck('name', 'id');
 
-        $products = Product::where('active', true)
+        // Hanya menu yang boleh dipesan: menu tanpa resep yang belum dicocokkan
+        // tim menu tidak muncul (Product::scopeOrderable).
+        $products = Product::query()->orderable()
             ->orderBy('name')
             ->get(['id', 'name', 'base_price', 'lapak_price']);
 
@@ -161,7 +158,9 @@ class AdminAppController extends Controller
 
         $products = Product::query()
             ->where(function ($query) use ($productIds) {
-                $query->where('active', true);
+                // Menu yang sudah ada di PO ini tetap tampil walau kini tidak
+                // bisa dipesan, supaya baris lamanya tidak hilang saat diedit.
+                $query->orderable();
 
                 if (! empty($productIds)) {
                     $query->orWhereIn('id', $productIds);
@@ -175,6 +174,31 @@ class AdminAppController extends Controller
             ->get(['id', 'name', 'type']);
 
         return view('adminapp.order_edit', compact('po', 'customers', 'areas', 'products', 'cashAccounts'));
+    }
+
+    /**
+     * Menu di PO harus bisa dipesan (Product::scopeOrderable). Saat mengedit,
+     * menu yang sudah ada di PO itu tetap diterima.
+     */
+    protected function orderableProductRule(?PurchaseOrder $po = null): \Closure
+    {
+        $existing = $po ? $po->items()->pluck('product_id')->filter()->all() : [];
+
+        return function (string $attribute, mixed $value, \Closure $fail) use ($existing) {
+            if (in_array((int) $value, array_map('intval', $existing), true)) {
+                return;
+            }
+
+            $product = Product::query()->find($value);
+
+            if (! $product || $product->isOrderable()) {
+                return;
+            }
+
+            $fail($product->active
+                ? 'Menu '.$product->name.' belum punya resep. Minta tim menu menautkannya ke resep di aplikasi Menu sebelum dipesan.'
+                : 'Menu '.$product->name.' sudah nonaktif.');
+        };
     }
 
     public function ordersStore(Request $r)
@@ -192,7 +216,7 @@ class AdminAppController extends Controller
             'cash_account_id' => ['nullable', 'exists:cash_accounts,id', 'required_if:payment_type,cash'],
             'receivable_days' => ['nullable', 'integer', 'min:1', 'max:365', 'required_if:payment_type,receivable'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'exists:products,id'],
+            'items.*.product_id' => ['required', 'exists:products,id', $this->orderableProductRule()],
             'items.*.qty' => ['required', 'integer', 'min:1'],
             'items.*.notes' => ['nullable', 'string', 'max:255'],
             'items.*.price_tier' => ['nullable', Rule::in([PurchaseOrderItem::TIER_NORMAL, PurchaseOrderItem::TIER_LAPAK])],
@@ -332,7 +356,7 @@ class AdminAppController extends Controller
             'cash_account_id' => ['nullable', 'exists:cash_accounts,id', 'required_if:payment_type,cash'],
             'receivable_days' => ['nullable', 'integer', 'min:1', 'max:365', 'required_if:payment_type,receivable'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'exists:products,id'],
+            'items.*.product_id' => ['required', 'exists:products,id', $this->orderableProductRule($po)],
             'items.*.qty' => ['required', 'integer', 'min:1'],
             'items.*.notes' => ['nullable', 'string', 'max:255'],
             'items.*.price_tier' => ['nullable', Rule::in([PurchaseOrderItem::TIER_NORMAL, PurchaseOrderItem::TIER_LAPAK])],

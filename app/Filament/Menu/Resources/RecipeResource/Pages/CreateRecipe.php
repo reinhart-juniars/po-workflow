@@ -4,6 +4,7 @@ namespace App\Filament\Menu\Resources\RecipeResource\Pages;
 
 use App\Filament\Menu\Resources\RecipeResource;
 use App\Models\Product;
+use App\Services\MasterMenuSync;
 use App\Services\MenuMatchSuggester;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Str;
@@ -34,6 +35,15 @@ class CreateRecipe extends CreateRecord
         $data['updated_by'] = auth()->id();
 
         return $data;
+    }
+
+    /**
+     * Menu Utama tanpa produk terpilih langsung dibuatkan Master Menu, supaya
+     * bisa dipesan di PO tanpa menunggu admin (MasterMenuSync).
+     */
+    protected function afterCreate(): void
+    {
+        app(MasterMenuSync::class)->ensureFor($this->getRecord());
     }
 
     protected function getRedirectUrl(): string

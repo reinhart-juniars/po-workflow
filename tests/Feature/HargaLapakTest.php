@@ -1,7 +1,6 @@
 <?php
 
 use App\Exports\ProductsExport;
-use App\Imports\ProductsImport;
 use App\Models\Area;
 use App\Models\CashAccount;
 use App\Models\Customer;
@@ -22,8 +21,9 @@ function siapkanHargaLapak(bool $customerLapak = false): array
     $area = Area::query()->create(['name' => 'Area Lapak', 'code' => 'ALP']);
     $customer = Customer::query()->create(['name' => $customerLapak ? 'KUTISARI LAPAK' : 'Bu Rina', 'area_id' => $area->id, 'active' => true, 'is_lapak' => $customerLapak]);
     $cash = CashAccount::query()->create(['name' => 'Kas', 'type' => 'cash', 'is_active' => true]);
-    $nasi = Product::query()->create(['name' => 'NASI AYAM 15K', 'unit' => 'porsi', 'base_price' => 15000, 'lapak_price' => 12000, 'active' => true]);
-    $teh = Product::query()->create(['name' => 'ES TEH', 'unit' => 'cup', 'base_price' => 5000, 'active' => true]); // tanpa harga lapak
+    // needs_recipe false = ditandai tim menu memang tanpa resep, jadi boleh dipesan di PO.
+    $nasi = Product::query()->create(['name' => 'NASI AYAM 15K', 'unit' => 'porsi', 'base_price' => 15000, 'lapak_price' => 12000, 'active' => true, 'needs_recipe' => false]);
+    $teh = Product::query()->create(['name' => 'ES TEH', 'unit' => 'cup', 'base_price' => 5000, 'active' => true, 'needs_recipe' => false]); // tanpa harga lapak
 
     Role::findOrCreate('admin', 'web');
     $admin = User::factory()->create(['is_active' => true, 'force_password_change' => false]);
@@ -109,20 +109,18 @@ it('mempertahankan harga lama saat PO diubah, kecuali tingkat harganya diganti',
     expect([$item->price_tier, (float) $item->unit_price])->toBe(['normal', 16000.0]);
 });
 
-it('menyimpan harga lapak dari Master Menu dan Excel', function () {
+it('hanya menyimpan Harga Non Lapak dari Harga Menu admin; harga lapak milik tim menu', function () {
     ['admin' => $admin, 'nasi' => $nasi] = siapkanHargaLapak();
 
     $this->actingAs($admin)->put(route('adminapp.products.update', $nasi), [
-        'name' => $nasi->name, 'sku' => 'Nasi Ayam', 'unit' => 'porsi', 'base_price' => 15000, 'lapak_price' => 11500, 'active' => 1,
+        'name' => 'NAMA LAIN', 'sku' => 'Nasi Ayam', 'unit' => 'porsi', 'base_price' => 17000, 'lapak_price' => 11500, 'active' => 0,
     ])->assertSessionHasNoErrors();
-    expect((float) $nasi->fresh()->lapak_price)->toBe(11500.0);
 
-    // Dikosongkan = tidak punya harga lapak lagi.
-    $this->actingAs($admin)->put(route('adminapp.products.update', $nasi), [
-        'name' => $nasi->name, 'sku' => 'Nasi Ayam', 'unit' => 'porsi', 'base_price' => 15000, 'lapak_price' => '', 'active' => 1,
-    ])->assertSessionHasNoErrors();
-    expect($nasi->fresh()->lapak_price)->toBeNull()
-        ->and($nasi->fresh()->priceForTier(PurchaseOrderItem::TIER_LAPAK))->toBe(15000.0);
+    $nasi->refresh();
+    expect((float) $nasi->base_price)->toBe(17000.0)
+        ->and((float) $nasi->lapak_price)->toBe(12000.0)
+        ->and($nasi->name)->toBe('NASI AYAM 15K')
+        ->and($nasi->active)->toBeTrue();
 });
 
 it('menamai harga di PO dan Master Menu sebagai Lapak dan Non Lapak', function () {
@@ -144,20 +142,7 @@ it('menamai harga di PO dan Master Menu sebagai Lapak dan Non Lapak', function (
         ->and($menu->priceForTier(PurchaseOrderItem::TIER_LAPAK))->toBe(20000.0);
 });
 
-it('membaca kolom Excel harga_non_lapak dan berkas lama berkolom harga_jual', function () {
-    $menu = Product::query()->create(['name' => 'NASI UJI IMPOR', 'sku' => 'NASI-UJI-IMPOR', 'unit' => 'porsi', 'base_price' => 10000, 'active' => true]);
-
-    $impor = fn (array $baris) => (new ProductsImport)->collection(collect([collect($baris + ['id' => $menu->id, 'nama_menu' => $menu->name, 'satuan' => 'porsi'])]));
-
-    $impor(['harga_non_lapak' => 26000, 'harga_lapak' => 21000]);
-    expect((float) $menu->fresh()->base_price)->toBe(26000.0)
-        ->and((float) $menu->fresh()->lapak_price)->toBe(21000.0);
-
-    // Berkas ekspor lama masih beredar; harga lapak yang sudah ada tidak terhapus.
-    $impor(['harga_jual' => 27000]);
-    expect((float) $menu->fresh()->base_price)->toBe(27000.0)
-        ->and((float) $menu->fresh()->lapak_price)->toBe(21000.0);
-
+it('mengekspor kolom harga_lapak dan harga_non_lapak', function () {
     expect((new ProductsExport(Product::query()->get()))->headings())->toContain('harga_lapak', 'harga_non_lapak')
         ->not->toContain('harga_jual');
 });

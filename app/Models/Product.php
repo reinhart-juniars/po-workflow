@@ -63,6 +63,12 @@ class Product extends Model
      */
     public const ORIGIN_V2 = 'v2';
 
+    /**
+     * Dibuat otomatis dari Menu Utama tim menu (MasterMenuSync): nama dan
+     * status aktifnya mengikuti resep.
+     */
+    public const ORIGIN_MENU = 'menu';
+
     /** HPP & OHC diketik admin. */
     public const COST_MANUAL = 'manual';
 
@@ -276,6 +282,22 @@ class Product extends Model
     public function scopeAwaitingRecipe(Builder $query): Builder
     {
         return $query->where('needs_recipe', true)->whereNull('recipe_id');
+    }
+
+    /**
+     * Menu yang boleh dipesan di PO (revisi 9 Nov 2026): aktif, dan punya
+     * resep atau ditandai tim menu memang tanpa resep (HARGA UP, EXTRA 1K).
+     * Menu yang belum dicocokkan ditolak sampai tim menu menautkannya.
+     */
+    public function scopeOrderable(Builder $query): Builder
+    {
+        return $query->where('active', true)
+            ->where(fn (Builder $q) => $q->whereNotNull('recipe_id')->orWhere('needs_recipe', false));
+    }
+
+    public function isOrderable(): bool
+    {
+        return $this->active && ($this->recipe_id !== null || ! $this->needs_recipe);
     }
 
     /**

@@ -157,14 +157,9 @@ Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:admin|ow
         Route::get('/delivery', [AdminAppController::class, 'deliveryIndex'])->name('delivery.index');
         Route::post('/delivery', [AdminAppController::class, 'deliveryStore'])->name('delivery.store');
 
-        // MASTER PRODUCTS
+        // HARGA MENU: admin hanya mengisi Harga Non Lapak; menu dibuat tim menu (aplikasi Menu › Master Menu).
         Route::get('/products', [AdminProductController::class, 'index'])->name('products.index');
-        Route::get('/products/create', [AdminProductController::class, 'create'])->name('products.create');
         Route::get('/products/export/excel', [AdminProductController::class, 'exportExcel'])->name('products.export.excel');
-        Route::post('/products/import/excel', [AdminProductController::class, 'importExcel'])->name('products.import.excel');
-        Route::post('/products/import/excel/commit', [AdminProductController::class, 'commitImportExcel'])->name('products.import.excel.commit');
-        Route::post('/products/import/excel/cancel', [AdminProductController::class, 'cancelImportExcel'])->name('products.import.excel.cancel');
-        Route::post('/products', [AdminProductController::class, 'store'])->name('products.store');
         Route::get('/products/{product}/edit', [AdminProductController::class, 'edit'])->name('products.edit');
         Route::put('/products/{product}', [AdminProductController::class, 'update'])->name('products.update');
 

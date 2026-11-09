@@ -3,6 +3,7 @@
 namespace App\Filament\Menu\Resources\RecipeResource\Pages;
 
 use App\Filament\Menu\Resources\RecipeResource;
+use App\Services\MasterMenuSync;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
@@ -28,5 +29,11 @@ class EditRecipe extends EditRecord
         $data['updated_by'] = auth()->id();
 
         return $data;
+    }
+
+    /** Menu Utama lama yang disimpan tanpa produk dibuatkan Master Menu (MasterMenuSync). */
+    protected function afterSave(): void
+    {
+        app(MasterMenuSync::class)->ensureFor($this->getRecord());
     }
 }

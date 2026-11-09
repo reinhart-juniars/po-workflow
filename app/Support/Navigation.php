@@ -89,7 +89,7 @@ class Navigation
                     ['label' => 'Delivery', 'route' => 'adminapp.delivery.index', 'match' => 'adminapp.delivery.*', 'icon' => 'heroicon-o-truck'],
                 ],
                 'Menu & Harga' => [
-                    ['label' => 'Master Menu', 'route' => 'adminapp.products.index', 'match' => 'adminapp.products.*', 'icon' => 'heroicon-o-squares-2x2'],
+                    ['label' => 'Harga Menu', 'route' => 'adminapp.products.index', 'match' => 'adminapp.products.*', 'icon' => 'heroicon-o-squares-2x2'],
                     ['label' => 'Menu Tanpa HPP/OHC', 'route' => 'adminapp.reports.missing-costs', 'match' => 'adminapp.reports.missing-costs*', 'icon' => 'heroicon-o-exclamation-triangle'],
                 ],
                 'Laporan' => [
@@ -170,14 +170,15 @@ class Navigation
                     ['label' => 'Pelaksana & Pemeriksa', 'route' => 'filament.admin.resources.production-workers.index', 'can' => 'production.view'],
                 ],
             ],
-            // Aplikasi Menu (panel Filament /menu): resep & biaya menu. Harga
-            // jual dan profit ke customer tetap di Admin › Master Menu.
+            // Aplikasi Menu (panel Filament /menu): resep, biaya, dan Master Menu. Harga
+            // non lapak tetap diisi admin di Admin › Harga Menu.
             'menu' => [
                 'Ringkasan' => [
                     ['label' => 'Dashboard', 'route' => 'filament.menu.pages.dashboard', 'can' => 'recipe.view'],
                 ],
                 'Menu & Resep' => [
                     ['label' => 'Menu Utama & Sub Menu', 'route' => 'filament.menu.resources.recipes.index', 'can' => 'recipe.view'],
+                    ['label' => 'Master Menu', 'route' => 'filament.menu.resources.master-menu.index', 'can' => 'recipe.view'],
                     ['label' => 'Pencocokan Menu', 'route' => 'filament.menu.pages.pencocokan-menu', 'can' => 'recipe.view'],
                     ['label' => 'Pekerjaan Menu', 'route' => 'filament.menu.pages.pekerjaan-menu', 'can' => 'recipe.view'],
                     ['label' => 'Impor Resep MMR', 'route' => 'filament.menu.pages.impor-resep-mmr', 'can' => 'recipe.manage'],

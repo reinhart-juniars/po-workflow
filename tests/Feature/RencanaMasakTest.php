@@ -41,7 +41,7 @@ function siapkanRencanaMasak(): array
     $ayam18 = Product::query()->create(['name' => 'NASI AYAM 18K', 'unit' => 'porsi', 'base_price' => 18000, 'active' => true]);
     $ayam12->forceFill(['recipe_id' => $recipe->id])->saveQuietly();
     $ayam18->forceFill(['recipe_id' => $recipe->id])->saveQuietly();
-    $tanpaResep = Product::query()->create(['name' => 'ES TEH', 'unit' => 'cup', 'base_price' => 5000, 'active' => true]);
+    $tanpaResep = Product::query()->create(['name' => 'ES TEH', 'unit' => 'cup', 'base_price' => 5000, 'active' => true, 'needs_recipe' => false]); // memang tanpa resep: boleh dipesan, tapi tak punya stok siap
 
     $plan = ProductionOrder::query()->create(['title' => 'Rencana lapak Senin', 'is_ready_stock' => true, 'production_date' => '2026-10-20']);
     $plan->lines()->create(['kind' => ProductionOrderLine::KIND_MENU, 'source' => ProductionOrderLine::SOURCE_MANUAL, 'recipe_id' => $recipe->id, 'label' => 'Nasi Ayam Lapak', 'qty' => 20, 'unit' => 'porsi', 'sort_order' => 1]);
