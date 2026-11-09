@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CashAccount;
 use App\Models\Customer;
 use App\Models\LeftoverBreakdown;
 use App\Models\LeftoverComponent;
@@ -13,6 +14,7 @@ use App\Services\LeftoverStockService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -22,6 +24,14 @@ use Illuminate\View\View;
  */
 class LeftoverStockController extends Controller
 {
+    /** Cara bayar Penjualan Barang Sisa: "po" (ikut PO customer) atau "cash:{akun kas}". */
+    private const PAYMENT_RULE = ['required', 'string', 'regex:/^(po|cash:\d+)$/'];
+
+    private const PAYMENT_MESSAGES = [
+        'payment.required' => 'Pilih cara bayar.',
+        'payment.regex' => 'Cara bayar tidak dikenali.',
+    ];
+
     public function __construct(
         private readonly LeftoverStockService $leftovers,
         private readonly LeftoverComponentSuggester $suggester,
@@ -77,6 +87,7 @@ class LeftoverStockController extends Controller
             'stock' => $stock,
             'breakdowns' => $breakdowns,
             'customerNames' => $customerNames,
+            'cashAccounts' => CashAccount::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'recentDisposals' => $recentDisposals,
             'totalQty' => round((float) $stock->sum('available_qty'), 2),
             'totalValue' => round((float) $stock->sum('value') + (float) $breakdowns->sum('available_value'), 2),
@@ -88,20 +99,27 @@ class LeftoverStockController extends Controller
     {
         $data = $request->validate([
             'customer_name' => ['required', 'string', 'max:255'],
+            'payment' => self::PAYMENT_RULE,
             'qty' => ['required', 'numeric', 'gt:0'],
             'unit_price' => ['nullable', 'numeric', 'min:0'],
         ], [
             'customer_name.required' => 'Ketik nama customer pembeli.',
-        ]);
+        ] + self::PAYMENT_MESSAGES);
 
-        $salesActual = $this->draftForCustomer($data['customer_name']);
+        // Satu transaksi: bila penjualannya ditolak, draft baru ikut batal dibuat.
+        $salesActual = DB::transaction(function () use ($data, $entry) {
+            $salesActual = $this->draftForCustomer($data['customer_name']);
 
-        $this->leftovers->addToSalesActual(
-            $salesActual,
-            $entry,
-            (float) $data['qty'],
-            isset($data['unit_price']) ? (float) $data['unit_price'] : null,
-        );
+            $this->leftovers->addToSalesActual(
+                $salesActual,
+                $entry,
+                (float) $data['qty'],
+                isset($data['unit_price']) ? (float) $data['unit_price'] : null,
+                $this->cashAccountId($data['payment']),
+            );
+
+            return $salesActual;
+        });
 
         return redirect()
             ->route('salesapp.actuals.edit', $salesActual)
@@ -158,23 +176,26 @@ class LeftoverStockController extends Controller
             'leftover_entry_id' => ['nullable', 'integer'],
             'leftover_qty' => ['required', 'numeric', 'gt:0'],
             'leftover_price' => ['nullable', 'numeric', 'min:0'],
+            // Opsional demi klien lama; bawaan = ikut PO.
+            'payment' => ['nullable', 'string', 'regex:/^(po|cash:\d+)$/'],
         ], [
             'leftover_source.required_without' => 'Pilih Barang Sisa yang dijual.',
-        ]);
+        ] + self::PAYMENT_MESSAGES);
 
         [$kind, $id] = filled($data['leftover_source'] ?? null)
             ? explode(':', $data['leftover_source'])
             : ['entry', $data['leftover_entry_id']];
         $price = isset($data['leftover_price']) ? (float) $data['leftover_price'] : null;
+        $cashAccountId = $this->cashAccountId($data['payment'] ?? 'po');
 
         if ($kind === 'component') {
             if ($price === null) {
                 return back()->withInput()->withErrors(['leftover_price' => 'Isi harga jual komponen Barang Sisa.']);
             }
 
-            $this->leftovers->addComponentToSalesActual($salesActual, LeftoverComponent::query()->findOrFail($id), (float) $data['leftover_qty'], $price);
+            $this->leftovers->addComponentToSalesActual($salesActual, LeftoverComponent::query()->findOrFail($id), (float) $data['leftover_qty'], $price, $cashAccountId);
         } else {
-            $this->leftovers->addToSalesActual($salesActual, SalesActualItem::query()->findOrFail($id), (float) $data['leftover_qty'], $price);
+            $this->leftovers->addToSalesActual($salesActual, SalesActualItem::query()->findOrFail($id), (float) $data['leftover_qty'], $price, $cashAccountId);
         }
 
         return redirect()
@@ -225,16 +246,27 @@ class LeftoverStockController extends Controller
     {
         $data = $request->validate([
             'customer_name' => ['required', 'string', 'max:255'],
+            'payment' => self::PAYMENT_RULE,
             'qty' => ['required', 'numeric', 'gt:0'],
             'unit_price' => ['required', 'numeric', 'min:0'],
         ], [
             'customer_name.required' => 'Ketik nama customer pembeli.',
             'unit_price.required' => 'Isi harga jual komponen.',
-        ]);
+        ] + self::PAYMENT_MESSAGES);
 
-        $salesActual = $this->draftForCustomer($data['customer_name']);
+        $salesActual = DB::transaction(function () use ($data, $component) {
+            $salesActual = $this->draftForCustomer($data['customer_name']);
 
-        $this->leftovers->addComponentToSalesActual($salesActual, $component, (float) $data['qty'], (float) $data['unit_price']);
+            $this->leftovers->addComponentToSalesActual(
+                $salesActual,
+                $component,
+                (float) $data['qty'],
+                (float) $data['unit_price'],
+                $this->cashAccountId($data['payment']),
+            );
+
+            return $salesActual;
+        });
 
         return redirect()
             ->route('salesapp.actuals.edit', $salesActual)
@@ -272,40 +304,40 @@ class LeftoverStockController extends Controller
     /**
      * Sales Actual draft tujuan untuk customer yang diketik.
      *
-     * Customer harus ada di Master Customer (bukan customer internal). Cara
-     * bayar Penjualan Barang Sisa diambil dari PO customer itu, jadi tujuannya
-     * draft Sales Actual customer tersebut -- yang terbaru bila lebih dari satu.
+     * Customer harus ada di Master Customer (bukan customer internal). Tujuannya
+     * draft Sales Actual terbaru customer itu; bila belum ada, dibuatkan draft
+     * tanpa DO bertanggal hari ini (lihat LeftoverStockService::draftForBuyer).
+     * Nama kembar: utamakan yang sudah punya draft, lalu yang punya PO.
      */
     private function draftForCustomer(string $name): SalesActual
     {
         $name = trim($name);
 
-        $customerIds = Customer::query()
+        $customer = Customer::query()
             ->external()
             ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
-            ->pluck('id');
+            ->withExists([
+                'salesActuals as has_draft' => fn ($query) => $query->where('status', 'draft'),
+                'purchaseOrders as has_po' => fn ($query) => $query->whereNull('cancelled_at'),
+            ])
+            ->orderByDesc('has_draft')
+            ->orderByDesc('has_po')
+            ->orderBy('id')
+            ->first();
 
-        if ($customerIds->isEmpty()) {
+        if (! $customer) {
             throw ValidationException::withMessages([
                 'customer_name' => "Customer \"{$name}\" tidak ada di Master Customer. Pilih nama dari daftar.",
             ]);
         }
 
-        $salesActual = SalesActual::query()
-            ->external()
-            ->whereIn('customer_id', $customerIds)
-            ->where('status', 'draft')
-            ->orderByDesc('sales_date')
-            ->orderByDesc('id')
-            ->first();
+        return $this->leftovers->draftForBuyer($customer);
+    }
 
-        if (! $salesActual) {
-            throw ValidationException::withMessages([
-                'customer_name' => "Customer \"{$name}\" belum punya Sales Actual draft. Barang Sisa dijual lewat Sales Actual dari DO customer itu.",
-            ]);
-        }
-
-        return $salesActual;
+    /** Akun kas dari pilihan cara bayar "cash:{id}"; null untuk "po" (ikut PO). */
+    private function cashAccountId(string $payment): ?int
+    {
+        return str_starts_with($payment, 'cash:') ? (int) substr($payment, 5) : null;
     }
 
     /** @return array<string, mixed> */

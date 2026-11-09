@@ -10,8 +10,11 @@ it('membangun panduan pengguna pdf dari sumber html', function () {
 
     // Batas memori CLI bawaan (128 MB) tidak cukup untuk panduan 120+ halaman
     // bergambar; perintahnya sendiri yang menaikkan batas, bukan penggunanya.
+    // Batas rendah yang dipasang tetap di atas pemakaian saat ini: di full suite
+    // proses PHP bisa sudah lewat 128 MB, dan ini_set ke bawah pemakaian gagal.
     $previousLimit = ini_get('memory_limit');
-    ini_set('memory_limit', '128M');
+    $lowLimitMb = max(128, (int) ceil(memory_get_usage(true) / 1024 ** 2) + 64);
+    ini_set('memory_limit', $lowLimitMb.'M');
 
     try {
         $this->artisan('panduan:pdf', ['--output' => $output])->assertSuccessful();

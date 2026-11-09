@@ -691,6 +691,11 @@ class SalesActualService
 
     private function purchaseOrderForSalesActualItem(SalesActualItem $item): ?PurchaseOrder
     {
+        // Tunai langsung ke akun kas: tidak terikat PO mana pun (tanpa ongkir/jatuh tempo).
+        if ($item->cash_account_id) {
+            return null;
+        }
+
         return $item->purchaseOrderItem?->purchaseOrder
             ?? $item->purchaseOrder
             ?? $item->sourceSalesActualItem?->purchaseOrderItem?->purchaseOrder
@@ -704,6 +709,11 @@ class SalesActualService
         }
 
         $visitedItemIds[] = $item->id;
+
+        // Penjualan Barang Sisa dengan cara bayar dipilih langsung: tunai.
+        if ($item->cash_account_id) {
+            return 'cash';
+        }
 
         $item->loadMissing('purchaseOrderItem.purchaseOrder', 'purchaseOrder', 'sourceSalesActualItem');
 
@@ -869,6 +879,11 @@ class SalesActualService
         }
 
         $visitedItemIds[] = $item->id;
+
+        // Penjualan Barang Sisa dengan cara bayar dipilih langsung: tunai ke akun ini.
+        if ($item->cash_account_id) {
+            return (int) $item->cash_account_id;
+        }
 
         $item->loadMissing('purchaseOrderItem.purchaseOrder', 'purchaseOrder', 'sourceSalesActualItem');
 

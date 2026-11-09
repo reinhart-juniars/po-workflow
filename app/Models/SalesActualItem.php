@@ -15,6 +15,7 @@ class SalesActualItem extends Model
         'sales_actual_id',
         'purchase_order_item_id',
         'purchase_order_id',
+        'cash_account_id',
         'product_id',
         'item_name',
         'unit',
@@ -124,6 +125,12 @@ class SalesActualItem extends Model
     public function purchaseOrder(): BelongsTo
     {
         return $this->belongsTo(PurchaseOrder::class);
+    }
+
+    /** Tunai langsung ke akun kas ini (Penjualan Barang Sisa tanpa PO); null = ikut PO. */
+    public function cashAccount(): BelongsTo
+    {
+        return $this->belongsTo(CashAccount::class);
     }
 
     /**

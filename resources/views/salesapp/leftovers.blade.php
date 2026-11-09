@@ -85,6 +85,7 @@
                                             <label class="form-label" for="sell-customer-{{ $row['entry_id'] }}">Customer pembeli</label>
                                             <input id="sell-customer-{{ $row['entry_id'] }}" type="text" name="customer_name" list="leftover-customers"
                                                 autocomplete="off" maxlength="255" placeholder="Ketik nama customer" class="form-control" required>
+                                            @include('salesapp.partials.leftover-payment', ['id' => 'sell-payment-' . $row['entry_id']])
                                             <div class="grid grid-cols-2 gap-2">
                                                 <div>
                                                     <label class="form-label" for="sell-qty-{{ $row['entry_id'] }}">Qty</label>
@@ -235,6 +236,7 @@
                                                     <label class="form-label" for="csell-customer-{{ $component['component_id'] }}">Customer pembeli</label>
                                                     <input id="csell-customer-{{ $component['component_id'] }}" type="text" name="customer_name" list="leftover-customers"
                                                         autocomplete="off" maxlength="255" placeholder="Ketik nama customer" class="form-control" required>
+                                                    @include('salesapp.partials.leftover-payment', ['id' => 'csell-payment-' . $component['component_id']])
                                                     <div class="grid grid-cols-2 gap-2">
                                                         <div>
                                                             <label class="form-label" for="csell-qty-{{ $component['component_id'] }}">Qty</label>

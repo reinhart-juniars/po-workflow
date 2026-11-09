@@ -91,7 +91,7 @@
   <div class="sub">Business Control System</div>
   <p style="margin-top: 24pt; font-size: 14pt;">Panduan Pengguna</p>
   <p class="muted">Satu sistem untuk pesanan, produksi, stok, dan keuangan<br>W3S Catering</p>
-  <div class="meta">Versi 3.2.1 &middot; pembaruan 9 November 2026</div>
+  <div class="meta">Versi 3.2.2 &middot; pembaruan 9 November 2026</div>
 </div>
 
 <!-- ============ DAFTAR ISI ============ -->
@@ -429,7 +429,7 @@
   <ul>
     <li>Buka alamat sistem di browser (Chrome disarankan), lalu isi <b>username atau email</b> dan <b>password</b>.</li>
     <li>Akun baru mendapat password sementara dari Owner dan <b>wajib menggantinya</b> saat pertama masuk.</li>
-    <li>Versi sistem tertulis di bagian bawah halaman masuk (misalnya <i>3S ONE v3.2.1</i>) — sebutkan ini bila melapor masalah.</li>
+    <li>Versi sistem tertulis di bagian bawah halaman masuk (misalnya <i>3S ONE v3.2.2</i>) — sebutkan ini bila melapor masalah.</li>
   </ul>
   <div class="fig"><img src="img/login.jpg" alt="Halaman masuk. Versi sistem tertulis di bawah kolom masuk."><div class="cap">Halaman masuk. Isi username atau email dan password; versi sistem tertulis di bagian bawah.</div></div>
 
@@ -621,7 +621,7 @@
   <table class="grid">
     <tr><th style="width: 28%">Menu</th><th>Untuk apa</th></tr>
     <tr><td>Dashboard</td><td>Penjualan hari ini dan bulan berjalan. Buka Sales Actual untuk mengisi qty yang benar-benar terjual; sisanya otomatis menjadi retur.</td></tr>
-    <tr><td><b>Barang Sisa</b></td><td>Retur dari Sales Actual yang sudah disubmit. Barang Sisa boleh <b>dijual ke customer mana pun</b> (tombol <b>Jual</b>: ketik nama customer pembeli, qty, harga), <b>dibuang</b> bila tidak layak jual (tombol <b>Buang</b>, alasan wajib), atau dicatat <b>Batal</b> <span class="new">BARU</span> bila porsinya ternyata tidak jadi dibuat. Seporsi juga bisa <b>dirinci per komponen</b> (nasi, telur, …) yang dijual atau di-waste sendiri-sendiri; tombol <b>Isi dari HPP resep</b> <span class="new">BARU</span> mengisi komponen dan nilainya dari bagian resep. Sisa <b>stok siap</b> Rencana Masak yang tidak terdistribusi juga masuk ke sini. Customer yang mengganti menu dicatat di Sales Actual dengan <b>Porsi Tambahan</b> (harga PO). Rinciannya di Bab 14.</td></tr>
+    <tr><td><b>Barang Sisa</b></td><td>Retur dari Sales Actual yang sudah disubmit. Barang Sisa boleh <b>dijual ke customer mana pun</b> (tombol <b>Jual</b>: ketik nama customer pembeli, pilih cara bayar, qty, harga), <b>dibuang</b> bila tidak layak jual (tombol <b>Buang</b>, alasan wajib), atau dicatat <b>Batal</b> <span class="new">BARU</span> bila porsinya ternyata tidak jadi dibuat. Seporsi juga bisa <b>dirinci per komponen</b> (nasi, telur, …) yang dijual atau di-waste sendiri-sendiri; tombol <b>Isi dari HPP resep</b> <span class="new">BARU</span> mengisi komponen dan nilainya dari bagian resep. Sisa <b>stok siap</b> Rencana Masak yang tidak terdistribusi juga masuk ke sini. Customer yang mengganti menu dicatat di Sales Actual dengan <b>Porsi Tambahan</b> (harga PO). Rinciannya di Bab 14.</td></tr>
     <tr><td>Laporan Sales Final & Retur</td><td>Penjualan yang benar-benar terjadi setelah retur, dan ke mana tiap retur pergi: dijual ke siapa, dibuang, atau masih di Barang Sisa.</td></tr>
     <tr><td>Laporan Waste</td><td>Barang Sisa yang dibuang — baik yang ketahuan tidak layak saat dijual ulang, maupun yang dibuang langsung dari halaman Barang Sisa.</td></tr>
     <tr><td>Laporan Penjualan</td><td>Rekap penjualan per periode (juga terbaca Accounting). Mode <b>Ringkas</b> muat satu lembar; mode <b>Lihat Lengkap</b> menampilkan jumlah per harga jual untuk tiap pelanggan, dipisah Lapak dan Retail, dengan subtotal per tanggal.</td></tr>
@@ -1113,13 +1113,13 @@
   <table class="grid">
     <tr><th style="width: 28%">Ingin</th><th>Caranya</th></tr>
     <tr><td>Menjual Barang Sisa bersama penjualan hari ini</td><td>Buka Sales Actual customer pembeli (yang masih draft) › panel <b>Penjualan Barang Sisa</b>: pilih Barang Sisa, qty, dan harga, lalu <b>Tambahkan</b>. Barisnya ikut tabel, isi qty terjual, lalu submit seperti biasa.</td></tr>
-    <tr><td>Menjual dari halaman Barang Sisa</td><td><b>Sales › Barang Sisa</b> › <b>Jual</b> pada baris menunya: ketik nama customer pembeli (daftar nama muncul dari Master Customer, pilih salah satu), isi qty dan harga. Barang Sisa masuk ke Sales Actual draft <b>terbaru</b> customer itu. Bila customer belum punya Sales Actual draft dari DO, sistem menolak; buat dulu Sales Actual-nya dari DO.</td></tr>
+    <tr><td>Menjual dari halaman Barang Sisa</td><td><b>Sales › Barang Sisa</b> › <b>Jual</b> pada baris menunya: ketik nama customer pembeli (daftar nama muncul dari Master Customer, pilih salah satu), isi qty dan harga. Pilih <b>Cara bayar</b> <span class="new">BARU</span>: <i>Ikuti PO customer</i> bila customer itu punya DO hari ini, atau <i>Tunai · nama akun kas</i> bila tidak (mis. lapak). Barang Sisa masuk ke Sales Actual draft <b>terbaru</b> customer itu; bila belum ada, sistem membuatkan Sales Actual draft <b>tanpa DO</b> bertanggal hari ini, lalu membukanya untuk diisi qty terjual dan disubmit.</td></tr>
     <tr><td>Salah menambahkan</td><td>Di Sales Actual yang masih draft, tekan <b>Lepas dari Sales Actual ini</b> pada baris Barang Sisa; qty-nya kembali ke stok Barang Sisa.</td></tr>
     <tr><td>Membuang yang tidak layak jual</td><td><b>Sales › Barang Sisa</b> › <b>Buang</b>: isi qty, tanggal, dan alasan (wajib). Atau, bila baru ketahuan saat dijual ulang, isi kolom <b>Qty Waste</b> pada barisnya.</td></tr>
     <tr><td>Menu tidak jadi dibuat <span class="new">BARU</span></td><td><b>Sales › Barang Sisa</b> › <b>Batal</b>: isi qty yang tidak jadi dibuat, tanggal, dan keterangan (boleh kosong). Stok Barang Sisa berkurang tanpa dihitung waste, karena bahan bakunya memang tidak terpakai. Riwayatnya tampil di tabel <b>Dibuang &amp; Batal 30 Hari Terakhir</b> dengan jenis <i>Batal dibuat</i>.</td></tr>
   </table>
   <ul>
-    <li><b>Cara bayar</b> Penjualan Barang Sisa mengikuti PO customer pembeli di DO-nya (tunai ke akun kasnya, atau piutang). Karena itu Barang Sisa hanya bisa dijual lewat Sales Actual yang berasal dari DO — kecuali dijual kembali ke customer asal returnya.</li>
+    <li><b>Cara bayar</b> Penjualan Barang Sisa dipilih saat menjual. <i>Ikuti PO customer</i>: tunai ke akun kas PO-nya, atau piutang, sesuai PO customer pembeli di DO-nya. <i>Tunai · akun kas</i>: uangnya masuk akun kas itu saat closing harian, tanpa PO dan tanpa ongkir. Piutang hanya bisa lewat PO, karena piutang dicatat per PO. Customer tanpa DO hari ini yang memilih <i>Ikuti PO</i> ditolak dengan pesan untuk memilih Tunai.</li>
     <li>Satu retur boleh dipecah ke beberapa customer. Barang Sisa yang sudah ditambahkan ke draft langsung dikunci, jadi tidak bisa terjual dua kali.</li>
     <li>Barang Sisa tidak punya batas umur; biasanya terjual keesokan harinya.</li>
     <li><b>Sisa stok siap</b> dari Rencana Masak juga muncul di sini, dengan asal <i>Stok Siap Dapur (internal)</i> dan HPP per porsi dari resepnya. Cara menjual, merinci, dan membuangnya sama persis dengan retur biasa (Bab 15).</li>
@@ -1569,7 +1569,7 @@
   <h3>Angka di laporan Owner dan laporan Accounting berbeda?</h3>
   <p>Seharusnya tidak, karena sumbernya sama. Cek dulu apakah periode/tanggal yang dipilih sama, dan apakah periode itu sudah ditutup buku. Kalau masih berbeda, laporkan dengan menyebut menu, periode, dan versi sistem (tertera di halaman masuk).</p>
 
-  <p class="muted small" style="margin-top: 20pt;">3S ONE · Panduan Pengguna v3.2.1 · Dibuat dari sistem yang berjalan, bukan dari rencana — bila layar Anda berbeda dari panduan ini, kemungkinan versi sistem sudah lebih baru.</p>
+  <p class="muted small" style="margin-top: 20pt;">3S ONE · Panduan Pengguna v3.2.2 · Dibuat dari sistem yang berjalan, bukan dari rencana — bila layar Anda berbeda dari panduan ini, kemungkinan versi sistem sudah lebih baru.</p>
 </div>
 
 </body>
