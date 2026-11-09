@@ -193,7 +193,11 @@ class Product extends Model
         return round((float) $recipe->target_price, 2);
     }
 
-    /** Resep tertautnya juga dipakai produk lain (varian harga). */
+    /**
+     * Resep tertautnya juga dipakai produk aktif lain (varian harga). Varian
+     * yang dinonaktifkan MasterMenuSync tidak dihitung, supaya harga lapak menu
+     * jualnya kembali mengikuti Harga Jual Target resep.
+     */
     public function recipeIsShared(): bool
     {
         $recipe = $this->recipe_id === null ? null : ($this->relationLoaded('recipe') ? $this->recipe : $this->recipe()->first());
@@ -202,8 +206,14 @@ class Product extends Model
             return false;
         }
 
-        // products_count dimuat lewat withCount di daftar & sinkron; sisanya dihitung.
-        return ($recipe->products_count ?? $recipe->products()->count()) > 1;
+        // products_count dimuat lewat withCount (activeProductsCount) di daftar & sinkron; sisanya dihitung.
+        return ($recipe->products_count ?? $recipe->products()->where('active', true)->count()) > 1;
+    }
+
+    /** Untuk withCount resep: hanya produk aktif (lihat recipeIsShared). */
+    public static function activeProductsCount(): array
+    {
+        return ['products' => fn ($query) => $query->where('active', true)];
     }
 
     /** Harga lapak diatur tim menu lewat resep, terkunci di Admin App. */
@@ -285,19 +295,21 @@ class Product extends Model
     }
 
     /**
-     * Menu yang boleh dipesan di PO (revisi 9 Nov 2026): aktif, dan punya
-     * resep atau ditandai tim menu memang tanpa resep (HARGA UP, EXTRA 1K).
-     * Menu yang belum dicocokkan ditolak sampai tim menu menautkannya.
+     * Menu yang boleh dipesan di PO dan tampil di Harga Menu (revisi 9 Nov
+     * 2026): hanya menu jual sebuah Menu Utama aktif tim menu (origin `menu`,
+     * lihat MasterMenuSync). Sisa V2, varian harga, dan item tanpa resep
+     * (HARGA UP, EXTRA 1K) tidak bisa dipesan.
      */
     public function scopeOrderable(Builder $query): Builder
     {
         return $query->where('active', true)
-            ->where(fn (Builder $q) => $q->whereNotNull('recipe_id')->orWhere('needs_recipe', false));
+            ->where('origin', self::ORIGIN_MENU)
+            ->whereHas('recipe', fn (Builder $recipe) => $recipe->utama()->where('is_active', true));
     }
 
     public function isOrderable(): bool
     {
-        return $this->active && ($this->recipe_id !== null || ! $this->needs_recipe);
+        return $this->exists && static::query()->orderable()->whereKey($this->getKey())->exists();
     }
 
     /**

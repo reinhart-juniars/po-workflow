@@ -211,6 +211,8 @@ it('mengunci Harga Lapak dari resep di Admin, tetapi Harga Non Lapak tetap diisi
     $data['recipe']->update(['target_price' => 12000]);
     sinkron();
     $product = $data['product']->fresh();
+    // Menu jual Menu Utama: hanya ini yang tampil di Harga Menu.
+    $product->forceFill(['origin' => Product::ORIGIN_MENU])->saveQuietly();
     $admin = adminMenu();
 
     $this->actingAs($admin)->get(route('adminapp.products.edit', $product))->assertOk()

@@ -45,6 +45,23 @@ expect()->extend('toBeOne', function () {
 */
 
 /**
+ * Menu jual sebuah Menu Utama (origin `menu`), satu-satunya jenis menu yang
+ * bisa dipesan di PO sejak 9 Nov 2026. Resepnya ikut dibuat bila tidak diberi.
+ */
+function menuJual(array $attributes = [], ?App\Models\Recipe $recipe = null): App\Models\Product
+{
+    $recipe ??= App\Models\Recipe::query()->create([
+        'name' => $attributes['name'] ?? 'Menu Uji', 'jenis' => App\Models\Recipe::JENIS_UTAMA,
+        'yield_qty' => 1, 'yield_unit' => 'porsi', 'ohc_pct' => 0, 'profit_pct' => 0, 'is_active' => true,
+    ]);
+
+    $product = App\Models\Product::query()->create($attributes + ['unit' => 'porsi', 'active' => true, 'recipe_id' => $recipe->id]);
+    $product->forceFill(['origin' => App\Models\Product::ORIGIN_MENU])->saveQuietly();
+
+    return $product;
+}
+
+/**
  * Data produksi lengkap untuk tes alur SPK Produksi -> Form Kebutuhan ->
  * kartu stok: dua bahan berharga, satu resep (10 porsi), satu SPK dengan dua
  * PO (30 + 50 porsi) dan satu produk tanpa resep.

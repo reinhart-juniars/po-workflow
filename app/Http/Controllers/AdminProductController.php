@@ -25,8 +25,12 @@ class AdminProductController extends Controller
         $q = trim((string) $request->query('q', ''));
         $priceMissing = $request->query('harga') === 'kosong';
 
+        // Harga Menu = menu yang bisa dipesan di PO: Menu Utama tim menu (punya
+        // resep) atau ditandai tim menu memang tanpa resep (Product::scopeOrderable).
+        // Sisa V2 yang belum tertaut tidak ditampilkan sama sekali.
         $products = Product::query()
-            ->with(['recipe' => fn ($query) => $query->select('id', 'name', 'target_price')->withCount('products')])
+            ->orderable()
+            ->with(['recipe' => fn ($query) => $query->select('id', 'name', 'target_price')->withCount(Product::activeProductsCount())])
             ->withMax('priceHistories as price_last_changed_at', 'effective_from')
             ->withCount('priceHistories')
             ->when($q !== '', function ($query) use ($q) {
@@ -36,13 +40,13 @@ class AdminProductController extends Controller
                         ->orWhere('sku', 'like', $like);
                 });
             })
-            ->when($priceMissing, fn ($query) => $query->where('active', true)->where(fn ($inner) => $inner->whereNull('base_price')->orWhere('base_price', '<=', 0)))
+            ->when($priceMissing, fn ($query) => $query->where(fn ($inner) => $inner->whereNull('base_price')->orWhere('base_price', '<=', 0)))
             ->orderBy('name')
             ->paginate(20)
             ->withQueryString();
 
         $priceMissingCount = Product::query()
-            ->where('active', true)
+            ->orderable()
             ->where(fn ($inner) => $inner->whereNull('base_price')->orWhere('base_price', '<=', 0))
             ->count();
 
@@ -88,7 +92,7 @@ class AdminProductController extends Controller
         $fileName = 'harga_menu_'.now()->format('Ymd_His').'.xlsx';
 
         return Excel::download(
-            new ProductsExport(Product::query()->orderBy('name')->get()),
+            new ProductsExport(Product::query()->orderable()->orderBy('name')->get()),
             $fileName
         );
     }

@@ -46,8 +46,8 @@
         <div>
             <h1 class="section-title">Harga Menu</h1>
             <p class="section-subtitle">
-                Isi Harga Non Lapak tiap menu. Menu baru, nama, harga lapak, dan HPP diatur tim menu di aplikasi Menu
-                (Master Menu), jadi menu baru otomatis muncul di sini.
+                Daftar ini sama dengan Menu Utama tim menu, dan hanya menu ini yang bisa dipesan di PO. Isi Harga Non
+                Lapak-nya di sini; nama, harga lapak, dan HPP diatur tim menu di aplikasi Menu.
             </p>
         </div>
         <div class="toolbar-actions">
@@ -133,14 +133,9 @@
                                             <span class="cost-tag is-manual" title="Hitungan resep belum lengkap; HPP &amp; OHC masih angka manual">HPP manual</span>
                                         @endif
                                     </div>
-                                @elseif (! $product->needs_recipe)
-                                    <div class="mt-1 text-[11px] text-slate-400">Tanpa resep</div>
-                                @elseif (auth()->user()?->can('recipe.view'))
-                                    <a href="{{ route('filament.menu.pages.pencocokan-menu') }}"
-                                       class="mt-1 badge-soft-amber"
-                                       title="Belum ditautkan ke resep di aplikasi Menu — buka Pencocokan Menu">
-                                        Belum ada resep
-                                    </a>
+                                @else
+                                    {{-- Daftar ini hanya menu yang bisa dipesan: tanpa resep = ditandai memang tanpa resep. --}}
+                                    <div class="mt-1 text-[11px] text-slate-400">Memang tanpa resep</div>
                                 @endif
                             </td>
                             <td class="whitespace-nowrap">{{ $product->unit }}</td>

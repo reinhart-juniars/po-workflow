@@ -21,9 +21,8 @@ function siapkanHargaLapak(bool $customerLapak = false): array
     $area = Area::query()->create(['name' => 'Area Lapak', 'code' => 'ALP']);
     $customer = Customer::query()->create(['name' => $customerLapak ? 'KUTISARI LAPAK' : 'Bu Rina', 'area_id' => $area->id, 'active' => true, 'is_lapak' => $customerLapak]);
     $cash = CashAccount::query()->create(['name' => 'Kas', 'type' => 'cash', 'is_active' => true]);
-    // needs_recipe false = ditandai tim menu memang tanpa resep, jadi boleh dipesan di PO.
-    $nasi = Product::query()->create(['name' => 'NASI AYAM 15K', 'unit' => 'porsi', 'base_price' => 15000, 'lapak_price' => 12000, 'active' => true, 'needs_recipe' => false]);
-    $teh = Product::query()->create(['name' => 'ES TEH', 'unit' => 'cup', 'base_price' => 5000, 'active' => true, 'needs_recipe' => false]); // tanpa harga lapak
+    $nasi = menuJual(['name' => 'NASI AYAM 15K', 'unit' => 'porsi', 'base_price' => 15000, 'lapak_price' => 12000]);
+    $teh = menuJual(['name' => 'ES TEH', 'unit' => 'cup', 'base_price' => 5000]); // tanpa harga lapak
 
     Role::findOrCreate('admin', 'web');
     $admin = User::factory()->create(['is_active' => true, 'force_password_change' => false]);

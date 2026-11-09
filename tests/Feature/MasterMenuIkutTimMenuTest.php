@@ -116,77 +116,75 @@ it('membuatkan Master Menu saat Menu Utama lama tanpa menu disimpan ulang', func
     expect(Product::query()->count())->toBe(1);
 });
 
-it('mengikutkan nama dan status aktif menu buatan resep, tapi tidak mengganti nama menu lama', function () {
+it('mengikutkan nama dan status aktif menu jual pada resepnya', function () {
     $recipe = resepUtama();
-    $baru = app(MasterMenuSync::class)->ensureFor($recipe);
-    $lama = Product::query()->create(['name' => 'NASI TERIYAKI 18K', 'sku' => 'NASI TERIYAKI 18K', 'unit' => 'porsi', 'base_price' => 18000, 'active' => true, 'recipe_id' => $recipe->id]);
-    $lama->forceFill(['origin' => Product::ORIGIN_V2])->saveQuietly();
+    $menu = app(MasterMenuSync::class)->ensureFor($recipe);
 
     $recipe->update(['name' => 'Nasi Chicken Teriyaki Box WP']);
-    expect($baru->fresh()->name)->toBe('NASI CHICKEN TERIYAKI BOX WP')
-        ->and($lama->fresh()->name)->toBe('NASI TERIYAKI 18K');
+    expect($menu->fresh()->name)->toBe('NASI CHICKEN TERIYAKI BOX WP');
 
     $recipe->update(['is_active' => false]);
-    expect($baru->fresh()->active)->toBeFalse()
-        ->and($lama->fresh()->active)->toBeTrue();
+    expect($menu->fresh()->active)->toBeFalse()
+        ->and($menu->fresh()->isOrderable())->toBeFalse();
 
     // Disimpan tanpa mengubah status: menu yang sengaja dinonaktifkan tetap nonaktif.
     $recipe->update(['is_active' => true]);
-    $baru->fresh()->update(['active' => false]);
+    $menu->fresh()->update(['active' => false]);
     $recipe->update(['notes' => 'catatan baru']);
-    expect($baru->fresh()->active)->toBeFalse();
+    expect($menu->fresh()->active)->toBeFalse();
 });
 
-it('memberi nomor pada SKU menu buatan resep bila namanya sudah dipakai', function () {
-    Product::query()->create(['name' => 'SOTO AYAM', 'sku' => 'Soto Ayam', 'unit' => 'porsi', 'base_price' => 0, 'active' => true]);
+it('memberi nomor pada SKU menu baru bila namanya sudah dipakai', function () {
+    Product::query()->create(['name' => 'SOTO AYAM LAMA', 'sku' => 'Soto Ayam', 'unit' => 'porsi', 'base_price' => 0, 'active' => true]);
 
     $product = app(MasterMenuSync::class)->ensureFor(resepUtama(['name' => 'Soto Ayam']));
 
     expect($product->sku)->toBe('Soto Ayam (2)');
 });
 
-it('menolak menu tanpa resep di PO, tetapi menerima menu beresep dan yang memang tanpa resep', function () {
+it('hanya menerima menu jual Menu Utama di PO', function () {
     $admin = penggunaPeranMenu('admin');
-    $belumCocok = Product::query()->create(['name' => 'DONAT 3K', 'sku' => 'DONAT 3K', 'unit' => 'pcs', 'base_price' => 3000, 'active' => true]);
+    $sisaV2 = Product::query()->create(['name' => 'DONAT 3K', 'sku' => 'DONAT 3K', 'unit' => 'pcs', 'base_price' => 3000, 'active' => true]);
     $hargaUp = Product::query()->create(['name' => 'HARGA UP 2K', 'sku' => 'HARGA UP 2K', 'unit' => 'pcs', 'base_price' => 2000, 'active' => true, 'needs_recipe' => false]);
-    $beresep = app(MasterMenuSync::class)->ensureFor(resepUtama());
-    $beresep->update(['base_price' => 25000]);
+    $menu = app(MasterMenuSync::class)->ensureFor(resepUtama());
+    $menu->update(['base_price' => 25000]);
 
     $this->actingAs($admin)->get(route('adminapp.orders.index'))->assertOk()
-        ->assertSee('HARGA UP 2K')
         ->assertSee('NASI AYAM TERIYAKI BOX WP')
-        ->assertDontSee('DONAT 3K');
+        ->assertDontSee('DONAT 3K')
+        ->assertDontSee('HARGA UP 2K');
 
-    $this->actingAs($admin)->post(route('adminapp.orders.store'), formPoMenu([
-        ['product_id' => $belumCocok->id, 'qty' => 10],
-    ]))->assertSessionHasErrors(['items.0.product_id' => 'Menu DONAT 3K belum punya resep. Minta tim menu menautkannya ke resep di aplikasi Menu sebelum dipesan.']);
+    foreach ([$sisaV2, $hargaUp] as $product) {
+        $this->actingAs($admin)->post(route('adminapp.orders.store'), formPoMenu([['product_id' => $product->id, 'qty' => 10]]))
+            ->assertSessionHasErrors(['items.0.product_id' => 'Menu '.$product->name.' tidak ada di Menu Utama tim menu, jadi tidak bisa dipesan. Pilih menu dari daftar.']);
+    }
     expect(PurchaseOrder::query()->count())->toBe(0);
 
-    // Kontrol positif: menu beresep dan menu yang memang tanpa resep lolos.
-    $this->actingAs($admin)->post(route('adminapp.orders.store'), formPoMenu([
-        ['product_id' => $beresep->id, 'qty' => 10],
-        ['product_id' => $hargaUp->id, 'qty' => 10],
-    ]))->assertSessionHasNoErrors();
-    expect(PurchaseOrder::query()->sole()->items()->count())->toBe(2);
+    // Kontrol positif: menu jual Menu Utama lolos.
+    $this->actingAs($admin)->post(route('adminapp.orders.store'), formPoMenu([['product_id' => $menu->id, 'qty' => 10]]))
+        ->assertSessionHasNoErrors();
+    expect(PurchaseOrder::query()->sole()->items()->sole()->product_id)->toBe($menu->id);
 });
 
 it('tetap bisa mengedit PO lama yang memuat menu yang kini tidak bisa dipesan', function () {
     $admin = penggunaPeranMenu('admin');
-    $donat = Product::query()->create(['name' => 'DONAT 3K', 'sku' => 'DONAT 3K', 'unit' => 'pcs', 'base_price' => 3000, 'active' => true, 'needs_recipe' => false]);
+    $recipe = resepUtama(['name' => 'Donat Gula']);
+    $donat = app(MasterMenuSync::class)->ensureFor($recipe);
     $lain = Product::query()->create(['name' => 'BOLU 5K', 'sku' => 'BOLU 5K', 'unit' => 'pcs', 'base_price' => 5000, 'active' => true]);
 
     $this->actingAs($admin)->post(route('adminapp.orders.store'), formPoMenu([['product_id' => $donat->id, 'qty' => 10]]))->assertSessionHasNoErrors();
     $po = PurchaseOrder::query()->sole();
 
-    // Tim menu mencabut tanda "memang tanpa resep": DONAT tidak bisa dipesan lagi.
-    $donat->update(['needs_recipe' => true]);
+    // Tim menu menonaktifkan resepnya: menu tidak bisa dipesan di PO baru.
+    $recipe->update(['is_active' => false]);
+    expect($donat->fresh()->isOrderable())->toBeFalse();
 
-    $this->actingAs($admin)->get(route('adminapp.orders.edit', $po))->assertOk()->assertSee('DONAT 3K');
+    $this->actingAs($admin)->get(route('adminapp.orders.edit', $po))->assertOk()->assertSee('DONAT GULA');
     $this->actingAs($admin)->put(route('adminapp.orders.update', $po), formPoMenu([['product_id' => $donat->id, 'qty' => 12]]) + ['edit_reason' => 'Tambah porsi'])
         ->assertSessionHasNoErrors();
     expect($po->fresh()->items()->sole()->qty)->toBe(12);
 
-    // Menu tanpa resep yang belum ada di PO tetap ditolak.
+    // Menu di luar Menu Utama yang belum ada di PO tetap ditolak.
     $this->actingAs($admin)->put(route('adminapp.orders.update', $po), formPoMenu([['product_id' => $lain->id, 'qty' => 1]]) + ['edit_reason' => 'Ganti menu'])
         ->assertSessionHasErrors('items.0.product_id');
 });
@@ -222,9 +220,10 @@ it('membuka Master Menu di aplikasi Menu: tim menu mengubah, admin hanya melihat
     $this->actingAs(penggunaPeranMenu('admin'))->get(MasterMenuResource::getUrl('edit', ['record' => $menu]))->assertForbidden();
     $this->actingAs(penggunaPeranMenu('sales'))->get(MasterMenuResource::getUrl('index'))->assertForbidden();
 
-    // Harga lapak dari target resep terkunci; harga non lapak tidak ada di form tim menu.
+    // Nama ikut resep dan terkunci; harga non lapak tidak ada di form tim menu.
     Livewire::actingAs(penggunaPeranMenu('menu'))
         ->test(EditMasterMenu::class, ['record' => $menu->getRouteKey()])
+        ->assertFormFieldIsDisabled('name')
         ->assertFormFieldExists('lapak_price')
         ->assertFormFieldDoesNotExist('base_price');
 });
@@ -247,11 +246,14 @@ it('menonaktifkan menu tanpa resep yang 90 hari tidak dipakai, dan membiarkan si
     $baruDiubah = $buat('MENU BARU DIAKTIFKAN');
     $baruDiubah->forceFill(['updated_at' => Carbon::parse('2026-10-30')])->saveQuietly();
 
-    $this->actingAs(penggunaPeranMenu('admin'));
-    $dipesan->update(['needs_recipe' => false]);
-    $dipesan->forceFill(['updated_at' => $lama])->saveQuietly();
-    $this->post(route('adminapp.orders.store'), formPoMenu([['product_id' => $dipesan->id, 'qty' => 1]]))->assertSessionHasNoErrors();
-    PurchaseOrder::query()->update(['delivery_date' => '2026-09-01', 'created_at' => '2026-08-30 10:00:00']);
+    // PO lama yang memakai MENU V2 LARIS (tanggal kirim dalam 90 hari).
+    formPoMenu([]);
+    $po = PurchaseOrder::query()->create([
+        'customer_id' => Customer::query()->value('id'), 'recipient_name' => 'Penerima', 'shipping_address' => 'Jl.',
+        'area_id' => Area::query()->value('id'), 'delivery_date' => '2026-09-01', 'delivery_time' => '09:00:00', 'payment_type' => 'cash', 'status' => 'completed', 'created_by' => User::factory()->create()->id,
+    ]);
+    $po->items()->create(['product_id' => $dipesan->id, 'qty' => 1, 'unit' => 'porsi']);
+    $po->forceFill(['created_at' => '2026-08-30 10:00:00'])->saveQuietly();
 
     // Uji-jalan tidak mengubah apa pun.
     $this->artisan('menu:deactivate-unused', ['--dry-run' => true])->assertSuccessful();
@@ -266,4 +268,95 @@ it('menonaktifkan menu tanpa resep yang 90 hari tidak dipakai, dan membiarkan si
         ->and(DeactivateUnusedMenusCommand::IDLE_DAYS)->toBe(90);
 
     Carbon::setTestNow();
+});
+
+it('menyamakan seluruh Master Menu dengan Menu Utama lewat menu:sync-from-recipes', function () {
+    $admin = penggunaPeranMenu('admin');
+
+    // Resep bertaut dua varian V2: yang paling sering dipesan jadi menu jualnya.
+    $koloke = resepUtama(['name' => 'Nasi Koloke']);
+    $koloke12 = Product::query()->create(['name' => 'NASI KOLOKE 12K', 'sku' => 'Nasi Koloke 12K', 'unit' => 'porsi', 'base_price' => 12000, 'active' => true, 'recipe_id' => $koloke->id]);
+    $koloke15 = Product::query()->create(['name' => 'NASI KOLOKE 15K', 'sku' => 'Nasi Koloke', 'unit' => 'porsi', 'base_price' => 15000, 'active' => true, 'recipe_id' => $koloke->id]);
+    formPoMenu([]);
+    $po = PurchaseOrder::query()->create([
+        'customer_id' => Customer::query()->value('id'), 'recipient_name' => 'Penerima', 'shipping_address' => 'Jl.',
+        'area_id' => Area::query()->value('id'), 'delivery_date' => now()->subDays(3)->toDateString(), 'delivery_time' => '09:00:00', 'payment_type' => 'cash', 'status' => 'completed', 'created_by' => User::factory()->create()->id,
+    ]);
+    $po->items()->create(['product_id' => $koloke15->id, 'qty' => 5, 'unit' => 'porsi']);
+    $po->items()->create(['product_id' => $koloke15->id, 'qty' => 2, 'unit' => 'porsi']);
+    $po->items()->create(['product_id' => $koloke12->id, 'qty' => 1, 'unit' => 'porsi']);
+
+    // Menu V2 tanpa resep bernama sama: ditautkan, harganya terbawa.
+    $ladaHitam = Product::query()->create(['name' => 'NASI AYAM LADA HITAM', 'sku' => 'NASI AYAM LADA HITAM', 'unit' => 'porsi', 'base_price' => 14000, 'active' => true]);
+    $resepLada = resepUtama(['name' => 'Nasi Ayam Lada Hitam']);
+
+    // Harga di nama berbeda: tidak ditautkan, resepnya dibuatkan menu baru.
+    $sopMerah = Product::query()->create(['name' => 'NASI SOP MERAH 15K', 'sku' => 'NASI SOP MERAH 15K', 'unit' => 'porsi', 'base_price' => 15000, 'active' => true]);
+    $resepSop = resepUtama(['name' => 'nasi sop merah 12k']);
+
+    // Item di luar Menu Utama.
+    $hargaUp = Product::query()->create(['name' => 'HARGA UP 2K', 'sku' => 'HARGA UP 2K', 'unit' => 'pcs', 'base_price' => 2000, 'active' => true, 'needs_recipe' => false]);
+    resepUtama(['name' => 'Sambal Bawang', 'jenis' => Recipe::JENIS_SUB]);
+
+    $this->artisan('menu:sync-from-recipes', ['--dry-run' => true])->assertSuccessful();
+    expect($koloke15->fresh()->name)->toBe('NASI KOLOKE 15K')
+        ->and(Product::query()->count())->toBe(5);
+
+    $this->artisan('menu:sync-from-recipes')->assertSuccessful();
+
+    expect($koloke15->fresh())
+        ->name->toBe('NASI KOLOKE')
+        ->sku->toBe('Nasi Koloke')
+        ->origin->toBe(Product::ORIGIN_MENU)
+        ->and((float) $koloke15->fresh()->base_price)->toBe(15000.0)
+        ->and($koloke12->fresh()->active)->toBeFalse()
+        ->and($ladaHitam->fresh())->recipe_id->toBe($resepLada->id)->name->toBe('NASI AYAM LADA HITAM')
+        ->and($sopMerah->fresh()->recipe_id)->toBeNull()
+        ->and(Product::query()->where('recipe_id', $resepSop->id)->sole()->name)->toBe('NASI SOP MERAH 12K');
+
+    // Harga Menu = pilihan PO = tepat satu menu per Menu Utama, bernama resep.
+    expect(Product::query()->orderable()->orderBy('name')->pluck('name')->all())
+        ->toBe(['NASI AYAM LADA HITAM', 'NASI KOLOKE', 'NASI SOP MERAH 12K']);
+
+    foreach ([route('adminapp.products.index'), route('adminapp.orders.index')] as $url) {
+        $this->actingAs($admin)->get($url)->assertOk()
+            ->assertSee('NASI KOLOKE')
+            ->assertDontSee('NASI KOLOKE 12K')
+            ->assertDontSee('NASI KOLOKE 15K')
+            ->assertDontSee('HARGA UP 2K')
+            ->assertDontSee('NASI SOP MERAH 15K');
+    }
+
+    // Satu lonceng ringkasan untuk menu baru, bukan satu per menu.
+    expect(DatabaseNotification::query()->where('notifiable_id', $admin->id)->pluck('data')->pluck('title')->all())
+        ->toBe(['1 menu dari tim menu belum punya Harga Non Lapak']);
+
+    // Dijalankan ulang: tidak ada perubahan lagi.
+    $this->artisan('menu:sync-from-recipes')->assertSuccessful();
+    expect(Product::query()->orderable()->count())->toBe(3)
+        ->and($hargaUp->fresh()->isOrderable())->toBeFalse();
+});
+
+it('memakai menu lama bernama sama saat Menu Utama disimpan, bukan membuat menu dobel', function () {
+    $lama = Product::query()->create(['name' => 'NASI AYAM LADA HITAM', 'sku' => 'NASI AYAM LADA HITAM', 'unit' => 'porsi', 'base_price' => 14000, 'active' => true]);
+    $recipe = resepUtama(['name' => 'Nasi Ayam Lada Hitam']);
+
+    $menu = app(MasterMenuSync::class)->ensureFor($recipe);
+
+    expect($menu->is($lama))->toBeTrue()
+        ->and(Product::query()->count())->toBe(1)
+        ->and($lama->fresh()->isOrderable())->toBeTrue();
+});
+
+it('menjalankan sinkron Menu Utama lewat migrasi supaya Harga Menu tidak kosong setelah deploy', function () {
+    $recipe = resepUtama(['name' => 'Nasi Bakmoy']);
+    $lama = Product::query()->create(['name' => 'NASI BAKMOY 12K', 'sku' => 'NASI BAKMOY 12K', 'unit' => 'porsi', 'base_price' => 12000, 'active' => true, 'recipe_id' => $recipe->id]);
+    expect(Product::query()->orderable()->count())->toBe(0);
+
+    (require database_path('migrations/2026_11_09_100001_sync_master_menu_from_recipes.php'))->up();
+
+    expect($lama->fresh())
+        ->name->toBe('NASI BAKMOY')
+        ->isOrderable()->toBeTrue()
+        ->and((float) $lama->fresh()->base_price)->toBe(12000.0);
 });

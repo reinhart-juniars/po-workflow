@@ -43,9 +43,12 @@ menggantikan HPP residual opname dengan pemakaian bahan riil dari resep × produ
 - **Master Menu ikut tim menu** (9 Nov 2026): menu dibuat dan diatur di aplikasi Menu › Master Menu
   (`MasterMenuResource`). Menu Utama yang dibuat/disimpan tanpa menu otomatis dibuatkan satu (`MasterMenuSync`,
   `products.origin = menu`; nama & status aktifnya ikut resep), dan admin diberi lonceng untuk mengisi harga.
-  Admin App › **Harga Menu** hanya mengisi Harga Non Lapak (tanpa tambah menu / impor Excel). Menu yang belum
-  punya resep tidak bisa dipesan di PO kecuali ditandai *memang tanpa resep* (`Product::scopeOrderable`);
-  menu tanpa resep yang 90 hari tidak dipakai dinonaktifkan `menu:deactivate-unused` (05:45).
+  Admin App › **Harga Menu** hanya mengisi Harga Non Lapak (tanpa tambah menu / impor Excel). Harga Menu dan
+  pilihan menu di PO **hanya berisi menu jual Menu Utama** (`Product::scopeOrderable`: origin `menu`, resep utama
+  aktif) — satu menu per Menu Utama, bernama resepnya; sisa V2, varian 10K/12K, dan HARGA UP tidak bisa dipesan.
+  Rapikan data lama sekali jalan dengan `menu:sync-from-recipes` (menu V2 tertaut yang paling sering dipesan
+  diganti nama jadi nama resep, varian lain dinonaktifkan, menu V2 bernama sama ditautkan, sisanya dibuat baru).
+  Menu tanpa resep yang 90 hari tidak dipakai dinonaktifkan `menu:deactivate-unused` (05:45).
 - **Breakdown SPK Produksi bertingkat**: menu → sub menu → bahan, buka-tutup berpanah
   (`RecipeCostService::tree`, `partials/recipe-tree`).
 - **Purchasing — Tagihan Pembelian**: gudang tidak lagi memilih akun kas. Periksa Form Kebutuhan
@@ -159,6 +162,7 @@ Dokumen:
 | `profit:check` | Periksa profit menu keseluruhan terhadap batas; lonceng bila berubah keadaan (dijadwalkan harian 06:30) |
 | `menu:sync-product-costs` | Hitung ulang HPP & OHC produk yang bertaut resep (dijadwalkan harian 06:15; perubahan resep/harga bahan sudah tersinkron otomatis) |
 | `menu:deactivate-unused {--dry-run}` | Nonaktifkan menu tanpa resep yang 90 hari tidak dipakai di PO / sales actual dan tidak diubah (dijadwalkan harian 05:45) |
+| `menu:sync-from-recipes {--dry-run}` | Jadikan tiap Menu Utama tepat satu menu jual bernama resepnya; sesudahnya Harga Menu & PO = Menu Utama (jalankan sekali setelah deploy, aman diulang) |
 | `db:clone-to-staging` | Salin database kerja ke `po_workflow_staging` |
 | `po:audit-cash-in {--fix}` | Audit data kas PO lama |
 

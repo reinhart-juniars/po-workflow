@@ -195,9 +195,7 @@ class AdminAppController extends Controller
                 return;
             }
 
-            $fail($product->active
-                ? 'Menu '.$product->name.' belum punya resep. Minta tim menu menautkannya ke resep di aplikasi Menu sebelum dipesan.'
-                : 'Menu '.$product->name.' sudah nonaktif.');
+            $fail('Menu '.$product->name.' tidak ada di Menu Utama tim menu, jadi tidak bisa dipesan. Pilih menu dari daftar.');
         };
     }
 
