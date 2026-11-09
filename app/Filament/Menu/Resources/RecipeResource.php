@@ -99,9 +99,9 @@ class RecipeResource extends Resource
                                 static::syncProducts($record, array_map('intval', (array) $component->getState()));
                             })
                             ->helperText(
-                                'Menu di PO yang dimasak dengan resep ini. Kosongkan untuk menu baru: Master Menu '
-                                .'dibuat otomatis dengan nama resep ini saat disimpan. Pilih menu lama (V2) bila menu ini '
-                                .'sudah ada; varian harga (10K/12K) boleh dipilih semuanya.'
+                                'Menu jual resep ini disiapkan otomatis dengan nama resep saat disimpan, dan hanya menu '
+                                .'itu yang bisa dipesan di PO. Pilih menu lama (V2) di sini bila menu ini sudah ada, '
+                                .'supaya harga dan riwayatnya terbawa.'
                             ),
 
                         Forms\Components\Toggle::make('is_active')
@@ -486,9 +486,10 @@ class RecipeResource extends Resource
                         ->label('Buat Master Menu')
                         ->icon('heroicon-m-plus-circle')
                         ->authorize('update')
-                        ->visible(fn (Recipe $record) => $record->jenis === Recipe::JENIS_UTAMA && ! $record->products()->exists())
+                        ->visible(fn (Recipe $record) => $record->jenis === Recipe::JENIS_UTAMA
+                            && ! $record->products()->where('origin', Product::ORIGIN_MENU)->exists())
                         ->requiresConfirmation()
-                        ->modalDescription('Menu dengan nama resep ini dibuat di Master Menu dan langsung bisa dipilih di PO. Kalau menu ini sudah ada sebagai menu lama (V2), tautkan lewat Pencocokan Menu saja supaya tidak dobel.')
+                        ->modalDescription('Menu jual bernama resep ini disiapkan di Master Menu dan langsung bisa dipilih di PO. Menu lama (V2) yang tertaut atau bernama sama dipakai lebih dulu, supaya harganya terbawa.')
                         ->action(function (Recipe $record) {
                             app(MasterMenuSync::class)->ensureFor($record);
 

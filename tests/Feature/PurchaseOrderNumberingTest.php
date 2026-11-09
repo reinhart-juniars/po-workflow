@@ -4,7 +4,6 @@ use App\Models\Area;
 use App\Models\AuditLog;
 use App\Models\CashAccount;
 use App\Models\Customer;
-use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\User;
@@ -22,8 +21,8 @@ function formPoBaru(): array
     $area = Area::query()->create(['name' => 'Area PO', 'code' => 'APO']);
     $customer = Customer::query()->create(['name' => 'Pelanggan PO', 'area_id' => $area->id, 'active' => true]);
     $cash = CashAccount::query()->create(['name' => 'Kas PO', 'type' => 'cash', 'is_active' => true]);
-    $nasi = Product::query()->create(['name' => 'Nasi Box', 'unit' => 'porsi', 'base_price' => 20000, 'active' => true, 'needs_recipe' => false]);
-    $teh = Product::query()->create(['name' => 'Es Teh', 'unit' => 'cup', 'base_price' => 5000, 'active' => true, 'needs_recipe' => false]);
+    $nasi = menuJual(['name' => 'Nasi Box', 'unit' => 'porsi', 'base_price' => 20000]);
+    $teh = menuJual(['name' => 'Es Teh', 'unit' => 'cup', 'base_price' => 5000]);
 
     Role::findOrCreate('admin', 'web');
     $admin = User::factory()->create(['is_active' => true, 'force_password_change' => false]);

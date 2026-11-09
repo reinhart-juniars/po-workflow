@@ -223,7 +223,7 @@ class ProductRecipeCostSync
         $rest = array_diff($products, $done);
 
         if ($rest !== []) {
-            Product::query()->whereKey($rest)->with(['recipe' => fn ($query) => $query->withCount('products')])->get()
+            Product::query()->whereKey($rest)->with(['recipe' => fn ($query) => $query->withCount(Product::activeProductsCount())])->get()
                 ->each(function (Product $product) use (&$tally) {
                     $tally[$this->syncProduct($product)]++;
                 });
@@ -251,7 +251,7 @@ class ProductRecipeCostSync
 
         Product::query()
             ->where(fn ($q) => $q->whereNotNull('recipe_id')->orWhere('cost_source', Product::COST_RECIPE))
-            ->with(['recipe' => fn ($query) => $query->withCount('products')])
+            ->with(['recipe' => fn ($query) => $query->withCount(Product::activeProductsCount())])
             ->chunkById(200, function (Collection $products) use (&$tally) {
                 foreach ($products as $product) {
                     $tally[$this->syncProduct($product)]++;
@@ -274,7 +274,7 @@ class ProductRecipeCostSync
         }
 
         DB::transaction(function () use ($recipeIds, &$tally) {
-            Product::query()->whereIn('recipe_id', $recipeIds)->with(['recipe' => fn ($query) => $query->withCount('products')])->get()
+            Product::query()->whereIn('recipe_id', $recipeIds)->with(['recipe' => fn ($query) => $query->withCount(Product::activeProductsCount())])->get()
                 ->each(function (Product $product) use (&$tally) {
                     $tally[$this->syncProduct($product)]++;
                 });

@@ -36,12 +36,13 @@ function penggunaRencana(string $role): User
 function siapkanRencanaMasak(): array
 {
     $recipe = Recipe::query()->create(['name' => 'Nasi Ayam Lapak', 'jenis' => Recipe::JENIS_UTAMA, 'yield_qty' => 1, 'yield_unit' => 'porsi', 'ohc_pct' => 0, 'profit_pct' => 0.25, 'is_active' => true]);
-    // Dua varian harga berbagi satu resep: mengambil dari masakan yang sama.
+    // Dua menu berbagi satu resep: stok siap dihitung per resep. (Sejak 9 Nov 2026 MasterMenuSync
+    // menyisakan satu menu jual per resep; dua di sini menguji perhitungan per resep.)
     $ayam12 = Product::query()->create(['name' => 'NASI AYAM 12K', 'unit' => 'porsi', 'base_price' => 12000, 'active' => true]);
     $ayam18 = Product::query()->create(['name' => 'NASI AYAM 18K', 'unit' => 'porsi', 'base_price' => 18000, 'active' => true]);
-    $ayam12->forceFill(['recipe_id' => $recipe->id])->saveQuietly();
-    $ayam18->forceFill(['recipe_id' => $recipe->id])->saveQuietly();
-    $tanpaResep = Product::query()->create(['name' => 'ES TEH', 'unit' => 'cup', 'base_price' => 5000, 'active' => true, 'needs_recipe' => false]); // memang tanpa resep: boleh dipesan, tapi tak punya stok siap
+    $ayam12->forceFill(['recipe_id' => $recipe->id, 'origin' => Product::ORIGIN_MENU])->saveQuietly();
+    $ayam18->forceFill(['recipe_id' => $recipe->id, 'origin' => Product::ORIGIN_MENU])->saveQuietly();
+    $tanpaResep = Product::query()->create(['name' => 'ES TEH', 'unit' => 'cup', 'base_price' => 5000, 'active' => true, 'needs_recipe' => false]); // bukan Menu Utama: tidak bisa dipesan
 
     $plan = ProductionOrder::query()->create(['title' => 'Rencana lapak Senin', 'is_ready_stock' => true, 'production_date' => '2026-10-20']);
     $plan->lines()->create(['kind' => ProductionOrderLine::KIND_MENU, 'source' => ProductionOrderLine::SOURCE_MANUAL, 'recipe_id' => $recipe->id, 'label' => 'Nasi Ayam Lapak', 'qty' => 20, 'unit' => 'porsi', 'sort_order' => 1]);
@@ -106,7 +107,7 @@ it('mendistribusikan stok siap ke PO dan menolak yang melebihi sisa', function (
     ]]);
 });
 
-it('hanya mengambil dari rencana masak bertanggal sama dan menolak menu tanpa resep', function () {
+it('hanya mengambil dari rencana masak bertanggal sama dan menolak menu di luar Menu Utama', function () {
     ['ayam12' => $ayam12, 'tanpaResep' => $teh, 'form' => $form] = siapkanRencanaMasak();
     $admin = penggunaRencana('admin');
 
@@ -116,7 +117,7 @@ it('hanya mengambil dari rencana masak bertanggal sama dan menolak menu tanpa re
 
     $this->actingAs($admin)->post(route('adminapp.orders.store'), $form([
         ['product_id' => $teh->id, 'qty' => 1, 'from_ready_stock' => 1],
-    ]))->assertSessionHasErrors(['items.0.from_ready_stock' => 'ES TEH belum punya resep, jadi tidak bisa diambil dari stok siap.']);
+    ]))->assertSessionHasErrors(['items.0.product_id' => 'Menu ES TEH tidak ada di Menu Utama tim menu, jadi tidak bisa dipesan. Pilih menu dari daftar.']);
 
     expect(PurchaseOrder::query()->count())->toBe(0);
 });

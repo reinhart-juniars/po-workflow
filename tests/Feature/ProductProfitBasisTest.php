@@ -77,7 +77,7 @@ it('memakai Harga Non Lapak sebagai dasar profit bila Harga Lapak kosong', funct
 it('menghitung margin daftar Master Menu dari Harga Lapak', function () {
     $this->actingAs(adminProfit());
     // Profit 8.000 dari lapak 20.000 = margin 40%; dari non lapak 40.000 akan jadi 20%.
-    menuProfit(['base_price' => 40000]);
+    menuProfit(['base_price' => 40000])->forceFill(['origin' => Product::ORIGIN_MENU, 'recipe_id' => Recipe::query()->create(['name' => 'Nasi Uji Profit', 'jenis' => Recipe::JENIS_UTAMA, 'yield_qty' => 1, 'yield_unit' => 'porsi', 'ohc_pct' => 0, 'profit_pct' => 0, 'is_active' => true])->id])->saveQuietly();
 
     $this->get(route('adminapp.products.index'))->assertOk()
         ->assertSee('40,00%')

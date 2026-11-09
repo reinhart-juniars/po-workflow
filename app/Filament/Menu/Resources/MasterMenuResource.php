@@ -77,9 +77,13 @@ class MasterMenuResource extends Resource
         return $form->schema([
             Forms\Components\Section::make('Menu')
                 ->schema([
+                    // Menu jual Menu Utama memakai nama resep; diganti lewat resepnya.
                     Forms\Components\TextInput::make('name')
                         ->label('Nama Menu')
-                        ->helperText('Nama yang dipilih admin di PO dan tercetak di invoice.')
+                        ->disabled(fn (?Product $record) => $record?->origin === Product::ORIGIN_MENU)
+                        ->helperText(fn (?Product $record) => $record?->origin === Product::ORIGIN_MENU
+                            ? 'Ikut nama resep Menu Utama. Ganti nama di resepnya.'
+                            : 'Menu lama di luar Menu Utama: tidak bisa dipesan di PO.')
                         ->required()
                         ->maxLength(255)
                         ->columnSpan(2),
@@ -196,7 +200,16 @@ class MasterMenuResource extends Resource
                 IconColumn::make('active')->label('Aktif')->boolean(),
             ])
             ->filters([
-                Tables\Filters\TernaryFilter::make('active')->label('Aktif')->default(true),
+                // Bawaan: hanya menu yang dipesan di PO (menu jual Menu Utama).
+                Tables\Filters\TernaryFilter::make('menu_jual')
+                    ->label('Bisa dipesan di PO')
+                    ->default(true)
+                    ->queries(
+                        true: fn (Builder $query) => $query->orderable(),
+                        false: fn (Builder $query) => $query->whereNotIn('id', Product::query()->orderable()->select('id')),
+                    ),
+
+                Tables\Filters\TernaryFilter::make('active')->label('Aktif'),
 
                 Tables\Filters\TernaryFilter::make('punya_resep')
                     ->label('Resep')

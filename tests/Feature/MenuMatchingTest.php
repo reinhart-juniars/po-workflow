@@ -203,10 +203,11 @@ it('mengganti daftar produk sebuah resep dari form resep', function () {
         ->and($p15->fresh())->recipe_id->toBe($resep->id)->needs_recipe->toBeTrue();
 });
 
-it('menampilkan status resep tiap produk di master menu Admin App', function () {
+it('hanya menampilkan menu jual Menu Utama di Harga Menu Admin App', function () {
     $this->actingAs(penggunaPencocokan('admin'));
 
     $resep = resepUji('Nasi Capjay');
+    menuJual(['name' => 'NASI CAPJAY', 'base_price' => 10000], $resep);
     produkUji('NASI CAPJAY 10K', ['recipe_id' => $resep->id]);
     produkUji('EXTRA 1K', ['needs_recipe' => false]);
     produkUji('NASI KATSU 12K');
@@ -215,9 +216,10 @@ it('menampilkan status resep tiap produk di master menu Admin App', function () 
         ->assertOk()
         ->assertSee('Resep:')
         ->assertSee('Nasi Capjay')
-        ->assertSee('Tanpa resep')
-        ->assertSee('Belum ada resep')
-        ->assertSee(route('filament.menu.pages.pencocokan-menu'), false);
+        // Varian V2, item tanpa resep, dan sisa V2 tidak ditampilkan.
+        ->assertDontSee('NASI CAPJAY 10K')
+        ->assertDontSee('EXTRA 1K')
+        ->assertDontSee('NASI KATSU 12K');
 });
 
 it('membiarkan nama produk panjang turun baris supaya tombol Tautkan tetap di layar', function () {
