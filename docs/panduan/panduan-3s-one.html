@@ -91,7 +91,7 @@
   <div class="sub">Business Control System</div>
   <p style="margin-top: 24pt; font-size: 14pt;">Panduan Pengguna</p>
   <p class="muted">Satu sistem untuk pesanan, produksi, stok, dan keuangan<br>W3S Catering</p>
-  <div class="meta">Versi 3.2 &middot; pembaruan 27 Oktober 2026</div>
+  <div class="meta">Versi 3.2.1 &middot; pembaruan 9 November 2026</div>
 </div>
 
 <!-- ============ DAFTAR ISI ============ -->
@@ -142,7 +142,7 @@
     <tr><td><b>Menu</b> (tim menu) <span class="new">BARU</span></td><td>Menu</td><td>Menyusun resep <b>menu utama &amp; sub menu</b>, takaran, HPP &amp; OHC, pencocokan menu ke Master Menu, konversi satuan, pekerjaan menu.</td></tr>
     <tr><td><b>Inventory</b> (gudang)</td><td>Inventory, Menu (lihat)</td><td><b>Menyusun Rencana Masak</b> (stok siap untuk lapak, termasuk impor Excel) dan menutup stok siapnya, <b>menyetujui / menolak Form Kebutuhan</b> dari dapur, belanja &amp; menerima barang, <b>mengajukan Tagihan Pembelian</b> ke accounting, mencatat stok, opname (termasuk Opname Bahan), data bahan &amp; supplier.</td></tr>
     <tr><td><b>Production</b></td><td>Production, Inventory</td><td>Menyusun Form Kebutuhan, memasak sesuai SPK <b>dan Rencana Masak</b>, mencatat pemakaian bahan, menutup SPK.</td></tr>
-    <tr><td><b>Sales</b></td><td>Sales</td><td>Sales actual, <b>Barang Sisa</b> (retur yang dijual lagi atau dibuang), laporan penjualan, sales final & retur, waste.</td></tr>
+    <tr><td><b>Sales</b></td><td>Sales</td><td>Sales actual, <b>Barang Sisa</b> (retur yang dijual lagi, dibuang, atau dicatat batal dibuat), laporan penjualan, sales final & retur, waste.</td></tr>
     <tr><td><b>Marketing</b></td><td>Marketing</td><td>Katalog foto menu, memilih menu yang tampil di website beserta <b>kategorinya</b>, dan menekan <b>Terbitkan ke Website</b>.</td></tr>
     <tr><td><b>Delivery</b></td><td>Delivery</td><td>Pengiriman pesanan dan bukti kirim.</td></tr>
   </table>
@@ -249,7 +249,7 @@
   <h3>6. Satu peran untuk gudang: Inventory</h3>
   <div class="tip"><b>Di W3S Catering bagian inventory dipegang satu orang.</b> Beri orang itu peran <b>Inventory</b>: ia mengelola bahan, supplier, pembelian, opname, dan Tagihan Pembelian, sekaligus <b>menyetujui / menolak</b> Form Kebutuhan dari dapur dan menerima lonceng perubahan harga. Staf gudang yang menghitung dan mengatur barang secara fisik <b>tidak perlu akun</b>; hasil hitungan mereka dicatat oleh pemegang sistem inventory. (Peran <i>Supervisor Gudang</i> yang dulu terpisah sudah digabung ke Inventory sejak 12 Oktober 2026.)</div>
   <div class="warn"><b>Pemisahan tugas:</b> pemegang peran Inventory menyetujui form, belanja, dan menekan <b>Periksa</b> sendiri, jadi tidak ada orang kedua di dalam gudang yang mengecek. Pemeriksaan kedua datang dari tiga tempat: dapur yang mengajukan kebutuhan, <b>staf gudang</b> yang mencocokkan barang fisik (diterima dan Opname Bahan), dan <b>accounting</b> yang mencocokkan nota sebelum membayar. Owner dan Admin tetap bisa menyetujui sebagai cadangan.</div>
-  <div class="tip">Pembagian hak ini adalah bawaan sistem dan tidak diatur dari layar. Bila sebuah peran perlu hak tambahan atau dikurangi, sampaikan ke tim IT — Owner cukup memilih <b>peran</b> yang tepat untuk tiap orang di Master User.</div>
+  <div class="tip">Pembagian hak ini adalah bawaan sistem dan tidak diatur dari layar. Bila sebuah peran perlu hak tambahan atau dikurangi, sampaikan ke pengembang sistem — Owner cukup memilih <b>peran</b> yang tepat untuk tiap orang di Master User.</div>
 </div>
 
 <!-- ============ 3. PETA BESAR ============ -->
@@ -429,7 +429,7 @@
   <ul>
     <li>Buka alamat sistem di browser (Chrome disarankan), lalu isi <b>username atau email</b> dan <b>password</b>.</li>
     <li>Akun baru mendapat password sementara dari Owner dan <b>wajib menggantinya</b> saat pertama masuk.</li>
-    <li>Versi sistem tertulis di bagian bawah halaman masuk (misalnya <i>3S ONE v3.1</i>) — sebutkan ini bila melapor masalah.</li>
+    <li>Versi sistem tertulis di bagian bawah halaman masuk (misalnya <i>3S ONE v3.2.1</i>) — sebutkan ini bila melapor masalah.</li>
   </ul>
   <div class="fig"><img src="img/login.jpg" alt="Halaman masuk. Versi sistem tertulis di bawah kolom masuk."><div class="cap">Halaman masuk. Isi username atau email dan password; versi sistem tertulis di bagian bawah.</div></div>
 
@@ -621,13 +621,13 @@
   <table class="grid">
     <tr><th style="width: 28%">Menu</th><th>Untuk apa</th></tr>
     <tr><td>Dashboard</td><td>Penjualan hari ini dan bulan berjalan. Buka Sales Actual untuk mengisi qty yang benar-benar terjual; sisanya otomatis menjadi retur.</td></tr>
-    <tr><td><b>Barang Sisa</b></td><td>Retur dari Sales Actual yang sudah disubmit. Barang Sisa boleh <b>dijual ke customer mana pun</b> (tombol <b>Jual</b>: pilih Sales Actual draft tujuan, qty, harga) atau <b>dibuang</b> bila tidak layak jual (tombol <b>Buang</b>, alasan wajib). Seporsi juga bisa <b>dirinci per komponen</b> (nasi, telur, …) yang dijual atau di-waste sendiri-sendiri; tombol <b>Isi dari HPP resep</b> <span class="new">BARU</span> mengisi komponen dan nilainya dari bagian resep. Sisa <b>stok siap</b> Rencana Masak yang tidak terdistribusi juga masuk ke sini. Customer yang mengganti menu dicatat di Sales Actual dengan <b>Porsi Tambahan</b> (harga PO). Rinciannya di Bab 14.</td></tr>
+    <tr><td><b>Barang Sisa</b></td><td>Retur dari Sales Actual yang sudah disubmit. Barang Sisa boleh <b>dijual ke customer mana pun</b> (tombol <b>Jual</b>: ketik nama customer pembeli, qty, harga), <b>dibuang</b> bila tidak layak jual (tombol <b>Buang</b>, alasan wajib), atau dicatat <b>Batal</b> <span class="new">BARU</span> bila porsinya ternyata tidak jadi dibuat. Seporsi juga bisa <b>dirinci per komponen</b> (nasi, telur, …) yang dijual atau di-waste sendiri-sendiri; tombol <b>Isi dari HPP resep</b> <span class="new">BARU</span> mengisi komponen dan nilainya dari bagian resep. Sisa <b>stok siap</b> Rencana Masak yang tidak terdistribusi juga masuk ke sini. Customer yang mengganti menu dicatat di Sales Actual dengan <b>Porsi Tambahan</b> (harga PO). Rinciannya di Bab 14.</td></tr>
     <tr><td>Laporan Sales Final & Retur</td><td>Penjualan yang benar-benar terjadi setelah retur, dan ke mana tiap retur pergi: dijual ke siapa, dibuang, atau masih di Barang Sisa.</td></tr>
     <tr><td>Laporan Waste</td><td>Barang Sisa yang dibuang — baik yang ketahuan tidak layak saat dijual ulang, maupun yang dibuang langsung dari halaman Barang Sisa.</td></tr>
     <tr><td>Laporan Penjualan</td><td>Rekap penjualan per periode (juga terbaca Accounting). Mode <b>Ringkas</b> muat satu lembar; mode <b>Lihat Lengkap</b> menampilkan jumlah per harga jual untuk tiap pelanggan, dipisah Lapak dan Retail, dengan subtotal per tanggal.</td></tr>
   </table>
   <div class="fig"><img src="img/sales-dashboard.jpg" alt="Sales › Dashboard: chip menunjukkan periode dan status yang sedang ditampilkan."><div class="cap">Sales › Dashboard: chip menunjukkan periode dan status yang sedang ditampilkan.</div></div>
-  <div class="fig"><img src="img/barang-sisa.jpg" alt="Sales › Barang Sisa: sisa tiap retur beserta nilai HPP-nya; tombol Jual membuka pilihan Sales Actual tujuan, qty, dan harga, tombol Buang mencatat yang tidak layak jual."><div class="cap">Sales › Barang Sisa: sisa tiap retur beserta nilai HPP-nya; tombol Jual membuka pilihan Sales Actual tujuan, qty, dan harga, tombol Buang mencatat yang tidak layak jual.</div></div>
+  <div class="fig"><img src="img/barang-sisa.jpg" alt="Sales › Barang Sisa: sisa tiap retur beserta nilai HPP-nya. Tombol Jual membuka isian customer pembeli (diketik), qty, dan harga; tombol Buang mencatat yang tidak layak jual. Tombol Batal (v3.2.1) ada di bawah Buang."><div class="cap">Sales › Barang Sisa: sisa tiap retur beserta nilai HPP-nya. Tombol Jual membuka isian customer pembeli (diketik), qty, dan harga; tombol Buang mencatat yang tidak layak jual. Tombol Batal (v3.2.1) ada di bawah Buang.</div></div>
   <div class="fig"><img src="img/laporan-lengkap.jpg" alt="Laporan Penjualan › Lihat Lengkap: menu kiri ditutup sementara supaya tabel selebar layar; tombol garis tiga di kiri atas membukanya lagi."><div class="cap">Laporan Penjualan › Lihat Lengkap: menu kiri ditutup sementara supaya tabel selebar layar; tombol ☰ di kiri atas membukanya lagi.</div></div>
   <div class="tip">Kalau kolom harganya banyak (misalnya rentang seminggu), tabel <i>Lihat Lengkap</i> bisa digeser ke samping. Untuk mencetak atau mengolah angka, pakai <b>Export Excel</b> / <b>Export PDF</b>.</div>
 
@@ -1062,6 +1062,7 @@
     <tr><td>Porsi terkirim tetapi tidak terjual (retur)</td><td>Otomatis saat <b>Sales Actual</b> disubmit</td><td>Barang Sisa (persediaan)</td></tr>
     <tr><td>Barang Sisa dijual ke customer lain</td><td><b>Sales › Barang Sisa › Jual</b> atau panel di Sales Actual</td><td>Penjualan biasa; HPP-nya pindah ke bulan terjual</td></tr>
     <tr><td>Barang Sisa tidak layak jual</td><td><b>Sales › Barang Sisa › Buang</b></td><td>Barang Sisa Dibuang (rincian HPP) & Laporan Waste</td></tr>
+    <tr><td>Porsi tercatat Barang Sisa tetapi ternyata tidak jadi dibuat</td><td><b>Sales › Barang Sisa › Batal</b></td><td>Stok & persediaan Barang Sisa berkurang; <b>bukan</b> waste, tidak masuk Barang Sisa Dibuang maupun Laporan Waste</td></tr>
     <tr><td>Barang Sisa dirinci per komponen</td><td><b>Sales › Barang Sisa › Rinci per komponen</b></td><td>Komponen tetap persediaan sebesar nilai yang diketik; selisih tidak terinci masuk Barang Sisa Dibuang</td></tr>
     <tr><td>Customer mengganti menu (mis. 10+5 menjadi 13+2)</td><td>Sales Actual: qty actual menu lama dikurangi, menu pengganti lewat <b>Porsi Tambahan</b></td><td>Kelebihan menjadi Barang Sisa; Porsi Tambahan ditagih harga PO</td></tr>
     <tr><td>Porsi stok siap Rencana Masak tidak terdistribusi ke PO</td><td><b>Inventory › Rencana Masak › Tutup Stok Siap</b> (Bab 15)</td><td>Barang Sisa (persediaan), asal <i>Stok Siap Dapur (internal)</i></td></tr>
@@ -1112,9 +1113,10 @@
   <table class="grid">
     <tr><th style="width: 28%">Ingin</th><th>Caranya</th></tr>
     <tr><td>Menjual Barang Sisa bersama penjualan hari ini</td><td>Buka Sales Actual customer pembeli (yang masih draft) › panel <b>Penjualan Barang Sisa</b>: pilih Barang Sisa, qty, dan harga, lalu <b>Tambahkan</b>. Barisnya ikut tabel, isi qty terjual, lalu submit seperti biasa.</td></tr>
-    <tr><td>Menjual dari halaman Barang Sisa</td><td><b>Sales › Barang Sisa</b> › <b>Jual</b> pada baris menunya: pilih Sales Actual draft tujuan (customer &amp; tanggal), qty, harga.</td></tr>
+    <tr><td>Menjual dari halaman Barang Sisa</td><td><b>Sales › Barang Sisa</b> › <b>Jual</b> pada baris menunya: ketik nama customer pembeli (daftar nama muncul dari Master Customer, pilih salah satu), isi qty dan harga. Barang Sisa masuk ke Sales Actual draft <b>terbaru</b> customer itu. Bila customer belum punya Sales Actual draft dari DO, sistem menolak; buat dulu Sales Actual-nya dari DO.</td></tr>
     <tr><td>Salah menambahkan</td><td>Di Sales Actual yang masih draft, tekan <b>Lepas dari Sales Actual ini</b> pada baris Barang Sisa; qty-nya kembali ke stok Barang Sisa.</td></tr>
     <tr><td>Membuang yang tidak layak jual</td><td><b>Sales › Barang Sisa</b> › <b>Buang</b>: isi qty, tanggal, dan alasan (wajib). Atau, bila baru ketahuan saat dijual ulang, isi kolom <b>Qty Waste</b> pada barisnya.</td></tr>
+    <tr><td>Menu tidak jadi dibuat <span class="new">BARU</span></td><td><b>Sales › Barang Sisa</b> › <b>Batal</b>: isi qty yang tidak jadi dibuat, tanggal, dan keterangan (boleh kosong). Stok Barang Sisa berkurang tanpa dihitung waste, karena bahan bakunya memang tidak terpakai. Riwayatnya tampil di tabel <b>Dibuang &amp; Batal 30 Hari Terakhir</b> dengan jenis <i>Batal dibuat</i>.</td></tr>
   </table>
   <ul>
     <li><b>Cara bayar</b> Penjualan Barang Sisa mengikuti PO customer pembeli di DO-nya (tunai ke akun kasnya, atau piutang). Karena itu Barang Sisa hanya bisa dijual lewat Sales Actual yang berasal dari DO — kecuali dijual kembali ke customer asal returnya.</li>
@@ -1567,7 +1569,7 @@
   <h3>Angka di laporan Owner dan laporan Accounting berbeda?</h3>
   <p>Seharusnya tidak, karena sumbernya sama. Cek dulu apakah periode/tanggal yang dipilih sama, dan apakah periode itu sudah ditutup buku. Kalau masih berbeda, laporkan dengan menyebut menu, periode, dan versi sistem (tertera di halaman masuk).</p>
 
-  <p class="muted small" style="margin-top: 20pt;">3S ONE · Panduan Pengguna v3.1 · Dibuat dari sistem yang berjalan, bukan dari rencana — bila layar Anda berbeda dari panduan ini, kemungkinan versi sistem sudah lebih baru.</p>
+  <p class="muted small" style="margin-top: 20pt;">3S ONE · Panduan Pengguna v3.2.1 · Dibuat dari sistem yang berjalan, bukan dari rencana — bila layar Anda berbeda dari panduan ini, kemungkinan versi sistem sudah lebih baru.</p>
 </div>
 
 </body>
