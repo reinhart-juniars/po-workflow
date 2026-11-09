@@ -268,8 +268,8 @@ class MasterMenuSync
             ->whereIn('purchase_order_items.product_id', $products->pluck('id'))
             ->where('purchase_orders.delivery_date', '>=', now()->subDays(self::USAGE_DAYS)->toDateString())
             ->groupBy('purchase_order_items.product_id')
-            ->selectRaw('purchase_order_items.product_id, count(*) as lines')
-            ->pluck('lines', 'product_id');
+            ->selectRaw('purchase_order_items.product_id, count(*) as line_count')
+            ->pluck('line_count', 'product_id');
 
         return $products
             ->sortBy(fn (Product $product) => [-(int) ($usage[$product->id] ?? 0), $product->id])

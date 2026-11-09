@@ -46,8 +46,8 @@
         <div>
             <h1 class="section-title">Harga Menu</h1>
             <p class="section-subtitle">
-                Menu yang bisa dipesan di PO: sudah punya resep, atau ditandai tim menu memang tanpa resep. Isi Harga
-                Non Lapak-nya di sini; nama, harga lapak, dan HPP diatur tim menu di aplikasi Menu (Master Menu).
+                Daftar ini sama dengan Menu Utama tim menu, dan hanya menu ini yang bisa dipesan di PO. Isi Harga Non
+                Lapak-nya di sini; nama, harga lapak, dan HPP diatur tim menu di aplikasi Menu.
             </p>
         </div>
         <div class="toolbar-actions">

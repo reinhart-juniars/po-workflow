@@ -347,3 +347,16 @@ it('memakai menu lama bernama sama saat Menu Utama disimpan, bukan membuat menu 
         ->and(Product::query()->count())->toBe(1)
         ->and($lama->fresh()->isOrderable())->toBeTrue();
 });
+
+it('menjalankan sinkron Menu Utama lewat migrasi supaya Harga Menu tidak kosong setelah deploy', function () {
+    $recipe = resepUtama(['name' => 'Nasi Bakmoy']);
+    $lama = Product::query()->create(['name' => 'NASI BAKMOY 12K', 'sku' => 'NASI BAKMOY 12K', 'unit' => 'porsi', 'base_price' => 12000, 'active' => true, 'recipe_id' => $recipe->id]);
+    expect(Product::query()->orderable()->count())->toBe(0);
+
+    (require database_path('migrations/2026_11_09_100001_sync_master_menu_from_recipes.php'))->up();
+
+    expect($lama->fresh())
+        ->name->toBe('NASI BAKMOY')
+        ->isOrderable()->toBeTrue()
+        ->and((float) $lama->fresh()->base_price)->toBe(12000.0);
+});
