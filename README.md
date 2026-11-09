@@ -90,7 +90,10 @@ menggantikan HPP residual opname dengan pemakaian bahan riil dari resep × produ
   dibawa ke draft customer yang sama. Retur masuk stok Barang Sisa (dihitung dari data, tanpa tabel
   saldo: `qty_return` − Penjualan Barang Sisa − `leftover_disposals`; `LeftoverStockService`) dan boleh
   dijual ke customer mana pun ("Penjualan Barang Sisa", dari halaman Barang Sisa atau panel di edit
-  Sales Actual) atau dibuang dengan alasan. Cara bayar Penjualan Barang Sisa mengikuti PO customer
+  Sales Actual) atau dibuang dengan alasan. Porsi yang ternyata tidak jadi dibuat dicatat **Batal**
+  (`leftover_disposals.kind = cancel`): stoknya berkurang, tapi tidak dihitung waste/Barang Sisa Dibuang.
+  Di halaman Barang Sisa, customer pembeli diketik dari Master Customer (nama saja); tujuannya draft
+  Sales Actual terbaru customer itu. Cara bayar Penjualan Barang Sisa mengikuti PO customer
   pembeli di DO-nya (`sales_actual_items.purchase_order_id`); Sales Actual tanpa DO hanya untuk customer
   asal retur.
 - Nilainya **HPP menu** (snapshot bahan baku di item). Retur yang belum terjual per akhir periode adalah

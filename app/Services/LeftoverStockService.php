@@ -232,6 +232,15 @@ class LeftoverStockService
         return $this->addDisposal($entry->id, null, $qty, $date, $reason, $userId);
     }
 
+    /**
+     * Batal: porsi Barang Sisa yang ternyata tidak jadi dibuat. Stoknya
+     * berkurang seperti dibuang, tapi tidak dilaporkan sebagai waste.
+     */
+    public function cancel(SalesActualItem $entry, float $qty, CarbonInterface $date, ?string $reason = null, ?int $userId = null): LeftoverDisposal
+    {
+        return $this->addDisposal($entry->id, null, $qty, $date, $reason, $userId, LeftoverDisposal::KIND_CANCEL);
+    }
+
     /** Buang (waste) sebagian atau seluruh komponen Barang Sisa. */
     public function disposeComponent(LeftoverComponent $component, float $qty, CarbonInterface $date, ?string $reason = null, ?int $userId = null): LeftoverDisposal
     {
@@ -493,7 +502,9 @@ class LeftoverStockService
 
         $inScope = fn ($query) => $query->where('status', 'submitted')->where('submitted_at', '>=', $start);
 
+        // Yang batal dibuat bukan waste: bahan bakunya tidak pernah terpakai.
         $disposals = LeftoverDisposal::query()
+            ->waste()
             ->with(['sourceItem.product', 'component'])
             ->whereHas('sourceItem.salesActual', $inScope)
             ->whereDate('disposed_at', '>=', $fromDay->toDateString())
@@ -635,17 +646,25 @@ class LeftoverStockService
         });
     }
 
-    protected function addDisposal(int $entryId, ?int $componentId, float $qty, CarbonInterface $date, ?string $reason, ?int $userId): LeftoverDisposal
-    {
+    protected function addDisposal(
+        int $entryId,
+        ?int $componentId,
+        float $qty,
+        CarbonInterface $date,
+        ?string $reason,
+        ?int $userId,
+        string $kind = LeftoverDisposal::KIND_WASTE,
+    ): LeftoverDisposal {
         $qty = round($qty, 2);
+        $verb = $kind === LeftoverDisposal::KIND_CANCEL ? 'dibatalkan' : 'dibuang';
 
         if ($qty <= 0) {
             throw ValidationException::withMessages([
-                'dispose_qty' => 'Qty yang dibuang harus lebih dari 0.',
+                'dispose_qty' => "Qty yang {$verb} harus lebih dari 0.",
             ]);
         }
 
-        return DB::transaction(function () use ($entryId, $componentId, $qty, $date, $reason, $userId) {
+        return DB::transaction(function () use ($entryId, $componentId, $qty, $date, $reason, $userId, $kind, $verb) {
             $entry = $this->lockEntry($entryId, 'dispose_qty');
             $this->assertDateNotBeforeReturn($entry, $date, 'disposed_at');
 
@@ -669,19 +688,22 @@ class LeftoverStockService
             $disposal = LeftoverDisposal::query()->create([
                 'source_sales_actual_item_id' => $entry->id,
                 'leftover_component_id' => $component?->id,
+                'kind' => $kind,
                 'disposed_at' => $date->toDateString(),
                 'qty' => $qty,
                 'reason' => filled($reason) ? trim((string) $reason) : null,
                 'created_by' => $userId ?? Auth::id(),
             ]);
 
-            $this->audit('leftover_disposal', $disposal->id, 'leftover_disposed', sprintf(
-                'Barang Sisa %s dibuang %s pada %s.%s',
+            $action = $kind === LeftoverDisposal::KIND_CANCEL ? 'leftover_cancelled' : 'leftover_disposed';
+            $this->audit('leftover_disposal', $disposal->id, $action, sprintf(
+                'Barang Sisa %s %s %s pada %s.%s',
                 $component ? $component->name.' (rincian '.$entry->item_name.')' : $entry->item_name,
+                $verb,
                 number_format($qty, 2, ',', '.'),
                 $date->format('d-m-Y'),
                 $disposal->reason ? ' Alasan: '.$disposal->reason : ''
-            ), ['entry_id' => $entry->id, 'component_id' => $component?->id, 'qty' => $qty, 'value' => $disposal->value()]);
+            ), ['entry_id' => $entry->id, 'component_id' => $component?->id, 'kind' => $kind, 'qty' => $qty, 'value' => $disposal->value()]);
 
             return $disposal;
         });

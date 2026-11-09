@@ -15,7 +15,7 @@
                 <p class="dashboard-hero-subtitle">
                     Retur dari penjualan yang sudah disubmit. Barang Sisa boleh dijual ke customer mana pun lewat
                     Penjualan Barang Sisa, dirinci per komponen (nasi, telur, ...) lalu dijual sesuai yang diambil,
-                    atau dibuang bila tidak layak jual. Nilainya dihitung dari HPP menu dan, selama belum terjual,
+                    atau dibuang bila tidak layak jual. Bila ternyata tidak jadi dibuat, catat sebagai Batal. Nilainya dihitung dari HPP menu dan, selama belum terjual,
                     tercatat sebagai persediaan.
                 </p>
             </div>
@@ -82,16 +82,9 @@
                                         <summary class="cursor-pointer font-semibold text-brand-600">Jual</summary>
                                         <form method="POST" action="{{ route('salesapp.leftovers.sell', $row['entry_id']) }}" class="mt-2 space-y-2">
                                             @csrf
-                                            <label class="form-label" for="sell-target-{{ $row['entry_id'] }}">Sales Actual tujuan (draft)</label>
-                                            <select id="sell-target-{{ $row['entry_id'] }}" name="sales_actual_id" class="form-control" required>
-                                                <option value="">Pilih customer &amp; tanggal</option>
-                                                @foreach ($draftActuals as $draft)
-                                                    <option value="{{ $draft->id }}">
-                                                        {{ $draft->sales_date?->format('d M Y') }} - {{ $draft->customer->name ?? 'Tanpa Customer' }}
-                                                        ({{ $draft->deliveryOrder->do_code ?? 'tanpa DO' }})
-                                                    </option>
-                                                @endforeach
-                                            </select>
+                                            <label class="form-label" for="sell-customer-{{ $row['entry_id'] }}">Customer pembeli</label>
+                                            <input id="sell-customer-{{ $row['entry_id'] }}" type="text" name="customer_name" list="leftover-customers"
+                                                autocomplete="off" maxlength="255" placeholder="Ketik nama customer" class="form-control" required>
                                             <div class="grid grid-cols-2 gap-2">
                                                 <div>
                                                     <label class="form-label" for="sell-qty-{{ $row['entry_id'] }}">Qty</label>
@@ -130,6 +123,31 @@
                                             <input id="dispose-reason-{{ $row['entry_id'] }}" type="text" name="reason" maxlength="255"
                                                 placeholder="mis. basi, rusak di perjalanan" class="form-control" required>
                                             <button type="submit" class="btn-danger">Catat Dibuang</button>
+                                        </form>
+                                    </details>
+                                    <details class="mt-2">
+                                        <summary class="cursor-pointer font-semibold text-slate-600">Batal</summary>
+                                        <form method="POST" action="{{ route('salesapp.leftovers.cancel', $row['entry_id']) }}" class="mt-2 space-y-2"
+                                            onsubmit="return confirm('Catat menu ini batal dibuat sejumlah qty tersebut? Stok Barang Sisa berkurang, tidak dihitung waste.')">
+                                            @csrf
+                                            <p class="text-xs text-slate-500">Menu ini sejumlah qty di bawah ternyata tidak jadi dibuat.</p>
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <label class="form-label" for="cancel-qty-{{ $row['entry_id'] }}">Qty</label>
+                                                    <input id="cancel-qty-{{ $row['entry_id'] }}" type="number" name="qty" step="0.01" min="0.01"
+                                                        max="{{ $row['available_qty'] }}" value="{{ $row['available_qty'] }}"
+                                                        class="form-control text-right tabular-nums" required>
+                                                </div>
+                                                <div>
+                                                    <label class="form-label" for="cancel-date-{{ $row['entry_id'] }}">Tanggal</label>
+                                                    <input id="cancel-date-{{ $row['entry_id'] }}" type="date" name="disposed_at"
+                                                        value="{{ now()->toDateString() }}" max="{{ now()->toDateString() }}" class="form-control" required>
+                                                </div>
+                                            </div>
+                                            <label class="form-label" for="cancel-reason-{{ $row['entry_id'] }}">Keterangan (opsional)</label>
+                                            <input id="cancel-reason-{{ $row['entry_id'] }}" type="text" name="reason" maxlength="255"
+                                                placeholder="mis. bahan tidak cukup" class="form-control">
+                                            <button type="submit" class="btn-secondary">Catat Batal</button>
                                         </form>
                                     </details>
                                 </td>
@@ -214,16 +232,9 @@
                                                 <summary class="cursor-pointer font-semibold text-brand-600">Jual</summary>
                                                 <form method="POST" action="{{ route('salesapp.leftovers.components.sell', $component['component_id']) }}" class="mt-2 space-y-2">
                                                     @csrf
-                                                    <label class="form-label" for="csell-target-{{ $component['component_id'] }}">Sales Actual tujuan (draft)</label>
-                                                    <select id="csell-target-{{ $component['component_id'] }}" name="sales_actual_id" class="form-control" required>
-                                                        <option value="">Pilih customer &amp; tanggal</option>
-                                                        @foreach ($draftActuals as $draft)
-                                                            <option value="{{ $draft->id }}">
-                                                                {{ $draft->sales_date?->format('d M Y') }} - {{ $draft->customer->name ?? 'Tanpa Customer' }}
-                                                                ({{ $draft->deliveryOrder->do_code ?? 'tanpa DO' }})
-                                                            </option>
-                                                        @endforeach
-                                                    </select>
+                                                    <label class="form-label" for="csell-customer-{{ $component['component_id'] }}">Customer pembeli</label>
+                                                    <input id="csell-customer-{{ $component['component_id'] }}" type="text" name="customer_name" list="leftover-customers"
+                                                        autocomplete="off" maxlength="255" placeholder="Ketik nama customer" class="form-control" required>
                                                     <div class="grid grid-cols-2 gap-2">
                                                         <div>
                                                             <label class="form-label" for="csell-qty-{{ $component['component_id'] }}">Qty</label>
@@ -308,13 +319,14 @@
         @endforeach
 
         <section class="table-shell sales-table sales-responsive-table">
-            <div class="table-head">Dibuang 30 Hari Terakhir</div>
+            <div class="table-head">Dibuang &amp; Batal 30 Hari Terakhir</div>
             <div class="data-table-wrap">
                 <table class="data-table">
                     <thead>
                         <tr>
                             <th>Tanggal</th>
                             <th>Menu</th>
+                            <th>Jenis</th>
                             <th>Qty</th>
                             <th>Nilai (HPP)</th>
                             <th>Alasan</th>
@@ -335,17 +347,24 @@
                                         retur {{ $disposal->sourceItem?->salesActual?->customer?->name ?? '-' }}
                                     </span>
                                 </td>
-                                <td class="number-cell text-rose-600" data-label="Qty">{{ $qty($disposal->qty) }}</td>
+                                <td data-label="Jenis">
+                                    @if ($disposal->isCancel())
+                                        <span class="text-xs font-semibold text-slate-600">Batal dibuat</span>
+                                    @else
+                                        <span class="text-xs font-semibold text-rose-600">Dibuang</span>
+                                    @endif
+                                </td>
+                                <td class="number-cell {{ $disposal->isCancel() ? 'text-slate-600' : 'text-rose-600' }}" data-label="Qty">{{ $qty($disposal->qty) }}</td>
                                 <td class="number-cell" data-label="Nilai (HPP)">
-                                    {{ $rupiah($disposal->value()) }}
+                                    {{ $disposal->isCancel() ? '-' : $rupiah($disposal->value()) }}
                                 </td>
                                 <td data-label="Alasan">{{ $disposal->reason ?: '-' }}</td>
                                 <td data-label="Dicatat">{{ $disposal->creator?->name ?? '-' }}</td>
                             </tr>
                         @empty
                             <tr class="empty-row">
-                                <td colspan="6" class="full-cell py-8 text-center text-sm text-slate-500">
-                                    Belum ada Barang Sisa yang dibuang dalam 30 hari terakhir.
+                                <td colspan="7" class="full-cell py-8 text-center text-sm text-slate-500">
+                                    Belum ada Barang Sisa yang dibuang atau batal dalam 30 hari terakhir.
                                 </td>
                             </tr>
                         @endforelse
@@ -353,6 +372,13 @@
                 </table>
             </div>
         </section>
+
+        {{-- Satu daftar nama Master Customer untuk semua isian "Customer pembeli". --}}
+        <datalist id="leftover-customers">
+            @foreach ($customerNames as $customerName)
+                <option value="{{ $customerName }}"></option>
+            @endforeach
+        </datalist>
     </div>
 
     <script>

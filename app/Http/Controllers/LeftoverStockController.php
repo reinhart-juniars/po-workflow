@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\LeftoverBreakdown;
 use App\Models\LeftoverComponent;
 use App\Models\LeftoverDisposal;
@@ -12,7 +13,7 @@ use App\Services\LeftoverStockService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 /**
@@ -56,13 +57,14 @@ class LeftoverStockController extends Controller
             return $row;
         });
 
-        $draftActuals = SalesActual::query()
-            ->with(['customer:id,name', 'deliveryOrder:id,do_code'])
-            ->where('status', 'draft')
-            ->orderByDesc('sales_date')
-            ->orderByDesc('id')
-            ->limit(100)
-            ->get(['id', 'customer_id', 'delivery_order_id', 'sales_date']);
+        // Pilihan customer pembeli: nama dari Master Customer saja (diketik).
+        $customerNames = Customer::query()
+            ->external()
+            ->where('active', true)
+            ->orderBy('name')
+            ->pluck('name')
+            ->unique()
+            ->values();
 
         $recentDisposals = LeftoverDisposal::query()
             ->with(['sourceItem.salesActual.customer', 'sourceItem.product', 'component', 'creator:id,name'])
@@ -74,25 +76,25 @@ class LeftoverStockController extends Controller
         return view('salesapp.leftovers', [
             'stock' => $stock,
             'breakdowns' => $breakdowns,
-            'draftActuals' => $draftActuals,
+            'customerNames' => $customerNames,
             'recentDisposals' => $recentDisposals,
             'totalQty' => round((float) $stock->sum('available_qty'), 2),
             'totalValue' => round((float) $stock->sum('value') + (float) $breakdowns->sum('available_value'), 2),
         ]);
     }
 
-    /** Jual dari halaman Barang Sisa: pilih Sales Actual draft tujuan. */
+    /** Jual dari halaman Barang Sisa: ketik customer pembeli dari Master Customer. */
     public function sell(Request $request, SalesActualItem $entry): RedirectResponse
     {
         $data = $request->validate([
-            'sales_actual_id' => ['required', 'integer', Rule::exists('sales_actuals', 'id')->where('status', 'draft')],
+            'customer_name' => ['required', 'string', 'max:255'],
             'qty' => ['required', 'numeric', 'gt:0'],
             'unit_price' => ['nullable', 'numeric', 'min:0'],
         ], [
-            'sales_actual_id.exists' => 'Sales Actual tujuan harus yang masih draft.',
+            'customer_name.required' => 'Ketik nama customer pembeli.',
         ]);
 
-        $salesActual = SalesActual::query()->findOrFail($data['sales_actual_id']);
+        $salesActual = $this->draftForCustomer($data['customer_name']);
 
         $this->leftovers->addToSalesActual(
             $salesActual,
@@ -121,6 +123,28 @@ class LeftoverStockController extends Controller
         return redirect()
             ->route('salesapp.leftovers.index')
             ->with('success', 'Barang Sisa dicatat sebagai dibuang.');
+    }
+
+    /** Batal: porsi Barang Sisa ini tidak jadi dibuat (bukan waste). */
+    public function cancel(Request $request, SalesActualItem $entry): RedirectResponse
+    {
+        $data = $request->validate([
+            'qty' => ['required', 'numeric', 'gt:0'],
+            'disposed_at' => ['required', 'date', 'before_or_equal:today'],
+            'reason' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $this->leftovers->cancel(
+            $entry,
+            (float) $data['qty'],
+            Carbon::parse($data['disposed_at']),
+            $data['reason'] ?? null,
+            $request->user()?->id,
+        );
+
+        return redirect()
+            ->route('salesapp.leftovers.index')
+            ->with('success', 'Barang Sisa dicatat batal dibuat; stoknya berkurang tanpa dihitung waste.');
     }
 
     /**
@@ -200,15 +224,15 @@ class LeftoverStockController extends Controller
     public function sellComponent(Request $request, LeftoverComponent $component): RedirectResponse
     {
         $data = $request->validate([
-            'sales_actual_id' => ['required', 'integer', Rule::exists('sales_actuals', 'id')->where('status', 'draft')],
+            'customer_name' => ['required', 'string', 'max:255'],
             'qty' => ['required', 'numeric', 'gt:0'],
             'unit_price' => ['required', 'numeric', 'min:0'],
         ], [
-            'sales_actual_id.exists' => 'Sales Actual tujuan harus yang masih draft.',
+            'customer_name.required' => 'Ketik nama customer pembeli.',
             'unit_price.required' => 'Isi harga jual komponen.',
         ]);
 
-        $salesActual = SalesActual::query()->findOrFail($data['sales_actual_id']);
+        $salesActual = $this->draftForCustomer($data['customer_name']);
 
         $this->leftovers->addComponentToSalesActual($salesActual, $component, (float) $data['qty'], (float) $data['unit_price']);
 
@@ -243,6 +267,45 @@ class LeftoverStockController extends Controller
         return redirect()
             ->route('salesapp.actuals.edit', $salesActual)
             ->with('success', 'Penjualan Barang Sisa dilepas; qty-nya kembali ke stok Barang Sisa.');
+    }
+
+    /**
+     * Sales Actual draft tujuan untuk customer yang diketik.
+     *
+     * Customer harus ada di Master Customer (bukan customer internal). Cara
+     * bayar Penjualan Barang Sisa diambil dari PO customer itu, jadi tujuannya
+     * draft Sales Actual customer tersebut -- yang terbaru bila lebih dari satu.
+     */
+    private function draftForCustomer(string $name): SalesActual
+    {
+        $name = trim($name);
+
+        $customerIds = Customer::query()
+            ->external()
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+            ->pluck('id');
+
+        if ($customerIds->isEmpty()) {
+            throw ValidationException::withMessages([
+                'customer_name' => "Customer \"{$name}\" tidak ada di Master Customer. Pilih nama dari daftar.",
+            ]);
+        }
+
+        $salesActual = SalesActual::query()
+            ->external()
+            ->whereIn('customer_id', $customerIds)
+            ->where('status', 'draft')
+            ->orderByDesc('sales_date')
+            ->orderByDesc('id')
+            ->first();
+
+        if (! $salesActual) {
+            throw ValidationException::withMessages([
+                'customer_name' => "Customer \"{$name}\" belum punya Sales Actual draft. Barang Sisa dijual lewat Sales Actual dari DO customer itu.",
+            ]);
+        }
+
+        return $salesActual;
     }
 
     /** @return array<string, mixed> */

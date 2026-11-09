@@ -15,6 +15,7 @@ use App\Models\SalesActualItem;
 use App\Models\User;
 use App\Services\LeftoverStockService;
 use App\Services\SalesActualService;
+use App\Support\Settings\Settings;
 use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Role;
 
@@ -101,7 +102,7 @@ it('memasukkan retur ke Barang Sisa lalu menjualnya ke customer lain dengan cara
         ->assertViewHas('totalValue', 15000.0); // 3 x HPP 5.000
 
     $this->post(route('salesapp.leftovers.sell', $f['entry']), [
-        'sales_actual_id' => $f['draftB']->id,
+        'customer_name' => 'customer pembeli', // diketik, huruf kecil pun cocok
         'qty' => 2,
         'unit_price' => 12000,
     ])->assertRedirect(route('salesapp.actuals.edit', $f['draftB']));
@@ -242,4 +243,89 @@ it('hanya membuka Barang Sisa untuk peran sales, owner, dan superadmin', functio
 
     // Kontrol positif.
     $this->actingAs($f['sales'])->get(route('salesapp.leftovers.index'))->assertOk();
+});
+
+it('menjual Barang Sisa ke customer yang diketik dari Master Customer, hanya menampilkan namanya', function () {
+    $f = barangSisaFixture();
+    actingAs($f['sales']);
+    Customer::query()->create(['name' => 'Customer Tanpa Draft', 'area_id' => $f['customerA']->area_id]);
+    Customer::query()->create(['name' => Customer::INTERNAL_READY_STOCK, 'area_id' => $f['customerA']->area_id, 'is_internal' => true]);
+
+    // Pilihan customer = nama Master Customer saja, tanpa tanggal/DO; customer internal tidak ikut.
+    $this->get(route('salesapp.leftovers.index'))
+        ->assertOk()
+        ->assertSee('<option value="Customer Pembeli">', false)
+        ->assertSee('<option value="Customer Tanpa Draft">', false)
+        ->assertDontSee('<option value="'.Customer::INTERNAL_READY_STOCK.'">', false)
+        ->assertDontSee('DO-SISA-B');
+
+    // Nama di luar Master Customer ditolak.
+    $this->post(route('salesapp.leftovers.sell', $f['entry']), [
+        'customer_name' => 'Customer Karangan', 'qty' => 1,
+    ])->assertSessionHasErrors(['customer_name' => 'Customer "Customer Karangan" tidak ada di Master Customer. Pilih nama dari daftar.']);
+
+    // Customer internal bukan pembeli.
+    $this->post(route('salesapp.leftovers.sell', $f['entry']), [
+        'customer_name' => Customer::INTERNAL_READY_STOCK, 'qty' => 1,
+    ])->assertSessionHasErrors('customer_name');
+
+    // Customer ada tapi belum punya Sales Actual draft: cara bayarnya tidak bisa ditentukan.
+    $this->post(route('salesapp.leftovers.sell', $f['entry']), [
+        'customer_name' => 'Customer Tanpa Draft', 'qty' => 1,
+    ])->assertSessionHasErrors('customer_name');
+
+    expect(SalesActualItem::query()->where('source_sales_actual_item_id', $f['entry']->id)->count())->toBe(0);
+
+    // Kontrol positif: nama diketik dengan spasi berlebih tetap cocok ke draft customer itu.
+    $this->post(route('salesapp.leftovers.sell', $f['entry']), [
+        'customer_name' => '  Customer Pembeli ', 'qty' => 1, 'unit_price' => 12000,
+    ])->assertSessionHasNoErrors()->assertRedirect(route('salesapp.actuals.edit', $f['draftB']));
+
+    $sale = SalesActualItem::query()->where('source_sales_actual_item_id', $f['entry']->id)->sole();
+    expect($sale->sales_actual_id)->toBe($f['draftB']->id)
+        ->and($sale->purchase_order_id)->toBe($f['poB']->id);
+});
+
+it('mencatat Barang Sisa batal dibuat: stok dan persediaan berkurang tanpa dihitung waste', function () {
+    $f = barangSisaFixture();
+    actingAs($f['sales']);
+    $leftovers = app(LeftoverStockService::class);
+    // Barang Sisa hanya dinilai sejak tanggal mulai akuntansinya.
+    app(Settings::class)->set('leftover.accounting_start', now()->subMonth()->toDateString());
+
+    expect($leftovers->valueAt(now()))->toBe(15000.0); // 3 x HPP 5.000
+
+    // Melebihi sisa ditolak.
+    $this->post(route('salesapp.leftovers.cancel', $f['entry']), [
+        'qty' => 4, 'disposed_at' => now()->toDateString(),
+    ])->assertSessionHasErrors('dispose_qty');
+
+    expect(LeftoverDisposal::query()->count())->toBe(0);
+
+    // Kontrol positif: keterangan boleh kosong.
+    $this->post(route('salesapp.leftovers.cancel', $f['entry']), [
+        'qty' => 2, 'disposed_at' => now()->toDateString(),
+    ])->assertRedirect(route('salesapp.leftovers.index'))->assertSessionHasNoErrors();
+
+    $batal = LeftoverDisposal::query()->sole();
+    expect($batal->kind)->toBe(LeftoverDisposal::KIND_CANCEL)
+        ->and($batal->isCancel())->toBeTrue()
+        ->and($leftovers->availableQty($f['entry']))->toBe(1.0)
+        ->and($leftovers->valueAt(now()))->toBe(5000.0)
+        // Bukan waste: tidak masuk Barang Sisa Dibuang di HPP.
+        ->and($leftovers->wasteValueBetween(now()->startOfMonth(), now()))->toBe(0.0);
+
+    // Bandingkan: dibuang tetap dihitung waste.
+    $leftovers->dispose($f['entry'], 1, now(), 'Basi');
+    expect($leftovers->wasteValueBetween(now()->startOfMonth(), now()))->toBe(5000.0)
+        ->and($leftovers->availableQty($f['entry']))->toBe(0.0);
+
+    // Laporan waste Sales hanya berisi yang dibuang.
+    $this->get(route('salesapp.reports.waste', ['date_from' => now()->toDateString(), 'date_to' => now()->toDateString()]))
+        ->assertOk()
+        ->assertViewHas('totalWasteQty', 1.0);
+
+    $this->get(route('salesapp.leftovers.index'))->assertOk()->assertSee('Batal dibuat');
+
+    expect(AuditLog::query()->where('action', 'leftover_cancelled')->count())->toBe(1);
 });

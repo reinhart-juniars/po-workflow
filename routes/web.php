@@ -277,6 +277,7 @@ Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:sales|ow
         Route::get('/barang-sisa', [LeftoverStockController::class, 'index'])->name('leftovers.index');
         Route::post('/barang-sisa/{entry}/jual', [LeftoverStockController::class, 'sell'])->name('leftovers.sell');
         Route::post('/barang-sisa/{entry}/buang', [LeftoverStockController::class, 'dispose'])->name('leftovers.dispose');
+        Route::post('/barang-sisa/{entry}/batal', [LeftoverStockController::class, 'cancel'])->name('leftovers.cancel');
         // Rincian Barang Sisa per komponen (diketik bebas) + jual/buang per komponen.
         Route::post('/barang-sisa/{entry}/rinci', [LeftoverStockController::class, 'breakDown'])->name('leftovers.breakdowns.store');
         Route::put('/barang-sisa/rincian/{breakdown}', [LeftoverStockController::class, 'updateBreakdown'])->name('leftovers.breakdowns.update');

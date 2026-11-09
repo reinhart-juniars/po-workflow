@@ -132,7 +132,7 @@ it('menjual komponen sesuai yang diambil dengan cara bayar customer pembeli', fu
     $leftovers = app(LeftoverStockService::class);
 
     $this->post(route('salesapp.leftovers.components.sell', $telur), [
-        'sales_actual_id' => $f['draftB']->id,
+        'customer_name' => 'Customer Komponen',
         'qty' => 2,
         'unit_price' => 2500,
     ])->assertRedirect(route('salesapp.actuals.edit', $f['draftB']));

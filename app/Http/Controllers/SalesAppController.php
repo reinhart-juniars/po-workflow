@@ -251,7 +251,9 @@ class SalesAppController extends Controller
                 'notes' => $item->salesActual?->notes,
             ]);
 
+        // Barang Sisa yang batal dibuat bukan waste, jadi tidak ikut di sini.
         $disposals = LeftoverDisposal::query()
+            ->waste()
             ->with(['sourceItem.salesActual.customer', 'component'])
             ->whereDate('disposed_at', '>=', $dateFrom->toDateString())
             ->whereDate('disposed_at', '<=', $dateTo->toDateString())
