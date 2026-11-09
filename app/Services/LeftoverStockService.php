@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\AuditLog;
+use App\Models\CashAccount;
+use App\Models\Customer;
 use App\Models\LeftoverBreakdown;
 use App\Models\LeftoverComponent;
 use App\Models\LeftoverDisposal;
@@ -182,21 +184,21 @@ class LeftoverStockService
     /**
      * Tambahkan Penjualan Barang Sisa (porsi utuh) ke Sales Actual draft.
      *
-     * Cara bayarnya mengikuti PO customer pembeli di DO Sales Actual itu. Bila
-     * Sales Actual-nya tanpa DO, hanya customer asal retur yang boleh -- cara
-     * bayarnya diwarisi dari PO asal seperti carry forward lama.
+     * Cara bayar: $cashAccountId diisi = tunai langsung ke akun kas itu (tanpa
+     * PO). Null = ikut PO customer pembeli di DO Sales Actual itu; bila tanpa
+     * DO, hanya customer asal retur yang boleh (diwarisi dari PO asal).
      */
-    public function addToSalesActual(SalesActual $salesActual, SalesActualItem $entry, float $qty, ?float $unitPrice = null): SalesActualItem
+    public function addToSalesActual(SalesActual $salesActual, SalesActualItem $entry, float $qty, ?float $unitPrice = null, ?int $cashAccountId = null): SalesActualItem
     {
-        return $this->addSale($salesActual, $entry->id, null, $qty, $unitPrice);
+        return $this->addSale($salesActual, $entry->id, null, $qty, $unitPrice, $cashAccountId);
     }
 
     /** Jual komponen Barang Sisa sesuai yang diambil; harganya diisi Sales. */
-    public function addComponentToSalesActual(SalesActual $salesActual, LeftoverComponent $component, float $qty, float $unitPrice): SalesActualItem
+    public function addComponentToSalesActual(SalesActual $salesActual, LeftoverComponent $component, float $qty, float $unitPrice, ?int $cashAccountId = null): SalesActualItem
     {
         $entryId = (int) $component->breakdown()->value('source_sales_actual_item_id');
 
-        return $this->addSale($salesActual, $entryId, $component->id, $qty, $unitPrice);
+        return $this->addSale($salesActual, $entryId, $component->id, $qty, $unitPrice, $cashAccountId);
     }
 
     /** Batalkan Penjualan Barang Sisa di draft: qty-nya kembali ke stok. */
@@ -557,9 +559,16 @@ class LeftoverStockService
         return $item->sourceSalesActualItem?->leftoverUnitCost() ?? $item->leftoverUnitCost();
     }
 
-    protected function addSale(SalesActual $salesActual, int $entryId, ?int $componentId, float $qty, ?float $unitPrice): SalesActualItem
+    protected function addSale(SalesActual $salesActual, int $entryId, ?int $componentId, float $qty, ?float $unitPrice, ?int $cashAccountId = null): SalesActualItem
     {
         $qty = round($qty, 2);
+
+        // Akun kas pilihan harus akun kas aktif, persis seperti syarat closing harian.
+        if ($cashAccountId !== null && ! CashAccount::query()->whereKey($cashAccountId)->where('is_active', true)->exists()) {
+            throw ValidationException::withMessages([
+                'payment' => 'Akun kas untuk cara bayar Tunai tidak ditemukan atau tidak aktif.',
+            ]);
+        }
 
         if (! $salesActual->isDraft()) {
             throw ValidationException::withMessages([
@@ -579,7 +588,7 @@ class LeftoverStockService
             ]);
         }
 
-        return DB::transaction(function () use ($salesActual, $entryId, $componentId, $qty, $unitPrice) {
+        return DB::transaction(function () use ($salesActual, $entryId, $componentId, $qty, $unitPrice, $cashAccountId) {
             // Kunci entri supaya dua penjualan bersamaan tidak mengambil stok yang sama.
             $entry = $this->lockEntry($entryId, 'leftover');
 
@@ -625,7 +634,9 @@ class LeftoverStockService
             $item = SalesActualItem::query()->create($attributes + [
                 'sales_actual_id' => $salesActual->id,
                 'purchase_order_item_id' => null,
-                'purchase_order_id' => $this->paymentPurchaseOrderId($salesActual, $entry),
+                // Tunai ke akun kas pilihan, atau ikut PO (lihat paymentPurchaseOrderId).
+                'purchase_order_id' => $cashAccountId ? null : $this->paymentPurchaseOrderId($salesActual, $entry),
+                'cash_account_id' => $cashAccountId,
                 'qty_delivery' => $qty,
                 'qty_actual' => $qty,
                 'qty_return' => 0,
@@ -640,7 +651,7 @@ class LeftoverStockService
                 $component ? $component->name.' (rincian '.$entry->item_name.')' : $entry->item_name,
                 number_format($qty, 2, ',', '.'),
                 $salesActual->id
-            ), ['entry_id' => $entry->id, 'component_id' => $component?->id, 'item_id' => $item->id, 'qty' => $qty, 'unit_price' => (float) $item->unit_price]);
+            ), ['entry_id' => $entry->id, 'component_id' => $component?->id, 'item_id' => $item->id, 'qty' => $qty, 'unit_price' => (float) $item->unit_price, 'cash_account_id' => $cashAccountId]);
 
             return $item;
         });
@@ -917,9 +928,13 @@ class LeftoverStockService
     /**
      * PO yang menentukan cara bayar Penjualan Barang Sisa.
      *
-     * Sales Actual dari DO: PO customer itu di DO tersebut (id terkecil bila
-     * lebih dari satu). Tanpa DO: hanya customer asal, dan null berarti cara
-     * bayar diwarisi lewat rantai retur (perilaku carry forward lama).
+     * 1. Sales Actual dari DO: PO customer itu di DO tersebut (id terkecil
+     *    bila lebih dari satu).
+     * 2. Dijual kembali ke customer asal retur: null, cara bayar diwarisi
+     *    lewat rantai retur (perilaku carry forward lama).
+     * 3. Selain itu tidak ada PO yang bisa diikuti: Sales harus memilih
+     *    cara bayar Tunai ke akun kas (lihat addSale). PO lama customer
+     *    sengaja tidak dipakai -- ongkirnya akan ikut tertagih lagi.
      */
     protected function paymentPurchaseOrderId(SalesActual $salesActual, SalesActualItem $entry): ?int
     {
@@ -942,7 +957,45 @@ class LeftoverStockService
         }
 
         throw ValidationException::withMessages([
-            'leftover' => 'Sales Actual ini tidak punya PO untuk menentukan cara bayar. Tambahkan Barang Sisa ke Sales Actual dari DO customer pembeli.',
+            'payment' => 'Customer ini tidak punya PO di Sales Actual tujuan, jadi cara bayarnya tidak bisa mengikuti PO. Pilih cara bayar Tunai dan akun kasnya.',
         ]);
+    }
+
+    /**
+     * Sales Actual draft tujuan Penjualan Barang Sisa untuk seorang customer:
+     * draft terbarunya, atau draft baru tanpa DO bertanggal hari ini bila
+     * belum ada. Panggil di dalam transaksi bersama penjualannya, supaya draft
+     * baru ikut batal bila penjualannya ditolak.
+     */
+    public function draftForBuyer(Customer $customer): SalesActual
+    {
+        $draft = SalesActual::query()
+            ->external()
+            ->where('customer_id', $customer->id)
+            ->where('status', 'draft')
+            ->orderByDesc('sales_date')
+            ->orderByDesc('id')
+            ->first();
+
+        if ($draft) {
+            return $draft;
+        }
+
+        $draft = SalesActual::query()->create([
+            'customer_id' => $customer->id,
+            'delivery_order_id' => null,
+            'sales_date' => now()->toDateString(),
+            'status' => 'draft',
+            'is_internal' => false,
+            'notes' => null,
+        ]);
+
+        $this->audit('sales_actual', $draft->id, 'sales_actual_draft_created', sprintf(
+            'Draft Sales Actual #%s (tanpa DO) dibuat untuk Penjualan Barang Sisa ke %s.',
+            $draft->id,
+            $customer->name
+        ), ['customer_id' => $customer->id, 'sales_date' => $draft->sales_date?->toDateString()]);
+
+        return $draft;
     }
 }

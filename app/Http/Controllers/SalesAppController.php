@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\ViewExcelExport;
+use App\Models\CashAccount;
 use App\Models\LeftoverBreakdown;
 use App\Models\LeftoverDisposal;
 use App\Models\Product;
@@ -86,6 +87,7 @@ class SalesAppController extends Controller
             'items.product',
             'items.purchaseOrderItem.purchaseOrder',
             'items.purchaseOrder',
+            'items.cashAccount',
             'items.sourceSalesActualItem.salesActual.customer',
         ]);
 
@@ -115,8 +117,10 @@ class SalesAppController extends Controller
             : collect();
         // Menu PO di Sales Actual ini: acuan harga Porsi Tambahan.
         $extraPortionLines = $salesActual->items->whereNotNull('purchase_order_item_id')->values();
+        // Pilihan cara bayar Tunai untuk Penjualan Barang Sisa.
+        $cashAccounts = CashAccount::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']);
 
-        return view('salesapp.edit', compact('salesActual', 'products', 'leftoverStock', 'leftoverComponents', 'extraPortionLines'));
+        return view('salesapp.edit', compact('salesActual', 'products', 'leftoverStock', 'leftoverComponents', 'extraPortionLines', 'cashAccounts'));
     }
 
     public function update(Request $request, SalesActual $salesActual)

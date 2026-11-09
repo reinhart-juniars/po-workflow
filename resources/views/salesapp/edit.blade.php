@@ -271,13 +271,14 @@
             @csrf
             <h2 class="panel-title">Penjualan Barang Sisa</h2>
             <p class="section-subtitle mt-1">
-                Jual retur yang masih tersedia ke customer ini. Cara bayarnya mengikuti PO customer ini di DO.
+                Jual retur yang masih tersedia ke customer ini. Cara bayarnya mengikuti PO customer ini di DO,
+                atau pilih Tunai ke akun kas bila Sales Actual ini tanpa DO.
             </p>
 
             @if ($leftoverStock->isEmpty() && $leftoverComponents->isEmpty())
                 <p class="mt-3 text-sm text-slate-500">Tidak ada Barang Sisa yang tersedia.</p>
             @else
-                <div class="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_8rem_10rem_auto] sm:items-end">
+                <div class="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_8rem_10rem_minmax(0,14rem)_auto] sm:items-end">
                     <div>
                         <label class="form-label" for="leftover-entry">Barang Sisa</label>
                         <select id="leftover-entry" name="leftover_source" class="form-control js-leftover-entry" required>
@@ -319,6 +320,16 @@
                         <label class="form-label" for="leftover-price">Harga</label>
                         <input id="leftover-price" type="number" name="leftover_price" step="0.01" min="0"
                             value="{{ old('leftover_price') }}" class="form-control text-right tabular-nums">
+                    </div>
+                    <div>
+                        {{-- Tanpa DO: bawaan Tunai ke akun kas pertama, karena tidak ada PO yang bisa diikuti. --}}
+                        @include('salesapp.partials.leftover-payment', [
+                            'id' => 'leftover-payment',
+                            'selected' => old('payment', $salesActual->delivery_order_id || $cashAccounts->isEmpty()
+                                ? 'po'
+                                : 'cash:' . $cashAccounts->first()->id),
+                            'hint' => false,
+                        ])
                     </div>
                     <button type="submit" class="btn-primary">Tambahkan</button>
                 </div>

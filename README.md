@@ -93,9 +93,12 @@ menggantikan HPP residual opname dengan pemakaian bahan riil dari resep × produ
   Sales Actual) atau dibuang dengan alasan. Porsi yang ternyata tidak jadi dibuat dicatat **Batal**
   (`leftover_disposals.kind = cancel`): stoknya berkurang, tapi tidak dihitung waste/Barang Sisa Dibuang.
   Di halaman Barang Sisa, customer pembeli diketik dari Master Customer (nama saja); tujuannya draft
-  Sales Actual terbaru customer itu. Cara bayar Penjualan Barang Sisa mengikuti PO customer
-  pembeli di DO-nya (`sales_actual_items.purchase_order_id`); Sales Actual tanpa DO hanya untuk customer
-  asal retur.
+  Sales Actual terbaru customer itu, atau draft baru tanpa DO bertanggal hari ini bila belum ada.
+  **Cara bayar** dipilih di form Jual: *Ikuti PO customer* (PO customer pembeli di DO-nya,
+  `sales_actual_items.purchase_order_id`; tanpa DO hanya untuk customer asal retur) atau *Tunai* ke akun
+  kas pilihan (`sales_actual_items.cash_account_id`, tanpa PO, jadi tanpa ongkir) untuk customer yang hari
+  itu tidak punya DO. PO lama customer sengaja tidak dipakai supaya ongkirnya tidak tertagih dua kali.
+  Piutang hanya lewat PO, karena piutang dicatat per PO.
 - Nilainya **HPP menu** (snapshot bahan baku di item). Retur yang belum terjual per akhir periode adalah
   persediaan: baris *Barang Sisa - Persediaan Akhir* di Neraca, *Barang Sisa Awal/Akhir* di blok HPP Laba
   Rugi (awal menambah, akhir mengurangi Bahan Baku Terpakai). Hanya retur sejak pengaturan

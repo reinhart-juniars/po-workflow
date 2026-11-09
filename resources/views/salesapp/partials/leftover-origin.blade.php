@@ -11,3 +11,6 @@
 @else
     Barang Sisa
 @endif
+@if ($item->cash_account_id)
+    · <span class="font-semibold text-emerald-700">Tunai {{ $item->cashAccount?->name }}</span>
+@endif
