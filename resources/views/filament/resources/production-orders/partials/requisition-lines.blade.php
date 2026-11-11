@@ -16,36 +16,44 @@
     // Meja gudang: nilai perkiraan per bahan supaya keputusan setujui/tolak punya dasar.
     $showEstimate = $stage === 'draft' || ($requisition?->isSubmitted() ?? false);
     $defaultTreatment = app(\App\Support\Settings\Settings::class)->get('requisition.reject_default_treatment');
+
+    // Lebar kolom (px) setelah kolom Bahan, urut sama dengan <th>. Kolom Bahan
+    // memakai sisa lebar, jadi lebar minimum tabel = jumlah kolom ini + ruang
+    // nama bahan. Tanpa itu, di tahap Pemakaian (11 kolom) kolom Bahan
+    // tergencet sampai namanya hilang.
+    $nameWidth = 180;
+    $cols = [96]; // Kebutuhan
+    if ($stage === 'draft') {
+        array_push($cols, 104, 104, 100, 180); // Stok Awal, Beli, Harga Master, Catatan
+    } elseif ($showEstimate) {
+        array_push($cols, 96, 90, 110, 120, 180); // Stok, Beli, Harga Master, Perkiraan, Catatan
+    } else {
+        array_push($cols, 96, 80); // Stok, Beli
+        if ($receivingVisible) {
+            array_push($cols, 84, 72); // Diterima, Ditolak
+            $stage === 'receiving'
+                ? array_push($cols, 130, 130, 104) // Alasan, Perlakuan, Harga Beli
+                : array_push($cols, 140, 104);     // Alasan, Harga Beli
+        }
+        if ($actualsVisible) {
+            array_push($cols, 120, 120); // Pemakaian, Sisa Stok
+        }
+        $cols[] = 140; // Catatan
+    }
+    $minWidth = $nameWidth + array_sum($cols);
 @endphp
 
-<div class="sh-grid-wrap" x-data="{ roundUp: {{ $roundUp }},
+<div class="sh-grid-wrap sh-grid-wrap--freeze" x-data="{ roundUp: {{ $roundUp }},
     n(v) { const x = parseFloat(String(v ?? '').replace(',', '.')); return isNaN(x) ? null : x; },
     fmt(v) { return v === null ? '' : Number(v.toFixed(4)).toLocaleString('id-ID', { maximumFractionDigits: 4 }); },
     suggest(i) { const l = $wire.data.lines[i]; const o = this.n(l.opening_stock_qty) ?? 0; let s = Math.max((this.n(l.required_qty) ?? 0) - o, 0); if (this.roundUp) s = Math.ceil(s); $wire.data.lines[i].purchase_qty = Number(s.toFixed(4)); },
     rejected(i) { const l = $wire.data.lines[i]; const b = this.n(l.purchase_qty) ?? 0; const r = this.n(l.received_qty); return Math.max(b - (r === null ? b : r), 0); } }">
-<table class="sh-grid">
+<table class="sh-grid" style="min-width: {{ $minWidth }}px">
     <colgroup>
         <col>
-        <col style="width: 76px">
-        @if ($stage === 'draft')
-            <col style="width: 104px"><col style="width: 104px"><col style="width: 100px"><col style="width: 180px">
-        @elseif ($showEstimate)
-            <col style="width: 90px"><col style="width: 90px"><col style="width: 110px"><col style="width: 120px"><col style="width: 180px">
-        @else
-            <col style="width: 56px"><col style="width: 60px">
-            @if ($receivingVisible)
-                <col style="width: 84px"><col style="width: 66px">
-                @if ($stage === 'receiving')
-                    <col style="width: 112px"><col style="width: 126px"><col style="width: 96px">
-                @else
-                    <col style="width: 130px"><col style="width: 90px">
-                @endif
-            @endif
-            @if ($actualsVisible)
-                <col style="width: 92px"><col style="width: 90px">
-            @endif
-            <col style="width: 96px">
-        @endif
+        @foreach ($cols as $width)
+            <col style="width: {{ $width }}px">
+        @endforeach
     </colgroup>
     <thead>
         <tr>
