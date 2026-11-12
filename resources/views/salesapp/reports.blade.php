@@ -119,7 +119,7 @@
                                             ke
                                             {{ $sale->salesActual?->customer?->name ?? '-' }}
                                             {{ $sale->salesActual?->sales_date?->format('d M Y') }}
-                                            <span class="text-xs text-slate-500">({{ $sale->salesActual?->isSubmitted() ? 'final' : 'draft' }})</span>
+                                            <span class="text-xs text-slate-500">({{ $sale->salesActual?->isSubmitted() ? 'final' : mb_strtolower($sale->salesActual?->statusLabel() ?? 'draft') }})</span>
                                         </div>
                                     @empty
                                     @endforelse

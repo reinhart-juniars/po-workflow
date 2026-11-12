@@ -25,10 +25,10 @@
     <section class="sales-stats-grid-narrow">
         <article class="sales-stat-card">
             <p class="stat-label">Status</p>
-            <p class="sales-stat-value {{ $isDraft ? 'text-amber-600' : 'text-emerald-700' }}">{{ ucfirst($salesActual->status) }}
+            <p class="sales-stat-value {{ $isDraft ? 'text-amber-600' : ($salesActual->isArchived() ? 'text-slate-500' : 'text-emerald-700') }}">{{ $salesActual->statusLabel() }}
             </p>
             <p class="stat-meta">
-                {{ $salesActual->submitted_at ? 'Submitted ' . $salesActual->submitted_at->format('d M Y H:i') : 'Belum final' }}
+                {{ $salesActual->isArchived() ? 'Draft V2 yang tidak pernah disubmit' : ($salesActual->submitted_at ? 'Submitted ' . $salesActual->submitted_at->format('d M Y H:i') : 'Belum final') }}
             </p>
         </article>
         <article class="sales-stat-card">

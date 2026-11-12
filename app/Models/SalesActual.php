@@ -12,6 +12,15 @@ class SalesActual extends Model
 {
     use HasFactory;
 
+    public const STATUS_DRAFT = 'draft';
+
+    public const STATUS_SUBMITTED = 'submitted';
+
+    public const STATUS_ARCHIVED = 'archived';
+
+    /** V2 berhenti 31 Okt 2026; sejak 1 Nov semua penjualan dicatat di V3. */
+    public const V3_START = '2026-11-01';
+
     protected $fillable = [
         'delivery_order_id',
         'sales_date',
@@ -72,5 +81,29 @@ class SalesActual extends Model
     public function isSubmitted(): bool
     {
         return $this->status === 'submitted';
+    }
+
+    /**
+     * Draft V2 (bertanggal sebelum V3_START) yang dinonaktifkan: tidak bisa
+     * diedit, disubmit, atau menampung Barang Sisa, dan tidak masuk laporan.
+     */
+    public function isArchived(): bool
+    {
+        return $this->status === self::STATUS_ARCHIVED;
+    }
+
+    public function statusLabel(): string
+    {
+        return self::statusOptions()[$this->status] ?? ucfirst((string) $this->status);
+    }
+
+    /** @return array<string, string> */
+    public static function statusOptions(): array
+    {
+        return [
+            self::STATUS_DRAFT => 'Draft',
+            self::STATUS_SUBMITTED => 'Submitted',
+            self::STATUS_ARCHIVED => 'Nonaktif',
+        ];
     }
 }
