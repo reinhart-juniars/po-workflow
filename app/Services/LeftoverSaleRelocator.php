@@ -30,9 +30,6 @@ use RuntimeException;
  */
 class LeftoverSaleRelocator
 {
-    /** V2 berhenti 31 Okt 2026; sejak 1 Nov semua transaksi di V3. */
-    public const V3_START = '2026-11-01';
-
     /**
      * Rencana pemindahan tanpa menulis apa pun. Melempar RuntimeException bila
      * ada baris yang tidak boleh dipindah.
@@ -182,7 +179,7 @@ class LeftoverSaleRelocator
      */
     protected function reopenCandidates(Collection $sources): array
     {
-        $start = Carbon::parse(self::V3_START)->startOfDay();
+        $start = Carbon::parse(SalesActual::V3_START)->startOfDay();
 
         return $sources
             ->filter(fn (SalesActual $sa) => $sa->isSubmitted()

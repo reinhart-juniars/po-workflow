@@ -93,7 +93,11 @@ menggantikan HPP residual opname dengan pemakaian bahan riil dari resep × produ
   Sales Actual) atau dibuang dengan alasan. Porsi yang ternyata tidak jadi dibuat dicatat **Batal**
   (`leftover_disposals.kind = cancel`): stoknya berkurang, tapi tidak dihitung waste/Barang Sisa Dibuang.
   Di halaman Barang Sisa, customer pembeli diketik dari Master Customer (nama saja); tujuannya draft
-  Sales Actual terbaru customer itu, atau draft baru tanpa DO bertanggal hari ini bila belum ada.
+  Sales Actual customer itu yang bertanggal hari ini, atau draft baru tanpa DO bila belum ada (v3.2.5:
+  draft tanggal lain tidak dipakai lagi). Barang Sisa tidak bisa dijual lewat Sales Actual bertanggal sebelum
+  sisanya ada. Draft V2 (sebelum 1 Nov 2026) dinonaktifkan dengan `sales-actual:nonaktifkan-draft-v2`
+  (status `archived`, label Nonaktif: tidak bisa diedit/disubmit, tidak masuk laporan); penjualan yang
+  terlanjur salah tempat dipindah dengan `sales-actual:pindah-barang-sisa` (keduanya uji-jalan tanpa `--execute`).
   **Cara bayar** dipilih di form Jual: *Ikuti PO customer* (PO customer pembeli di DO-nya,
   `sales_actual_items.purchase_order_id`; tanpa DO hanya untuk customer asal retur) atau *Tunai* ke akun
   kas pilihan (`sales_actual_items.cash_account_id`, tanpa PO, jadi tanpa ongkir) untuk customer yang hari

@@ -19,7 +19,7 @@
                  'value' => [$dateFrom, $dateTo]],
                 ['type' => 'select', 'name' => 'status', 'label' => 'Status', 'required' => true,
                  'removable' => request()->filled('status'),
-                 'options' => ['all' => 'Semua', 'draft' => 'Draft', 'submitted' => 'Submitted'], 'value' => $status],
+                 'options' => ['all' => 'Semua'] + \App\Models\SalesActual::statusOptions(), 'value' => $status],
               ]" />
         </section>
 
@@ -109,8 +109,8 @@
                                 </td>
                                 <td data-label="Status">
                                     <span
-                                        class="status-badge {{ $actual->status === 'draft' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700' }}">
-                                        {{ ucfirst($actual->status) }}
+                                        class="status-badge {{ $actual->isDraft() ? 'bg-amber-100 text-amber-700' : ($actual->isArchived() ? 'bg-slate-100 text-slate-600' : 'bg-emerald-100 text-emerald-700') }}">
+                                        {{ $actual->statusLabel() }}
                                     </span>
                                 </td>
                                 <td class="number-cell font-semibold" data-label="Total Actual">

@@ -598,6 +598,20 @@ class LeftoverStockService
                 ]);
             }
 
+            // Penjualan tidak boleh bertanggal sebelum barangnya ada: ia akan
+            // tercatat di hari yang sudah lewat (atau bahkan di draft V2).
+            $entryDate = $entry->salesActual()->value('sales_date');
+
+            if ($entryDate !== null && $salesActual->sales_date?->lt(Carbon::parse($entryDate)->startOfDay())) {
+                throw ValidationException::withMessages([
+                    'leftover' => sprintf(
+                        'Barang Sisa tanggal %s tidak bisa dijual lewat Sales Actual tanggal %s. Jual lewat Sales Actual hari ini.',
+                        Carbon::parse($entryDate)->format('d/m/Y'),
+                        $salesActual->sales_date->format('d/m/Y'),
+                    ),
+                ]);
+            }
+
             $component = $componentId ? LeftoverComponent::query()->findOrFail($componentId) : null;
             $available = $component ? $this->componentAvailableQty($component) : $this->availableQty($entry);
             $name = $component ? $component->name : $entry->item_name;
@@ -963,17 +977,20 @@ class LeftoverStockService
 
     /**
      * Sales Actual draft tujuan Penjualan Barang Sisa untuk seorang customer:
-     * draft terbarunya, atau draft baru tanpa DO bertanggal hari ini bila
-     * belum ada. Panggil di dalam transaksi bersama penjualannya, supaya draft
-     * baru ikut batal bila penjualannya ditolak.
+     * draft bertanggal hari ini, atau draft baru tanpa DO bila belum ada.
+     * Draft tanggal lain tidak dipakai: penjualannya ikut tanggal draft itu,
+     * dan draft lama (mis. sisa V2 April) membuat penjualan hari ini hilang
+     * dari laporan dan closing harian (kasus Rice Bowl Dori, 12 Nov 2026).
+     * Panggil di dalam transaksi bersama penjualannya, supaya draft baru ikut
+     * batal bila penjualannya ditolak.
      */
     public function draftForBuyer(Customer $customer): SalesActual
     {
         $draft = SalesActual::query()
             ->external()
             ->where('customer_id', $customer->id)
-            ->where('status', 'draft')
-            ->orderByDesc('sales_date')
+            ->where('status', SalesActual::STATUS_DRAFT)
+            ->whereDate('sales_date', now()->toDateString())
             ->orderByDesc('id')
             ->first();
 

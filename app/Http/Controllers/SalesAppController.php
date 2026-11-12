@@ -26,7 +26,7 @@ class SalesAppController extends Controller
         [$dateFrom, $dateTo] = $this->parseDateRange($request);
         $status = $request->input('status', 'draft');
 
-        if (! in_array($status, ['all', 'draft', 'submitted'], true)) {
+        if ($status !== 'all' && ! array_key_exists($status, SalesActual::statusOptions())) {
             $status = 'draft';
         }
 

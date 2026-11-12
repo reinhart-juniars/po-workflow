@@ -56,11 +56,15 @@ function sisaSalahTempatFixture(): array
         'status' => 'completed', 'completed_at' => '2026-04-30 12:00', 'created_by' => $user->id, 'updated_by' => $user->id,
     ]);
 
-    // Penjualan Barang Sisa yang salah tempat, lalu draft V2 tersubmit hari ini.
-    $leftovers = app(LeftoverStockService::class);
-    $tunai = $leftovers->addToSalesActual($mei, $entry, 2, 17500, $kas->id);
-    $ikutPo = $leftovers->addToSalesActual($april, $entry, 2, 17500, $kas->id);
-    $ikutPo->forceFill(['cash_account_id' => null, 'purchase_order_id' => $poApril->id])->save();
+    // Penjualan Barang Sisa yang salah tempat (dibuat sebelum v3.2.5 menolaknya),
+    // lalu draft V2 tersubmit hari ini.
+    $jual = fn (SalesActual $sa, array $bayar) => SalesActualItem::query()->create($bayar + [
+        'sales_actual_id' => $sa->id, 'product_id' => $dori->id, 'item_name' => 'Rice Bowl Dori Cabe Garam', 'unit' => 'porsi',
+        'qty_delivery' => 2, 'qty_actual' => 2, 'qty_return' => 0, 'qty_cancel' => 0, 'unit_price' => 17500,
+        'raw_material_cost' => 8000, 'overhead_cost' => 2000, 'is_carry_forward' => true, 'source_sales_actual_item_id' => $entry->id,
+    ]);
+    $tunai = $jual($mei, ['cash_account_id' => $kas->id]);
+    $ikutPo = $jual($april, ['purchase_order_id' => $poApril->id]);
 
     foreach ([$mei, $april] as $sa) {
         $sa->forceFill(['status' => 'submitted', 'submitted_at' => now(), 'submitted_by' => $user->id])->save();
