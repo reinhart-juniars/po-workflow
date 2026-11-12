@@ -123,16 +123,22 @@ class SalesAppController extends Controller
         return view('salesapp.edit', compact('salesActual', 'products', 'leftoverStock', 'leftoverComponents', 'extraPortionLines', 'cashAccounts'));
     }
 
-    public function update(Request $request, SalesActual $salesActual)
+    /** Aturan isian tabel Sales Actual, dipakai Simpan Perubahan dan Submit. */
+    private function actualItemRules(): array
     {
-        $data = $request->validate([
+        return [
             'notes' => ['nullable', 'string'],
             'items' => ['required', 'array'],
             'items.*.qty_actual' => ['required', 'numeric', 'min:0'],
             'items.*.qty_waste' => ['nullable', 'numeric', 'min:0'],
             'items.*.product_id' => ['nullable', 'exists:products,id'],
             'items.*.unit_price' => ['nullable', 'numeric', 'min:0'],
-        ]);
+        ];
+    }
+
+    public function update(Request $request, SalesActual $salesActual)
+    {
+        $data = $request->validate($this->actualItemRules());
 
         $this->salesActualService->updateActualItems(
             $salesActual,
@@ -146,8 +152,20 @@ class SalesAppController extends Controller
             ->with('success', 'Hasil penjualan berhasil disimpan. Retur dihitung otomatis dari selisih qty delivery dan qty actual.');
     }
 
+    /**
+     * Submit final. Tombol Submit mengirim form tabel, jadi isian yang belum
+     * disimpan (mis. harga Barang Sisa yang baru diketik) disimpan dulu --
+     * dulu ketikan itu terbuang dan yang tersubmit harga lama (12 Nov 2026).
+     */
     public function submit(Request $request, SalesActual $salesActual)
     {
+        if ($request->has('items')) {
+            $data = $request->validate($this->actualItemRules());
+
+            $this->salesActualService->updateActualItems($salesActual, $data['items'], $data['notes'] ?? null, $request->ip());
+            $salesActual->refresh();
+        }
+
         $this->salesActualService->submit($salesActual, $request->ip());
 
         return redirect()

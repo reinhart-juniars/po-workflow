@@ -48,7 +48,7 @@
         </article>
     </section>
 
-    <form method="POST" action="{{ route('salesapp.actuals.update', $salesActual) }}" class="table-shell sales-table sales-responsive-table">
+    <form id="sales-actual-form" method="POST" action="{{ route('salesapp.actuals.update', $salesActual) }}" class="table-shell sales-table sales-responsive-table">
         @csrf
         @method('PUT')
 
@@ -336,19 +336,22 @@
             @endif
         </form>
 
-        <form method="POST" action="{{ route('salesapp.actuals.submit', $salesActual) }}" class="section-card">
-            @csrf
+        {{-- Tombol ini mengirim form tabel di atas (form="sales-actual-form"), jadi qty, harga
+             Barang Sisa, dan catatan yang baru diketik ikut tersimpan sebelum submit. Dulu form
+             submit terpisah dan ketikan yang belum disimpan hilang diam-diam (12 Nov 2026). --}}
+        <div class="section-card">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 class="panel-title">Submit Final</h2>
-                    <p class="section-subtitle mt-1">Kunci hasil penjualan ini. Nilai actual masuk ke Accounting dan retur masuk Barang Sisa.</p>
+                    <p class="section-subtitle mt-1">Kunci hasil penjualan ini. Isian tabel di atas ikut disimpan. Nilai actual masuk ke Accounting dan retur masuk Barang Sisa.</p>
                 </div>
-                <button type="submit" class="btn-success"
-                    onclick="return confirm('Submit sales actual ini sebagai penjualan final? Setelah submit, data tidak bisa diedit lagi.')">
+                <button type="submit" class="btn-success" form="sales-actual-form"
+                    formaction="{{ route('salesapp.actuals.submit', $salesActual) }}"
+                    onclick="return confirm('Submit sales actual ini sebagai penjualan final? Isian tabel ikut disimpan. Setelah submit, data tidak bisa diedit lagi.')">
                     Submit Sales Actual
                 </button>
             </div>
-        </form>
+        </div>
     @endif
   </div>
 
