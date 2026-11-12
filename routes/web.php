@@ -270,7 +270,8 @@ Route::middleware(['web', 'auth', 'force.password.change', 'ensure.role:sales|ow
         });
         Route::get('/actuals/{salesActual}', [SalesAppController::class, 'edit'])->name('actuals.edit');
         Route::put('/actuals/{salesActual}', [SalesAppController::class, 'update'])->name('actuals.update');
-        Route::post('/actuals/{salesActual}/submit', [SalesAppController::class, 'submit'])->name('actuals.submit');
+        // PUT: tombol Submit mengirim form tabel (yang memakai @method('PUT')) supaya isiannya ikut disimpan.
+        Route::match(['post', 'put'], '/actuals/{salesActual}/submit', [SalesAppController::class, 'submit'])->name('actuals.submit');
         // Barang Sisa: retur yang bisa dijual ke customer mana pun atau dibuang.
         Route::post('/actuals/{salesActual}/leftovers', [LeftoverStockController::class, 'storeOnActual'])->name('actuals.leftovers.store');
         Route::delete('/actuals/{salesActual}/leftovers/{item}', [LeftoverStockController::class, 'destroyOnActual'])->name('actuals.leftovers.destroy');
