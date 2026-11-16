@@ -11,7 +11,11 @@ use Illuminate\Support\Collection;
  * produk Master Menu ("NASI GORENG CRABSTIK 10K").
  *
  * Produk di 3S ONE adalah varian harga, jadi harga ikut menentukan: nama dasar
- * (tanpa akhiran "12K") harus sama DAN harganya sama. Urutan:
+ * (tanpa akhiran "12K") harus sama DAN harganya sama. Harga Excel rencana masak
+ * adalah harga lapak (stok siap didistribusikan ke lapak), sedangkan menu dari
+ * tim menu bernama tanpa akhiran harga dan harga lapaknya sering berbeda dari
+ * harga non lapak (mis. NASI CAMPUR BARU DADAR JAGUNG: lapak 12.000, non lapak
+ * 14.000) — jadi harga lapak maupun non lapak diterima, lapak didahulukan. Urutan:
  *   1. alias yang pernah dipilih manual (nama + harga);
  *   2. nama dasar + harga sama persis (setelah ejaan dirapikan);
  *   3. tidak cocok -> kandidat terdekat untuk dipilih manual.
@@ -20,7 +24,7 @@ use Illuminate\Support\Collection;
  */
 class ReadyStockPlanMatcher
 {
-    /** @var Collection<int, array{product: Product, base: string, price: ?float}>|null */
+    /** @var Collection<int, array{product: Product, base: string, prices: list<float>, lapak: ?float}>|null */
     private ?Collection $index = null;
 
     /**
@@ -36,8 +40,10 @@ class ReadyStockPlanMatcher
         }
 
         $exact = $this->index()
-            ->filter(fn (array $row) => $row['base'] === $norm && ($price === null || $row['price'] === null || abs($row['price'] - $price) < 0.5))
-            ->sortByDesc(fn (array $row) => $row['product']->recipe_id !== null)
+            ->filter(fn (array $row) => $row['base'] === $norm && ($price === null || self::priceIn($price, $row['prices'])))
+            // Berresep dulu, lalu yang cocok di harga lapak.
+            ->sortByDesc(fn (array $row) => ($row['product']->recipe_id !== null ? 2 : 0)
+                + ($price !== null && $row['lapak'] !== null && abs($row['lapak'] - $price) < 0.5 ? 1 : 0))
             ->first();
 
         if ($exact) {
@@ -82,22 +88,38 @@ class ReadyStockPlanMatcher
         return trim($text);
     }
 
-    /** @return Collection<int, array{product: Product, base: string, price: ?float}> */
+    /** @param list<float> $prices */
+    private static function priceIn(float $price, array $prices): bool
+    {
+        foreach ($prices as $candidate) {
+            if (abs($candidate - $price) < 0.5) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** @return Collection<int, array{product: Product, base: string, prices: list<float>, lapak: ?float}> */
     private function index(): Collection
     {
         return $this->index ??= Product::query()
             ->where('active', true)
-            ->get(['id', 'name', 'base_price', 'recipe_id', 'active'])
+            ->get(['id', 'name', 'base_price', 'lapak_price', 'recipe_id', 'active'])
             ->map(function (Product $product) {
                 $norm = self::normalize($product->name);
-                // Akhiran harga di nama: "12K", "22 5K" (22.5K), "35RB".
-                $price = null;
+                // Akhiran harga di nama: "12K", "22 5K" (22.5K), "35RB" — itulah harganya.
                 if (preg_match('/\s(\d+)(?:\s(\d))?\s?(K|RB)$/', $norm, $m)) {
                     $price = ((float) $m[1] + (isset($m[2]) && $m[2] !== '' ? (float) $m[2] / 10 : 0)) * 1000;
-                    $norm = trim(substr($norm, 0, -strlen($m[0])));
+
+                    return ['product' => $product, 'base' => trim(substr($norm, 0, -strlen($m[0]))), 'prices' => [$price], 'lapak' => null];
                 }
 
-                return ['product' => $product, 'base' => $norm, 'price' => $price ?? (float) $product->base_price];
+                // Tanpa akhiran: harga lapak dan non lapak; 0 = belum diisi admin.
+                $lapak = $product->lapak_price !== null && (float) $product->lapak_price > 0 ? (float) $product->lapak_price : null;
+                $prices = array_values(array_filter([$lapak, (float) $product->base_price], fn ($value) => $value !== null && $value > 0));
+
+                return ['product' => $product, 'base' => $norm, 'prices' => $prices, 'lapak' => $lapak];
             });
     }
 
@@ -108,7 +130,7 @@ class ReadyStockPlanMatcher
             ->map(function (array $row) use ($norm, $price) {
                 similar_text($norm, $row['base'], $percent);
                 // Harga sama memberi dorongan kecil: varian yang sama lebih mungkin benar.
-                $score = $percent + ($price !== null && $row['price'] !== null && abs($row['price'] - $price) < 0.5 ? 8 : 0);
+                $score = $percent + ($price !== null && self::priceIn($price, $row['prices']) ? 8 : 0);
 
                 return $row + ['score' => $score];
             })
