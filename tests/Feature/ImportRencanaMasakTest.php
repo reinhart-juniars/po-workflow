@@ -113,6 +113,26 @@ it('mencocokkan nama + harga ke varian Master Menu yang tepat', function () {
         ->and($miss['candidates'][0]['id'])->toBe($menu['crabstik']->id);
 });
 
+it('mencocokkan menu tim menu (tanpa akhiran harga) lewat harga lapak', function () {
+    // Kasus 16 Nov 2026: nama Excel sudah sama persis dengan Menu App, tapi
+    // tetap "Pilih menu" karena hanya harga non lapak (14.000) yang dibandingkan.
+    $recipe = Recipe::query()->create(['name' => 'Nasi Campur Baru Dadar Jagung', 'jenis' => Recipe::JENIS_UTAMA, 'yield_qty' => 1, 'yield_unit' => 'porsi', 'ohc_pct' => 0, 'profit_pct' => 0.25, 'is_active' => true]);
+    $menu = Product::query()->create(['name' => 'NASI CAMPUR BARU DADAR JAGUNG', 'unit' => 'porsi', 'base_price' => 14000, 'lapak_price' => 12000, 'active' => true]);
+    $menu->forceFill(['recipe_id' => $recipe->id])->saveQuietly();
+    // Menu baru dari tim menu yang harganya belum diisi admin.
+    Product::query()->create(['name' => 'NASI UDANG KRISPI SAMBEL BRAMBANG', 'unit' => 'porsi', 'base_price' => 0, 'lapak_price' => null, 'active' => true]);
+
+    $matcher = app(ReadyStockPlanMatcher::class);
+
+    expect($matcher->match('Nasi Campur Baru Dadar Jagung', 12000))->toMatchArray(['product_id' => $menu->id, 'via' => 'nama'])
+        // Harga non lapak tetap diterima.
+        ->and($matcher->match('Nasi Campur Baru Dadar Jagung', 14000)['product_id'])->toBe($menu->id)
+        // Harga yang bukan harga menu itu tetap tidak dicocokkan otomatis.
+        ->and($matcher->match('Nasi Campur Baru Dadar Jagung', 10000)['product_id'])->toBeNull()
+        // Harga 0 (belum diisi) tidak dianggap cocok dengan harga apa pun.
+        ->and($matcher->match('Nasi Udang Krispi Sambel Brambang', 12000)['product_id'])->toBeNull();
+});
+
 it('menyimpan Rencana Masak per tanggal dari Excel, mengingat pilihan manual, dan aman diimpor ulang', function () {
     $menu = siapkanMenuImpor();
     $gudang = penggunaImpor('inventory');
