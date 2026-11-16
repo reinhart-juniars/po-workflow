@@ -869,21 +869,64 @@ class AdminAppController extends Controller
             'driver_user_id' => ['required', Rule::exists('users', 'id')->where('is_active', true)],
         ]);
 
-        // Ambil PO yang dipilih beserta relasi
-        $pos = PurchaseOrder::with(['customer', 'area'])
-            ->whereIn('id', $data['po_ids'])
-            ->get();
-
-        if ($pos->isEmpty()) {
-            return back()
-                ->withErrors(['po_ids' => 'Tidak ada PO yang valid dipilih.'])
-                ->withInput();
-        }
-
         $scheduledAt = Carbon::parse($data['schedule_date'])
             ->setTimeFromTimeString($data['schedule_time']);
 
-        // Buat DO (status: ready)
+        // Satu PO hanya boleh ada di satu DO. Tanpa pengaman ini klik ganda
+        // "Teruskan ke Delivery" (kasus 14 Nov 2026: DO-20261114-0002 & -0003,
+        // selisih 1 detik) membuat dua DO berisi PO yang sama, lalu tiap DO
+        // menghasilkan Sales Actual sendiri sehingga penjualan tercatat dobel.
+        // Baris PO dikunci dulu supaya permintaan kedua menunggu yang pertama
+        // selesai, lalu tabel pivot dibaca dengan locking read (selalu melihat
+        // data terbaru yang sudah di-commit).
+        $result = DB::transaction(function () use ($data, $scheduledAt, $r) {
+            $pos = PurchaseOrder::with(['customer', 'area'])
+                ->whereIn('id', $data['po_ids'])
+                ->lockForUpdate()
+                ->get();
+
+            if ($pos->isEmpty()) {
+                return 'Tidak ada PO yang valid dipilih.';
+            }
+
+            $alreadyScheduled = DB::table('delivery_order_purchase_orders')
+                ->join('delivery_orders', 'delivery_orders.id', '=', 'delivery_order_purchase_orders.delivery_order_id')
+                ->whereIn('delivery_order_purchase_orders.purchase_order_id', $pos->pluck('id')->all())
+                ->lockForUpdate()
+                ->get(['delivery_order_purchase_orders.purchase_order_id', 'delivery_orders.do_code']);
+
+            if ($alreadyScheduled->isNotEmpty()) {
+                $poNumbers = $pos->pluck('po_number', 'id');
+
+                return 'PO berikut sudah dijadwalkan ke DO lain, jadi tidak dibuatkan DO lagi: '
+                    .$alreadyScheduled
+                        ->map(fn ($row) => ($poNumbers[$row->purchase_order_id] ?? '#'.$row->purchase_order_id).' ('.$row->do_code.')')
+                        ->unique()
+                        ->implode(', ')
+                    .'. Muat ulang halaman ini sebelum membuat DO.';
+            }
+
+            return $this->createDeliveryOrderForPurchaseOrders($pos, $data, $scheduledAt, $r);
+        });
+
+        if (is_string($result)) {
+            return redirect()
+                ->route('adminapp.delivery.index')
+                ->withErrors(['po_ids' => $result]);
+        }
+
+        return redirect()
+            ->route('adminapp.delivery.index')
+            ->with('success', "DO dengan ID {$result->do_code} dibuat (status: ".UiLabel::deliveryStatus('ready').').');
+    }
+
+    /**
+     * Buat DO (status: ready), tautkan PO-nya, dan catat audit log.
+     *
+     * @param  \Illuminate\Support\Collection<int, PurchaseOrder>  $pos
+     */
+    private function createDeliveryOrderForPurchaseOrders($pos, array $data, Carbon $scheduledAt, Request $r): DeliveryOrder
+    {
         $do = DeliveryOrder::create([
             'do_code' => $this->generateDoCode(),
             'area_id' => $data['area_id'],
@@ -939,9 +982,7 @@ class AdminAppController extends Controller
             'ip_address' => $r->ip(),
         ]);
 
-        return redirect()
-            ->route('adminapp.delivery.index')
-            ->with('success', "DO dengan ID {$do->do_code} dibuat (status: ".UiLabel::deliveryStatus('ready').').');
+        return $do;
     }
 
     public function ordersMissingCosts(Request $request)

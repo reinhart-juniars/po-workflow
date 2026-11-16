@@ -111,7 +111,7 @@
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
-      <button type="submit" class="btn-primary">Teruskan ke Delivery</button>
+      <button type="submit" class="btn-primary" id="doSubmitButton">Teruskan ke Delivery</button>
       <span class="text-sm text-slate-500">Status awal DO: <b>{{ UiLabel::deliveryStatus('ready') }}</b></span>
     </div>
   </form>
@@ -175,6 +175,30 @@
       if (count === 0) {
         e.preventDefault();
         alert('Pilih minimal 1 PO selesai untuk dibuatkan DO.');
+        return;
+      }
+
+      // Cegah klik ganda: kiriman kedua membuat DO dobel (server juga menolaknya).
+      if (form.dataset.submitting === '1') {
+        e.preventDefault();
+        return;
+      }
+
+      form.dataset.submitting = '1';
+      const submitButton = document.getElementById('doSubmitButton');
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = 'Memproses...';
+      }
+    });
+
+    // Kembali lewat tombol Back (bfcache): aktifkan lagi tombolnya.
+    window.addEventListener('pageshow', function () {
+      delete form.dataset.submitting;
+      const submitButton = document.getElementById('doSubmitButton');
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Teruskan ke Delivery';
       }
     });
   }
