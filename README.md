@@ -63,7 +63,9 @@ menggantikan HPP residual opname dengan pemakaian bahan riil dari resep × produ
   laporan.
 - **Admin = mini CRM**: sidebar Customer / Pesanan / Menu & Harga / Laporan; daftar customer dengan order
   terakhir, omzet 90 hari, status (baru / aktif / lama tidak order / belum pernah); profil customer
-  (`CustomerInsightService`). Owner Dashboard: pie chart kategori diganti batang berurutan.
+  (`CustomerInsightService`). Tombol **Export Excel** (v3.2.10) mengunduh daftar sesuai tab & pencarian
+  aktif untuk follow up marketing: telepon, link WhatsApp, status, order terakhir, total PO & omzet
+  (`CustomersExport`). Owner Dashboard: pie chart kategori diganti batang berurutan.
 - **Satu bahasa visual** untuk Blade, kedua panel, dan halaman masuk (portal korporat, tanpa data contoh);
   angka & penyimpangan di [`docs/DESIGN.md`](docs/DESIGN.md).
 
