@@ -2,33 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\CustomersExport;
 use App\Models\Area;
 use App\Models\Customer;
 use App\Models\PurchaseOrder;
 use App\Services\CustomerInsightService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AdminCustomerController extends Controller
 {
     public function index(Request $request, CustomerInsightService $insights)
     {
-        $q = trim((string) $request->query('q', ''));
-        // Tab status CRM: semua / aktif / baru / lama tidak order / belum pernah order.
-        $status = array_key_exists((string) $request->query('status'), CustomerInsightService::statusOptions())
-            ? (string) $request->query('status')
-            : null;
+        [$q, $status] = $this->listFilters($request);
 
-        $customers = $insights->withListAggregates(Customer::query()->external())
-            ->when($status, fn ($query) => $insights->filterByStatus($query, $status))
-            ->when($q !== '', function ($query) use ($q) {
-                $like = '%'.$q.'%';
-                $query->where(function ($inner) use ($like) {
-                    $inner->where('name', 'like', $like)
-                        ->orWhere('phone', 'like', $like)
-                        ->orWhere('address', 'like', $like);
-                });
-            })
-            ->orderBy('name')
+        $customers = $this->filteredQuery($insights, $q, $status)
             ->paginate(20)
             ->withQueryString();
 
@@ -42,6 +31,55 @@ class AdminCustomerController extends Controller
             'statusCounts' => $statusCounts,
             'insights' => $insights,
         ]);
+    }
+
+    /**
+     * Export Excel untuk follow up tim marketing. Mengikuti tab status &
+     * pencarian yang sedang dibuka, jadi "Lama tidak order" → hanya mereka.
+     */
+    public function export(Request $request, CustomerInsightService $insights)
+    {
+        [$q, $status] = $this->listFilters($request);
+
+        $customers = $insights->withLifetimeAggregates($this->filteredQuery($insights, $q, $status))
+            ->with('area:id,name')
+            ->get();
+
+        $fileName = 'customer_'.($status ?? 'semua').'_'.now()->format('Ymd_His').'.xlsx';
+
+        return Excel::download(new CustomersExport($customers, $insights), $fileName);
+    }
+
+    /**
+     * Filter daftar dari query string. Status di luar daftar diabaikan (= Semua).
+     *
+     * @return array{0: string, 1: ?string}
+     */
+    private function listFilters(Request $request): array
+    {
+        $q = mb_substr(trim((string) $request->query('q', '')), 0, 100);
+        // Tab status CRM: semua / aktif / baru / lama tidak order / belum pernah order.
+        $status = array_key_exists((string) $request->query('status'), CustomerInsightService::statusOptions())
+            ? (string) $request->query('status')
+            : null;
+
+        return [$q, $status];
+    }
+
+    /** Query daftar customer (non internal) + agregat, dipakai halaman dan export. */
+    private function filteredQuery(CustomerInsightService $insights, string $q, ?string $status): Builder
+    {
+        return $insights->withListAggregates(Customer::query()->external())
+            ->when($status, fn ($query) => $insights->filterByStatus($query, $status))
+            ->when($q !== '', function ($query) use ($q) {
+                $like = '%'.$q.'%';
+                $query->where(function ($inner) use ($like) {
+                    $inner->where('name', 'like', $like)
+                        ->orWhere('phone', 'like', $like)
+                        ->orWhere('address', 'like', $like);
+                });
+            })
+            ->orderBy('name');
     }
 
     /** Profil customer (mini CRM): ringkasan order, omzet bulanan, menu favorit, riwayat PO. */

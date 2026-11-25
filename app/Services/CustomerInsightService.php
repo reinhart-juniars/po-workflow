@@ -62,6 +62,18 @@ class CustomerInsightService
     }
 
     /**
+     * Jumlah PO & omzet sepanjang masa (untuk export follow up), satu query.
+     */
+    public function withLifetimeAggregates(Builder $query): Builder
+    {
+        $completed = fn ($q) => $q->where('status', 'completed');
+
+        return $query
+            ->withCount(['purchaseOrders as total_po_count' => $completed])
+            ->withSum(['purchaseOrders as total_revenue' => $completed], 'total_amount');
+    }
+
+    /**
      * Saring daftar menurut status (lihat status()). Dihitung di database
      * supaya paginasi tetap benar.
      */

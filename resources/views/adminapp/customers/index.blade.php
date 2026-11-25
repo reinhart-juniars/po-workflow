@@ -26,6 +26,17 @@
             <p class="section-subtitle">Data pelanggan beserta riwayat ordernya. Buka profil untuk melihat omzet, menu favorit, dan riwayat PO.</p>
         </div>
         <div class="toolbar-actions">
+            {{-- Export mengikuti tab & pencarian yang sedang dibuka (untuk follow up tim marketing). --}}
+            <a href="{{ route('adminapp.customers.export.excel', array_filter(['status' => $status, 'q' => $q ?: null])) }}" class="btn-gray"
+               title="Unduh {{ $tabs[$status ?? ''] }} ({{ number_format($customers->total(), 0, ',', '.') }} customer) ke Excel">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M12 3v12" />
+                    <path d="m7 10 5 5 5-5" />
+                    <path d="M5 21h14" />
+                </svg>
+                Export Excel
+            </a>
             <a href="{{ route('adminapp.customers.create') }}" class="btn-primary">+ Tambah Customer</a>
         </div>
     </div>
