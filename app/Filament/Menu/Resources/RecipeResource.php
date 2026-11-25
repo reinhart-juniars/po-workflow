@@ -14,6 +14,7 @@ use App\Services\RecipeCostService;
 use App\Support\PriceInput;
 use App\Support\Settings\Settings;
 use App\Support\Units\Unit;
+use App\Support\Units\UnitCatalog;
 use Closure;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -596,10 +597,10 @@ class RecipeResource extends Resource
      */
     public static function unitOptions(?string ...$current): array
     {
-        $options = Unit::groupedOptions();
+        $options = UnitCatalog::groupedOptions();
 
         foreach ($current as $value) {
-            if (filled($value) && Unit::tryFromAlias($value) === null) {
+            if (filled($value) && ! UnitCatalog::isKnown($value)) {
                 $options['Satuan Lain'][$value] = $value;
             }
         }

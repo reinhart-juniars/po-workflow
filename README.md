@@ -85,6 +85,11 @@ menggantikan HPP residual opname dengan pemakaian bahan riil dari resep × produ
   Pilihan satuan baris hanya satuan yang bisa dihitung ke satuan harga bahan / hasil sub-menu
   (registri + Konversi Satuan), lengkap dengan bacaannya ("ikat — 1 ikat = 100 gram"); satuan lama
   yang tidak terhitung tetap tampil bertanda.
+- **Satuan panjang & Master Satuan (v3.2.11)**: `cm` dan `meter` bawaan, terkonversi otomatis (1 m = 100 cm).
+  Inventory › Master Satuan (`custom_units`, izin `inventory.view` / `inventory.manage`) untuk satuan hitung
+  tambahan yang diketik gudang (roll, karung, ...); muncul di semua pilihan satuan lewat `UnitCatalog`,
+  tanpa konversi otomatis (atur per bahan di Konversi Satuan). Satuan yang sudah dipakai dikunci namanya
+  dan tidak bisa dihapus, cukup dinonaktifkan.
 
 ## Barang Sisa, Barang Hilang & Susut Bahan (revisi Owner, v3.1)
 

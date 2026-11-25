@@ -25,6 +25,10 @@ enum Unit: string
     case SendokMakan = 'sdm';
     case SendokTeh = 'sdt';
 
+    // Panjang -- basis sentimeter (kain, plastik roll, tali, aluminium foil)
+    case Sentimeter = 'cm';
+    case Meter = 'meter';
+
     // Satuan hitung -- tidak saling terkonversi
     case Pcs = 'pcs';
     case Butir = 'butir';
@@ -54,12 +58,13 @@ enum Unit: string
         return match ($this) {
             self::Gram, self::Kilogram => UnitDimension::Mass,
             self::Mililiter, self::Liter, self::SendokMakan, self::SendokTeh => UnitDimension::Volume,
+            self::Sentimeter, self::Meter => UnitDimension::Length,
             default => UnitDimension::Count,
         };
     }
 
     /**
-     * Nilai satu satuan ini dalam satuan basis besarannya (gram atau mililiter).
+     * Nilai satu satuan ini dalam satuan basis besarannya (gram, mililiter, atau sentimeter).
      *
      * Satuan hitung memakai 1 karena tidak punya pembanding tetap; angka itu
      * tidak pernah dipakai untuk konversi silang, hanya untuk identitas.
@@ -73,6 +78,8 @@ enum Unit: string
             self::Liter => 1000.0,
             self::SendokMakan => 15.0,
             self::SendokTeh => 5.0,
+            self::Sentimeter => 1.0,
+            self::Meter => 100.0,
             default => 1.0,
         };
     }
@@ -86,6 +93,8 @@ enum Unit: string
             self::Liter => 'Liter',
             self::SendokMakan => 'Sendok Makan (15 ml)',
             self::SendokTeh => 'Sendok Teh (5 ml)',
+            self::Sentimeter => 'Sentimeter (cm)',
+            self::Meter => 'Meter (m)',
             self::Pcs => 'Pcs',
             self::Butir => 'Butir',
             self::Ikat => 'Ikat',
@@ -125,6 +134,8 @@ enum Unit: string
             self::Liter => ['l', 'lt', 'ltr', 'litre'],
             self::SendokMakan => ['sendok makan'],
             self::SendokTeh => ['sendok teh'],
+            self::Sentimeter => ['centimeter', 'sentimeter', 'senti'],
+            self::Meter => ['m', 'mtr'],
             self::Pcs => ['pc', 'piece', 'pieces', 'buah', 'bh', 'biji', 'bj'],
             self::Butir => ['btr'],
             self::Ikat => ['ikt'],

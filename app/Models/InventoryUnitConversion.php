@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Services\IngredientUnitConverter;
 use App\Support\Units\Unit;
+use App\Support\Units\UnitCatalog;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -118,6 +119,7 @@ class InventoryUnitConversion extends Model
             ->merge(DB::table('inventory_items')->whereNotNull('unit')->where('unit', '!=', '')->distinct()->pluck('unit'));
 
         return collect(Unit::cases())->map(fn (Unit $unit) => $unit->value)
+            ->merge(UnitCatalog::customUnits())
             ->merge($used->map(fn ($unit) => Unit::canonical((string) $unit)))
             ->filter(fn (?string $unit) => filled($unit) && $unit !== 'All')
             ->unique(fn (string $unit) => mb_strtolower($unit))
