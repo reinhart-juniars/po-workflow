@@ -13,6 +13,7 @@ enum UnitDimension: string
 {
     case Mass = 'mass';
     case Volume = 'volume';
+    case Length = 'length';
     case Count = 'count';
 
     public function label(): string
@@ -20,6 +21,7 @@ enum UnitDimension: string
         return match ($this) {
             self::Mass => 'Berat',
             self::Volume => 'Volume',
+            self::Length => 'Panjang',
             self::Count => 'Satuan Hitung',
         };
     }

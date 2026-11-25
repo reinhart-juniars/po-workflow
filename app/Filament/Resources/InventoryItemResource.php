@@ -8,6 +8,7 @@ use App\Models\InventoryItem;
 use App\Services\InventoryStockAlertService;
 use App\Support\PriceInput;
 use App\Support\Units\Unit;
+use App\Support\Units\UnitCatalog;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -54,7 +55,7 @@ class InventoryItemResource extends Resource
                     // nilainya tetap ditawarkan supaya menyunting item lama tidak
                     // diam-diam mengganti satuannya.
                     ->options(fn (?InventoryItem $record) => static::unitOptions($record?->unit))
-                    ->helperText('Satuan berat dan volume bisa dikonversi otomatis saat resep dihitung; satuan hitung tidak.'),
+                    ->helperText('Satuan berat, volume, dan panjang (cm/meter) dikonversi otomatis saat resep dihitung; satuan hitung tidak. Satuan belum ada? Tambahkan di Inventory › Master Satuan.'),
 
                 Forms\Components\Select::make('category')
                     ->label('Kategori')
@@ -293,9 +294,9 @@ class InventoryItemResource extends Resource
      */
     public static function unitOptions(?string $current = null): array
     {
-        $options = Unit::groupedOptions();
+        $options = UnitCatalog::groupedOptions();
 
-        if (filled($current) && Unit::tryFromAlias($current) === null) {
+        if (filled($current) && ! UnitCatalog::isKnown($current)) {
             $options['Satuan Lama'][$current] = $current;
         }
 

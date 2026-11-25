@@ -150,6 +150,7 @@ class Navigation
                     ['label' => 'Opname Bahan', 'route' => 'filament.admin.pages.opname-bahan', 'can' => 'inventory.manage'],
                     ['label' => 'Susut Bahan', 'route' => 'filament.admin.pages.susut-bahan', 'can' => 'ledger.view'],
                     ['label' => 'Saldo Awal Stok', 'route' => 'filament.admin.resources.inventory-openings.index', 'can' => 'inventory.view'],
+                    ['label' => 'Master Satuan', 'route' => 'filament.admin.resources.master-satuan.index', 'can' => 'inventory.view'],
                     ['label' => 'Pengaturan Inventory', 'route' => 'filament.admin.pages.pengaturan-inventory', 'can' => 'settings.manage'],
                 ],
                 // Modul Pembelian (revisi 7 Okt 2026): gudang belanja lalu
