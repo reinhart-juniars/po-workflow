@@ -1,9 +1,15 @@
 @php
-    $rows = $this->getRows();
+    $previewing = $importCounts !== [];
+    $rows = $previewing ? collect() : $this->getRows();
+    $preview = $previewing ? $this->getImportPreview() : null;
+    $rupiah = fn ($v) => 'Rp '.number_format((float) $v, 0, ',', '.');
     $qty = fn ($v) => rtrim(rtrim(number_format((float) $v, 4, ',', '.'), '0'), ',');
 @endphp
 
 <x-filament-panels::page>
+    @if ($previewing)
+        @include('filament.pages.partials.ingredient-stock-count-preview')
+    @else
     <x-filament::section>
         <x-slot name="description">
             Isi hasil hitung fisik bahan yang diopname; bahan yang dikosongkan tidak diubah. Selisih terhadap saldo
@@ -11,6 +17,9 @@
             <strong>Barang Temuan</strong> (hitung lebih), lalu tampil di Susut Bahan dan rincian HPP Laba Rugi.
             Bahan yang belum pernah tercatat di kartu stok: hitungan pertamanya menjadi Saldo Awal.
             Stock Opname (nilai rupiah per kategori) untuk Neraca tetap diisi seperti biasa.
+            <br>Menghitung di gudang dengan kertas? <strong>Export Excel</strong> untuk dicetak (ikut tanggal &amp; kategori
+            di bawah), isi kolom Hitung Fisik, lalu <strong>Import Excel</strong>: isinya tampil dulu sebagai pratinjau
+            (selisih &amp; nilainya) dan baru tercatat setelah disimpan dari pratinjau.
         </x-slot>
 
         {{ $this->form }}
@@ -79,4 +88,5 @@
             </x-filament::button>
         </div>
     </form>
+    @endif
 </x-filament-panels::page>
