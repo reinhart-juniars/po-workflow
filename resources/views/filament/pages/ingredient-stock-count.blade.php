@@ -11,6 +11,9 @@
             <strong>Barang Temuan</strong> (hitung lebih), lalu tampil di Susut Bahan dan rincian HPP Laba Rugi.
             Bahan yang belum pernah tercatat di kartu stok: hitungan pertamanya menjadi Saldo Awal.
             Stock Opname (nilai rupiah per kategori) untuk Neraca tetap diisi seperti biasa.
+            <br>Menghitung di gudang dengan kertas? <strong>Export Excel</strong> untuk dicetak (ikut tanggal &amp; kategori
+            di bawah), isi kolom Hitung Fisik, lalu <strong>Import Excel</strong>: hasilnya mengisi form ini, periksa
+            selisihnya, baru klik Simpan Opname.
         </x-slot>
 
         {{ $this->form }}
@@ -36,8 +39,9 @@
                 <tbody>
                     @forelse ($rows as $row)
                         {{-- Selisih dihitung di browser (Alpine) supaya mengetik tidak memicu request per tombol. --}}
-                        {{-- Kunci ikut saldo: setelah disimpan saldonya berubah dan baris dirender ulang. --}}
-                        <tr wire:key="opname-{{ $row['id'] }}-{{ $row['balance'] }}-{{ $row['tracked'] ? 1 : 0 }}"
+                        {{-- Kunci ikut saldo: setelah disimpan saldonya berubah dan baris dirender ulang.
+                             importVersion: sesudah Import, Alpine membaca ulang hitungan dari berkas. --}}
+                        <tr wire:key="opname-{{ $importVersion }}-{{ $row['id'] }}-{{ $row['balance'] }}-{{ $row['tracked'] ? 1 : 0 }}"
                             x-data="{ fisik: @js($counts[$row['id']] ?? ''), saldo: {{ $row['balance'] }}, tracked: @js($row['tracked']) }"
                             x-on:opname-saved.window="fisik = ''">
                             <td>

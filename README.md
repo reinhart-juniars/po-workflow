@@ -85,6 +85,10 @@ menggantikan HPP residual opname dengan pemakaian bahan riil dari resep × produ
   Pilihan satuan baris hanya satuan yang bisa dihitung ke satuan harga bahan / hasil sub-menu
   (registri + Konversi Satuan), lengkap dengan bacaannya ("ikat — 1 ikat = 100 gram"); satuan lama
   yang tidak terhitung tetap tampil bertanda.
+- **Opname Bahan lewat Excel (v3.2.12)**: Export = lembar cetak A4 (ID, kategori, bahan, satuan, saldo kartu
+  stok, Hitung Fisik kosong, Selisih berupa rumus) sesuai tanggal & filter; Import (`IngredientStockCountImport`)
+  membaca ID + Hitung Fisik + tanggal dan hanya mengisi form. Kartu stok berubah setelah Simpan Opname. Satu baris
+  bermasalah (bukan angka, negatif, ID dobel/bukan bahan stok) membatalkan seluruh berkas.
 - **Satuan panjang & Master Satuan (v3.2.11)**: `cm` dan `meter` bawaan, terkonversi otomatis (1 m = 100 cm).
   Inventory › Master Satuan (`custom_units`, izin `inventory.view` / `inventory.manage`) untuk satuan hitung
   tambahan yang diketik gudang (roll, karung, ...); muncul di semua pilihan satuan lewat `UnitCatalog`,
