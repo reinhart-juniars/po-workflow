@@ -127,46 +127,86 @@ it('mengekspor lembar cetak sesuai tanggal dan kategori, hanya bahan stok', func
         ->and($sheet->getCell('D6')->getValue())->toBe('Box Nasi');
 });
 
-it('mengimpor hitung fisik ke form tanpa menyimpan, lalu Simpan Opname mencatat selisihnya', function () {
+it('menampilkan pratinjau import dulu, lalu menyimpan ke kartu stok dari pratinjau', function () {
     $d = bahanOpname();
+    $d['minyak'] = InventoryItem::query()->create([
+        'parent_id' => $d['tepung']->parent_id, 'name' => 'Minyak Goreng', 'unit' => 'liter', 'unit_price' => 20000,
+        'category' => InventoryItem::CATEGORY_RAW_MATERIAL, 'is_active' => true,
+    ]);
+    app(InventoryLedgerService::class)->post($d['minyak']->id, InventoryMovement::TYPE_OPENING, 4, 'liter', '2026-11-01', 20000);
     $gudang = opnameGudang();
     $this->actingAs($gudang);
 
-    $page = Livewire::test(IngredientStockCount::class)->set('data.count_date', '2026-11-25');
-    $book = exportOpname($page);
+    $book = exportOpname(Livewire::test(IngredientStockCount::class)->set('data.count_date', '2026-11-25'));
     $sheet = $book->getActiveSheet();
-    $sheet->setCellValue('G'.barisBahan($book, $d['tepung']), 9.5);      // hilang 0,5
+    $sheet->setCellValue('G'.barisBahan($book, $d['tepung']), 9.5);      // hilang 0,5 kg x 12.000 = 6.000
+    $sheet->setCellValue('G'.barisBahan($book, $d['minyak']), 5);        // temuan 1 liter x 20.000
     $sheet->setCellValue('G'.barisBahan($book, $d['gula']), '3,25');     // ditulis cara Indonesia; saldo awal
     // Box dibiarkan kosong: tidak diubah.
 
-    $kemasan = InventoryItem::query()->buckets()->where('name', 'Kemasan')->value('id');
     $movements = InventoryMovement::query()->count();
 
     $page = Livewire::test(IngredientStockCount::class)
-        ->set('data.bucket_id', $kemasan) // filter sedang aktif saat import
-        ->callAction('import', ['berkas' => unggahLembar($book)])
+        ->set('data.count_date', '2026-11-27')
+        ->set('data.notes', 'opname akhir bulan')
+        ->callAction('import', ['berkas' => unggahLembar($book, 'opname-gudang.xlsx')])
         ->assertHasNoActionErrors()
-        ->assertNotified('2 bahan terisi dari berkas')
-        ->assertSet('counts', [$d['tepung']->id => '9.5', $d['gula']->id => '3.25'])
-        ->assertSet('data.count_date', '2026-11-25') // tanggal dari berkas
-        ->assertSet('data.bucket_id', null)          // filter dilepas supaya semua yang terisi kelihatan
-        ->assertSee('Tepung Terigu');
+        ->assertSet('importCounts', [$d['tepung']->id => '9.5', $d['minyak']->id => '5', $d['gula']->id => '3.25'])
+        ->assertSet('importDate', '2026-11-25') // tanggal dari berkas, bukan form
+        ->assertSet('importBlank', 1)
+        ->assertSet('importNotes', 'opname akhir bulan')
+        ->assertSee('Pratinjau import: opname-gudang.xlsx')
+        ->assertSee('Rp 6.000')
+        ->assertSee('Rp 20.000')
+        // Urutan: hilang, temuan, saldo awal.
+        ->assertSeeInOrder(['Tepung Terigu', 'Minyak Goreng', 'Gula Pasir'])
+        // Grid isian manual disembunyikan selama pratinjau.
+        ->assertDontSee('Box Nasi');
 
-    // Belum ada yang masuk kartu stok sebelum Simpan Opname.
+    $preview = $page->instance()->getImportPreview();
+    expect($preview['summary'])->toMatchArray(['hilang' => 1, 'hilang_value' => 6000.0, 'temuan' => 1, 'temuan_value' => 20000.0, 'saldo_awal' => 1, 'sesuai' => 0])
+        ->and($preview['rows']->pluck('status')->all())->toBe(['hilang', 'temuan', 'saldo_awal']);
+
+    // Pratinjau belum menyimpan apa pun.
     expect(InventoryMovement::query()->count())->toBe($movements);
 
-    $page->call('save')->assertHasNoErrors();
+    $page->call('saveImport')->assertHasNoErrors()
+        ->assertNotified('Opname bahan tersimpan')
+        ->assertSet('importCounts', [])
+        ->assertSee('Box Nasi'); // kembali ke grid
 
-    $hilang = InventoryMovement::query()->where('type', InventoryMovement::TYPE_ADJUSTMENT)->sole();
+    $hilang = InventoryMovement::query()->where('type', InventoryMovement::TYPE_ADJUSTMENT)->where('inventory_item_id', $d['tepung']->id)->sole();
     expect((float) $hilang->qty)->toBe(-0.5)
-        ->and($hilang->inventory_item_id)->toBe($d['tepung']->id)
         ->and($hilang->moved_at->toDateString())->toBe('2026-11-25')
         ->and($hilang->created_by)->toBe($gudang->id)
+        ->and($hilang->notes)->toBe('Opname bahan 25/11/2026 — opname akhir bulan')
+        ->and((float) InventoryMovement::query()->where('type', InventoryMovement::TYPE_ADJUSTMENT)->where('inventory_item_id', $d['minyak']->id)->sole()->qty)->toBe(1.0)
         ->and((float) InventoryMovement::query()->where('inventory_item_id', $d['gula']->id)->sole()->qty)->toBe(3.25)
         ->and(InventoryMovement::query()->where('inventory_item_id', $d['box']->id)->count())->toBe(1); // hanya saldo awal
 });
 
-it('membatalkan import bila ada baris bermasalah dan tidak mengubah form', function (Closure $rusak, string $pesan) {
+it('membuang pratinjau saat Batal tanpa mencatat apa pun', function () {
+    $d = bahanOpname();
+    $this->actingAs(opnameGudang());
+
+    $book = exportOpname(Livewire::test(IngredientStockCount::class));
+    $book->getActiveSheet()->setCellValue('G'.barisBahan($book, $d['tepung']), 2);
+    $movements = InventoryMovement::query()->count();
+
+    Livewire::test(IngredientStockCount::class)
+        ->callAction('import', ['berkas' => unggahLembar($book)])
+        ->assertSee('Pratinjau import')
+        ->call('cancelImport')
+        ->assertSet('importCounts', [])
+        ->assertDontSee('Pratinjau import')
+        ->assertSee('Box Nasi')
+        // Simpan tanpa pratinjau aktif tidak melakukan apa-apa.
+        ->call('saveImport');
+
+    expect(InventoryMovement::query()->count())->toBe($movements);
+});
+
+it('membatalkan import bila ada baris bermasalah, tanpa pratinjau', function (Closure $rusak, string $pesan) {
     $d = bahanOpname();
     $this->actingAs(opnameGudang());
 
@@ -178,16 +218,17 @@ it('membatalkan import bila ada baris bermasalah dan tidak mengubah form', funct
     Livewire::test(IngredientStockCount::class)
         ->set('counts', [$d['box']->id => '480'])
         ->callAction('import', ['berkas' => unggahLembar($book)])
-        ->assertSet('counts', [$d['box']->id => '480']);
+        ->assertSet('importCounts', [])
+        ->assertSet('counts', [$d['box']->id => '480']); // isian manual tidak tersentuh
 
-    expect(isiNotifikasi())->toContain('Import dibatalkan, form tidak diubah')->toContain($pesan);
+    expect(isiNotifikasi())->toContain('Import dibatalkan, tidak ada yang berubah')->toContain($pesan);
 
-    // Kontrol positif: lembar yang sama tanpa baris rusak diterima.
+    // Kontrol positif: lembar yang sama tanpa baris rusak masuk pratinjau.
     $bersih = exportOpname(Livewire::test(IngredientStockCount::class));
     $bersih->getActiveSheet()->setCellValue('G'.barisBahan($bersih, $d['tepung']), 9);
     Livewire::test(IngredientStockCount::class)
         ->callAction('import', ['berkas' => unggahLembar($bersih)])
-        ->assertSet('counts', [$d['tepung']->id => '9']);
+        ->assertSet('importCounts', [$d['tepung']->id => '9']);
 })->with([
     'bukan angka' => [fn ($sheet, $book, $d) => $sheet->setCellValue('G'.barisBahan($book, $d['gula']), 'dua'), 'bukan angka'],
     'negatif' => [fn ($sheet, $book, $d) => $sheet->setCellValue('G'.barisBahan($book, $d['gula']), -1), 'tidak boleh negatif'],
@@ -203,17 +244,19 @@ it('menolak berkas yang bukan lembar opname dan berkas tanpa isian', function ()
     $lain->getActiveSheet()->fromArray([['Nama Barang', 'Stok'], ['Tepung', 3]]);
 
     Livewire::test(IngredientStockCount::class)
-        ->callAction('import', ['berkas' => unggahLembar($lain)]);
-    expect(isiNotifikasi())->toContain('Import dibatalkan, form tidak diubah')->toContain('tidak ditemukan');
+        ->callAction('import', ['berkas' => unggahLembar($lain)])
+        ->assertSet('importCounts', []);
+    expect(isiNotifikasi())->toContain('Import dibatalkan')->toContain('tidak ditemukan');
 
     Livewire::test(IngredientStockCount::class)
-        ->callAction('import', ['berkas' => unggahLembar(exportOpname(Livewire::test(IngredientStockCount::class)))]);
-    expect(isiNotifikasi())->toContain('Import dibatalkan, form tidak diubah')->toContain('Belum ada Hitung Fisik');
+        ->callAction('import', ['berkas' => unggahLembar(exportOpname(Livewire::test(IngredientStockCount::class)))])
+        ->assertSet('importCounts', []);
+    expect(isiNotifikasi())->toContain('Import dibatalkan')->toContain('Belum ada Hitung Fisik');
 
     expect(InventoryMovement::query()->count())->toBe(2);
 });
 
-it('tidak memindah tanggal opname ke masa depan dari berkas', function () {
+it('memakai tanggal form bila tanggal di berkas di masa depan', function () {
     $d = bahanOpname();
     $this->actingAs(opnameGudang());
 
@@ -225,8 +268,9 @@ it('tidak memindah tanggal opname ke masa depan dari berkas', function () {
     Livewire::test(IngredientStockCount::class)
         ->set('data.count_date', '2026-11-26')
         ->callAction('import', ['berkas' => unggahLembar($book)])
-        ->assertSet('data.count_date', '2026-11-26')
-        ->assertSet('counts', [$d['tepung']->id => '9']);
+        ->assertSet('importDate', '2026-11-26')
+        ->assertSee('di masa depan')
+        ->assertSet('importCounts', [$d['tepung']->id => '9']);
 });
 
 it('menutup Export dan Import untuk peran tanpa izin kelola inventory', function () {
